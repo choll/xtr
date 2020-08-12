@@ -1,0 +1,51 @@
+name: Ubuntu-GCC
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: install gcc
+      run: |
+        sudo apt-get install g++-10
+        sudo update-alternatives \
+          --install /usr/bin/gcc gcc /usr/bin/gcc-10 100 \
+          --slave /usr/bin/g++ g++ /usr/bin/g++-10 \
+          --slave /usr/bin/gcov gcov /usr/bin/gcov-10 \
+          --slave /usr/bin/gcc-ar gcc-ar /usr/bin/gcc-ar-10 \
+          --slave /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib-10
+
+    - name: init submodules
+      run: git submodule init
+    - name: update submodules
+      run: git submodule update
+
+    - name: make 
+      run: make -j2
+    - name: test
+      run: make -j2 run_test
+    - name: sanitizer
+      run: make -j2 SANITIZER=1 run_test
+
+    - name: make no-exceptions
+      run: make -j2 EXCEPTIONS=0
+    - name: test no-exceptions
+      run: make -j2 EXCEPTIONS=0 run_test
+    - name: sanitizer no-exceptions
+      run: make -j2 EXCEPTIONS=0 SANITIZER=1 run_test
+
+    - name: coverage
+      run: make -j2 COVERAGE=1 run_test
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        flags: unittests
+
