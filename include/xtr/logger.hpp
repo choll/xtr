@@ -406,7 +406,7 @@ namespace xtr::detail
         std::byte* str_end = pos + sv.length();
         while (end < str_end + 1) [[unlikely]]
         {
-            pause();
+            detail::pause();
             const auto s = buf.write_span();
             if (s.end() < str_end + 1) [[unlikely]]
             {
@@ -439,7 +439,7 @@ namespace xtr::detail
         {
             while (pos == end) [[unlikely]]
             {
-                pause();
+                detail::pause();
                 const auto s = buf.write_span();
                 if (s.end() == end) [[unlikely]]
                 {
@@ -858,7 +858,7 @@ void xtr::logger::producer::log_impl_str(Args&&... args)
     while (XTR_UNLIKELY(s.size() < size)) [[unlikely]]
     {
         if constexpr (!detail::is_non_blocking_v<Tags>)
-            pause();
+            detail::pause();
         s = buf_.write_span<Tags>();
         if (detail::is_non_blocking_v<Tags> && s.empty()) [[unlikely]]
             return;
@@ -921,7 +921,7 @@ void xtr::logger::producer::post(Func&& func)
     while (XTR_UNLIKELY(s.size() < size)) [[unlikely]] // XXX UNLIKELY
     {
         if constexpr (!detail::is_non_blocking_v<Tags>)
-            pause();
+            detail::pause();
         s = buf_.write_span<Tags>();
         if (detail::is_non_blocking_v<Tags> && s.empty()) [[unlikely]]
             return;
