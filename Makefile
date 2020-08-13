@@ -76,7 +76,9 @@ ifeq ($(COVERAGE), 1)
 	COVERAGE_DATA = \
 		$(SRCS:%=$(BUILD_DIR)/%.gcno) $(SRCS:%=$(BUILD_DIR)/%.gcda) \
 		$(TEST_SRCS:%=$(BUILD_DIR)/%.gcno) $(TEST_SRCS:%=$(BUILD_DIR)/%.gcda)
-else ifeq ($(DEBUG), 1)
+endif
+
+ifeq ($(DEBUG), 1)
 	CXXFLAGS += $(DEBUG_CXXFLAGS)
 	CPPFLAGS += $(DEBUG_CPPFLAGS)
 	BUILD_DIR := $(BUILD_DIR)-debug
@@ -157,13 +159,13 @@ run_benchmark: $(BENCH_TARGET)
 clean:
 	$(RM) $(TARGET) $(TEST_TARGET) $(OBJS) $(TEST_OBJS) $(DEPS) $(COVERAGE_DATA)
 
-coverage_html: coverage_report/index.html
-coverage_report/index.html: $(TEST_TARGET)
+coverage_html: $(BUILD_DIR)/coverage_report/index.html
+$(BUILD_DIR)/coverage_report/index.html: $(TEST_TARGET)
 ifeq ($(COVERAGE), 0)
 	$(error COVERAGE=1 option required)
 endif
 	$<
-	@mkdir -p coverage_report
+	@mkdir -p $(@D)
 	gcovr --exclude test --exclude third_party --html-detail $@ -r .
 
 -include $(DEPS)
