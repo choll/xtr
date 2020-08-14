@@ -29,16 +29,6 @@
 
 namespace xtrd = xtr::detail;
 
-void xtrd::throw_runtime_error(const char* what)
-{
-#if __cpp_exceptions
-    throw std::runtime_error(what);
-#else
-    std::fprintf(stderr, "runtime error: %s\n", what);
-    std::abort();
-#endif
-}
-
 void xtrd::throw_system_error(const char* what)
 {
 #if __cpp_exceptions

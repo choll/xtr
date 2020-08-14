@@ -23,7 +23,6 @@
 
 namespace xtr::detail
 {
-    [[noreturn, gnu::cold, gnu::noinline]] void throw_runtime_error(const char* what);
     // errno isn't passed as an argument just to make the calling code
     // marginally smaller (i.e. avoid a call to __errno_location)
     [[noreturn, gnu::cold, gnu::noinline]] void throw_system_error(const char* what);
