@@ -815,7 +815,7 @@ TEST_CASE_METHOD(fixture, "logger producer tsc timestamp test", "[logger]")
             // timezone adjustment is. This does not matter for the purpose of
             // this test.
             const std::time_t secs = std::mktime(&tm);
-            std::int64_t micros;
+            std::int64_t micros = 0;
             std::from_chars(pos, pos + 6, micros);
             return secs * 1000000L + micros;
         };
@@ -839,7 +839,7 @@ TEST_CASE_METHOD(fixture, "tsc estimation test", "[logger]")
 TEST_CASE_METHOD(fixture, "logger error handling test", "[logger]")
 {
     XTR_LOG(p_, "Test {}", thrower{}), line_ = __LINE__;
-    REQUIRE(last_err() == "Exception error text");
+    REQUIRE(last_err() == "2000-01-01 01:02:03.123456: Name: Error: Exception error text");
     REQUIRE(lines_.empty());
 }
 #endif
@@ -898,7 +898,7 @@ TEST_CASE("logger set error file test", "[logger]")
     std::vector<std::string> lines;
     buf.push_lines(lines);
     REQUIRE(lines.size() == 1);
-    REQUIRE(lines.back() == "Write error");
+    REQUIRE(lines.back() == "2000-01-01 01:02:03.123456: Name: Error: Write error");
 }
 #endif
 
@@ -942,9 +942,26 @@ TEST_CASE_METHOD(fixture, "logger set error func test", "[logger]")
     REQUIRE(lines_.empty());
     REQUIRE(errors_.empty());
 
-    REQUIRE(error == "Write error\n");
+    REQUIRE(error == "2000-01-01 01:02:03.123456: Name: Error: Write error\n");
 }
 #endif
+
+TEST_CASE_METHOD(fixture, "logger short write test", "[logger]")
+{
+    log_.set_output_function(
+        [&](const char* buf, std::size_t size)
+        {
+            size -= 20;
+            std::scoped_lock lock{m_};
+            lines_.push_back(std::string(buf, size));
+            return size;
+        });
+
+    XTR_LOG(p_, "Test {} {} {}", 1, 2, 3), line_ = __LINE__;
+
+    REQUIRE(last_line() == "2000-01-01 01:02:03.123456: Name: logger."_format(line_));
+    REQUIRE(last_err() == "2000-01-01 01:02:03.123456: Name: Error: Short write"_format(line_));
+}
 
 TEST_CASE_METHOD(fixture, "logger producer change name test", "[logger]")
 {
@@ -1007,38 +1024,31 @@ TEST_CASE_METHOD(fixture, "logger non-blocking drop test", "[logger]")
     // 64kb default size buffer, 8 bytes per log record, 16 bytes taken
     // by blocker.
     const std::size_t n_dropped = 100;
-    const std::size_t n = (64 * 1024 - 16) / 8 + n_dropped;
+    const std::size_t blocker_sz = 16;
+    const std::size_t msg_sz = 8;
+    const std::size_t n = (64 * 1024 - blocker_sz) / msg_sz + n_dropped;
 
-    // Run the test a few times to verify that the dropped count is reset
-    // each time the count is printed.
-    for (std::size_t i = 0; i < 3; ++i)
-    {
-        blocker b;
-        XTR_LOG(p_, "{}", b);
+    blocker b;
 
-        for (std::size_t j = 0; j < n; ++j)
-            XTR_TRY_LOG(p_, "Test");
+    XTR_LOG(p_, "{}", b);
 
-        b.release();
-        sync();
+    for (std::size_t j = 0; j < n; ++j)
+        XTR_TRY_LOG(p_, "Test");
 
-        // Plus 2 is because the blocker emits a line (the other line being
-        // the `messages dropped' line that is being tested)
-        const std::size_t expected_line_count = n - n_dropped + 2;
+    b.release();
+    sync();
 
-        // Wait for lines to be printed, there is no clean way of synchronizing
-        // this as the count is communicated "out-of-band" (i.e not via the
-        // queue)
-        for (std::size_t j = 0; line_count() != expected_line_count; ++j)
-        {
-            REQUIRE(j < 1000); // Wait for at most 1 second
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        }
+    // Plus 2 is because the blocker emits a line (the other line being
+    // the `messages dropped' line that is being tested)
+    const std::size_t expected_line_count = n - n_dropped + 2;
 
-        REQUIRE(last_line() == "2000-01-01 01:02:03.123456: Name: {} messages dropped"_format(n_dropped));
+    // Wait for lines to be printed, there is no clean way of synchronizing
+    // this as the count is communicated "out-of-band" (i.e not via the
+    // queue)
+    for (std::size_t j = 0; j < 1000 && line_count() != expected_line_count; ++j)
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
-        clear_lines();
-    }
+    REQUIRE(last_line() == "2000-01-01 01:02:03.123456: Name: {} messages dropped"_format(n_dropped));
 }
 
 TEST_CASE_METHOD(fixture, "logger soak test", "[logger]")
@@ -1151,11 +1161,9 @@ TEST_CASE_METHOD(fixture, "logger flush test", "[logger]")
         std::size_t target_count = flush_count + 1;
         XTR_LOG(p_, "Test");
         // Wait for flush to be called
-        for (std::size_t j = 0; flush_count < target_count; ++j)
-        {
-            REQUIRE(j < 1000); // Wait for at most 1 second
+        for (std::size_t j = 0; j < 1000 && flush_count < target_count; ++j)
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        }
+        REQUIRE(flush_count == target_count);
     }
 
     // Set an empty function to avoid accessing a dangling reference

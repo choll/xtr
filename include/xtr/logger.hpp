@@ -241,20 +241,27 @@ namespace fmt
 
 namespace xtr::detail
 {
-    template<typename OutputFunction, typename ErrorFunction, typename... Args>
+
+    template<
+        typename OutputFunction,
+        typename ErrorFunction,
+        typename Timestamp,
+        typename... Args>
     void print(
         fmt::memory_buffer& mbuf,
         const OutputFunction& out,
         [[maybe_unused]] const ErrorFunction& err,
         std::string_view fmt,
-        Args&&... args)
+        Timestamp ts,
+        const std::string& name,
+        const Args&... args)
     {
 #if __cpp_exceptions
         try
         {
 #endif
             mbuf.clear();
-            fmt::format_to(mbuf, fmt, std::forward<Args>(args)...);
+            fmt::format_to(mbuf, fmt, ts, name, args...);
             const auto result = out(mbuf.data(), mbuf.size());
             if (result == -1)
                 throw_runtime_error("Write error");
@@ -264,9 +271,10 @@ namespace xtr::detail
         }
         catch (const std::exception& e)
         {
-            using namespace std::literals::string_literals;
-            const std::string s = e.what() + "\n"s;
-            err(s.c_str(), s.length());
+            using namespace std::literals::string_view_literals;
+            mbuf.clear();
+            fmt::format_to(mbuf, "{}: {}: Error: {}\n"sv, ts, name, e.what());
+            err(mbuf.data(), mbuf.size());
         }
 #endif
     }
@@ -283,7 +291,7 @@ namespace xtr::detail
         std::string_view fmt,
         const std::string& name,
         Timestamp ts,
-        Args&&... args)
+        const Args&... args)
     {
         print(mbuf, out, err, fmt, ts, name, args...);
     }
@@ -951,9 +959,9 @@ auto xtr::logger::producer::make_lambda(Args&&... args)
             [[maybe_unused]] const char* ts,
             const std::string& name) mutable noexcept
         {
-            // args are moved, not forwarded because although the arguments
-            // were forwarded into the lambda, they were still captured by
-            // copy, so we can just move them into print().
+            // args are passed by reference because although they were
+            // forwarded into the lambda, they were still captured by copy,
+            // so there is no point in moving them out of the lambda.
             if constexpr (detail::is_timestamp_v<Tags>)
             {
                 xtr::detail::print_ts(
@@ -962,7 +970,7 @@ auto xtr::logger::producer::make_lambda(Args&&... args)
                     err,
                     fmt,
                     name,
-                    std::move(args)...);
+                    args...);
             }
             else
             {
@@ -973,7 +981,7 @@ auto xtr::logger::producer::make_lambda(Args&&... args)
                     fmt,
                     ts,
                     name,
-                    std::move(args)...);
+                    args...);
             }
         };
 }
