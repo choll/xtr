@@ -876,7 +876,6 @@ TEST_CASE("logger set output file test", "[logger]")
     REQUIRE(lines.back() == "2000-01-01 01:02:03.123456: Name: logger.cpp:{}: Test"_format(f.line_));
 }
 
-#if __cpp_exceptions
 TEST_CASE("logger set error file test", "[logger]")
 {
     file_buf buf;
@@ -900,7 +899,6 @@ TEST_CASE("logger set error file test", "[logger]")
     REQUIRE(lines.size() == 1);
     REQUIRE(lines.back() == "2000-01-01 01:02:03.123456: Name: Error: Write error");
 }
-#endif
 
 TEST_CASE_METHOD(fixture, "logger set output func test", "[logger]")
 {
@@ -921,7 +919,6 @@ TEST_CASE_METHOD(fixture, "logger set output func test", "[logger]")
     REQUIRE(output == "2000-01-01 01:02:03.123456: Name: logger.cpp:{}: Test\n"_format(line_));
 }
 
-#if __cpp_exceptions
 TEST_CASE_METHOD(fixture, "logger set error func test", "[logger]")
 {
     std::string error;
@@ -944,7 +941,6 @@ TEST_CASE_METHOD(fixture, "logger set error func test", "[logger]")
 
     REQUIRE(error == "2000-01-01 01:02:03.123456: Name: Error: Write error\n");
 }
-#endif
 
 TEST_CASE_METHOD(fixture, "logger short write test", "[logger]")
 {

@@ -241,6 +241,19 @@ namespace fmt
 
 namespace xtr::detail
 {
+    template<typename ErrorFunction,typename Timestamp>
+    [[gnu::cold, gnu::noinline]] void report_error(
+        fmt::memory_buffer& mbuf,
+        const ErrorFunction& err,
+        Timestamp ts,
+        const std::string& name,
+        const char* reason)
+    {
+        using namespace std::literals::string_view_literals;
+        mbuf.clear();
+        fmt::format_to(mbuf, "{}: {}: Error: {}\n"sv, ts, name, reason);
+        err(mbuf.data(), mbuf.size());
+    }
 
     template<
         typename OutputFunction,
@@ -264,17 +277,14 @@ namespace xtr::detail
             fmt::format_to(mbuf, fmt, ts, name, args...);
             const auto result = out(mbuf.data(), mbuf.size());
             if (result == -1)
-                throw_runtime_error("Write error");
+                return report_error(mbuf, err, ts, name, "Write error");
             if (std::size_t(result) != mbuf.size())
-                throw_runtime_error("Short write");
+                return report_error(mbuf, err, ts, name, "Short write");
 #if __cpp_exceptions
         }
         catch (const std::exception& e)
         {
-            using namespace std::literals::string_view_literals;
-            mbuf.clear();
-            fmt::format_to(mbuf, "{}: {}: Error: {}\n"sv, ts, name, e.what());
-            err(mbuf.data(), mbuf.size());
+            report_error(mbuf, err, ts, name, e.what());
         }
 #endif
     }
