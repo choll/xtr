@@ -16,31 +16,27 @@ BUILD_DIR := build/$(CXX)
 
 CXXFLAGS = \
 	-std=c++2a -Wall -Wextra -Wconversion -Wshadow -Wcast-qual -Wformat=2 \
-	-pedantic -pipe -fno-rtti
+	-pedantic -pipe -fno-rtti -pthread
 CPPFLAGS = -MMD -MP -I include $(FMT_CPPFLAGS)
-LDFLAGS = -pthread -fuse-ld=gold
+LDFLAGS = -fuse-ld=gold
+LDLIBS = -lxtr
 
 DEBUG_CXXFLAGS = -O0 -ggdb -ftrapv
 DEBUG_CPPFLAGS = -DXTR_ENABLE_TEST_STATIC_ASSERTIONS
 
 OPT_CXXFLAGS = -O3 -march=native -flto
 OPT_CPPFLAGS = -DNDEBUG 
-OPT_LDFLAGS = -flto
 
 TEST_CPPFLAGS = $(CATCH2_CPPFLAGS) 
 TEST_LDFLAGS = -L $(BUILD_DIR) $(FMT_LDFLAGS)
-TEST_LDLIBS = -lxtr
 
 BENCH_CPPFLAGS = $(GOOGLE_BENCH_CPPFLAGS)
 BENCH_LDFLAGS = -L $(BUILD_DIR) $(GOOGLE_BENCH_LDFLAGS) $(FMT_LDFLAGS)
-BENCH_LDLIBS = -lxtr -lbenchmark
+BENCH_LDLIBS = -lbenchmark
 
 COVERAGE_CXXFLAGS = --coverage -DNDEBUG
-COVERAGE_LDFLAGS = --coverage
 
-SANITIZER_LIST = -fsanitize=address -fsanitize=undefined
-SANITIZER_CXXFLAGS = -fno-omit-frame-pointer $(SANITIZER_LIST)
-SANITIZER_LDFLAGS = $(SANITIZER_LIST)
+SANITIZER_CXXFLAGS = -fno-omit-frame-pointer -fsanitize=address -fsanitize=undefined
 
 # Use the libfmt submodule if it is present and no include directory for
 # libfmt has been configured.
@@ -53,8 +49,7 @@ ifneq ($(SUBMODULES_FLAG),)
 	FMT_CPPFLAGS += -DFMT_HEADER_ONLY
 	CPPFLAGS += -isystem third_party/include
 else
-	TEST_LDLIBS += -lfmt
-	BENCH_LDLIBS += -lfmt
+	LDLIBS += -lfmt
 endif
 
 ifneq (,$(findstring clang,$(CXX)))
@@ -71,7 +66,6 @@ endif
 
 ifeq ($(COVERAGE), 1)
 	CXXFLAGS += $(COVERAGE_CXXFLAGS)
-    LDFLAGS += $(COVERAGE_LDFLAGS)
 	BUILD_DIR := $(BUILD_DIR)-coverage
 	COVERAGE_DATA = \
 		$(SRCS:%=$(BUILD_DIR)/%.gcno) $(SRCS:%=$(BUILD_DIR)/%.gcda) \
@@ -85,13 +79,11 @@ ifeq ($(DEBUG), 1)
 else
 	CXXFLAGS += $(OPT_CXXFLAGS)
 	CPPFLAGS += $(OPT_CPPFLAGS)
-	LDFLAGS += $(OPT_LDFLAGS)
 	BUILD_DIR := $(BUILD_DIR)-release
 endif
 
 ifeq ($(SANITIZER), 1)
 	CXXFLAGS += $(SANITIZER_CXXFLAGS)
-	LDFLAGS += $(SANITIZER_LDFLAGS)
 	BUILD_DIR := $(BUILD_DIR)-sanitizer
 endif
 
@@ -115,14 +107,16 @@ BENCH_OBJS = $(BENCH_SRCS:%=$(BUILD_DIR)/%.o)
 DEPS = $(OBJS:.o=.d) $(TEST_OBJS:.o=.d)
 
 $(TARGET): $(OBJS)
-	$(AR) rc $@ $(OBJS)
+	$(AR) rc $@ $^
 	$(RANLIB) $@
 
+# LINK.cc = $(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) $(TARGET_ARCH)
+
 $(TEST_TARGET): $(TARGET) $(TEST_OBJS)
-	$(CXX) -o $@ $(LDFLAGS) $(TEST_LDFLAGS) $(TEST_OBJS) -Wl,-Bstatic $(TEST_LDLIBS) -Wl,-Bdynamic
+	$(LINK.cc) -o $@ $(TEST_LDFLAGS) $(TEST_OBJS) -Wl,-Bstatic $(LDLIBS) -Wl,-Bdynamic
 
 $(BENCH_TARGET): $(TARGET) $(BENCH_OBJS)
-	$(CXX) -o $@ $(LDFLAGS) $(BENCH_LDFLAGS) $(BENCH_OBJS) -Wl,-Bstatic $(BENCH_LDLIBS) -Wl,-Bdynamic
+	$(LINK.cc) -o $@ $(BENCH_LDFLAGS) $(BENCH_OBJS) -Wl,-Bstatic $(LDLIBS) $(BENCH_LDLIBS) -Wl,-Bdynamic
 
 $(OBJS): $(BUILD_DIR)/%.cpp.o: %.cpp
 	@mkdir -p $(@D)
