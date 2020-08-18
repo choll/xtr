@@ -21,17 +21,19 @@
 #ifndef XTR_LOGGER_HPP
 #define XTR_LOGGER_HPP
 
+#include "detail/align.hpp"
+#include "detail/assume.hpp"
 #include "detail/is_c_string.hpp"
-#include "detail/string.hpp" // XXX rename to constexpr_string?
+#include "detail/pause.hpp"
+#include "detail/print.hpp"
+#include "detail/string.hpp"
+#include "detail/string_ref.hpp"
+#include "detail/string_table.hpp"
+#include "detail/synchronized_ring_buffer.hpp"
 #include "detail/get_time.hpp"
+#include "detail/tags.hpp"
+#include "detail/trampolines.hpp"
 #include "detail/tsc.hpp"
-
-#include "xtr/detail/tags.hpp"
-#include "xtr/detail/throw.hpp"
-#include "xtr/detail/pause.hpp"
-#include "xtr/detail/synchronized_ring_buffer.hpp"
-#include "xtr/detail/align.hpp"
-#include "xtr/detail/assume.hpp"
 
 #include <fmt/format.h>
 
@@ -39,6 +41,7 @@
 #include <chrono>
 #include <cstddef>
 #include <cstdio>
+#include <cstdint>
 #include <ctime>
 #include <functional>
 #include <memory>
@@ -128,68 +131,6 @@
             (SINK).log<&xtr_fmt, void(TAGS)>(__VA_ARGS__);                  \
         }))
 
-namespace xtr::detail
-{
-    // XXX put into sanitize.hpp
-    // Transforms non-printable characters and backslash to hex (\xFF).
-    // Backslash is treated like this to prevent terminal escape
-    // sequence injection attacks.
-    template<typename OutputIterator>
-    void sanitize_char_to(OutputIterator& pos, char c)
-    {
-        if (c >= ' ' && c <= '~' && c != '\\') [[likely]]
-        {
-            *pos++ = c;
-        }
-        else
-        {
-            constexpr const char hex[] = "0123456789ABCDEF";
-            *pos++ = '\\';
-            *pos++ = 'x';
-            *pos++ = hex[(c >> 4) & 0xF];
-            *pos++ = hex[c & 0xF];
-        }
-    }
-
-    // XXX MOVE TO string_ref.hpp
-    template<typename T>
-    struct string_ref;
-
-    template<>
-    struct string_ref<const char*>
-    {
-        explicit string_ref(const char* s)
-        :
-            str(s)
-        {
-        }
-
-        explicit string_ref(const std::string& s)
-        :
-            str(s.c_str())
-        {
-        }
-
-        const char* str;
-    };
-
-    string_ref(const char*) -> string_ref<const char*>;
-    string_ref(const std::string&) -> string_ref<const char*>;
-    string_ref(const std::string_view&) -> string_ref<std::string_view>;
-
-    template<>
-    struct string_ref<std::string_view>
-    {
-        explicit string_ref(std::string_view s)
-        :
-            str(s)
-        {
-        }
-
-        std::string_view str;
-    };
-}
-
 namespace xtr
 {
     class logger;
@@ -198,280 +139,8 @@ namespace xtr
     using nocopy = detail::string_ref<T>;
 }
 
-namespace fmt
-{
-    template<>
-    struct formatter<xtr::detail::string_ref<const char*>>
-    {
-        template<typename ParseContext>
-        constexpr auto parse(ParseContext &ctx)
-        {
-            return ctx.begin();
-        }
-
-        template<typename FormatContext>
-        auto format(xtr::detail::string_ref<const char*> ref, FormatContext &ctx)
-        {
-            auto pos = ctx.out();
-            while (*ref.str != '\0')
-                xtr::detail::sanitize_char_to(pos, *ref.str++);
-            return pos;
-        }
-    };
-
-    template<>
-    struct formatter<xtr::detail::string_ref<std::string_view>>
-    {
-        template<typename ParseContext>
-        constexpr auto parse(ParseContext &ctx)
-        {
-            return ctx.begin();
-        }
-
-        template<typename FormatContext>
-        auto format(const xtr::detail::string_ref<std::string_view> ref, FormatContext &ctx)
-        {
-            auto pos = ctx.out();
-            for (const char c : ref.str)
-                xtr::detail::sanitize_char_to(pos, c);
-            return pos;
-        }
-    };
-}
-
 namespace xtr::detail
 {
-    template<typename ErrorFunction,typename Timestamp>
-    [[gnu::cold, gnu::noinline]] void report_error(
-        fmt::memory_buffer& mbuf,
-        const ErrorFunction& err,
-        Timestamp ts,
-        const std::string& name,
-        const char* reason)
-    {
-        using namespace std::literals::string_view_literals;
-        mbuf.clear();
-        fmt::format_to(mbuf, "{}: {}: Error: {}\n"sv, ts, name, reason);
-        err(mbuf.data(), mbuf.size());
-    }
-
-    template<
-        typename OutputFunction,
-        typename ErrorFunction,
-        typename Timestamp,
-        typename... Args>
-    void print(
-        fmt::memory_buffer& mbuf,
-        const OutputFunction& out,
-        [[maybe_unused]] const ErrorFunction& err,
-        std::string_view fmt,
-        Timestamp ts,
-        const std::string& name,
-        const Args&... args)
-    {
-#if __cpp_exceptions
-        try
-        {
-#endif
-            mbuf.clear();
-            fmt::format_to(mbuf, fmt, ts, name, args...);
-            const auto result = out(mbuf.data(), mbuf.size());
-            if (result == -1)
-                return report_error(mbuf, err, ts, name, "Write error");
-            if (std::size_t(result) != mbuf.size())
-                return report_error(mbuf, err, ts, name, "Short write");
-#if __cpp_exceptions
-        }
-        catch (const std::exception& e)
-        {
-            report_error(mbuf, err, ts, name, e.what());
-        }
-#endif
-    }
-
-    template<
-        typename OutputFunction,
-        typename ErrorFunction,
-        typename Timestamp,
-        typename... Args>
-    void print_ts(
-        fmt::memory_buffer& mbuf,
-        const OutputFunction& out,
-        const ErrorFunction& err,
-        std::string_view fmt,
-        const std::string& name,
-        Timestamp ts,
-        const Args&... args)
-    {
-        print(mbuf, out, err, fmt, ts, name, args...);
-    }
-
-    // XXX MOVE THESE TO TRAMPOLINES.HPP
-
-    template<auto Format, typename State>
-    std::byte* trampoline0(
-        fmt::memory_buffer& mbuf,
-        std::byte* buf,
-        State& state,
-        const char* ts,
-        const std::string& name) noexcept
-    {
-        print(mbuf, state.out, state.err, *Format, ts, name);
-        return buf + sizeof(void(*)());
-    }
-
-    template<auto Format, typename State, typename Func>
-    std::byte* trampolineN(
-        fmt::memory_buffer& mbuf,
-        std::byte* buf,
-        State& state,
-        [[maybe_unused]] const char* ts,
-        const std::string& name) noexcept
-    {
-        typedef void(*fptr_t)();
-
-        auto func_pos = buf + sizeof(fptr_t);
-        if constexpr (alignof(Func) > alignof(fptr_t))
-            func_pos = align<alignof(Func)>(func_pos);
-
-        assert(std::uintptr_t(func_pos) % alignof(Func) == 0);
-
-        // Invoke lambda, the first call is for commands sent to the consumer
-        // thread such as adding a new producer or modifying the output stream.
-        auto& func = *reinterpret_cast<Func*>(func_pos);
-        if constexpr (std::is_same_v<decltype(Format), std::nullptr_t>)
-            func(state);
-        else
-            func(mbuf, state.out, state.err, *Format, ts, name);
-
-        static_assert(noexcept(func.~Func()));
-        std::destroy_at(std::addressof(func));
-
-        return func_pos + align(sizeof(Func), alignof(fptr_t));
-    }
-
-    template<auto Format, typename State, typename Func>
-    std::byte* trampolineS(
-        fmt::memory_buffer& mbuf,
-        std::byte* buf,
-        State& state,
-        const char* ts,
-        const std::string& name) noexcept
-    {
-        typedef void(*fptr_t)();
-
-        auto size_pos = buf + sizeof(fptr_t);
-        assert(std::uintptr_t(size_pos) % alignof(std::size_t) == 0);
-
-        auto func_pos = size_pos + sizeof(std::size_t);
-        if constexpr (alignof(Func) > alignof(std::size_t))
-            func_pos = align<alignof(Func)>(func_pos);
-        assert(std::uintptr_t(func_pos) % alignof(Func) == 0);
-
-        auto& func = *reinterpret_cast<Func*>(func_pos);
-        func(mbuf, state.out, state.err, *Format, ts, name);
-
-        static_assert(noexcept(func.~Func()));
-        std::destroy_at(std::addressof(func));
-
-        return buf + *reinterpret_cast<const std::size_t*>(size_pos);
-    }
-
-    // XXX put this in detail/
-    // XXX This seems to slow things down? should be as fast as string_view.
-    template<typename T>
-    constexpr std::enable_if_t<std::is_same_v<std::string, T>, std::string_view>
-    preprocess_string(const T& s)
-    {
-        return s; // convert string to string_view
-    }
-
-    template<typename T>
-    constexpr std::enable_if_t<
-        !std::is_same_v<std::string, std::remove_cvref_t<T>> ||
-            !std::is_reference_v<T>, // string&& and non-string only
-        T&&>
-    preprocess_string(T&& v) noexcept
-    {
-        return std::forward<T>(v);
-    }
-
-    struct string_table_string
-    {
-        // could even store an offset instead of a full pointer here?
-        const char* str;
-    };
-
-    template<typename Tags, typename T, typename Buffer>
-    std::enable_if_t<
-        !std::disjunction_v<
-            is_c_string<T>,
-            std::is_same<std::remove_cv_t<T>, std::string_view>>, T>&&
-    build_string_table(std::byte*&, std::byte*&, Buffer&, T&& value)
-    {
-        return std::forward<T>(value);
-    }
-
-    // XXX std::construct_at instead of placement new?
-
-    template<typename Tags, typename Buffer>
-    string_ref<const char*> build_string_table(
-        std::byte*& pos,
-        std::byte*& end,
-        Buffer& buf,
-        std::string_view sv)
-    {
-        std::byte* str_end = pos + sv.length();
-        while (end < str_end + 1) [[unlikely]]
-        {
-            detail::pause();
-            const auto s = buf.write_span();
-            if (s.end() < str_end + 1) [[unlikely]]
-            {
-                if (s.size() == buf.capacity() || is_non_blocking_v<Tags>)
-                    return string_ref("<truncated>");
-            }
-            end = s.end();
-        }
-        const char* result = reinterpret_cast<char*>(pos);
-        const char* str = sv.data();
-        while (pos != str_end)
-        {
-            XTR_ASSUME(pos != nullptr);
-            new (pos++) char(*str++);
-        }
-        XTR_ASSUME(pos != nullptr);
-        new (pos++) char('\0');
-        return string_ref(result);
-    }
-
-    template<typename Tags, typename Buffer>
-    string_ref<const char*> build_string_table(
-        std::byte*& pos,
-        std::byte*& end,
-        Buffer& buf,
-        const char* str)
-    {
-        const char* result = reinterpret_cast<char*>(pos);
-        do
-        {
-            while (pos == end) [[unlikely]]
-            {
-                detail::pause();
-                const auto s = buf.write_span();
-                if (s.end() == end) [[unlikely]]
-                {
-                    if (s.size() == buf.capacity() || is_non_blocking_v<Tags>)
-                        return string_ref("<truncated>");
-                }
-                end = s.end();
-            }
-            XTR_ASSUME(pos != nullptr);
-            new (pos++) char(*str);
-        } while (*str++ != '\0');
-        return string_ref(result);
-    }
-
     inline auto make_output_func(FILE* stream)
     {
         return
@@ -560,13 +229,7 @@ public:
         producer(logger& owner, std::string name);
 
         template<auto Format, typename Tags, typename... Args>
-        void log_impl(Args&&... args)
-            noexcept(std::conjunction_v<
-                std::is_nothrow_copy_constructible<Args>...,
-                std::is_nothrow_move_constructible<Args>...>);
-
-        template<auto Format, typename Tags, typename... Args>
-        void log_impl_str(Args&&... args)
+        void log_str(Args&&... args)
             noexcept(std::conjunction_v<
                 std::is_nothrow_copy_constructible<Args>...,
                 std::is_nothrow_move_constructible<Args>...>);
@@ -825,28 +488,19 @@ void xtr::logger::producer::log(Args&&... args)
         std::is_nothrow_move_constructible<Args>...>)
 {
     static_assert(sizeof...(Args) > 0);
-    log_impl<Format, Tags>(
-        detail::preprocess_string(std::forward<Args>(args))...);
-}
-
-template<auto Format, typename Tags, typename... Args>
-void xtr::logger::producer::log_impl(Args&&... args)
-    noexcept(std::conjunction_v<
-        std::is_nothrow_copy_constructible<Args>...,
-        std::is_nothrow_move_constructible<Args>...>)
-{
-    constexpr bool str_copy_required =
+    constexpr bool is_str =
         std::disjunction_v<
             detail::is_c_string<decltype(std::forward<Args>(args))>...,
-            std::is_same<std::remove_cvref_t<Args>, std::string_view>...>;
-    if constexpr (str_copy_required)
-        log_impl_str<Format, Tags>(std::forward<Args>(args)...);
+            std::is_same<std::remove_cvref_t<Args>, std::string_view>...,
+            std::is_same<std::remove_cvref_t<Args>, std::string>...>;
+    if constexpr (is_str)
+        log_str<Format, Tags>(std::forward<Args>(args)...);
     else
         post<Format, Tags>(make_lambda<Tags>(std::forward<Args>(args)...));
 }
 
 template<auto Format, typename Tags, typename... Args>
-void xtr::logger::producer::log_impl_str(Args&&... args)
+void xtr::logger::producer::log_str(Args&&... args)
     noexcept(std::conjunction_v<
         std::is_nothrow_copy_constructible<Args>...,
         std::is_nothrow_move_constructible<Args>...>)
