@@ -1,0 +1,46 @@
+name: Ubuntu-GCC-Sanitizer
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: install gcc
+      run: |
+        sudo apt-get install g++-10
+        sudo update-alternatives \
+          --install /usr/bin/gcc gcc /usr/bin/gcc-10 100 \
+          --slave /usr/bin/g++ g++ /usr/bin/g++-10 \
+          --slave /usr/bin/gcc-ar gcc-ar /usr/bin/gcc-ar-10 \
+          --slave /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib-10
+
+    - name: init submodules
+      run: git submodule init
+    - name: update submodules
+      run: git submodule update
+
+    - name: address sanitizer 
+      run: make -j2 SANITIZER=address run_test
+    - name: leak sanitizer 
+      run: make -j2 SANITIZER=leak run_test
+    - name: undefined behaviour sanitizer 
+      run: make -j2 SANITIZER=undefined run_test
+    - name: thread sanitizer 
+      run: make -j2 SANITIZER=thread run_test
+
+    - name: address sanitizer no-exceptions
+      run: make -j2 EXCEPTIONS=0 SANITIZER=address run_test
+    - name: leak sanitizer no-exceptions
+      run: make -j2 EXCEPTIONS=0 SANITIZER=leak run_test
+    - name: undefined behaviour sanitizer no-exceptions
+      run: make -j2 EXCEPTIONS=0 SANITIZER=undefined run_test
+    - name: thread sanitizer no-exceptions
+      run: make -j2 EXCEPTIONS=0 SANITIZER=thread run_test
+

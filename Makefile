@@ -2,7 +2,6 @@
 
 PREFIX ?= /usr/local
 EXCEPTIONS ?= 1
-SANITIZER ?= 0
 COVERAGE ?= 0
 PIC ?= 0
 
@@ -35,8 +34,6 @@ BENCH_LDFLAGS = -L $(BUILD_DIR) $(GOOGLE_BENCH_LDFLAGS) $(FMT_LDFLAGS)
 BENCH_LDLIBS = -lbenchmark
 
 COVERAGE_CXXFLAGS = --coverage -DNDEBUG
-
-SANITIZER_CXXFLAGS = -fno-omit-frame-pointer -fsanitize=address -fsanitize=undefined
 
 # Use the libfmt submodule if it is present and no include directory for
 # libfmt has been configured.
@@ -82,9 +79,9 @@ else
 	BUILD_DIR := $(BUILD_DIR)-release
 endif
 
-ifeq ($(SANITIZER), 1)
-	CXXFLAGS += $(SANITIZER_CXXFLAGS)
-	BUILD_DIR := $(BUILD_DIR)-sanitizer
+ifneq ($(SANITIZER),)
+	CXXFLAGS += -fno-omit-frame-pointer -fsanitize=$(SANITIZER)
+	BUILD_DIR := $(BUILD_DIR)-$(SANITIZER)-sanitizer
 endif
 
 ifeq ($(EXCEPTIONS), 0)
@@ -109,8 +106,6 @@ DEPS = $(OBJS:.o=.d) $(TEST_OBJS:.o=.d)
 $(TARGET): $(OBJS)
 	$(AR) rc $@ $^
 	$(RANLIB) $@
-
-# LINK.cc = $(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) $(TARGET_ARCH)
 
 $(TEST_TARGET): $(TARGET) $(TEST_OBJS)
 	$(LINK.cc) -o $@ $(TEST_LDFLAGS) $(TEST_OBJS) -Wl,-Bstatic $(LDLIBS) -Wl,-Bdynamic
