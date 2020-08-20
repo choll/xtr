@@ -24,6 +24,7 @@
 
 #include <cassert>
 #include <cstdlib>
+#include <random>
 
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -31,6 +32,20 @@
 #include <unistd.h>
 
 namespace xtrd = xtr::detail;
+
+namespace xtr::detail
+{
+    struct fd_closer
+    {
+        ~fd_closer()
+        {
+            if (fd != -1)
+                ::close(fd);
+        }
+
+        int fd = -1;
+    };
+}
 
 xtrd::mirrored_memory_mapping::mirrored_memory_mapping(
     std::size_t length,
@@ -64,6 +79,8 @@ xtrd::mirrored_memory_mapping::mirrored_memory_mapping(
         length * 2,
         prot,
         MAP_PRIVATE|MAP_ANONYMOUS);
+
+    fd_closer fdc;
 
     if (fd == -1)
     {
@@ -99,18 +116,46 @@ xtrd::mirrored_memory_mapping::mirrored_memory_mapping(
         mirror.release(); // mirror will be recreated in ~mirrored_memory_mapping
         return;
 #else
-        char path[] = "yeti.mirrored_mapping.XXXXXX";
-        fd = ::shm_open(path, O_RDWR|O_CREAT|O_EXCL, S_IRUSR|S_IWUSR);
+#if defined(SHM_ANON) // FreeBSD extension
+        fd = ::shm_open(SHM_ANON, O_RDWR|O_CREAT, S_IRUSR|S_IWUSR);
+#else
+        // Some platforms don't allow slashes in shm object names except
+        // for the first character, hence not using the usual base64 table
+        const char ctable[] =
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+            "abcdefghijklmnopqrstuvwxyz"
+            "0123456789~-";
+        char name[] = "/xtr.XXXXXXXXXXXXXXXX";
+
+        std::random_device rd;
+        std::uniform_int_distribution<> udist(0, sizeof(ctable) - 2);
+
+        // As there is no way to create an anonymous shm object we generate
+        // random names, retrying up to 64 times if the name already exists.
+        std::size_t retries = 64;
+        do
+        {
+            for (char* pos = name + 5; *pos != '\0'; ++pos)
+                *pos = ctable[udist(rd)];
+            fdc.fd = ::shm_open(name, O_RDWR|O_CREAT|O_EXCL, S_IRUSR|S_IWUSR);
+        }
+        while (--retries > 0 && fdc.fd == -1 && errno == EEXIST);
+
+        if (fdc.fd != -1)
+        {
+            ::shm_unlink(name);
+            fd = fdc.fd;
+        }
+#endif
         if (fd == -1)
         {
             throw_system_error(
                 "xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping: "
                 "Failed to shm_open backing file");
         }
-        ::shm_unlink(path);
+
         if (::ftruncate(fd, ::off_t(length)) == -1)
         {
-            ::close(fd);
             throw_system_error(
                 "xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping: "
                 "Failed to ftruncate backing file");

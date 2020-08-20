@@ -23,6 +23,7 @@
 
 #include "detail/align.hpp"
 #include "detail/assume.hpp"
+#include "detail/clock_ids.hpp"
 #include "detail/is_c_string.hpp"
 #include "detail/pause.hpp"
 #include "detail/print.hpp"
@@ -90,14 +91,14 @@
     XTR_LOG_TS(                                         \
         SINK,                                           \
         FMT,                                            \
-        xtr::detail::get_time<CLOCK_REALTIME_COARSE>()  \
+        xtr::detail::get_time<XTR_CLOCK_REALTIME_FAST>()  \
         __VA_OPT__(,) __VA_ARGS__)
 
 #define XTR_TRY_LOG_RTC(SINK, FMT, ...)                 \
     XTR_TRY_LOG_TS(                                     \
         SINK,                                           \
         FMT,                                            \
-        xtr::detail::get_time<CLOCK_REALTIME_COARSE>()  \
+        xtr::detail::get_time<XTR_CLOCK_REALTIME_FAST>()  \
         __VA_OPT__(,) __VA_ARGS__)
 
 #define XTR_LOG_TSC(SINK, FMT, ...) \

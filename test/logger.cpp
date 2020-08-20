@@ -781,12 +781,10 @@ TEST_CASE_METHOD(fixture, "logger producer arbitrary timestamp test", "[logger]"
 TEST_CASE_METHOD(fixture, "logger producer rtc timestamp test", "[logger]")
 {
     // Only somewhat sane way I can think of to test XTR_LOG_RTC
-    const auto ts = xtr::detail::get_time<CLOCK_REALTIME_COARSE>();
+    const auto ts = xtr::detail::get_time<XTR_CLOCK_REALTIME_FAST>();
     XTR_LOG_TS(p_, "Test {}", ts, 42), line_ = __LINE__;
     REQUIRE(last_line() == "{}: Name: logger.cpp:{}: Test 42"_format(ts, line_));
 }
-
-
 
 TEST_CASE_METHOD(fixture, "logger producer tsc timestamp test", "[logger]")
 {

@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 #include "xtr/detail/tsc.hpp"
+#include "xtr/detail/clock_ids.hpp"
 #include "xtr/detail/cpuid.hpp"
 
 #include <array>
@@ -98,7 +99,7 @@ std::uint64_t xtrd::estimate_tsc_hz() noexcept
 {
     const std::uint64_t tsc0 = tsc::now().ticks;
     std::timespec ts0;
-    ::clock_gettime(CLOCK_MONOTONIC_RAW, &ts0);
+    ::clock_gettime(XTR_CLOCK_MONOTONIC, &ts0);
 
     std::array<std::uint64_t, 5> history;
     std::size_t n = 0;
@@ -108,7 +109,7 @@ std::uint64_t xtrd::estimate_tsc_hz() noexcept
     const std::size_t tick_range = 1000;
     const std::size_t max_iters = max_sleep_time / sleep_time;
 
-    // Read the TSC and system clock every 10ms for up to 2 minutes or until
+    // Read the TSC and system clock every 10ms for up to 2 seconds or until
     // last 5 TSC frequency estimations are within a 1000 tick range, whichever
     // occurs first.
 
@@ -118,7 +119,7 @@ std::uint64_t xtrd::estimate_tsc_hz() noexcept
 
         const std::uint64_t tsc1 = tsc::now().ticks;
         std::timespec ts1;
-        ::clock_gettime(CLOCK_MONOTONIC_RAW, &ts1);
+        ::clock_gettime(XTR_CLOCK_MONOTONIC, &ts1);
 
         const auto elapsed_nanos =
             std::uint64_t(ts1.tv_sec - ts0.tv_sec) * 1000000000UL +
@@ -153,7 +154,7 @@ std::timespec xtrd::tsc::to_timespec(tsc ts)
     {
         last_tsc = tsc::now();
         std::timespec temp;
-        ::clock_gettime(CLOCK_TAI, &temp);
+        ::clock_gettime(XTR_CLOCK_TAI, &temp);
         last_epoch_nanos = temp.tv_sec * 1000000000L + temp.tv_nsec;
     }
 

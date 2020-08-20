@@ -50,11 +50,11 @@ else
 endif
 
 ifneq (,$(findstring clang,$(CXX)))
-	RANLIB = llvm-ranlib
-    AR = llvm-ar
+	RANLIB ?= llvm-ranlib
+	AR ?= llvm-ar
 else
-	RANLIB = gcc-ranlib
-	AR = gcc-ar
+	RANLIB ?= gcc-ranlib
+	AR ?= gcc-ar
 endif
 
 ifeq ($(PIC), 1)
