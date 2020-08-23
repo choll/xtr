@@ -38,7 +38,7 @@ jobs:
       run: make -j2 EXCEPTIONS=0 run_test
 
     - name: coverage
-      run: make -j2 COVERAGE=1 run_test
+      run: make -j2 DEBUG=1 COVERAGE=1 run_test
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v1
       with:
