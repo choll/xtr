@@ -70,7 +70,7 @@ Name                       | Description                    | Default value
 ---------------------------|--------------------------------|--------------
 `PREFIX`                   | Installation prefix            | `/usr/local`
 `EXCEPTIONS`               | Set to 0 to disable exceptions | 1
-`SANITIZER`                | Set to 1 to build with [AddressSanitizer](http://clang.llvm.org/docs/AddressSanitizer.html) and [UBSan](https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html) | 0
+`SANITIZER`                | Set to a sanitizer such as 'address', 'undefined', 'thread', 'leak' | None
 `COVERAGE`                 | Set to 1 to build with code coverage instrumentation | 0
 `PIC`                      | Set to 1 to build with -fPIC (position independent code, may be required if you want to link the produced static library in your own shared object) | 0
 
