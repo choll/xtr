@@ -82,7 +82,9 @@ xtrd::mirrored_memory_mapping::mirrored_memory_mapping(
         prot,
         MAP_PRIVATE|MAP_ANONYMOUS);
 
+#if !defined(__linux__)
     fd_closer fdc;
+#endif
 
     if (fd == -1)
     {
