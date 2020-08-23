@@ -72,7 +72,7 @@ public:
 
     explicit operator bool() const
     {
-        return !!m_;
+        return m_;
     }
 
 private:

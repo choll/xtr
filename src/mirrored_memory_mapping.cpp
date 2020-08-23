@@ -185,7 +185,7 @@ xtrd::mirrored_memory_mapping::mirrored_memory_mapping(
 
 xtrd::mirrored_memory_mapping::~mirrored_memory_mapping()
 {
-    if (*this)
+    if (m_)
         memory_mapping{}.reset(m_.get() + m_.length(), m_.length());
 }
 
