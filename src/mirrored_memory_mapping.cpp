@@ -33,6 +33,7 @@
 
 namespace xtrd = xtr::detail;
 
+#if !defined(__linux__)
 namespace xtr::detail
 {
     struct fd_closer
@@ -46,6 +47,7 @@ namespace xtr::detail
         int fd = -1;
     };
 }
+#endif
 
 xtrd::mirrored_memory_mapping::mirrored_memory_mapping(
     std::size_t length,
