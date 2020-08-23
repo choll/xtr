@@ -117,7 +117,7 @@ xtrd::mirrored_memory_mapping::mirrored_memory_mapping(
         return;
 #else
 #if defined(SHM_ANON) // FreeBSD extension
-        fd = ::shm_open(SHM_ANON, O_RDWR|O_CREAT, S_IRUSR|S_IWUSR);
+        fdc.fd = ::shm_open(SHM_ANON, O_RDWR|O_CREAT, S_IRUSR|S_IWUSR);
 #else
         // Some platforms don't allow slashes in shm object names except
         // for the first character, hence not using the usual base64 table
@@ -142,11 +142,10 @@ xtrd::mirrored_memory_mapping::mirrored_memory_mapping(
         while (--retries > 0 && fdc.fd == -1 && errno == EEXIST);
 
         if (fdc.fd != -1)
-        {
             ::shm_unlink(name);
-            fd = fdc.fd;
-        }
 #endif
+        fd = fdc.fd;
+
         if (fd == -1)
         {
             throw_system_error(
