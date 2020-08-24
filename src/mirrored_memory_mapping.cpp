@@ -31,8 +31,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-namespace xtrd = xtr::detail;
-
 #if !defined(__linux__)
 namespace xtr::detail
 {
@@ -46,10 +44,48 @@ namespace xtr::detail
 
         int fd = -1;
     };
+
+    XTR_FUNC
+    int shm_open_anon(int oflag, mode_t mode)
+    {
+#if defined(SHM_ANON) // FreeBSD extension
+        return ::shm_open(SHM_ANON, oflag, mode);
+#else
+        int fd;
+
+        // Some platforms don't allow slashes in shm object names except
+        // for the first character, hence not using the usual base64 table
+        const char ctable[] =
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+            "abcdefghijklmnopqrstuvwxyz"
+            "0123456789~-";
+        char name[] = "/xtr.XXXXXXXXXXXXXXXX";
+
+        std::random_device rd;
+        std::uniform_int_distribution<> udist(0, sizeof(ctable) - 2);
+
+        // As there is no way to create an anonymous shm object we generate
+        // random names, retrying up to 64 times if the name already exists.
+        std::size_t retries = 64;
+        do
+        {
+            for (char* pos = name + 5; *pos != '\0'; ++pos)
+                *pos = ctable[udist(rd)];
+            fd = ::shm_open(name, oflag|O_EXCL, mode);
+        }
+        while (--retries > 0 && fd == -1 && errno == EEXIST);
+
+        if (fd != -1)
+            ::shm_unlink(name);
+
+        return fd;
+#endif
+    }
 }
 #endif
 
-xtrd::mirrored_memory_mapping::mirrored_memory_mapping(
+XTR_FUNC
+xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping(
     std::size_t length,
     int fd,
     std::size_t offset,
@@ -83,7 +119,7 @@ xtrd::mirrored_memory_mapping::mirrored_memory_mapping(
         MAP_PRIVATE|MAP_ANONYMOUS);
 
 #if !defined(__linux__)
-    fd_closer fdc;
+    fd_closer closer;
 #endif
 
     if (fd == -1)
@@ -120,35 +156,7 @@ xtrd::mirrored_memory_mapping::mirrored_memory_mapping(
         mirror.release(); // mirror will be recreated in ~mirrored_memory_mapping
         return;
 #else
-#if defined(SHM_ANON) // FreeBSD extension
-        fdc.fd = ::shm_open(SHM_ANON, O_RDWR|O_CREAT, S_IRUSR|S_IWUSR);
-#else
-        // Some platforms don't allow slashes in shm object names except
-        // for the first character, hence not using the usual base64 table
-        const char ctable[] =
-            "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-            "abcdefghijklmnopqrstuvwxyz"
-            "0123456789~-";
-        char name[] = "/xtr.XXXXXXXXXXXXXXXX";
-
-        std::random_device rd;
-        std::uniform_int_distribution<> udist(0, sizeof(ctable) - 2);
-
-        // As there is no way to create an anonymous shm object we generate
-        // random names, retrying up to 64 times if the name already exists.
-        std::size_t retries = 64;
-        do
-        {
-            for (char* pos = name + 5; *pos != '\0'; ++pos)
-                *pos = ctable[udist(rd)];
-            fdc.fd = ::shm_open(name, O_RDWR|O_CREAT|O_EXCL, S_IRUSR|S_IWUSR);
-        }
-        while (--retries > 0 && fdc.fd == -1 && errno == EEXIST);
-
-        if (fdc.fd != -1)
-            ::shm_unlink(name);
-#endif
-        fd = fdc.fd;
+        fd = shm_open_anon(O_RDWR|O_CREAT, S_IRUSR|S_IWUSR);
 
         if (fd == -1)
         {
@@ -156,6 +164,8 @@ xtrd::mirrored_memory_mapping::mirrored_memory_mapping(
                 "xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping: "
                 "Failed to shm_open backing file");
         }
+
+        closer.fd = fd;
 
         if (::ftruncate(fd, ::off_t(length)) == -1)
         {
@@ -183,7 +193,8 @@ xtrd::mirrored_memory_mapping::mirrored_memory_mapping(
     mirror.release(); // mirror will be recreated in ~mirrored_memory_mapping
 }
 
-xtrd::mirrored_memory_mapping::~mirrored_memory_mapping()
+XTR_FUNC
+xtr::detail::mirrored_memory_mapping::~mirrored_memory_mapping()
 {
     if (m_)
         memory_mapping{}.reset(m_.get() + m_.length(), m_.length());
