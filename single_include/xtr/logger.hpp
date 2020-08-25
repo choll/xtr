@@ -85,26 +85,6 @@ namespace xtr
 #endif
 
 
-#ifndef XTR_DETAIL_ASSERT_HPP
-#define XTR_DETAIL_ASSERT_HPP
-
-#include <cstdio>
-#include <cstdlib>
-
-#define XTR_ASSERT_ALWAYS(expr) \
-    (__builtin_expect(!(expr), 0) ? \
-        (static_cast<void>(std::printf( \
-            "Assertion failed: (%s), function %s, file %s, line %u.\n", \
-            __STRING(expr), \
-            __PRETTY_FUNCTION__, \
-            __FILE__, \
-            __LINE__)), \
-            abort()) : \
-        static_cast<void>(0))
-
-#endif
-
-
 #ifndef XTR_DETAIL_ASSUME_HPP
 #define XTR_DETAIL_ASSUME_HPP
 
