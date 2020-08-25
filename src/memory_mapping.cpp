@@ -25,9 +25,8 @@
 
 #include <unistd.h>
 
-namespace xtrd = xtr::detail;
-
-xtrd::memory_mapping::memory_mapping(
+XTR_FUNC
+xtr::detail::memory_mapping::memory_mapping(
     void* addr,
     std::size_t length,
     int prot,
@@ -45,7 +44,8 @@ xtrd::memory_mapping::memory_mapping(
     }
 }
 
-xtrd::memory_mapping::memory_mapping(memory_mapping&& other) noexcept
+XTR_FUNC
+xtr::detail::memory_mapping::memory_mapping(memory_mapping&& other) noexcept
 :
     mem_(other.mem_),
     length_(other.length_)
@@ -53,19 +53,21 @@ xtrd::memory_mapping::memory_mapping(memory_mapping&& other) noexcept
     other.release();
 }
 
-xtrd::memory_mapping& xtrd::memory_mapping::operator=(
+XTR_FUNC
+xtr::detail::memory_mapping& xtr::detail::memory_mapping::operator=(
     memory_mapping&& other) noexcept
 {
     swap(*this, other);
     return *this;
 }
 
-xtrd::memory_mapping::~memory_mapping()
+XTR_FUNC xtr::detail::memory_mapping::~memory_mapping()
 {
     reset();
 }
 
-void xtrd::memory_mapping::reset(void* addr, std::size_t length) noexcept
+XTR_FUNC
+void xtr::detail::memory_mapping::reset(void* addr, std::size_t length) noexcept
 {
     if (mem_ != MAP_FAILED)
     {

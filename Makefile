@@ -16,7 +16,7 @@ BUILD_DIR := build/$(CXX)
 CXXFLAGS = \
 	-std=c++2a -Wall -Wextra -Wconversion -Wshadow -Wcast-qual -Wformat=2 \
 	-pedantic -pipe -fno-rtti -pthread
-CPPFLAGS = -MMD -MP -I include $(FMT_CPPFLAGS)
+CPPFLAGS = -MMD -MP -I include $(FMT_CPPFLAGS) -DXTR_FUNC=
 LDFLAGS = -fuse-ld=gold
 LDLIBS = -lxtr
 
@@ -137,6 +137,11 @@ benchmark: $(BENCH_TARGET)
 run_benchmark: $(BENCH_TARGET)
 	$<
 
+single_include/xtr/logger.hpp: $(SRCS)
+	scripts/make_single_include.sh
+
+single_include: single_include/xtr/logger.hpp
+
 # TODO help target
 #help:
 
@@ -149,6 +154,7 @@ clean:
 	$(RM) $(TARGET) $(TEST_TARGET) $(OBJS) $(TEST_OBJS) $(DEPS) $(COVERAGE_DATA)
 
 coverage_html: $(BUILD_DIR)/coverage_report/index.html
+
 $(BUILD_DIR)/coverage_report/index.html: $(TEST_TARGET)
 ifeq ($(COVERAGE), 0)
 	$(error COVERAGE=1 option required)
@@ -159,5 +165,5 @@ endif
 
 -include $(DEPS)
 
-.PHONY: all clean test run_test run_test run_benchmark coverage_html
+.PHONY: all clean test run_test run_test run_benchmark coverage_html single_include
 

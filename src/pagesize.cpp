@@ -24,7 +24,7 @@
 
 #include <unistd.h>
 
-std::size_t xtr::detail::align_to_page_size(std::size_t length)
+XTR_FUNC std::size_t xtr::detail::align_to_page_size(std::size_t length)
 {
     static const long pagesize(::sysconf(_SC_PAGESIZE));
     if (pagesize == -1)

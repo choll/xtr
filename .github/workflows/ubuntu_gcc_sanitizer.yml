@@ -26,13 +26,13 @@ jobs:
     - name: update submodules
       run: git submodule update
 
-    - name: address sanitizer 
+    - name: address sanitizer
       run: make -j2 SANITIZER=address run_test
-    - name: leak sanitizer 
+    - name: leak sanitizer
       run: make -j2 SANITIZER=leak run_test
-    - name: undefined behaviour sanitizer 
+    - name: undefined behaviour sanitizer
       run: make -j2 SANITIZER=undefined run_test
-    - name: thread sanitizer 
+    - name: thread sanitizer
       run: make -j2 SANITIZER=thread run_test
 
     - name: address sanitizer no-exceptions

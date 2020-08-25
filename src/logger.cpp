@@ -26,11 +26,13 @@
 #include <condition_variable>
 #include <cstring>
 
+XTR_FUNC
 xtr::logger::producer xtr::logger::get_producer(std::string name)
 {
     return producer{*this, std::move(name)};
 }
 
+XTR_FUNC
 void xtr::logger::register_producer(producer& p) noexcept
 {
     post(
@@ -40,20 +42,19 @@ void xtr::logger::register_producer(producer& p) noexcept
         });
 }
 
+XTR_FUNC
 void xtr::logger::set_output_stream(FILE* stream) noexcept
 {
     set_output_function(detail::make_output_func(stream));
 }
 
+XTR_FUNC
 void xtr::logger::set_error_stream(FILE* stream) noexcept
 {
     set_error_function(detail::make_error_func(stream));
 }
 
-// XXX make this a plain function and move the file descriptor in? this
-// way you cannot accidentally share data between threads
-//
-// Yes, just put everything inside a struct, and pass only the struct.
+XTR_FUNC
 void xtr::logger::consumer(state st, std::function<::timespec()> clock) noexcept
 {
     char ts[32] = {};
@@ -133,6 +134,7 @@ void xtr::logger::consumer(state st, std::function<::timespec()> clock) noexcept
     }
 }
 
+XTR_FUNC
 xtr::logger::producer::producer(logger& owner, std::string name)
 :
     name_(std::move(name))
@@ -140,6 +142,7 @@ xtr::logger::producer::producer(logger& owner, std::string name)
     owner.register_producer(*this);
 }
 
+XTR_FUNC
 void xtr::logger::producer::sync(bool destructing)
 {
     std::condition_variable cv;
@@ -186,6 +189,7 @@ void xtr::logger::producer::sync(bool destructing)
         cv.wait(lock);
 }
 
+XTR_FUNC
 void xtr::logger::producer::set_name(std::string name)
 {
     post(
@@ -196,6 +200,7 @@ void xtr::logger::producer::set_name(std::string name)
     sync();
 }
 
+XTR_FUNC
 xtr::logger::producer::~producer()
 {
     sync(true);

@@ -39,8 +39,8 @@ namespace xtr::detail
     }
 
     // Align is only a template argument to allow it to be used with
-    // assume_aligned. FIXME: Make Align a plain argument if it is possible to
-    // do so while still marking the return value as aligned.
+    // assume_aligned. Improvement: Make Align a plain argument if it is
+    // possible to do so while still marking the return value as aligned.
     template<std::size_t Align, typename T>
     __attribute__((assume_aligned(Align))) T* align(T* ptr) noexcept
     {

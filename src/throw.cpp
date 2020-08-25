@@ -29,7 +29,7 @@
 
 namespace xtrd = xtr::detail;
 
-void xtrd::throw_system_error(const char* what)
+XTR_FUNC void xtrd::throw_system_error(const char* what)
 {
 #if __cpp_exceptions
     throw std::system_error(std::error_code(errno, std::generic_category()), what);
@@ -39,7 +39,7 @@ void xtrd::throw_system_error(const char* what)
 #endif
 }
 
-void xtrd::throw_invalid_argument(const char* what)
+XTR_FUNC void xtrd::throw_invalid_argument(const char* what)
 {
 #if __cpp_exceptions
     throw std::invalid_argument(what);

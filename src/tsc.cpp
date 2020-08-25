@@ -28,12 +28,11 @@
 
 #include <time.h>
 
-namespace xtrd = xtr::detail;
-
 // Crystal clock frequencies are taken from:
 // https://github.com/torvalds/linux/blob/master/tools/power/x86/turbostat/turbostat.c
 
-std::uint64_t xtrd::read_tsc_hz() noexcept
+XTR_FUNC
+std::uint64_t xtr::detail::read_tsc_hz() noexcept
 {
     constexpr int tsc_leaf = 0x15;
 
@@ -95,7 +94,8 @@ std::uint64_t xtrd::read_tsc_hz() noexcept
     return std::uint64_t(ccc_hz) * ratio_num / ratio_den;
 }
 
-std::uint64_t xtrd::estimate_tsc_hz() noexcept
+XTR_FUNC
+std::uint64_t xtr::detail::estimate_tsc_hz() noexcept
 {
     const std::uint64_t tsc0 = tsc::now().ticks;
     std::timespec ts0;
@@ -142,7 +142,8 @@ std::uint64_t xtrd::estimate_tsc_hz() noexcept
     }
 }
 
-std::timespec xtrd::tsc::to_timespec(tsc ts)
+XTR_FUNC
+std::timespec xtr::detail::tsc::to_timespec(tsc ts)
 {
     thread_local tsc last_tsc{};
     thread_local std::int64_t last_epoch_nanos;

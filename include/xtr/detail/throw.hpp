@@ -25,8 +25,8 @@ namespace xtr::detail
 {
     // errno isn't passed as an argument just to make the calling code
     // marginally smaller (i.e. avoid a call to __errno_location)
-    [[noreturn, gnu::cold, gnu::noinline]] void throw_system_error(const char* what);
-    [[noreturn, gnu::cold, gnu::noinline]] void throw_invalid_argument(const char* what);
+    [[noreturn, gnu::cold]] void throw_system_error(const char* what);
+    [[noreturn, gnu::cold]] void throw_invalid_argument(const char* what);
 }
 
 #endif

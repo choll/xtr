@@ -25,7 +25,7 @@
 
 namespace xtr::detail
 {
-    [[gnu::noinline]] std::size_t align_to_page_size(std::size_t length);
+    std::size_t align_to_page_size(std::size_t length);
 }
 
 #endif
