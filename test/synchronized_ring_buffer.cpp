@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 #include "xtr/detail/synchronized_ring_buffer.hpp"
-#include "xtr/detail/assert.hpp"
 
 #include <catch2/catch.hpp>
 
