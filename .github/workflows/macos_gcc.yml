@@ -23,12 +23,12 @@ jobs:
       run: git submodule update
 
     - name: make 
-      run: make -j2
+      run: make CXX=g++-10 -j2
     - name: test
-      run: make -j2 check
+      run: make CXX=g++-10 -j2 check
 
     - name: make no-exceptions
-      run: make -j2 EXCEPTIONS=0
+      run: make CXX=g++-10 -j2 EXCEPTIONS=0
     - name: test no-exceptions
-      run: make -j2 EXCEPTIONS=0 check
+      run: make CXX=g++-10 -j2 EXCEPTIONS=0 check
 
