@@ -1,5 +1,4 @@
 ignore:
   - "test"
-  - "include/xtr/detail/tsc.hpp"
   - "src/tsc.cpp"
 
