@@ -29,10 +29,10 @@ jobs:
     - name: make 
       run: make -j2
     - name: test
-      run: make -j2 run_test
+      run: make -j2 check
 
     - name: make no-exceptions
       run: make -j2 EXCEPTIONS=0
     - name: test no-exceptions
-      run: make -j2 EXCEPTIONS=0 run_test
+      run: make -j2 EXCEPTIONS=0 check
 

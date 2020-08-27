@@ -129,12 +129,10 @@ all: $(TARGET)
 
 test: $(TEST_TARGET)
 
-run_test: $(TEST_TARGET)
+check: $(TEST_TARGET)
 	$< --order rand
 
 benchmark: $(BENCH_TARGET)
-
-run_benchmark: $(BENCH_TARGET)
 	$<
 
 single_include/xtr/logger.hpp: $(SRCS)
@@ -142,13 +140,13 @@ single_include/xtr/logger.hpp: $(SRCS)
 
 single_include: single_include/xtr/logger.hpp
 
-# TODO help target
-#help:
-
 # TODO install target, use install(1)
 # need to split header files up first
-#install: $(TARGET)
-#	install $< $(PREFIX)/bin
+install: $(TARGET)
+	mkdir -p $(PREFIX)/lib $(PREFIX)/include/xtr/detail
+	install $< $(PREFIX)/lib
+	install include/xtr/logger.hpp $(PREFIX)/include/xtr/logger.hpp
+	install include/xtr/detail/*.hpp $(PREFIX)/include/xtr/detail/
 
 clean:
 	$(RM) $(TARGET) $(TEST_TARGET) $(OBJS) $(TEST_OBJS) $(DEPS) $(COVERAGE_DATA)
@@ -165,5 +163,5 @@ endif
 
 -include $(DEPS)
 
-.PHONY: all clean test run_test run_test run_benchmark coverage_html single_include
+.PHONY: all clean check benchmark coverage_html single_include
 

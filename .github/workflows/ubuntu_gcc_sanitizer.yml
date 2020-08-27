@@ -27,20 +27,20 @@ jobs:
       run: git submodule update
 
     - name: address sanitizer
-      run: make -j2 SANITIZER=address run_test
+      run: make -j2 SANITIZER=address check
     - name: leak sanitizer
-      run: make -j2 SANITIZER=leak run_test
+      run: make -j2 SANITIZER=leak check
     - name: undefined behaviour sanitizer
-      run: make -j2 SANITIZER=undefined run_test
+      run: make -j2 SANITIZER=undefined check
     - name: thread sanitizer
-      run: make -j2 SANITIZER=thread run_test
+      run: make -j2 SANITIZER=thread check
 
     - name: address sanitizer no-exceptions
-      run: make -j2 EXCEPTIONS=0 SANITIZER=address run_test
+      run: make -j2 EXCEPTIONS=0 SANITIZER=address check
     - name: leak sanitizer no-exceptions
-      run: make -j2 EXCEPTIONS=0 SANITIZER=leak run_test
+      run: make -j2 EXCEPTIONS=0 SANITIZER=leak check
     - name: undefined behaviour sanitizer no-exceptions
-      run: make -j2 EXCEPTIONS=0 SANITIZER=undefined run_test
+      run: make -j2 EXCEPTIONS=0 SANITIZER=undefined check
     - name: thread sanitizer no-exceptions
-      run: make -j2 EXCEPTIONS=0 SANITIZER=thread run_test
+      run: make -j2 EXCEPTIONS=0 SANITIZER=thread check
 
