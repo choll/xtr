@@ -35,31 +35,27 @@
 namespace xtr::detail
 {
     // Forward if T is either:
-    // * Not a C string, string, or string_view
     // * std::string&&
+    // * Not a C string, string, or string_view
     // C string and string_view r-value references are not forwarded because
     // they are non-owning so being moved is meaningless.
     template<typename Tags, typename T, typename Buffer>
-    std::enable_if_t<
-        !std::disjunction_v<
-            is_c_string<T>,
-            std::is_same<std::remove_cvref_t<T>, std::string>,
-            std::is_same<std::remove_cvref_t<T>, std::string_view>> ||
+    requires
         (std::is_rvalue_reference_v<decltype(std::forward<T>(std::declval<T>()))> &&
-         std::is_same_v<std::remove_cvref_t<T>, std::string>),
-        T>&&
-    build_string_table(std::byte*&, std::byte*&, Buffer&, T&& value)
+         std::is_same_v<std::remove_cvref_t<T>, std::string>) ||
+        (!is_c_string<T>::value &&
+         !std::is_same_v<std::remove_cvref_t<T>, std::string> &&
+         !std::is_same_v<std::remove_cvref_t<T>, std::string_view>)
+    T&& build_string_table(std::byte*&, std::byte*&, Buffer&, T&& value)
     {
         return std::forward<T>(value);
     }
 
     template<typename Tags, typename Buffer, typename String>
-    std::enable_if_t<
-        std::disjunction_v<
-            std::is_same<String, std::string>,
-            std::is_same<String, std::string_view>>,
-        string_ref<const char*>>
-    build_string_table(
+    requires
+        std::is_same_v<String, std::string> ||
+        std::is_same_v<String, std::string_view>
+    string_ref<const char*> build_string_table(
         std::byte*& pos,
         std::byte*& end,
         Buffer& buf,

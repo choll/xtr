@@ -297,11 +297,10 @@ public:
     template<
         typename OutputFunction,
         typename ErrorFunction,
-        typename Clock = std::chrono::system_clock,
-        typename =
-            std::enable_if_t<
-                std::is_invocable_v<OutputFunction, const char*, std::size_t> &&
-                std::is_invocable_v<ErrorFunction, const char*, std::size_t>>>
+        typename Clock = std::chrono::system_clock>
+    requires
+        std::is_invocable_v<OutputFunction, const char*, std::size_t> &&
+        std::is_invocable_v<ErrorFunction, const char*, std::size_t>
     logger(
         OutputFunction&& out,
         ErrorFunction&& err,
@@ -321,13 +320,12 @@ public:
         typename ErrorFunction,
         typename FlushFunction,
         typename SyncFunction,
-        typename Clock = std::chrono::system_clock,
-        typename =
-            std::enable_if_t<
-                std::is_invocable_v<OutputFunction, const char*, std::size_t> &&
-                std::is_invocable_v<ErrorFunction, const char*, std::size_t> &&
-                std::is_invocable_v<FlushFunction> &&
-                std::is_invocable_v<SyncFunction>>>
+        typename Clock = std::chrono::system_clock>
+    requires
+        std::is_invocable_v<OutputFunction, const char*, std::size_t> &&
+        std::is_invocable_v<ErrorFunction, const char*, std::size_t> &&
+        std::is_invocable_v<FlushFunction> &&
+        std::is_invocable_v<SyncFunction>
     logger(
         OutputFunction&& out,
         ErrorFunction&& err,
