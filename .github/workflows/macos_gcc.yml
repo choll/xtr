@@ -1,0 +1,34 @@
+name: MacOS-GCC
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: install gcc
+      run: |
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
+        brew install g++-10
+
+    - name: init submodules
+      run: git submodule init
+    - name: update submodules
+      run: git submodule update
+
+    - name: make 
+      run: make -j2
+    - name: test
+      run: make -j2 check
+
+    - name: make no-exceptions
+      run: make -j2 EXCEPTIONS=0
+    - name: test no-exceptions
+      run: make -j2 EXCEPTIONS=0 check
+
