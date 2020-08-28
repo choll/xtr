@@ -108,10 +108,10 @@ $(TARGET): $(OBJS)
 	$(RANLIB) $@
 
 $(TEST_TARGET): $(TARGET) $(TEST_OBJS)
-	$(LINK.cc) -o $@ $(TEST_LDFLAGS) $(TEST_OBJS) -Wl,-Bstatic $(LDLIBS) -Wl,-Bdynamic
+	$(LINK.cc) -o $@ $(TEST_LDFLAGS) $(TEST_OBJS) $(LDLIBS)
 
 $(BENCH_TARGET): $(TARGET) $(BENCH_OBJS)
-	$(LINK.cc) -o $@ $(BENCH_LDFLAGS) $(BENCH_OBJS) -Wl,-Bstatic $(LDLIBS) $(BENCH_LDLIBS) -Wl,-Bdynamic
+	$(LINK.cc) -o $@ $(BENCH_LDFLAGS) $(BENCH_OBJS) $(LDLIBS) $(BENCH_LDLIBS)
 
 $(OBJS): $(BUILD_DIR)/%.cpp.o: %.cpp
 	@mkdir -p $(@D)
