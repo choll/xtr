@@ -140,8 +140,6 @@ single_include/xtr/logger.hpp: $(SRCS)
 
 single_include: single_include/xtr/logger.hpp
 
-# TODO install target, use install(1)
-# need to split header files up first
 install: $(TARGET)
 	mkdir -p $(PREFIX)/lib $(PREFIX)/include/xtr/detail
 	install $< $(PREFIX)/lib
