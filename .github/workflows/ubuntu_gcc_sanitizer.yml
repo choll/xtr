@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        sanitizer: [address, undefined, thread leak]
+        sanitizer: [address, undefined, thread, leak]
         exceptions: [1, 0]
     steps:
     - uses: actions/checkout@v2
