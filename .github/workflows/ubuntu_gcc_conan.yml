@@ -9,6 +9,10 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        except: [1, 0]
+        pic: [1, 0]
     steps:
     - uses: actions/checkout@v2
 
@@ -26,13 +30,8 @@ jobs:
     - name: install dependencies
       run: conan install . --build missing -s compiler.libcxx=libstdc++11
 
-    - name: make 
-      run: make -j2
+    - name: make
+      run: make -j2 EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}}
     - name: test
-      run: make -j2 check
-
-    - name: make no-exceptions
-      run: make -j2 EXCEPTIONS=0
-    - name: test no-exceptions
-      run: make -j2 EXCEPTIONS=0 check
+      run: make -j2 EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}} check
 

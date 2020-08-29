@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         sanitizer: [address, undefined, thread, leak]
-        exceptions: [1, 0]
+        except: [1, 0]
     steps:
     - uses: actions/checkout@v2
     - name: install gcc
@@ -28,5 +28,5 @@ jobs:
     - name: update submodules
       run: git submodule update
     - name: sanitizer
-      run: make -j2 EXCEPTIONS=${{matrix.exceptions}} SANITIZER=${{matrix.sanitizer}} check
+      run: make -j2 EXCEPTIONS=${{matrix.except}} SANITIZER=${{matrix.sanitizer}} check
 

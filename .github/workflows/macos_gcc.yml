@@ -9,6 +9,9 @@ on:
 jobs:
   build:
     runs-on: macos-latest
+    strategy:
+      matrix:
+        except: [1, 0]
     steps:
     - uses: actions/checkout@v2
 
@@ -22,13 +25,8 @@ jobs:
     - name: update submodules
       run: git submodule update
 
-    - name: make 
-      run: make CXX=g++-10 RANLIB=gcc-ranlib-10 AR=gcc-ar-10 -j2
+    - name: make
+      run: make CXX=g++-10 RANLIB=gcc-ranlib-10 AR=gcc-ar-10 -j2 EXCEPTIONS=${{matrix.except}}
     - name: test
-      run: make CXX=g++-10 RANLIB=gcc-ranlib-10 AR=gcc-ar-10 -j2 check
-
-    - name: make no-exceptions
-      run: make CXX=g++-10 RANLIB=gcc-ranlib-10 AR=gcc-ar-10 -j2 EXCEPTIONS=0
-    - name: test no-exceptions
-      run: make CXX=g++-10 RANLIB=gcc-ranlib-10 AR=gcc-ar-10 -j2 EXCEPTIONS=0 check
+      run: make CXX=g++-10 RANLIB=gcc-ranlib-10 AR=gcc-ar-10 -j2 EXCEPTIONS=${{matrix.except}} check
 
