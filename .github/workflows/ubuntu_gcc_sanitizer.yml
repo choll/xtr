@@ -9,9 +9,12 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        sanitizer: [address, undefined, thread leak]
+        exceptions: [1, 0]
     steps:
     - uses: actions/checkout@v2
-
     - name: install gcc
       run: |
         sudo apt-get install g++-10
@@ -20,27 +23,10 @@ jobs:
           --slave /usr/bin/g++ g++ /usr/bin/g++-10 \
           --slave /usr/bin/gcc-ar gcc-ar /usr/bin/gcc-ar-10 \
           --slave /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib-10
-
     - name: init submodules
       run: git submodule init
     - name: update submodules
       run: git submodule update
-
-    - name: address sanitizer
-      run: make -j2 SANITIZER=address check
-    - name: leak sanitizer
-      run: make -j2 SANITIZER=leak check
-    - name: undefined behaviour sanitizer
-      run: make -j2 SANITIZER=undefined check
-    - name: thread sanitizer
-      run: make -j2 SANITIZER=thread check
-
-    - name: address sanitizer no-exceptions
-      run: make -j2 EXCEPTIONS=0 SANITIZER=address check
-    - name: leak sanitizer no-exceptions
-      run: make -j2 EXCEPTIONS=0 SANITIZER=leak check
-    - name: undefined behaviour sanitizer no-exceptions
-      run: make -j2 EXCEPTIONS=0 SANITIZER=undefined check
-    - name: thread sanitizer no-exceptions
-      run: make -j2 EXCEPTIONS=0 SANITIZER=thread check
+    - name: sanitizer
+      run: make -j2 EXCEPTIONS=${{matrix.exceptions}} SANITIZER=${{matrix.sanitizer}} check
 
