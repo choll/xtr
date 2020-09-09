@@ -21,7 +21,6 @@
 #ifndef XTR_DETAIL_STRING_TABLE_HPP
 #define XTR_DETAIL_STRING_TABLE_HPP
 
-#include "assume.hpp"
 #include "pause.hpp"
 #include "is_c_string.hpp"
 #include "string_ref.hpp"
@@ -76,11 +75,7 @@ namespace xtr::detail
         const char* result = reinterpret_cast<char*>(pos);
         const char* str = sv.data();
         while (pos != str_end)
-        {
-            XTR_ASSUME(pos != nullptr);
             new (pos++) char(*str++);
-        }
-        XTR_ASSUME(pos != nullptr);
         new (pos++) char('\0');
         return string_ref(result);
     }
@@ -106,7 +101,6 @@ namespace xtr::detail
                 }
                 end = s.end();
             }
-            XTR_ASSUME(pos != nullptr);
             new (pos++) char(*str);
         } while (*str++ != '\0');
         return string_ref(result);

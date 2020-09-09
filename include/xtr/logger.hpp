@@ -22,7 +22,6 @@
 #define XTR_LOGGER_HPP
 
 #include "detail/align.hpp"
-#include "detail/assume.hpp"
 #include "detail/clock_ids.hpp"
 #include "detail/is_c_string.hpp"
 #include "detail/pause.hpp"
@@ -273,11 +272,19 @@ public:
 
     // XXX
     // const char* path option?
+    //
+    // should logs auto-rotate? don't think so, just write to one file,
+    // other issue is if you should overwrite, append or create a new
+    // file?
+    //
     // rotating files?
     //
     // Also perhaps have a single constructor that accepts
     // variadic args, then just check the type of them? eg
     // is_same<FILE*>, is_clock_v?
+    //
+    //
+    //
 
     template<typename Clock = std::chrono::system_clock>
     logger(
@@ -431,11 +438,9 @@ private:
                 auto sec = time_point_cast<seconds>(now);
                 if (sec > now)
                     sec - seconds{1};
-                const auto nanos = duration_cast<nanoseconds>(now - sec);
-                std::timespec ts;
-                ts.tv_sec = sec.time_since_epoch().count();
-                ts.tv_nsec = nanos.count();
-                return ts; // C++20: Designated initializer (not in Clang yet)
+                return std::timespec{
+                    .tv_sec=sec.time_since_epoch().count(),
+                    .tv_nsec=duration_cast<nanoseconds>(now - sec).count()};
             };
     }
 
@@ -445,27 +450,6 @@ private:
     producer control_;
     std::mutex control_mutex_;
 };
-
-// should std::string be copied? if you have Args as below then it will
-// always be copied, unless a ref is passed?
-//
-// std::string s;
-//
-// log(s) copy
-// log(std::move(s)) move
-// log(std::ref(s)) reference
-// log(s.c_str()) ingested
-//
-//
-// Args&& and forward might be better as it will default to reference, but
-// also allow moving? how can you detect if it is a ref or move though?
-//
-// easily: just apply a function that has && and const& overloads.
-//
-// if you call make_tuple then it is going to also perfectly
-// forward? sort of, the types will be decayed for the tuple type, so it
-// will copy/move as desired, no references unless std::reference_wrapper
-// is present.
 
 template<auto Format, typename Tags>
 void xtr::logger::producer::log() noexcept
@@ -565,8 +549,6 @@ void xtr::logger::producer::copy(std::byte* pos, T&& value) noexcept
     pos =
         static_cast<std::byte*>(
             __builtin_assume_aligned(pos, alignof(T)));
-    // In gcc 7.4 and below placement new contains a null pointer check
-    XTR_ASSUME(pos != nullptr);
     new (pos) std::remove_reference_t<T>(std::forward<T>(value));
 }
 
