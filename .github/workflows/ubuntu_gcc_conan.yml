@@ -13,6 +13,7 @@ jobs:
       matrix:
         except: [1, 0]
         pic: [1, 0]
+        rtti: [1, 0]
     steps:
     - uses: actions/checkout@v2
 
@@ -31,7 +32,7 @@ jobs:
       run: conan install . --build missing -s compiler.libcxx=libstdc++11
 
     - name: make
-      run: make -j2 EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}}
+      run: make -j2 EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}} RTTI=${{matrix.rtti}}
     - name: test
-      run: make -j2 EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}} check
+      run: make -j2 EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}} RTTI=${{matrix.rtti}} check
 

@@ -73,17 +73,17 @@ Name                       | Description                    | Default value
 `SANITIZER`                | Set to a sanitizer such as 'address', 'undefined', 'thread', 'leak' | None
 `COVERAGE`                 | Set to 1 to build with code coverage instrumentation | 0
 `PIC`                      | Set to 1 to build with -fPIC (position independent code, may be required if you want to link the produced static library in your own shared object) | 0
+`RTTI`                     | Set to 1 to build with RTTI (run-time type information) | 0
 
 ### Makefile targets
 
 Name                     | Description         | Required dependencies
 -------------------------|---------------------|------------------
 `all` / default          | Build library       | libfmt
-`test`                   | Build tests         | libfmt, Catch2
-`run_test`               | Run tests           |
-`benchmark`              | Build benchmarks    | libfmt, Google Benchmark
-`run_benchmark`          | Run benchmarks      |
-`coverage_html`          | Create a local code coverage report | libfmt, Catch2, gcovr
+`check`                  | Build and run tests | libfmt, Catch2
+`benchmark`              | Build and run benchmarks | libfmt, Google Benchmark
+`coverage_report`        | Create a local code coverage report | libfmt, Catch2, gcovr
+`install`                | Install the library and headers under `PREFIX` |
 
 ### Makefile paths
 

@@ -13,6 +13,7 @@ jobs:
       matrix:
         except: [1, 0]
         pic: [1, 0]
+        rtti: [1, 0]
     steps:
     - uses: actions/checkout@v2
 
@@ -32,9 +33,9 @@ jobs:
       run: git submodule update
 
     - name: make
-      run: make -j2 EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}}
+      run: make -j2 EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}} RTTI=${{matrix.rtti}}
     - name: test
-      run: make -j2 EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}} check
+      run: make -j2 EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}} RTTI=${{matrix.rtti}} check
 
     - name: coverage
       run: make -j2 DEBUG=1 COVERAGE=1 check

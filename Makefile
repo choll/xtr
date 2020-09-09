@@ -4,6 +4,7 @@ PREFIX ?= /usr/local
 EXCEPTIONS ?= 1
 COVERAGE ?= 0
 PIC ?= 0
+RTTI ?= 0
 
 GOOGLE_BENCH_CPPFLAGS = $(addprefix -isystem, $(CONAN_INCLUDE_DIRS_BENCHMARK) $(GOOGLE_BENCH_INCLUDE_DIR))
 GOOGLE_BENCH_LDFLAGS = $(addprefix -L, $(CONAN_LIB_DIRS_BENCHMARK) $(GOOGLE_BENCH_LIB_DIR))
@@ -15,7 +16,7 @@ BUILD_DIR := build/$(CXX)
 
 CXXFLAGS = \
 	-std=c++2a -Wall -Wextra -Wconversion -Wshadow -Wcast-qual -Wformat=2 \
-	-pedantic -pipe -fno-rtti -pthread
+	-pedantic -pipe -pthread
 CPPFLAGS = -MMD -MP -I include $(FMT_CPPFLAGS) -DXTR_FUNC=
 LDFLAGS = -fuse-ld=gold
 LDLIBS = -lxtr
@@ -36,12 +37,13 @@ BENCH_LDLIBS = -lbenchmark
 COVERAGE_CXXFLAGS = --coverage -DNDEBUG
 
 # Use the libfmt submodule if it is present and no include directory for
-# libfmt has been configured.
+# libfmt has been configured (including via Conan).
 ifeq ($(FMT_CPPFLAGS),)
 	ifneq ($(wildcard third_party/fmt/include),)
 		SUBMODULES_FLAG := 1
 	endif
 endif
+
 ifneq ($(SUBMODULES_FLAG),)
 	FMT_CPPFLAGS += -DFMT_HEADER_ONLY
 	CPPFLAGS += -isystem third_party/include
@@ -59,6 +61,13 @@ endif
 
 ifeq ($(PIC), 1)
 	CXXFLAGS += -fPIC
+	BUILD_DIR := $(BUILD_DIR)-pic
+endif
+
+ifeq ($(RTTI), 1)
+	BUILD_DIR := $(BUILD_DIR)-rtti
+else
+	CXXFLAGS += -fno-rtti
 endif
 
 ifeq ($(COVERAGE), 1)
@@ -127,8 +136,6 @@ $(BENCH_OBJS): $(BUILD_DIR)/%.cpp.o: %.cpp
 
 all: $(TARGET)
 
-test: $(TEST_TARGET)
-
 check: $(TEST_TARGET)
 	$< --order rand
 
@@ -149,7 +156,7 @@ install: $(TARGET)
 clean:
 	$(RM) $(TARGET) $(TEST_TARGET) $(OBJS) $(TEST_OBJS) $(DEPS) $(COVERAGE_DATA)
 
-coverage_html: $(BUILD_DIR)/coverage_report/index.html
+coverage_report: $(BUILD_DIR)/coverage_report/index.html
 
 $(BUILD_DIR)/coverage_report/index.html: $(TEST_TARGET)
 ifeq ($(COVERAGE), 0)
@@ -161,5 +168,5 @@ endif
 
 -include $(DEPS)
 
-.PHONY: all clean check benchmark coverage_html single_include
+.PHONY: all check benchmark single_include install clean coverage_report
 
