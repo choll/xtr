@@ -22,14 +22,13 @@
 
 #include <cerrno>
 #include <cstdio>
+#include <cstdarg>
 #include <cstdlib>
 #include <cstring>
 #include <stdexcept>
 #include <system_error>
 
-namespace xtrd = xtr::detail;
-
-XTR_FUNC void xtrd::throw_system_error(const char* what)
+XTR_FUNC void xtr::detail::throw_system_error(const char* what)
 {
 #if __cpp_exceptions
     throw std::system_error(std::error_code(errno, std::generic_category()), what);
@@ -39,7 +38,24 @@ XTR_FUNC void xtrd::throw_system_error(const char* what)
 #endif
 }
 
-XTR_FUNC void xtrd::throw_invalid_argument(const char* what)
+XTR_FUNC
+void xtr::detail::throw_system_error_fmt(const char* format, ...)
+{
+    const int errnum = errno; // in case vsnprintf modifies errno
+    va_list args;
+    va_start(args, format);;
+    char buf[1024];
+    std::vsnprintf(buf, sizeof(buf), format, args);
+    va_end(args);
+#if __cpp_exceptions
+    throw std::system_error(std::error_code(errnum, std::generic_category()), buf);
+#else
+    std::fprintf(stderr, "system error: %s: %s\n", buf, std::strerror(errnum));
+    std::abort();
+#endif
+}
+
+XTR_FUNC void xtr::detail::throw_invalid_argument(const char* what)
 {
 #if __cpp_exceptions
     throw std::invalid_argument(what);
