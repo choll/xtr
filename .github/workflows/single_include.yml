@@ -1,4 +1,4 @@
-name: Ubuntu-GCC
+name: Single include
 
 on:
   push:
@@ -35,5 +35,6 @@ jobs:
     - name: test
       run: ./test
 
-    - name: commit
-      run: git commit -m 'Update single include' single_include/xtr/logger.hpp
+    - name: commit and push
+      run: git commit -m 'Update single include' single_include/xtr/logger.hpp && git push
+
