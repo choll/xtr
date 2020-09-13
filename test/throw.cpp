@@ -25,19 +25,19 @@
 #if __cpp_exceptions
 TEST_CASE("system_error", "[throw]")
 {
-    REQUIRE_THROWS_AS(yeti::throw_system_error(""), std::system_error);
+    REQUIRE_THROWS_AS(xtr::detail::throw_system_error(""), std::system_error);
 }
 
 TEST_CASE("system_error_fmt", "[throw]")
 {
     errno = EBUSY;
     using namespace Catch::Matchers;
-    REQUIRE_THROWS_WITH(yeti::throw_system_error_fmt("error text"), Contains("error text: ") && Contains("busy"));
+    REQUIRE_THROWS_WITH(xtr::detail::throw_system_error_fmt("error text"), Contains("error text: ") && Contains("busy"));
 }
 
 TEST_CASE("invalid_argument", "[throw]")
 {
-    REQUIRE_THROWS_AS(yeti::throw_invalid_argument(""), std::invalid_argument);
+    REQUIRE_THROWS_AS(xtr::detail::throw_invalid_argument(""), std::invalid_argument);
 }
 
 #endif
