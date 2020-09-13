@@ -85,15 +85,6 @@ namespace xtr
 #endif
 
 
-#ifndef XTR_DETAIL_ASSUME_HPP
-#define XTR_DETAIL_ASSUME_HPP
-
-#define XTR_ASSUME(expr) \
-    ((expr) ? static_cast<void>(0) : __builtin_unreachable())
-
-#endif
-
-
 #ifndef XTR_DETAIL_THROW_HPP
 #define XTR_DETAIL_THROW_HPP
 
@@ -102,6 +93,10 @@ namespace xtr::detail
     // errno isn't passed as an argument just to make the calling code
     // marginally smaller (i.e. avoid a call to __errno_location)
     [[noreturn, gnu::cold]] void throw_system_error(const char* what);
+
+    [[noreturn, gnu::cold, gnu::format(printf, 1, 2)]]
+    void throw_system_error_fmt(const char* format, ...);
+
     [[noreturn, gnu::cold]] void throw_invalid_argument(const char* what);
 }
 
@@ -1267,11 +1262,7 @@ namespace xtr::detail
         const char* result = reinterpret_cast<char*>(pos);
         const char* str = sv.data();
         while (pos != str_end)
-        {
-            XTR_ASSUME(pos != nullptr);
             new (pos++) char(*str++);
-        }
-        XTR_ASSUME(pos != nullptr);
         new (pos++) char('\0');
         return string_ref(result);
     }
@@ -1297,7 +1288,6 @@ namespace xtr::detail
                 }
                 end = s.end();
             }
-            XTR_ASSUME(pos != nullptr);
             new (pos++) char(*str);
         } while (*str++ != '\0');
         return string_ref(result);
@@ -1631,11 +1621,19 @@ public:
 
     // XXX
     // const char* path option?
+    //
+    // should logs auto-rotate? don't think so, just write to one file,
+    // other issue is if you should overwrite, append or create a new
+    // file?
+    //
     // rotating files?
     //
     // Also perhaps have a single constructor that accepts
     // variadic args, then just check the type of them? eg
     // is_same<FILE*>, is_clock_v?
+    //
+    //
+    //
 
     template<typename Clock = std::chrono::system_clock>
     logger(
@@ -1789,11 +1787,9 @@ private:
                 auto sec = time_point_cast<seconds>(now);
                 if (sec > now)
                     sec - seconds{1};
-                const auto nanos = duration_cast<nanoseconds>(now - sec);
-                std::timespec ts;
-                ts.tv_sec = sec.time_since_epoch().count();
-                ts.tv_nsec = nanos.count();
-                return ts; // C++20: Designated initializer (not in Clang yet)
+                return std::timespec{
+                    .tv_sec=sec.time_since_epoch().count(),
+                    .tv_nsec=duration_cast<nanoseconds>(now - sec).count()};
             };
     }
 
@@ -1803,7 +1799,6 @@ private:
     producer control_;
     std::mutex control_mutex_;
 };
-
 
 template<auto Format, typename Tags>
 void xtr::logger::producer::log() noexcept
@@ -1903,8 +1898,6 @@ void xtr::logger::producer::copy(std::byte* pos, T&& value) noexcept
     pos =
         static_cast<std::byte*>(
             __builtin_assume_aligned(pos, alignof(T)));
-    // In gcc 7.4 and below placement new contains a null pointer check
-    XTR_ASSUME(pos != nullptr);
     new (pos) std::remove_reference_t<T>(std::forward<T>(value));
 }
 
@@ -2436,14 +2429,13 @@ XTR_FUNC std::size_t xtr::detail::align_to_page_size(std::size_t length)
 
 #include <cerrno>
 #include <cstdio>
+#include <cstdarg>
 #include <cstdlib>
 #include <cstring>
 #include <stdexcept>
 #include <system_error>
 
-namespace xtrd = xtr::detail;
-
-XTR_FUNC void xtrd::throw_system_error(const char* what)
+XTR_FUNC void xtr::detail::throw_system_error(const char* what)
 {
 #if __cpp_exceptions
     throw std::system_error(std::error_code(errno, std::generic_category()), what);
@@ -2453,7 +2445,24 @@ XTR_FUNC void xtrd::throw_system_error(const char* what)
 #endif
 }
 
-XTR_FUNC void xtrd::throw_invalid_argument(const char* what)
+XTR_FUNC
+void xtr::detail::throw_system_error_fmt(const char* format, ...)
+{
+    const int errnum = errno; // in case vsnprintf modifies errno
+    va_list args;
+    va_start(args, format);;
+    char buf[1024];
+    std::vsnprintf(buf, sizeof(buf), format, args);
+    va_end(args);
+#if __cpp_exceptions
+    throw std::system_error(std::error_code(errnum, std::generic_category()), buf);
+#else
+    std::fprintf(stderr, "system error: %s: %s\n", buf, std::strerror(errnum));
+    std::abort();
+#endif
+}
+
+XTR_FUNC void xtr::detail::throw_invalid_argument(const char* what)
 {
 #if __cpp_exceptions
     throw std::invalid_argument(what);
