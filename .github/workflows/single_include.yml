@@ -30,10 +30,10 @@ jobs:
       run: make single_include
 
     - name: build
-      run: g++-10 -DFMT_HEADER_ONLY -std=c++20 -Wall -pedantic test/logger.cpp test/main.cpp -I single_include -isystem third_party/include -pthread -o test
+      run: g++-10 -DFMT_HEADER_ONLY -std=c++20 -Wall -pedantic test/logger.cpp test/main.cpp -I single_include -isystem third_party/include -pthread -o unit_test
 
     - name: test
-      run: ./test
+      run: ./unit_test
 
     - name: commit and push
       run: git commit -m 'Update single include' single_include/xtr/logger.hpp && git push
