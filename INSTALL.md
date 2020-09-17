@@ -66,7 +66,7 @@ Note that if submodules are used only libfmt and Catch2 are provided, and libfmt
 
 ### Satisfying build dependencies manually
 
-See the list of makefile path options [below](#Makefile paths).
+See the list of makefile path options [below](#makefile-paths).
 
 ### Makefile options
 
