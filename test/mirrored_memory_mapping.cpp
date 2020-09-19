@@ -38,7 +38,8 @@ namespace
     {
         volatile unsigned int* first = reinterpret_cast<unsigned int*>(m.get());
         volatile unsigned int* second =
-            reinterpret_cast<unsigned int*>(m.get() + m.length());
+            reinterpret_cast<unsigned int*>(
+                static_cast<std::byte*>(m.get()) + m.length());
 
         *first = 0xDEADBEEF;
         REQUIRE(*second == 0xDEADBEEF);
