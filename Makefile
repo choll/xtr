@@ -142,10 +142,8 @@ check: $(TEST_TARGET)
 benchmark: $(BENCH_TARGET)
 	$<
 
-single_include/xtr/logger.hpp: $(SRCS)
+single_include:
 	scripts/make_single_include.sh
-
-single_include: single_include/xtr/logger.hpp
 
 install: $(TARGET)
 	mkdir -p $(PREFIX)/lib $(PREFIX)/include/xtr/detail

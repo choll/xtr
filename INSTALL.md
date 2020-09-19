@@ -64,6 +64,10 @@ The installation directory can be overridden via the `PREFIX` option.
 
 Note that if submodules are used only libfmt and Catch2 are provided, and libfmt is used in header-only mode.
 
+### Satisfying build dependencies manually
+
+See the list of makefile path options [below](#makefile-paths).
+
 ### Makefile options
 
 Name                       | Description                    | Default value

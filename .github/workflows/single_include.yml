@@ -1,0 +1,43 @@
+name: Single include
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: install gcc
+      run: |
+        sudo apt-get install g++-10
+        sudo update-alternatives \
+          --install /usr/bin/gcc gcc /usr/bin/gcc-10 100 \
+          --slave /usr/bin/g++ g++ /usr/bin/g++-10 \
+          --slave /usr/bin/gcov gcov /usr/bin/gcov-10 \
+          --slave /usr/bin/gcc-ar gcc-ar /usr/bin/gcc-ar-10 \
+          --slave /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib-10
+    - name: init submodules
+      run: git submodule init
+    - name: update submodules
+      run: git submodule update
+
+    - name: make header
+      run: make single_include
+
+    - name: build
+      run: g++-10 -DFMT_HEADER_ONLY -std=c++20 -Wall -pedantic test/logger.cpp test/main.cpp -I single_include -isystem third_party/include -pthread -o unit_test
+
+    - name: test
+      run: ./unit_test
+
+    - name: commit and push
+      run: |
+        git config --global user.name 'GitHub Actions'
+        git diff-index --quiet HEAD && git pull && git commit -m 'Update single include' single_include/xtr/logger.hpp
+        git push
+
