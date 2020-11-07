@@ -20,11 +20,7 @@
 #endif
 
 // Clock source used to translate TSC to wall time
-#if defined(CLOCK_TAI)
-#define XTR_CLOCK_TAI CLOCK_TAI
-#else
-#define XTR_CLOCK_TAI CLOCK_REALTIME
-#endif
+#define XTR_CLOCK_WALL CLOCK_REALTIME
 
 #endif
 

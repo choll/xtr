@@ -155,7 +155,7 @@ std::timespec xtr::detail::tsc::to_timespec(tsc ts)
     {
         last_tsc = tsc::now();
         std::timespec temp;
-        ::clock_gettime(XTR_CLOCK_TAI, &temp);
+        ::clock_gettime(XTR_CLOCK_WALL, &temp);
         last_epoch_nanos = temp.tv_sec * 1000000000L + temp.tv_nsec;
     }
 
