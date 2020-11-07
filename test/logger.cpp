@@ -20,7 +20,6 @@
 
 #include "xtr/logger.hpp"
 
-#define CATCH_CONFIG_ENABLE_BENCHMARKING
 #include <catch2/catch.hpp>
 
 #include <fmt/format.h>
@@ -793,7 +792,7 @@ TEST_CASE_METHOD(fixture, "logger producer tsc timestamp test", "[logger]")
     XTR_LOG_TS(p_, "Test {}", ts, 42), line_ = __LINE__;
     const auto logged = last_line();
     const auto expected = "{}: Name: logger.cpp:{}: Test 42"_format(ts, line_);
-    // The timestamps in logged and expected nay be off by a small margin due
+    // The timestamps in logged and expected may be off by a small margin due
     // to tsc::to_timespec's calibration state being stored in thread_local
     // variables, which may differ between the test thread and the logger
     // thread. This could be solved by applying dependency injection to all
@@ -803,7 +802,7 @@ TEST_CASE_METHOD(fixture, "logger producer tsc timestamp test", "[logger]")
     const auto timestamp_to_micros =
         [](const char* str)
         {
-            std::tm tm;
+            std::tm tm{};
             const char* pos = ::strptime(str, "%Y-%m-%d %T", &tm);
             REQUIRE(pos != nullptr);
             REQUIRE(*pos == '.');
@@ -817,6 +816,8 @@ TEST_CASE_METHOD(fixture, "logger producer tsc timestamp test", "[logger]")
             std::from_chars(pos, pos + 6, micros);
             return secs * 1000000L + micros;
         };
+    INFO(logged);
+    INFO(expected);
     REQUIRE(
         std::abs(
             timestamp_to_micros(logged.c_str()) -
@@ -1205,5 +1206,12 @@ TEST_CASE_METHOD(throughput_fixture, "logger throughput", "[.logger]")
         const auto t1 = clock::now();
         print_result(t0, t1, "Fmt");
     }
+}
+
+TEST_CASE("no fixture test", "[logger]")
+{
+    xtr::logger log{stdout};
+    auto p = log.get_producer("Test");
+    XTR_LOG(p, "Hello world");
 }
 
