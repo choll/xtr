@@ -20,7 +20,6 @@ grep -hEv '^//|^#include "' \
     include/xtr/detail/string_ref.hpp \
     include/xtr/detail/tags.hpp \
     include/xtr/detail/synchronized_ring_buffer.hpp \
-    include/xtr/detail/interprocess_ring_buffer.hpp \
     include/xtr/detail/tsc.hpp \
     include/xtr/detail/clock_ids.hpp \
     include/xtr/detail/get_time.hpp \
