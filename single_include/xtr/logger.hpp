@@ -103,6 +103,21 @@ namespace xtr::detail
 #endif
 
 
+#ifndef XTR_DETAIL_RETRY_HPP
+#define XTR_DETAIL_RETRY_HPP
+
+#define XTR_TEMP_FAILURE_RETRY(expr)                    \
+    (__extension__                                      \
+        ({                                              \
+            decltype(expr) xtr_result;                  \
+            do xtr_result = (expr);                     \
+            while (xtr_result == -1 && errno == EINTR); \
+            xtr_result;                                 \
+        }))
+
+#endif
+
+
 #ifndef XTR_DETAIL_ALIGN_HPP
 #define XTR_DETAIL_ALIGN_HPP
 
@@ -219,12 +234,12 @@ namespace xtr::detail
     // to use remove_pointer before applying remove_cv. decay turns arrays
     // into pointers and removes references.
     template<typename T>
-    struct is_c_string :
+    using is_c_string =
         std::conjunction<
             std::is_pointer<std::decay_t<T>>,
-            std::is_same<char, std::remove_cv_t<std::remove_pointer_t<std::decay_t<T>>>>>
-    {
-    };
+            std::is_same<
+                char,
+                std::remove_cv_t<std::remove_pointer_t<std::decay_t<T>>>>>;
 
 #if defined(XTR_ENABLE_TEST_STATIC_ASSERTIONS)
     static_assert(is_c_string<char*>::value);
@@ -245,6 +260,79 @@ namespace xtr::detail
     static_assert(!is_c_string<int[2]>::value);
 #endif
 }
+
+#endif
+
+
+#ifndef XTR_DETAIL_FILE_DESCRIPTOR_HPP
+#define XTR_DETAIL_FILE_DESCRIPTOR_HPP
+
+#include <utility>
+
+namespace xtr::detail
+{
+    class file_descriptor;
+}
+
+class xtr::detail::file_descriptor
+{
+public:
+    file_descriptor() = default;
+
+    explicit file_descriptor(int fd)
+    :
+        fd_(fd)
+    {
+    }
+
+    file_descriptor(const char* path, int flags, int mode = 0);
+
+    file_descriptor(const file_descriptor&) = delete;
+
+    file_descriptor(file_descriptor&& other) noexcept
+    :
+        fd_(other.fd_)
+    {
+        other.release();
+    }
+
+    file_descriptor& operator=(const file_descriptor&) = delete;
+
+    file_descriptor& operator=(file_descriptor&& other) noexcept;
+
+    ~file_descriptor();
+
+    bool is_open() const noexcept
+    {
+        return fd_ != -1;
+    }
+
+    explicit operator bool() const noexcept
+    {
+        return is_open();
+    }
+
+    void reset(int fd = -1) noexcept;
+
+    int get() const noexcept
+    {
+        return fd_;
+    }
+
+    int release() noexcept
+    {
+        return std::exchange(fd_, -1);
+    }
+
+private:
+    int fd_ = -1;
+
+    friend void swap(file_descriptor& a, file_descriptor& b) noexcept
+    {
+        using std::swap;
+        swap(a.fd_, b.fd_);
+    }
+};
 
 #endif
 
@@ -292,14 +380,14 @@ public:
         mem_ = MAP_FAILED;
     }
 
-    std::byte* get()
+    void* get()
     {
-        return static_cast<std::byte*>(mem_);
+        return mem_;
     }
 
-    const std::byte* get() const
+    const void* get() const
     {
-        return static_cast<std::byte*>(mem_);
+        return mem_;
     }
 
     std::size_t length() const
@@ -355,12 +443,12 @@ public:
 
     ~mirrored_memory_mapping();
 
-    std::byte* get()
+    void* get()
     {
         return m_.get();
     }
 
-    const std::byte* get() const
+    const void* get() const
     {
         return m_.get();
     }
@@ -638,7 +726,7 @@ namespace xtr::detail
     static_assert(std::is_same<std::uint64_t, least_uint_t<18446744073709551615UL>>::value);
 #endif
 
-    // XXX Put in detail/ directory
+    // XXX Put in detail/ directory? explain non-use of std::span?
     // Probably ring buffer should be in detail too,
     // everything except the logger really
     template<typename T, typename SizeType>
@@ -719,17 +807,23 @@ public:
     static constexpr bool is_dynamic = Capacity == dynamic_capacity;
 
 public:
-    synchronized_ring_buffer()
+    synchronized_ring_buffer(
+        int fd = -1,
+        std::size_t offset = 0,
+        int flags = srb_flags)
+    requires (!is_dynamic)
     {
-        if (!is_dynamic)
-        {
-            m_ = mirrored_memory_mapping{capacity(), -1, 0, srb_flags};
-            nread_plus_capacity_ = wrnread_plus_capacity_ = capacity();
-            wrbase_ = m_.get();
-        }
+        m_ = mirrored_memory_mapping{capacity(), fd, offset, flags};
+        nread_plus_capacity_ = wrnread_plus_capacity_ = capacity();
+        wrbase_ = begin();
     }
 
-    explicit synchronized_ring_buffer(size_type min_capacity)
+    explicit synchronized_ring_buffer(
+        size_type min_capacity,
+        int fd = -1,
+        std::size_t offset = 0,
+        int flags = srb_flags)
+    requires is_dynamic
     :
         m_(
             align_to_page_size(
@@ -738,11 +832,12 @@ public:
 #else
                 std::ceil2(min_capacity)),
 #endif
-            -1, 0, srb_flags)
+            fd,
+            offset,
+            flags)
     {
-        static_assert(is_dynamic);
         assert(capacity() <= std::numeric_limits<size_type>::max());
-        wrbase_ = m_.get();
+        wrbase_ = begin();
         wrcapacity_ = capacity();
         nread_plus_capacity_ = wrnread_plus_capacity_ = capacity();
     }
@@ -822,7 +917,7 @@ public:
         // be read from the buffer.
         const size_type nr =
             nread_plus_capacity_.load(std::memory_order_relaxed) - capacity();
-        const auto b = m_.get() + clamp(nr, capacity());
+        const auto b = begin() + clamp(nr, capacity());
         // This acquire pairs with the release in reduce_writable(). No reads or
         // writes in the current thread can be reordered before this load.
         const size_type sz = nwritten_.load(std::memory_order_acquire) - nr;
@@ -842,7 +937,7 @@ public:
 
     iterator begin() noexcept
     {
-        return m_.get();
+        return static_cast<iterator>(m_.get());
     }
 
     iterator end() noexcept
@@ -852,7 +947,7 @@ public:
 
     const_iterator begin() const noexcept
     {
-        return m_.get();
+        return static_cast<const_iterator>(m_.get());
     }
 
     const_iterator end() const noexcept
@@ -921,6 +1016,94 @@ private:
 
     // Written by both the reader and writer
     alignas(cacheline_size) std::atomic<size_type> dropped_count_{};
+};
+
+#endif
+
+
+#ifndef XTR_DETAIL_INTERPROCESS_RING_BUFFER_HPP
+#define XTR_DETAIL_INTERPROCESS_RING_BUFFER_HPP
+
+
+#include <cassert>
+
+namespace xtr::detail
+{
+    class interprocess_ring_buffer;
+}
+
+    // So, the issue is that this will not store control variables in the
+    // buffer... what you actually need is to create a normal memory mapping,
+    //
+    // synchronized_ring_buffer could accept a mirrored_memory_mapping?
+    //
+    // So:
+    //
+    // open fd, ftruncate to getpagesize()+64*1024
+    //
+    // memory_mapping control_{nullptr, getpagesize(), prot, flags, fd};
+    // mirrored_memory_mapping buf_{64*1024, fd, getpagesize(), ;
+    //
+    // synchronized_ring_buffer* ring_buffer =
+    //     new(control_.get()) synchronized_ring_buffer
+    //
+    //
+    //    const int fd = /*YETI_TEMP_FAILURE_RETRY*/(open(path, flags, mode));
+    //    if (fd == -1)
+    //    {
+            //throw_system_error_fmt(
+            //    "xtr::synchronized_ring_buffer::synchronized_ring_buffer: "
+            //    "Failed to open `%s'", path);
+    //    }
+    //
+    //
+
+class xtr::detail::interprocess_ring_buffer
+{
+private:
+    static constexpr std::size_t capacity = 64 * 1024;
+
+    using ring_buffer = synchronized_ring_buffer<capacity>;
+
+public:
+    using span = ring_buffer::span;
+    using const_span = ring_buffer::const_span;
+    using size_type = ring_buffer::size_type;
+
+    explicit interprocess_ring_buffer(const char* path, int flags, int mode = 0);
+
+    interprocess_ring_buffer() = default;
+    interprocess_ring_buffer(interprocess_ring_buffer&&) = default;
+    interprocess_ring_buffer& operator=(interprocess_ring_buffer&&) = default;
+
+    ~interprocess_ring_buffer();
+
+    const_span read_span() noexcept
+    {
+        if (!buf_) [[unlikely]]
+            return span{};
+        return ring_buf()->read_span();
+    }
+
+    span write_span() noexcept
+    {
+        if (!buf_) [[unlikely]]
+            return span{};
+        return ring_buf()->write_span();
+    }
+
+    void reduce_readable(size_type nbytes) noexcept
+    {
+        ring_buf()->reduce_readable(nbytes);
+    }
+
+private:
+    ring_buffer* ring_buf() noexcept
+    {
+        return static_cast<ring_buffer*>(buf_.get());
+    }
+
+    memory_mapping buf_;
 };
 
 #endif
@@ -1007,17 +1190,15 @@ namespace fmt
 #define XTR_CLOCK_MONOTONIC CLOCK_MONOTONIC
 #endif
 
-#if defined(CLOCK_TAI)
-#define XTR_CLOCK_TAI CLOCK_TAI
-#else
-#define XTR_CLOCK_TAI CLOCK_REALTIME
-#endif
+#define XTR_CLOCK_WALL CLOCK_REALTIME
 
 #endif
 
 #ifndef XTR_DETAIL_GET_TIME_HPP
 #define XTR_DETAIL_GET_TIME_HPP
 
+
+#include <ctime>
 
 #include <time.h>
 
@@ -1213,6 +1394,7 @@ namespace xtr::detail
 #define XTR_DETAIL_STRING_TABLE_HPP
 
 
+#include <concepts>
 #include <cstddef>
 #include <string>
 #include <string_view>
@@ -1228,10 +1410,10 @@ namespace xtr::detail
     template<typename Tags, typename T, typename Buffer>
     requires
         (std::is_rvalue_reference_v<decltype(std::forward<T>(std::declval<T>()))> &&
-         std::is_same_v<std::remove_cvref_t<T>, std::string>) ||
+         std::same_as<std::remove_cvref_t<T>, std::string>) ||
         (!is_c_string<T>::value &&
-         !std::is_same_v<std::remove_cvref_t<T>, std::string> &&
-         !std::is_same_v<std::remove_cvref_t<T>, std::string_view>)
+         !std::same_as<std::remove_cvref_t<T>, std::string> &&
+         !std::same_as<std::remove_cvref_t<T>, std::string_view>)
     T&& build_string_table(std::byte*&, std::byte*&, Buffer&, T&& value)
     {
         return std::forward<T>(value);
@@ -1239,8 +1421,8 @@ namespace xtr::detail
 
     template<typename Tags, typename Buffer, typename String>
     requires
-        std::is_same_v<String, std::string> ||
-        std::is_same_v<String, std::string_view>
+        std::same_as<String, std::string> ||
+        std::same_as<String, std::string_view>
     string_ref<const char*> build_string_table(
         std::byte*& pos,
         std::byte*& end,
@@ -1310,6 +1492,10 @@ namespace xtr::detail
 
 namespace xtr::detail
 {
+    // trampoline_no_capture
+    // trampoline_fixed_size_capture
+    // trampoline_variable_size_capture
+
     template<auto Format, typename State>
     std::byte* trampoline0(
         fmt::memory_buffer& mbuf,
@@ -1390,6 +1576,7 @@ namespace xtr::detail
 #include <fmt/format.h>
 
 #include <algorithm>
+#include <concepts>
 #include <chrono>
 #include <cstddef>
 #include <cstdio>
@@ -1436,18 +1623,18 @@ namespace xtr::detail
             xtr::timestamp_tag)     \
         __VA_OPT__(,) __VA_ARGS__)
 
-#define XTR_LOG_RTC(SINK, FMT, ...)                     \
-    XTR_LOG_TS(                                         \
-        SINK,                                           \
-        FMT,                                            \
-        xtr::detail::get_time<XTR_CLOCK_REALTIME_FAST>()  \
+#define XTR_LOG_RTC(SINK, FMT, ...)                         \
+    XTR_LOG_TS(                                             \
+        SINK,                                               \
+        FMT,                                                \
+        xtr::detail::get_time<XTR_CLOCK_REALTIME_FAST>()    \
         __VA_OPT__(,) __VA_ARGS__)
 
-#define XTR_TRY_LOG_RTC(SINK, FMT, ...)                 \
-    XTR_TRY_LOG_TS(                                     \
-        SINK,                                           \
-        FMT,                                            \
-        xtr::detail::get_time<XTR_CLOCK_REALTIME_FAST>()  \
+#define XTR_TRY_LOG_RTC(SINK, FMT, ...)                     \
+    XTR_TRY_LOG_TS(                                         \
+        SINK,                                               \
+        FMT,                                                \
+        xtr::detail::get_time<XTR_CLOCK_REALTIME_FAST>()    \
         __VA_OPT__(,) __VA_ARGS__)
 
 #define XTR_LOG_TSC(SINK, FMT, ...) \
@@ -1534,19 +1721,17 @@ namespace xtr::detail
 class xtr::logger
 {
 private:
-    // XXX use of _t is not consistent, eg not here but there is fptr_t.
-    // same for state_t, also you need to allow specifying the buffer
-    // size
     using ring_buffer = detail::synchronized_ring_buffer<64 * 1024>;
 
-    struct state;
+    class consumer;
 
-    typedef std::byte* (*fptr_t)(
-        fmt::memory_buffer&,
-        std::byte*,
-        state& st,
-        const char* ts,
-        const std::string& name) noexcept;
+    using fptr_t =
+        std::byte* (*)(
+            fmt::memory_buffer& mbuf,
+            std::byte* buf, // pointer to log record
+            consumer&,
+            const char* timestamp,
+            const std::string& name) noexcept;
 
 public:
     // XXX is sink a better name? log_sink? logger::sink?
@@ -1555,9 +1740,11 @@ public:
     public:
         ~producer();
 
+        void close();
+
         void sync()
         {
-            sync(false);
+            sync(/*destruct=*/false);
         }
 
         void set_name(std::string name);
@@ -1577,12 +1764,6 @@ public:
 
         producer(logger& owner, std::string name);
 
-        template<auto Format, typename Tags, typename... Args>
-        void log_str(Args&&... args)
-            noexcept(std::conjunction_v<
-                std::is_nothrow_copy_constructible<Args>...,
-                std::is_nothrow_move_constructible<Args>...>);
-
         template<typename T>
         void copy(std::byte* pos, T&& value) noexcept; // XXX noexcept
 
@@ -1593,28 +1774,63 @@ public:
         void post(Func&& func)
             noexcept(std::is_nothrow_move_constructible_v<Func>);
 
+        template<auto Format, typename Tags, typename... Args>
+        void post_with_str_table(Args&&... args)
+            noexcept(std::conjunction_v<
+                std::is_nothrow_copy_constructible<Args>...,
+                std::is_nothrow_move_constructible<Args>...>);
+
         template<typename Tags, typename... Args>
         auto make_lambda(Args&&... args)
             noexcept(std::conjunction_v<
                 std::is_nothrow_copy_constructible<Args>...,
                 std::is_nothrow_move_constructible<Args>...>);
 
-        void sync(bool destructing);
+        void sync(bool destruct);
 
         ring_buffer buf_;
         std::string name_;
+        bool closed_ = false;
         friend logger;
     };
 
 private:
-    struct state
+    class consumer
     {
+    public:
+        void run(std::function<::timespec()> clock) noexcept;
+        void process_commands() noexcept;
+        void set_command_path(std::string path) noexcept;
+
+        template<typename O, typename E, typename F, typename S>
+        consumer(O&& o, E&& e, F&& f, S&& s, producer* control)
+        :
+            out(std::move(o)),
+            err(std::move(e)),
+            flush(std::move(f)),
+            sync(std::move(s)),
+            producers_({control})
+        {
+        }
+
+        consumer(consumer&&) = default;
+        ~consumer();
+
+        void add_producer(producer& p)
+        {
+            producers_.push_back(&p);
+        }
+
         std::function<::ssize_t(const char* buf, std::size_t size)> out;
         std::function<void(const char* buf, std::size_t size)> err;
         std::function<void()> flush;
         std::function<void()> sync;
-        std::vector<producer*> producers;
-        bool destroy;
+        bool destroy = false;
+
+    private:
+        std::vector<producer*> producers_;
+        int cmd_fd_; // XXX file_descriptor
+        std::string cmd_path_;
     };
 
 public:
@@ -1655,19 +1871,21 @@ public:
         typename ErrorFunction,
         typename Clock = std::chrono::system_clock>
     requires
-        std::is_invocable_v<OutputFunction, const char*, std::size_t> &&
-        std::is_invocable_v<ErrorFunction, const char*, std::size_t>
+        std::invocable<OutputFunction, const char*, std::size_t> &&
+        std::invocable<ErrorFunction, const char*, std::size_t>
     logger(
         OutputFunction&& out,
         ErrorFunction&& err,
-        Clock&& clock = Clock())
+        Clock&& clock = Clock(),
+        std::string command_path = default_command_path())
     :
         logger(
             std::forward<OutputFunction>(out),
             std::forward<ErrorFunction>(err),
             [](){}, // flush
             [](){}, // sync
-            std::forward<Clock>(clock))
+            std::forward<Clock>(clock),
+            std::move(command_path))
     {
     }
 
@@ -1678,32 +1896,36 @@ public:
         typename SyncFunction,
         typename Clock = std::chrono::system_clock>
     requires
-        std::is_invocable_v<OutputFunction, const char*, std::size_t> &&
-        std::is_invocable_v<ErrorFunction, const char*, std::size_t> &&
-        std::is_invocable_v<FlushFunction> &&
-        std::is_invocable_v<SyncFunction>
+        std::invocable<OutputFunction, const char*, std::size_t> &&
+        std::invocable<ErrorFunction, const char*, std::size_t> &&
+        std::invocable<FlushFunction> &&
+        std::invocable<SyncFunction>
     logger(
         OutputFunction&& out,
         ErrorFunction&& err,
         FlushFunction&& flush,
         SyncFunction&& sync,
-        Clock&& clock = Clock())
+        Clock&& clock = Clock(),
+        std::string command_path = default_command_path())
     {
         // The consumer thread must be started after control_ has been
-        // constructed, but control_ must be placed after consumer_ so that it
-        // is destructed before consumer_.
+        // constructed
         consumer_ =
             std::jthread(
-                &logger::consumer,
-                this,
-                state{
+                &consumer::run,
+                consumer(
                     std::forward<OutputFunction>(out),
                     std::forward<ErrorFunction>(err),
                     std::forward<FlushFunction>(flush),
                     std::forward<SyncFunction>(sync),
-                    {&control_},
-                    false},
+                    &control_),
                 make_clock(std::forward<Clock>(clock)));
+        set_command_path(std::move(command_path));
+    }
+
+    ~logger()
+    {
+        control_.close();
     }
 
     auto consumer_thread_native_handle()
@@ -1729,7 +1951,7 @@ public:
                 ::ssize_t>,
             "Output function type must be of type ssize_t(const char*, size_t) "
             "(returning the number of bytes written or -1 on error)");
-        post([f_ = std::forward<Func>(f)](state& st) { st.out = std::move(f_); });
+        post([f = std::forward<Func>(f)](consumer& c) { c.out = std::move(f); });
         control_.sync();
     }
 
@@ -1741,7 +1963,7 @@ public:
                 std::invoke_result_t<Func, const char*, std::size_t>,
                 void>,
             "Error function must be of type void(const char*, size_t)");
-        post([f_ = std::forward<Func>(f)](state& st) { st.err = std::move(f_); });
+        post([f = std::forward<Func>(f)](consumer& c) { c.err = std::move(f); });
         control_.sync();
     }
 
@@ -1751,7 +1973,7 @@ public:
         static_assert(
             std::is_same_v<std::invoke_result_t<Func>, void>,
             "Flush function must be of type void()");
-        post([f_ = std::forward<Func>(f)](state& st) { st.flush = std::move(f_); });
+        post([f = std::forward<Func>(f)](consumer& c) { c.flush = std::move(f); });
         control_.sync();
     }
 
@@ -1761,11 +1983,19 @@ public:
         static_assert(
             std::is_same_v<std::invoke_result_t<Func>, void>,
             "Sync function must be of type void()");
-        post([f_ = std::forward<Func>(f)](state& st) { st.sync = std::move(f_); });
+        post([f = std::forward<Func>(f)](consumer& c) { c.sync = std::move(f); });
+        control_.sync();
+    }
+
+    void set_command_path(std::string path) noexcept
+    {
+        post([p = std::move(path)](consumer& c) { c.set_command_path(std::move(p)); });
         control_.sync();
     }
 
 private:
+    static std::string default_command_path();
+
     template<typename Func>
     void post(Func&& f)
     {
@@ -1793,10 +2023,8 @@ private:
             };
     }
 
-    void consumer(state st, std::function<std::timespec()> clock) noexcept;
-
+    producer control_; // aligned to cache line so first to avoid extra padding
     std::jthread consumer_;
-    producer control_;
     std::mutex control_mutex_;
 };
 
@@ -1809,7 +2037,7 @@ void xtr::logger::producer::log() noexcept
     const ring_buffer::span s = buf_.write_span_spec<Tags>(sizeof(fptr_t));
     if (detail::is_non_blocking_v<Tags> && s.empty()) [[unlikely]]
         return;
-    copy(s.begin(), &detail::trampoline0<Format, state>);
+    copy(s.begin(), &detail::trampoline0<Format, consumer>);
     buf_.reduce_writable(sizeof(fptr_t));
 }
 
@@ -1826,13 +2054,13 @@ void xtr::logger::producer::log(Args&&... args)
             std::is_same<std::remove_cvref_t<Args>, std::string_view>...,
             std::is_same<std::remove_cvref_t<Args>, std::string>...>;
     if constexpr (is_str)
-        log_str<Format, Tags>(std::forward<Args>(args)...);
+        post_with_str_table<Format, Tags>(std::forward<Args>(args)...);
     else
         post<Format, Tags>(make_lambda<Tags>(std::forward<Args>(args)...));
 }
 
 template<auto Format, typename Tags, typename... Args>
-void xtr::logger::producer::log_str(Args&&... args)
+void xtr::logger::producer::post_with_str_table(Args&&... args)
     noexcept(std::conjunction_v<
         std::is_nothrow_copy_constructible<Args>...,
         std::is_nothrow_move_constructible<Args>...>)
@@ -1873,7 +2101,7 @@ void xtr::logger::producer::log_str(Args&&... args)
     auto str_cur = str_pos;
     auto str_end = s.end();
 
-    copy(s.begin(), &detail::trampolineS<Format, state, lambda_t>);
+    copy(s.begin(), &detail::trampolineS<Format, consumer, lambda_t>);
     copy(
         func_pos,
         make_lambda<Tags>(
@@ -1929,7 +2157,7 @@ void xtr::logger::producer::post(Func&& func)
             return;
     }
 
-    copy(s.begin(), &detail::trampolineN<Format, state, Func>);
+    copy(s.begin(), &detail::trampolineN<Format, consumer, Func>);
     copy(func_pos, std::forward<Func>(func));
 
     buf_.reduce_writable(size);
@@ -1985,11 +2213,132 @@ auto xtr::logger::producer::make_lambda(Args&&... args)
 #define XTR_FUNC inline
 
 
+#include <cassert>
+#include <cerrno>
+
+#include <fcntl.h>
+#include <unistd.h>
+
+XTR_FUNC
+xtr::detail::file_descriptor::file_descriptor(
+    const char* path,
+    int flags,
+    int mode)
+:
+    fd_(XTR_TEMP_FAILURE_RETRY(::open(path, flags, mode)))
+{
+    if (fd_ == -1)
+    {
+        throw_system_error_fmt(
+            "xtr::detail::file_descriptor::file_descriptor: "
+            "Failed to open `%s'", path);
+    }
+}
+
+XTR_FUNC
+xtr::detail::file_descriptor& xtr::detail::file_descriptor::operator=(
+    xtr::detail::file_descriptor&& other) noexcept
+{
+    swap(*this, other);
+    return *this;
+}
+
+XTR_FUNC
+xtr::detail::file_descriptor::~file_descriptor()
+{
+    reset();
+}
+
+XTR_FUNC
+void xtr::detail::file_descriptor::reset(int fd) noexcept
+{
+    if (is_open())
+    {
+#ifndef NDEBUG
+        const int result =
+#endif
+            XTR_TEMP_FAILURE_RETRY(::close(fd_));
+        assert(result == 0);
+    }
+    fd_ = fd;
+}
+
+
+
+#include <memory>
+
+#include <fcntl.h>
+#include <unistd.h>
+
+/*
+ XXX Needs to be shared with mirrored mapping
+namespace xtr::detail
+{
+    struct fd_closer
+    {
+        ~fd_closer()
+        {
+            if (fd != -1)
+                ::close(fd);
+        }
+
+        int fd = -1;
+    };
+}*/
+
+XTR_FUNC
+xtr::detail::interprocess_ring_buffer::interprocess_ring_buffer(
+    const char* path,
+    int flags,
+    int mode)
+{
+    // XXX NEED RAII
+    const int fd = XTR_TEMP_FAILURE_RETRY(::open(path, flags, mode));
+
+    if (fd == -1)
+    {
+        throw_system_error_fmt(
+            "xtr::detail::interprocess_ring_buffer: "
+            "Failed to open `%s'", path);
+    }
+
+    const std::size_t sz = align_to_page_size(sizeof(ring_buffer));
+
+    if (XTR_TEMP_FAILURE_RETRY(::ftruncate(fd, ::off_t(sz + capacity))) == -1)
+    {
+        throw_system_error(
+            "xtr::detail::interprocess_ring_buffer: "
+            "Failed to ftruncate backing file");
+    }
+
+    buf_ = memory_mapping(nullptr, sz, PROT_READ|PROT_WRITE, MAP_SHARED, fd);
+
+    new (buf_.get()) ring_buffer(fd, sz);
+}
+
+XTR_FUNC
+xtr::detail::interprocess_ring_buffer::~interprocess_ring_buffer()
+{
+    if (buf_)
+        std::destroy_at(ring_buf());
+}
+
+
+
 #include <fmt/chrono.h>
 
 #include <algorithm>
 #include <condition_variable>
 #include <cstring>
+#include <climits>
+
+#include <iostream> // XXX TESTING
+
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/un.h>
+
+#include <unistd.h>
 
 XTR_FUNC
 xtr::logger::producer xtr::logger::get_producer(std::string name)
@@ -2001,9 +2350,9 @@ XTR_FUNC
 void xtr::logger::register_producer(producer& p) noexcept
 {
     post(
-        [&p](state& st)
+        [&p](consumer& c)
         {
-            st.producers.push_back(&p);
+            c.add_producer(p);
         });
 }
 
@@ -2020,30 +2369,35 @@ void xtr::logger::set_error_stream(FILE* stream) noexcept
 }
 
 XTR_FUNC
-void xtr::logger::consumer(state st, std::function<::timespec()> clock) noexcept
+void xtr::logger::consumer::run(std::function<::timespec()> clock) noexcept
 {
     char ts[32] = {};
     bool ts_stale = true;
     std::size_t flush_count = 0;
     fmt::memory_buffer mbuf;
 
-    for (std::size_t i = 0; !st.producers.empty(); ++i)
+    for (std::size_t i = 0; !producers_.empty(); ++i)
     {
         ring_buffer::span span;
         // The inner loop below can modify producers so a reference cannot be taken
-        const std::size_t n = i % st.producers.size();
-        // Read the clock once per loop over producers
-        ts_stale |= n == 0;
+        const std::size_t n = i % producers_.size();
 
-        if ((span = st.producers[n]->buf_.read_span()).empty())
+        if (n == 0)
+        {
+            // Read the clock and commands once per loop over producers
+            ts_stale |= true;
+            process_commands();
+        }
+
+        if ((span = producers_[n]->buf_.read_span()).empty())
         {
             // flush if no further data available (all producers empty)
             if (flush_count != 0 && flush_count-- == 1)
-                st.flush();
+                flush();
             continue;
         }
 
-        st.destroy = false;
+        destroy = false;
 
         if (ts_stale)
         {
@@ -2053,50 +2407,243 @@ void xtr::logger::consumer(state st, std::function<::timespec()> clock) noexcept
 
         // span.end is capped to the end of the first mapping to guarantee that
         // data is only read from the same address that it was written to (the
-        // producer always begins log records in the first mapping, so do not
+        // producer always begins log records in the first mapping, so we do not
         // read a record beginning in the second mapping). This is done to
         // avoid undefined behaviour---reading an object from a different
         // address than it was written to will work on Intel and probably many
         // other CPUs but is outside of what is permitted by the C++ memory
         // model.
         std::byte* pos = span.begin();
-        std::byte* end = std::min(span.end(), st.producers[n]->buf_.end());
+        std::byte* end = std::min(span.end(), producers_[n]->buf_.end());
         do
         {
             assert(std::uintptr_t(pos) % alignof(fptr_t) == 0);
             fptr_t fptr = *reinterpret_cast<const fptr_t*>(pos);
-            pos = fptr(mbuf, pos, st, ts, st.producers[n]->name_);
-            if (st.destroy)
+            pos = fptr(mbuf, pos, *this, ts, producers_[n]->name_);
+            if (destroy)
             {
                 using std::swap;
-                swap(st.producers[n], st.producers.back()); // possible self-swap, ok
-                st.producers.pop_back();
+                swap(producers_[n], producers_.back()); // possible self-swap, ok
+                producers_.pop_back();
                 goto next;
             }
         } while (pos < end);
 
-        st.producers[n]->buf_.reduce_readable(
+        producers_[n]->buf_.reduce_readable(
             ring_buffer::size_type(pos - span.begin()));
 
         std::size_t n_dropped;
-        if (st.producers[n]->buf_.read_span().empty() &&
-            (n_dropped = st.producers[n]->buf_.dropped_count()) > 0)
+        if (producers_[n]->buf_.read_span().empty() &&
+            (n_dropped = producers_[n]->buf_.dropped_count()) > 0)
         {
             detail::print(
                 mbuf,
-                st.out,
-                st.err,
+                out,
+                err,
                 "{}: {}: {} messages dropped\n",
                 ts,
-                st.producers[n]->name_,
+                producers_[n]->name_,
                 n_dropped);
         }
 
         // flushing may be late/early if producers is modified, doesn't matter
-        flush_count = st.producers.size();
+        flush_count = producers_.size();
 
         next:;
     }
+}
+
+namespace xtr::detail
+{
+/*
+    std::generator<interprocess_ring_buffer::span> get_write_span(
+        interprocess_ring_buffer& buf)
+    {
+        co_await std::suspend_always();
+    }
+*/
+
+
+}
+
+XTR_FUNC
+void xtr::logger::consumer::process_commands() noexcept
+{
+/*
+    const auto now = detail::tsc::now().ticks;
+
+    if (now < process_cmd_next_)
+        return;
+
+    process_cmd_next_ = now + 123;
+
+    // This is admittedly hacky, however
+
+    fd_set fds;
+    struct timeval tv;
+
+    FD_ZERO(&rfds);
+    FD_SET(cmd_fd_, &rfds);
+
+    tv.tv_sec = 0;
+    tv.tv_usec = 0;
+
+    // first arg is the max fd
+
+    ::select(cmd_fd_, &fds,  )
+*/
+/*
+    // co_await, co_return, co_yield
+
+    detail::interprocess_ring_buffer::span rs;
+    detail::interprocess_ring_buffer::span ws;
+
+    //while ((ws = cmd_buf_.write_span()).size() < 42)
+    //    co_await std::suspend_always();
+
+
+    while ((ws = cmd_buf_.write_span()).size() < 42)
+        co_await std::suspend_always();
+
+
+    // Need to define a structure,
+    //
+    // also need to write tests---you can just make a free function
+    // or class that communicates with the logger.
+    //
+    // generate a random name then set the output function to test?
+    //
+    // or query the name?
+    //
+    //
+    //
+    // include/xtr/detail/command.hpp
+    // include/xtr/detail/send_command.hpp
+    //
+    // void send_command
+    //
+    // So, command types, you want to be able to:
+    //
+    // * Modify producers based on a regular expression
+    //   - ie set the log level on them
+    // * Dry run of modify
+    // * Wildcards?
+    //
+    // XXX HOW TO HANDLE THE COMMAND LINE TOOL BLOCKING WHEN SENDING REPLY?
+    //
+    // XXX fnmatch
+
+    // int socket(int domain, int type, int protocol)
+    // ::socket(AF_LOCAL, SOCK_SEQPACKET, 0);
+    //
+    // ::socket(AF_LOCAL, SOCK_STREAM, IPPROTO_SCTP)
+    //
+    // set non blocking
+    // listen
+    // add to epoll?
+    // accept
+
+    const auto span = cmd_buf_.read_span();
+    if (span.size() > 0)
+    {
+        cmd_buf_.reduce_readable(span.size());
+    }
+*/
+}
+
+XTR_FUNC
+std::string xtr::logger::default_command_path()
+{
+    static std::atomic<unsigned> ctl_count{0};
+
+    const unsigned long pid = ::getpid();
+    const unsigned long uid = ::geteuid();
+    const unsigned n = ctl_count++;
+    char path[PATH_MAX];
+    std::snprintf(path, sizeof(path), "/run/user/%lu/xtrctl.%lu.%u", uid, pid, n);
+    return path;
+}
+
+XTR_FUNC
+void xtr::logger::consumer::set_command_path(std::string path) noexcept
+{
+    // XXX Should you just read from a fifo?
+    // no, because you need connect/disconnect behaviour,
+    // same issue as with a shm buffer, if a request is made
+    // and the program disconnects, you need to know.
+
+#if 0
+#if __cpp_exceptions
+    try
+    {
+#endif
+        if (path.size() > sizeof(std::declval<sockaddr_un>().sun_path))
+        {
+        }
+
+        cmd_fd_ = ::socket(AF_LOCAL, SOCK_SEQPACKET|SOCK_NONBLOCK, 0);
+
+        sockaddr_un addr;
+        //struct sockaddr* = &addrp;
+
+
+
+
+        addr.sun_family = AF_LOCAL;
+        // XXX strncpy, maybe use std::copy?
+        strncpy(addr.sun_path, path.c_str(), sizeof(addr.sun_path));
+
+        //oldmask = umask(S_IXUSR | S_IRWXG | S_IRWXO);
+
+        if (::bind(cmd_fd_, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) == -1)
+        {
+            std::cout << "bind error\n";
+        }
+
+        if (::listen(cmd_fd_, 5) == -1)
+        {
+            std::cout << "listen error\n";
+        }
+
+        //int connfd;
+
+        //::fcntl(cmd_fd_, F_SETFD, 
+
+        // SET O_NONBLOCK, then select
+
+        //if ((connfd = ::accept(cmd_fd_, NULL, NULL)) == -1)
+        //{
+        //    std::cout << "accept error\n";
+        //}
+
+        // XXX Need to do something about signals, e.g. SIGPIPE
+        //
+        // - can use send with MSG_NOSIGNAL
+
+        // so, if you want to maintain portability you can't use epoll, but,
+        // you will probably only have 2 fds at a time anyway
+
+        //cmd_buf_ =
+        //    detail::interprocess_ring_buffer(
+        //        path.c_str(),
+        //        O_CREAT|O_EXCL|O_RDWR,
+        //        S_IRUSR|S_IWUSR);
+
+        cmd_path_ = std::move(path);
+#if __cpp_exceptions
+    }
+    catch (const std::exception& e)
+    {
+    }
+#endif
+#endif
+}
+
+XTR_FUNC
+xtr::logger::consumer::~consumer()
+{
+    if (!cmd_path_.empty())
+        ::unlink(cmd_path_.c_str());
 }
 
 XTR_FUNC
@@ -2108,19 +2655,29 @@ xtr::logger::producer::producer(logger& owner, std::string name)
 }
 
 XTR_FUNC
-void xtr::logger::producer::sync(bool destructing)
+void xtr::logger::producer::close()
+{
+    if (!closed_)
+    {
+        sync(/*destruct=*/true);
+        closed_ = true;
+    }
+}
+
+XTR_FUNC
+void xtr::logger::producer::sync(bool destruct)
 {
     std::condition_variable cv;
     std::mutex m;
     bool notified = false;
 
     post(
-        [&cv, &m, &notified, destructing](state& st)
+        [&cv, &m, &notified, destruct](consumer& c)
         {
-            st.destroy = destructing;
+            c.destroy = destruct;
 
-            st.flush();
-            st.sync();
+            c.flush();
+            c.sync();
 
             std::scoped_lock lock{m};
             notified = true;
@@ -2158,7 +2715,7 @@ XTR_FUNC
 void xtr::logger::producer::set_name(std::string name)
 {
     post(
-        [this, name{std::move(name)}](state&)
+        [this, name = std::move(name)](auto&)
         {
             this->name_ = std::move(name);
         });
@@ -2168,7 +2725,7 @@ void xtr::logger::producer::set_name(std::string name)
 XTR_FUNC
 xtr::logger::producer::~producer()
 {
-    sync(true);
+    close();
 }
 
 
@@ -2247,22 +2804,11 @@ void xtr::detail::memory_mapping::reset(void* addr, std::size_t length) noexcept
 #if !defined(__linux__)
 namespace xtr::detail
 {
-    struct fd_closer
-    {
-        ~fd_closer()
-        {
-            if (fd != -1)
-                ::close(fd);
-        }
-
-        int fd = -1;
-    };
-
     XTR_FUNC
-    int shm_open_anon(int oflag, mode_t mode)
+    file_descriptor shm_open_anon(int oflag, mode_t mode)
     {
 #if defined(SHM_ANON) // FreeBSD extension
-        return ::shm_open(SHM_ANON, oflag, mode);
+        return XTR_TEMP_FAILURE_RETRY(::shm_open(SHM_ANON, oflag, mode));
 #else
         int fd;
 
@@ -2284,14 +2830,14 @@ namespace xtr::detail
         {
             for (char* pos = name + 5; *pos != '\0'; ++pos)
                 *pos = ctable[udist(rd)];
-            fd = ::shm_open(name, oflag|O_EXCL, mode);
+            fd = XTR_TEMP_FAILURE_RETRY(::shm_open(name, oflag|O_EXCL|O_CREAT, mode));
         }
         while (--retries > 0 && fd == -1 && errno == EEXIST);
 
         if (fd != -1)
             ::shm_unlink(name);
 
-        return fd;
+        return file_descriptor(fd);
 #endif
     }
 }
@@ -2332,7 +2878,7 @@ xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping(
         MAP_PRIVATE|MAP_ANONYMOUS);
 
 #if !defined(__linux__)
-    fd_closer closer;
+    file_descriptor temp_fd;
 #endif
 
     if (fd == -1)
@@ -2344,7 +2890,7 @@ xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping(
         // cleaner, as with the below method we don't have to deal with the
         // first mapping's length being length * 2.
         memory_mapping mirror(
-            reserve.get() + length,
+            static_cast<std::byte*>(reserve.get()) + length,
             length,
             prot,
             MAP_FIXED|MAP_SHARED|MAP_ANONYMOUS|flags);
@@ -2361,7 +2907,7 @@ xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping(
         if (!m_)
         {
             throw_system_error(
-                "xtr::detail::mirrored_memory_mapping::memory_mapping: "
+                "xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping: "
                 "mremap failed");
         }
 
@@ -2369,16 +2915,14 @@ xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping(
         mirror.release(); // mirror will be recreated in ~mirrored_memory_mapping
         return;
 #else
-        fd = shm_open_anon(O_RDWR|O_CREAT, S_IRUSR|S_IWUSR);
-
-        if (fd == -1)
+        if (!(temp_fd = shm_open_anon(O_RDWR, S_IRUSR|S_IWUSR)))
         {
             throw_system_error(
                 "xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping: "
                 "Failed to shm_open backing file");
         }
 
-        closer.fd = fd;
+        fd = temp_fd.get();
 
         if (::ftruncate(fd, ::off_t(length)) == -1)
         {
@@ -2393,7 +2937,7 @@ xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping(
     flags |= MAP_FIXED | MAP_SHARED;
 
     memory_mapping mirror(
-        reserve.get() + length,
+        static_cast<std::byte*>(reserve.get()) + length,
         length,
         prot,
         flags,
@@ -2410,7 +2954,11 @@ XTR_FUNC
 xtr::detail::mirrored_memory_mapping::~mirrored_memory_mapping()
 {
     if (m_)
-        memory_mapping{}.reset(m_.get() + m_.length(), m_.length());
+    {
+        memory_mapping{}.reset(
+            static_cast<std::byte*>(m_.get()) + m_.length(),
+            m_.length());
+    }
 }
 
 
@@ -2605,7 +3153,7 @@ std::timespec xtr::detail::tsc::to_timespec(tsc ts)
     {
         last_tsc = tsc::now();
         std::timespec temp;
-        ::clock_gettime(XTR_CLOCK_TAI, &temp);
+        ::clock_gettime(XTR_CLOCK_WALL, &temp);
         last_epoch_nanos = temp.tv_sec * 1000000000L + temp.tv_nsec;
     }
 
