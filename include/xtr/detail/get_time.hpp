@@ -3,6 +3,8 @@
 
 #include "xtr/timespec.hpp"
 
+#include <ctime>
+
 #include <time.h>
 
 namespace xtr::detail
