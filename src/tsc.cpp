@@ -55,7 +55,8 @@ std::uint64_t xtr::detail::read_tsc_hz() noexcept
         // Core crystal clock frequency not provided, must infer
         // from CPU model number.
         const std::uint16_t model = get_family_model()[1];
-        switch(model) {
+        switch(model)
+        {
         case intel_fam6_skylake_l:
         case intel_fam6_skylake:
         case intel_fam6_kabylake_l:
