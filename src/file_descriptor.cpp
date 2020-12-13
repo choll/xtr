@@ -22,7 +22,6 @@
 #include "xtr/detail/retry.hpp"
 #include "xtr/detail/throw.hpp"
 
-#include <cassert>
 #include <cerrno>
 
 #include <fcntl.h>
@@ -61,14 +60,14 @@ xtr::detail::file_descriptor::~file_descriptor()
 XTR_FUNC
 void xtr::detail::file_descriptor::reset(int fd) noexcept
 {
+    // Note that although close() can fail due to EINTR we do not retry. This
+    // is because the state of the file descriptor is unspecified (according to
+    // POSIX) which makes retrying dangerous because if the file descriptor is
+    // closed then a race condition exists---the file descriptor could have
+    // been reused by another thread calling open(), so would be incorrectly
+    // closed if close() is retried.
     if (is_open())
-    {
-#ifndef NDEBUG
-        const int result =
-#endif
-            XTR_TEMP_FAILURE_RETRY(::close(fd_));
-        assert(result == 0);
-    }
+        (void)::close(fd_);
     fd_ = fd;
 }
 
