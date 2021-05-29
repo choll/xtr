@@ -22,5 +22,13 @@
 // Clock source used to translate TSC to wall time
 #define XTR_CLOCK_WALL CLOCK_REALTIME
 
+// Clock source used internally
+#if defined(CLOCK_MONOTONIC_COARSE)
+#define XTR_CLOCK_MONOTONIC_FAST CLOCK_MONOTONIC_COARSE
+#elif defined (CLOCK_MONOTONIC_FAST)
+#define XTR_CLOCK_MONOTONIC_FAST CLOCK_MONOTONIC_FAST
+#else
+#define XTR_CLOCK_MONOTONIC_FAST CLOCK_MONOTONIC
 #endif
 
+#endif

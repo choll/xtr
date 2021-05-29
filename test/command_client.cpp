@@ -1,4 +1,4 @@
-// Copyright 2014, 2015, 2019 Chris E. Holloway
+// Copyright 2021 Chris E. Holloway
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,14 +18,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef XTR_DETAIL_PAGESIZE_HPP
-#define XTR_DETAIL_PAGESIZE_HPP
+#include "command_client.hpp"
+#include "xtr/detail/commands/connect.hpp"
 
-#include <cstddef>
-
-namespace xtr::detail
+void xtr::detail::command_client::connect(const std::string& path)
 {
-    std::size_t align_to_page_size(std::size_t length);
+    fd_ = command_connect(path);
+    cmd_path_ = path;
 }
 
-#endif
+void xtr::detail::command_client::reconnect()
+{
+    connect(cmd_path_);
+}

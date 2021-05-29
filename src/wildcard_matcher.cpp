@@ -1,4 +1,4 @@
-// Copyright 2014, 2015, 2019 Chris E. Holloway
+// Copyright 2021 Chris E. Holloway
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,14 +18,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef XTR_DETAIL_PAGESIZE_HPP
-#define XTR_DETAIL_PAGESIZE_HPP
+#include "xtr/detail/commands/wildcard_matcher.hpp"
 
-#include <cstddef>
+#include <fnmatch.h>
 
-namespace xtr::detail
+XTR_FUNC
+xtr::detail::wildcard_matcher::wildcard_matcher(
+    const char* pattern,
+    bool ignore_case)
+:
+    pattern_(pattern),
+    flags_(FNM_EXTMATCH | (ignore_case ? FNM_CASEFOLD : 0))
 {
-    std::size_t align_to_page_size(std::size_t length);
 }
 
-#endif
+XTR_FUNC
+bool xtr::detail::wildcard_matcher::operator()(const char* str) const
+{
+    return ::fnmatch(pattern_, str, flags_) == 0;
+}
+

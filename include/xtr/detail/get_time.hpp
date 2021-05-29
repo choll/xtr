@@ -19,4 +19,3 @@ namespace xtr::detail
 }
 
 #endif
-

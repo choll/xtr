@@ -32,13 +32,17 @@
 
 namespace xtr::detail
 {
+    // trampoline_no_capture
+    // trampoline_fixed_size_capture
+    // trampoline_variable_size_capture
+
     template<auto Format, typename State>
     std::byte* trampoline0(
         fmt::memory_buffer& mbuf,
         std::byte* buf,
         State& state,
         const char* ts,
-        const std::string& name) noexcept
+        std::string& name) noexcept
     {
         print(mbuf, state.out, state.err, *Format, ts, name);
         return buf + sizeof(void(*)());
@@ -50,7 +54,7 @@ namespace xtr::detail
         std::byte* buf,
         State& state,
         [[maybe_unused]] const char* ts,
-        const std::string& name) noexcept
+        std::string& name) noexcept
     {
         typedef void(*fptr_t)();
 
@@ -64,7 +68,7 @@ namespace xtr::detail
         // thread such as adding a new producer or modifying the output stream.
         auto& func = *reinterpret_cast<Func*>(func_pos);
         if constexpr (std::is_same_v<decltype(Format), std::nullptr_t>)
-            func(state);
+            func(state, name);
         else
             func(mbuf, state.out, state.err, *Format, ts, name);
 
@@ -80,7 +84,7 @@ namespace xtr::detail
         std::byte* buf,
         State& state,
         const char* ts,
-        const std::string& name) noexcept
+        std::string& name) noexcept
     {
         typedef void(*fptr_t)();
 
@@ -103,4 +107,3 @@ namespace xtr::detail
 }
 
 #endif
-

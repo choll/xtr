@@ -30,12 +30,12 @@ namespace xtr::detail
     // to use remove_pointer before applying remove_cv. decay turns arrays
     // into pointers and removes references.
     template<typename T>
-    struct is_c_string :
+    using is_c_string =
         std::conjunction<
             std::is_pointer<std::decay_t<T>>,
-            std::is_same<char, std::remove_cv_t<std::remove_pointer_t<std::decay_t<T>>>>>
-    {
-    };
+            std::is_same<
+                char,
+                std::remove_cv_t<std::remove_pointer_t<std::decay_t<T>>>>>;
 
 #if defined(XTR_ENABLE_TEST_STATIC_ASSERTIONS)
     static_assert(is_c_string<char*>::value);
@@ -58,4 +58,3 @@ namespace xtr::detail
 }
 
 #endif
-

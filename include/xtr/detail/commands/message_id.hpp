@@ -1,4 +1,4 @@
-// Copyright 2014, 2015, 2019 Chris E. Holloway
+// Copyright 2021 Chris E. Holloway
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,14 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef XTR_DETAIL_PAGESIZE_HPP
-#define XTR_DETAIL_PAGESIZE_HPP
-
-#include <cstddef>
+#ifndef XTR_DETAIL_COMMANDS_MESSAGE_ID_HPP
+#define XTR_DETAIL_COMMANDS_MESSAGE_ID_HPP
 
 namespace xtr::detail
 {
-    std::size_t align_to_page_size(std::size_t length);
+    enum class message_id {status, set_level, sink_info, success, error, reopen};
 }
 
 #endif
+

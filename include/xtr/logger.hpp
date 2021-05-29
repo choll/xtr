@@ -1,4 +1,4 @@
-// Copyright 2019, 2020 Chris E. Holloway
+// Copyright 2019, 2020, 2021 Chris E. Holloway
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,11 +18,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+// XXX TODO:
+//
+// Double check use of noexcept, should only mark functions if they do not
+// throw. Maybe only in the main api?
+
 #ifndef XTR_LOGGER_HPP
 #define XTR_LOGGER_HPP
 
 #include "detail/align.hpp"
 #include "detail/clock_ids.hpp"
+#include "detail/commands/command_dispatcher_fwd.hpp"
+#include "detail/commands/requests_fwd.hpp"
+#include "detail/get_time.hpp"
 #include "detail/is_c_string.hpp"
 #include "detail/pause.hpp"
 #include "detail/print.hpp"
@@ -30,14 +38,17 @@
 #include "detail/string_ref.hpp"
 #include "detail/string_table.hpp"
 #include "detail/synchronized_ring_buffer.hpp"
-#include "detail/get_time.hpp"
 #include "detail/tags.hpp"
+#include "detail/throw.hpp"
 #include "detail/trampolines.hpp"
 #include "detail/tsc.hpp"
+#include "log_level.hpp"
 
 #include <fmt/format.h>
 
 #include <algorithm>
+#include <atomic>
+#include <concepts>
 #include <chrono>
 #include <cstddef>
 #include <cstdio>
@@ -63,41 +74,35 @@
 
 // __extension__ is to silence the gnu-zero-variadic-macro-arguments warning in clang
 
-#define XTR_LOG(...)                            \
-    (__extension__                              \
-        ({                                      \
-            XTR_LOG_TAGS(void(), __VA_ARGS__);  \
+#define XTR_LOG(...)                                \
+    (__extension__                                  \
+        ({                                          \
+            XTR_LOG_TAGS(void(), "I", __VA_ARGS__); \
         }))
 
-#define XTR_TRY_LOG(...)                                        \
-    (__extension__                                              \
-        ({                                                      \
-            XTR_LOG_TAGS(xtr::non_blocking_tag, __VA_ARGS__);   \
+#define XTR_TRY_LOG(...)                                            \
+    (__extension__                                                  \
+        ({                                                          \
+            XTR_LOG_TAGS(xtr::non_blocking_tag, "I", __VA_ARGS__); \
         }))
 
-#define XTR_LOG_TS(...)            \
-    XTR_LOG_TAGS(                  \
-        xtr::timestamp_tag         \
-        __VA_OPT__(,) __VA_ARGS__)
+#define XTR_LOG_TS(...) XTR_LOG_TAGS(xtr::timestamp_tag, "I", __VA_ARGS__)
 
 #define XTR_TRY_LOG_TS(...)         \
-    XTR_LOG_TAGS(                   \
-        (xtr::non_blocking_tag,     \
-            xtr::timestamp_tag)     \
+    XTR_LOG_TAGS((xtr::non_blocking_tag, xtr::timestamp_tag), "I", __VA_ARGS__)
+
+#define XTR_LOG_RTC(SINK, FMT, ...)                         \
+    XTR_LOG_TS(                                             \
+        SINK,                                               \
+        FMT,                                                \
+        xtr::detail::get_time<XTR_CLOCK_REALTIME_FAST>()    \
         __VA_OPT__(,) __VA_ARGS__)
 
-#define XTR_LOG_RTC(SINK, FMT, ...)                     \
-    XTR_LOG_TS(                                         \
-        SINK,                                           \
-        FMT,                                            \
-        xtr::detail::get_time<XTR_CLOCK_REALTIME_FAST>()  \
-        __VA_OPT__(,) __VA_ARGS__)
-
-#define XTR_TRY_LOG_RTC(SINK, FMT, ...)                 \
-    XTR_TRY_LOG_TS(                                     \
-        SINK,                                           \
-        FMT,                                            \
-        xtr::detail::get_time<XTR_CLOCK_REALTIME_FAST>()  \
+#define XTR_TRY_LOG_RTC(SINK, FMT, ...)                     \
+    XTR_TRY_LOG_TS(                                         \
+        SINK,                                               \
+        FMT,                                                \
+        xtr::detail::get_time<XTR_CLOCK_REALTIME_FAST>()    \
         __VA_OPT__(,) __VA_ARGS__)
 
 #define XTR_LOG_TSC(SINK, FMT, ...) \
@@ -114,15 +119,46 @@
         xtr::detail::tsc::now()         \
         __VA_OPT__(,) __VA_ARGS__)
 
+#define XTR_LOG_LEVEL(LEVELSTR, LEVEL, SINK, ...)                   \
+    (__extension__                                                  \
+        ({                                                          \
+            if ((SINK).level() >= xtr::log_level_t::LEVEL)          \
+                XTR_LOG_TAGS(void(), LEVELSTR, SINK, __VA_ARGS__);  \
+        }))                                                         \
+
+#define XTR_LOG_FATAL(SINK, ...)                            \
+    (__extension__                                          \
+        ({                                                  \
+            XTR_LOG_LEVEL("F", fatal, SINK, __VA_ARGS__);   \
+            (SINK).sync();                                  \
+            std::abort();                                   \
+        }))
+
+#define XTR_LOG_ERROR(...) XTR_LOG_LEVEL("E", error, __VA_ARGS__)
+#define XTR_LOG_WARN(...) XTR_LOG_LEVEL("W", warning, __VA_ARGS__)
+#define XTR_LOG_INFO(...) XTR_LOG_LEVEL("I", info, __VA_ARGS__)
+
+#if defined(XTR_NDEBUG)
+#define XTR_LOG_DEBUG(...)
+#else
+#define XTR_LOG_DEBUG(...) XTR_LOG_LEVEL("D", debug, __VA_ARGS__)
+#endif
+
+#define XTR_LOGF(...) XTR_LOG_FATAL(__VA_ARGS__)
+#define XTR_LOGE(...) XTR_LOG_ERROR(__VA_ARGS__)
+#define XTR_LOGW(...) XTR_LOG_WARN(__VA_ARGS__)
+#define XTR_LOGI(...) XTR_LOG_INFO(__VA_ARGS__)
+#define XTR_LOGD(...) XTR_LOG_DEBUG(__VA_ARGS__)
+
 #define XTR_XSTR(s) XTR_STR(s)
 #define XTR_STR(s) #s
 
 // '{}{}:' in the format string is for the timestamp and producer name
-#define XTR_LOG_TAGS(TAGS, SINK, FORMAT, ...)                               \
+#define XTR_LOG_TAGS(TAGS, LEVELSTR, SINK, FORMAT, ...)                     \
     (__extension__                                                          \
         ({                                                                  \
             static constexpr auto xtr_fmt =                                 \
-                xtr::detail::string{"{}: {}: "} +                           \
+                xtr::detail::string{LEVELSTR " {} {} "} +                   \
                 xtr::detail::rcut<                                          \
                     xtr::detail::rindex(__FILE__, '/') + 1>(__FILE__) +     \
                 xtr::detail::string{":"} +                                  \
@@ -135,8 +171,17 @@ namespace xtr
 {
     class logger;
 
+    // TODO: A template alias should be possible:
+    //
+    // template<typename T>
+    // using nocopy = detail::string_ref<T>;
+    //
+    // However only gcc accepts it, so for now we have:
     template<typename T>
-    using nocopy = detail::string_ref<T>;
+    inline auto nocopy(const T& arg)
+    {
+        return detail::string_ref(arg);
+    }
 }
 
 namespace xtr::detail
@@ -180,35 +225,61 @@ namespace xtr::detail
 #endif
             };
     }
+
+    inline auto make_reopen_func(std::string path, FILE* stream)
+    {
+        return
+            [path = std::move(path), stream]()
+            {
+                return std::freopen(path.c_str(), "a", stream) != nullptr;
+            };
+    }
+
+    inline FILE* open_path(const char* path)
+    {
+        FILE* const fp = std::fopen(path, "a");
+        if (fp == nullptr)
+            detail::throw_system_error_fmt("Failed to open `%s'", path);
+        return fp;
+    }
 }
 
+// TODO: Specify buffer size via template parameter, or as dynamic,
+// dynamic_capacity will need to become part of the interface.
 class xtr::logger
 {
 private:
-    // XXX use of _t is not consistent, eg not here but there is fptr_t.
-    // same for state_t, also you need to allow specifying the buffer
-    // size
     using ring_buffer = detail::synchronized_ring_buffer<64 * 1024>;
 
-    struct state;
+    class consumer;
 
-    typedef std::byte* (*fptr_t)(
-        fmt::memory_buffer&,
-        std::byte*,
-        state& st,
-        const char* ts,
-        const std::string& name) noexcept;
+    // XXX TODO: fptr_t is not a very helpful name
+    using fptr_t =
+        std::byte* (*)(
+            fmt::memory_buffer& mbuf,
+            std::byte* buf, // pointer to log record
+            consumer&,
+            const char* timestamp,
+            std::string& name) noexcept;
 
 public:
     // XXX is sink a better name? log_sink? logger::sink?
     class producer
     {
     public:
+        producer() = default;
+
+        producer(const producer& other);
+
+        producer& operator=(const producer& other);
+
         ~producer();
+
+        void close();
 
         void sync()
         {
-            sync(false);
+            sync(/*destroy=*/false);
         }
 
         void set_name(std::string name);
@@ -223,16 +294,18 @@ public:
                 std::is_nothrow_copy_constructible<Args>...,
                 std::is_nothrow_move_constructible<Args>...>);
 
+        void set_level(log_level_t l)
+        {
+            level_.store(l, std::memory_order_relaxed);
+        }
+
+        log_level_t level() const
+        {
+            return level_.load(std::memory_order_relaxed);
+        }
+
     private:
-        producer() = default;
-
         producer(logger& owner, std::string name);
-
-        template<auto Format, typename Tags, typename... Args>
-        void log_str(Args&&... args)
-            noexcept(std::conjunction_v<
-                std::is_nothrow_copy_constructible<Args>...,
-                std::is_nothrow_move_constructible<Args>...>);
 
         template<typename T>
         void copy(std::byte* pos, T&& value) noexcept; // XXX noexcept
@@ -244,36 +317,98 @@ public:
         void post(Func&& func)
             noexcept(std::is_nothrow_move_constructible_v<Func>);
 
+        template<auto Format, typename Tags, typename... Args>
+        void post_with_str_table(Args&&... args)
+            noexcept(std::conjunction_v<
+                std::is_nothrow_copy_constructible<Args>...,
+                std::is_nothrow_move_constructible<Args>...>);
+
         template<typename Tags, typename... Args>
         auto make_lambda(Args&&... args)
             noexcept(std::conjunction_v<
                 std::is_nothrow_copy_constructible<Args>...,
                 std::is_nothrow_move_constructible<Args>...>);
 
-        void sync(bool destructing);
+        void sync(bool destruct);
 
         ring_buffer buf_;
-        std::string name_;
+        std::atomic<log_level_t> level_{log_level_t::info};
+        bool open_ = false;
         friend logger;
     };
 
 private:
-    struct state
+    class consumer
     {
+    private:
+        struct producer_handle
+        {
+            producer* operator->()
+            {
+                return p;
+            }
+
+            producer* p;
+            std::string name;
+            std::size_t dropped_count = 0;
+        };
+
+    public:
+        void run(std::function<::timespec()> clock) noexcept;
+        void set_command_path(std::string path) noexcept;
+
+        template<
+            typename OutputFunction,
+            typename ErrorFunction,
+            typename FlushFunction,
+            typename SyncFunction,
+            typename ReopenFunction,
+            typename CloseFunction>
+        consumer(
+            OutputFunction&& o,
+            ErrorFunction&& e,
+            FlushFunction&& f,
+            SyncFunction&& s,
+            ReopenFunction&& r,
+            CloseFunction&& c,
+            producer* control)
+        :
+            out(std::forward<OutputFunction>(o)),
+            err(std::forward<ErrorFunction>(e)),
+            flush(std::forward<FlushFunction>(f)),
+            sync(std::forward<SyncFunction>(s)),
+            reopen(std::forward<ReopenFunction>(r)),
+            close(std::forward<CloseFunction>(c)),
+            producers_({{control, "control", 0}})
+        {
+        }
+
+        void add_producer(producer& p, const std::string& name);
+
         std::function<::ssize_t(const char* buf, std::size_t size)> out;
         std::function<void(const char* buf, std::size_t size)> err;
         std::function<void()> flush;
         std::function<void()> sync;
-        std::vector<producer*> producers;
-        bool destroy;
+        std::function<bool()> reopen;
+        std::function<void()> close;
+        bool destroy = false;
+
+    private:
+        void status_handler(int fd, detail::status&);
+        void set_level_handler(int fd, detail::set_level&);
+        void reopen_handler(int fd, detail::reopen&);
+
+        std::vector<producer_handle> producers_;
+        std::unique_ptr<
+            detail::command_dispatcher,
+            detail::command_dispatcher_deleter> cmds_;
     };
 
 public:
-
     // XXX
-    // const char* path option?
+    // const char* path option, err set to stderr, 
     //
-    // should logs auto-rotate? don't think so, just write to one file,
+    // should logs auto-reopen? don't think so, just write to one file,
     // other issue is if you should overwrite, append or create a new
     // file?
     //
@@ -282,22 +417,58 @@ public:
     // Also perhaps have a single constructor that accepts
     // variadic args, then just check the type of them? eg
     // is_same<FILE*>, is_clock_v?
-    //
-    //
-    //
 
     template<typename Clock = std::chrono::system_clock>
     logger(
-        FILE* stream = stderr,
+        const char* path,
+        Clock&& clock = Clock(),
+        std::string command_path = default_command_path())
+    :
+        logger(
+            path,
+            detail::open_path(path),
+            stderr,
+            std::forward<Clock>(clock),
+            std::move(command_path))
+    {
+    }
+
+    template<typename Clock = std::chrono::system_clock>
+    logger(
+        const char* path,
+        FILE* stream,
         FILE* err_stream = stderr,
-        Clock&& clock = Clock())
+        Clock&& clock = Clock(),
+        std::string command_path = default_command_path())
     :
         logger(
             detail::make_output_func(stream),
             detail::make_error_func(err_stream),
             detail::make_flush_func(stream, err_stream),
             detail::make_sync_func(stream, err_stream),
-            std::forward<Clock>(clock))
+            detail::make_reopen_func(path, stream),
+            [stream](){ std::fclose(stream); }, // close
+            std::forward<Clock>(clock),
+            std::move(command_path))
+    {
+    }
+
+    template<typename Clock = std::chrono::system_clock>
+    logger(
+        FILE* stream = stderr,
+        FILE* err_stream = stderr,
+        Clock&& clock = Clock(),
+        std::string command_path = default_command_path())
+    :
+        logger(
+            detail::make_output_func(stream),
+            detail::make_error_func(err_stream),
+            detail::make_flush_func(stream, err_stream),
+            detail::make_sync_func(stream, err_stream),
+            [](){ return true; }, // reopen
+            [](){}, // close
+            std::forward<Clock>(clock),
+            std::move(command_path))
     {
     }
 
@@ -306,19 +477,23 @@ public:
         typename ErrorFunction,
         typename Clock = std::chrono::system_clock>
     requires
-        std::is_invocable_v<OutputFunction, const char*, std::size_t> &&
-        std::is_invocable_v<ErrorFunction, const char*, std::size_t>
+        std::invocable<OutputFunction, const char*, std::size_t> &&
+        std::invocable<ErrorFunction, const char*, std::size_t>
     logger(
         OutputFunction&& out,
         ErrorFunction&& err,
-        Clock&& clock = Clock())
+        Clock&& clock = Clock(),
+        std::string command_path = default_command_path())
     :
         logger(
             std::forward<OutputFunction>(out),
             std::forward<ErrorFunction>(err),
             [](){}, // flush
             [](){}, // sync
-            std::forward<Clock>(clock))
+            [](){ return true; }, // reopen
+            [](){}, // close
+            std::forward<Clock>(clock),
+            std::move(command_path))
     {
     }
 
@@ -327,37 +502,49 @@ public:
         typename ErrorFunction,
         typename FlushFunction,
         typename SyncFunction,
+        typename ReopenFunction,
+        typename CloseFunction,
         typename Clock = std::chrono::system_clock>
     requires
-        std::is_invocable_v<OutputFunction, const char*, std::size_t> &&
-        std::is_invocable_v<ErrorFunction, const char*, std::size_t> &&
-        std::is_invocable_v<FlushFunction> &&
-        std::is_invocable_v<SyncFunction>
+        std::invocable<OutputFunction, const char*, std::size_t> &&
+        std::invocable<ErrorFunction, const char*, std::size_t> &&
+        std::invocable<FlushFunction> &&
+        std::invocable<SyncFunction> &&
+        std::invocable<ReopenFunction> &&
+        std::invocable<CloseFunction>
     logger(
         OutputFunction&& out,
         ErrorFunction&& err,
         FlushFunction&& flush,
         SyncFunction&& sync,
-        Clock&& clock = Clock())
+        ReopenFunction&& reopen,
+        CloseFunction&& close,
+        Clock&& clock = Clock(),
+        std::string command_path = default_command_path())
     {
         // The consumer thread must be started after control_ has been
-        // constructed, but control_ must be placed after consumer_ so that it
-        // is destructed before consumer_.
+        // constructed
         consumer_ =
             std::jthread(
-                &logger::consumer,
-                this,
-                state{
+                &consumer::run,
+                consumer(
                     std::forward<OutputFunction>(out),
                     std::forward<ErrorFunction>(err),
                     std::forward<FlushFunction>(flush),
                     std::forward<SyncFunction>(sync),
-                    {&control_},
-                    false},
+                    std::forward<ReopenFunction>(reopen),
+                    std::forward<CloseFunction>(close),
+                    &control_),
                 make_clock(std::forward<Clock>(clock)));
+        // Passing control_ to the consumer is equivalent to calling
+        // register_producer, so mark it as open.
+        control_.open_ = true;
+        set_command_path(std::move(command_path));
     }
 
-    auto consumer_thread_native_handle()
+    ~logger();
+
+    std::thread::native_handle_type consumer_thread_native_handle()
     {
         return consumer_.native_handle();
     }
@@ -366,7 +553,7 @@ public:
     // calls return the same producer.
     [[nodiscard]] producer get_producer(std::string name);
 
-    void register_producer(producer& p) noexcept;
+    void register_producer(producer& p, const std::string& name) noexcept;
 
     void set_output_stream(FILE* stream) noexcept;
     void set_error_stream(FILE* stream) noexcept;
@@ -380,7 +567,7 @@ public:
                 ::ssize_t>,
             "Output function type must be of type ssize_t(const char*, size_t) "
             "(returning the number of bytes written or -1 on error)");
-        post([f_ = std::forward<Func>(f)](state& st) { st.out = std::move(f_); });
+        post([f = std::forward<Func>(f)](consumer& c, auto&) { c.out = std::move(f); });
         control_.sync();
     }
 
@@ -392,7 +579,7 @@ public:
                 std::invoke_result_t<Func, const char*, std::size_t>,
                 void>,
             "Error function must be of type void(const char*, size_t)");
-        post([f_ = std::forward<Func>(f)](state& st) { st.err = std::move(f_); });
+        post([f = std::forward<Func>(f)](consumer& c, auto&) { c.err = std::move(f); });
         control_.sync();
     }
 
@@ -402,7 +589,7 @@ public:
         static_assert(
             std::is_same_v<std::invoke_result_t<Func>, void>,
             "Flush function must be of type void()");
-        post([f_ = std::forward<Func>(f)](state& st) { st.flush = std::move(f_); });
+        post([f = std::forward<Func>(f)](consumer& c, auto&) { c.flush = std::move(f); });
         control_.sync();
     }
 
@@ -412,11 +599,35 @@ public:
         static_assert(
             std::is_same_v<std::invoke_result_t<Func>, void>,
             "Sync function must be of type void()");
-        post([f_ = std::forward<Func>(f)](state& st) { st.sync = std::move(f_); });
+        post([f = std::forward<Func>(f)](consumer& c, auto&) { c.sync = std::move(f); });
         control_.sync();
     }
 
+    template<typename Func>
+    void set_reopen_function(Func&& f) noexcept
+    {
+        static_assert(
+            std::is_same_v<std::invoke_result_t<Func>, bool>,
+            "Reopen function must be of type bool()");
+        post([f = std::forward<Func>(f)](consumer& c, auto&) { c.reopen = std::move(f); });
+        control_.sync();
+    }
+
+    template<typename Func>
+    void set_close_function(Func&& f) noexcept
+    {
+        static_assert(
+            std::is_same_v<std::invoke_result_t<Func>, void>,
+            "Close function must be of type void()");
+        post([f = std::forward<Func>(f)](consumer& c, auto&) { c.close = std::move(f); });
+        control_.close();
+    }
+
+    void set_command_path(std::string path) noexcept;
+
 private:
+    static std::string default_command_path();
+
     template<typename Func>
     void post(Func&& f)
     {
@@ -444,10 +655,8 @@ private:
             };
     }
 
-    void consumer(state st, std::function<std::timespec()> clock) noexcept;
-
+    producer control_; // aligned to cache line so first to avoid extra padding
     std::jthread consumer_;
-    producer control_;
     std::mutex control_mutex_;
 };
 
@@ -460,7 +669,7 @@ void xtr::logger::producer::log() noexcept
     const ring_buffer::span s = buf_.write_span_spec<Tags>(sizeof(fptr_t));
     if (detail::is_non_blocking_v<Tags> && s.empty()) [[unlikely]]
         return;
-    copy(s.begin(), &detail::trampoline0<Format, state>);
+    copy(s.begin(), &detail::trampoline0<Format, consumer>);
     buf_.reduce_writable(sizeof(fptr_t));
 }
 
@@ -477,13 +686,13 @@ void xtr::logger::producer::log(Args&&... args)
             std::is_same<std::remove_cvref_t<Args>, std::string_view>...,
             std::is_same<std::remove_cvref_t<Args>, std::string>...>;
     if constexpr (is_str)
-        log_str<Format, Tags>(std::forward<Args>(args)...);
+        post_with_str_table<Format, Tags>(std::forward<Args>(args)...);
     else
         post<Format, Tags>(make_lambda<Tags>(std::forward<Args>(args)...));
 }
 
 template<auto Format, typename Tags, typename... Args>
-void xtr::logger::producer::log_str(Args&&... args)
+void xtr::logger::producer::post_with_str_table(Args&&... args)
     noexcept(std::conjunction_v<
         std::is_nothrow_copy_constructible<Args>...,
         std::is_nothrow_move_constructible<Args>...>)
@@ -524,7 +733,7 @@ void xtr::logger::producer::log_str(Args&&... args)
     auto str_cur = str_pos;
     auto str_end = s.end();
 
-    copy(s.begin(), &detail::trampolineS<Format, state, lambda_t>);
+    copy(s.begin(), &detail::trampolineS<Format, consumer, lambda_t>);
     copy(
         func_pos,
         make_lambda<Tags>(
@@ -580,7 +789,7 @@ void xtr::logger::producer::post(Func&& func)
             return;
     }
 
-    copy(s.begin(), &detail::trampolineN<Format, state, Func>);
+    copy(s.begin(), &detail::trampolineN<Format, consumer, Func>);
     copy(func_pos, std::forward<Func>(func));
 
     buf_.reduce_writable(size);
@@ -632,4 +841,3 @@ auto xtr::logger::producer::make_lambda(Args&&... args)
 }
 
 #endif
-

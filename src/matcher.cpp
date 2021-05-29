@@ -1,4 +1,4 @@
-// Copyright 2014, 2015, 2019 Chris E. Holloway
+// Copyright 2021 Chris E. Holloway
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,14 +18,26 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef XTR_DETAIL_PAGESIZE_HPP
-#define XTR_DETAIL_PAGESIZE_HPP
+#include "xtr/detail/commands/matcher.hpp"
+#include "xtr/detail/commands/regex_matcher.hpp"
+#include "xtr/detail/commands/wildcard_matcher.hpp"
 
-#include <cstddef>
-
-namespace xtr::detail
+XTR_FUNC
+std::unique_ptr<xtr::detail::matcher> xtr::detail::make_matcher(
+    pattern_type_t pattern_type,
+    const char* pattern,
+    bool ignore_case)
 {
-    std::size_t align_to_page_size(std::size_t length);
+    switch (pattern_type)
+    {
+    case pattern_type_t::wildcard:
+        return std::make_unique<wildcard_matcher>(pattern, ignore_case);
+    case pattern_type_t::extended_regex:
+        return std::make_unique<regex_matcher>(pattern, ignore_case, true);
+    case pattern_type_t::basic_regex:
+        return std::make_unique<regex_matcher>(pattern, ignore_case, false);
+    case pattern_type_t::none:
+        break;
+    }
+    return std::make_unique<matcher>();
 }
-
-#endif

@@ -21,6 +21,8 @@
 #ifndef XTR_DETAIL_RETRY_HPP
 #define XTR_DETAIL_RETRY_HPP
 
+#include <cerrno>
+
 #define XTR_TEMP_FAILURE_RETRY(expr)                    \
     (__extension__                                      \
         ({                                              \
@@ -31,4 +33,3 @@
         }))
 
 #endif
-

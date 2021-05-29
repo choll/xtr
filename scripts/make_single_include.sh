@@ -1,9 +1,14 @@
 #!/bin/sh
 
-echo '/*' > single_include/xtr/logger.hpp
-cat LICENSE >> single_include/xtr/logger.hpp
-echo '*/' >> single_include/xtr/logger.hpp
-grep -hEv '^//|^#include "' \
+target=single_include/xtr/logger.hpp
+
+echo '/*' > $target
+cat LICENSE >> $target
+echo '*/' >> $target
+echo '\n#ifndef XTR_LOGGER_HPP' >> $target
+echo '#define XTR_LOGGER_HPP\n' >> $target
+
+for file in \
     include/xtr/timespec.hpp \
     include/xtr/tags.hpp \
     include/xtr/detail/throw.hpp \
@@ -27,7 +32,26 @@ grep -hEv '^//|^#include "' \
     include/xtr/detail/string.hpp \
     include/xtr/detail/string_table.hpp \
     include/xtr/detail/trampolines.hpp \
-    include/xtr/logger.hpp >> single_include/xtr/logger.hpp
-echo '#define XTR_FUNC inline' >> single_include/xtr/logger.hpp
-grep -hEv '^//|^#include "'  src/*.cpp  >> single_include/xtr/logger.hpp
+    include/xtr/detail/strzcpy.hpp \
+    include/xtr/log_level.hpp \
+    include/xtr/detail/commands/frame.hpp \
+    include/xtr/detail/commands/pattern.hpp \
+    include/xtr/detail/commands/message_id.hpp \
+    include/xtr/detail/commands/requests.hpp \
+    include/xtr/detail/commands/responses.hpp \
+    include/xtr/detail/commands/command_dispatcher_fwd.hpp \
+    include/xtr/detail/commands/command_dispatcher.hpp \
+    include/xtr/detail/commands/matcher.hpp \
+    include/xtr/detail/commands/regex_matcher.hpp \
+    include/xtr/detail/commands/wildcard_matcher.hpp \
+    include/xtr/logger.hpp;
+do
+    sed '$d' $file|grep -Ev '^ *//|^#include "|^#ifndef XTR_.*HPP|^#define XTR_.*HPP' >> $target
+done
 
+grep -hEv '^ *//|^#include "' src/*.cpp  >> $target
+echo '#endif' >> $target
+
+sed -i 's/XTR_FUNC/inline/g' $target
+
+clang-format-12 -i single_include/xtr/logger.hpp

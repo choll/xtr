@@ -1,4 +1,4 @@
-// Copyright 2014, 2015, 2019 Chris E. Holloway
+// Copyright 2021 Chris E. Holloway
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,14 +18,54 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef XTR_DETAIL_PAGESIZE_HPP
-#define XTR_DETAIL_PAGESIZE_HPP
+#ifndef XTR_DETAIL_COMMANDS_CONNECT_HPP
+#define XTR_DETAIL_COMMANDS_CONNECT_HPP
 
-#include <cstddef>
+#include "xtr/detail/file_descriptor.hpp"
+#include "xtr/detail/strzcpy.hpp"
+
+#include <string_view>
+
+#include <sys/socket.h>
+#include <sys/un.h>
 
 namespace xtr::detail
 {
-    std::size_t align_to_page_size(std::size_t length);
+    [[nodiscard]] file_descriptor command_connect(std::string_view path);
+}
+
+inline xtr::detail::file_descriptor xtr::detail::command_connect(std::string_view path)
+{
+    file_descriptor fd(::socket(AF_LOCAL, SOCK_SEQPACKET, 0));
+
+    if (!fd)
+        return {};
+
+    sockaddr_un addr;
+    addr.sun_family = AF_LOCAL;
+
+    if (path.size() >= sizeof(addr.sun_path))
+    {
+        errno = ENAMETOOLONG;
+        return {};
+    }
+
+    strzcpy(addr.sun_path, path);
+
+#if defined(__linux__)
+    if (addr.sun_path[0] == '\0') // abstract socket
+    {
+        std::memset(
+            addr.sun_path + path.size(),
+            '\0',
+            sizeof(addr.sun_path) - path.size());
+    }
+#endif
+
+    if (::connect(fd.get(), reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) != 0)
+        return {};
+
+    return fd;
 }
 
 #endif

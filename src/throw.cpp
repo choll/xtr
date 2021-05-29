@@ -28,6 +28,31 @@
 #include <stdexcept>
 #include <system_error>
 
+XTR_FUNC void xtr::detail::throw_runtime_error(const char* what)
+{
+#if __cpp_exceptions
+    throw std::runtime_error(what);
+#else
+    std::fprintf(stderr, "runtime error: %s\n", what);
+    std::abort();
+#endif
+}
+
+XTR_FUNC void xtr::detail::throw_runtime_error_fmt(const char* format, ...)
+{
+    va_list args;
+    va_start(args, format);;
+    char buf[1024];
+    std::vsnprintf(buf, sizeof(buf), format, args);
+    va_end(args);
+#if __cpp_exceptions
+    throw std::runtime_error(buf);
+#else
+    std::fprintf(stderr, "runtime error: %s\n", buf);
+    std::abort();
+#endif
+}
+
 XTR_FUNC void xtr::detail::throw_system_error(const char* what)
 {
 #if __cpp_exceptions

@@ -26,6 +26,7 @@
 #include "string_ref.hpp"
 #include "tags.hpp"
 
+#include <concepts>
 #include <cstddef>
 #include <string>
 #include <string_view>
@@ -41,10 +42,10 @@ namespace xtr::detail
     template<typename Tags, typename T, typename Buffer>
     requires
         (std::is_rvalue_reference_v<decltype(std::forward<T>(std::declval<T>()))> &&
-         std::is_same_v<std::remove_cvref_t<T>, std::string>) ||
+         std::same_as<std::remove_cvref_t<T>, std::string>) ||
         (!is_c_string<T>::value &&
-         !std::is_same_v<std::remove_cvref_t<T>, std::string> &&
-         !std::is_same_v<std::remove_cvref_t<T>, std::string_view>)
+         !std::same_as<std::remove_cvref_t<T>, std::string> &&
+         !std::same_as<std::remove_cvref_t<T>, std::string_view>)
     T&& build_string_table(std::byte*&, std::byte*&, Buffer&, T&& value)
     {
         return std::forward<T>(value);
@@ -52,8 +53,8 @@ namespace xtr::detail
 
     template<typename Tags, typename Buffer, typename String>
     requires
-        std::is_same_v<String, std::string> ||
-        std::is_same_v<String, std::string_view>
+        std::same_as<String, std::string> ||
+        std::same_as<String, std::string_view>
     string_ref<const char*> build_string_table(
         std::byte*& pos,
         std::byte*& end,
@@ -108,4 +109,3 @@ namespace xtr::detail
 }
 
 #endif
-

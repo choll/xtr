@@ -55,12 +55,12 @@ public:
 
     ~mirrored_memory_mapping();
 
-    std::byte* get()
+    void* get()
     {
         return m_.get();
     }
 
-    const std::byte* get() const
+    const void* get() const
     {
         return m_.get();
     }
@@ -80,4 +80,3 @@ private:
 };
 
 #endif
-

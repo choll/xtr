@@ -65,7 +65,8 @@ void xtr::detail::file_descriptor::reset(int fd) noexcept
     // POSIX) which makes retrying dangerous because if the file descriptor is
     // closed then a race condition exists---the file descriptor could have
     // been reused by another thread calling open(), so would be incorrectly
-    // closed if close() is retried.
+    // closed if close() is retried. For Linux, the file descriptor is always
+    // closed.
     if (is_open())
         (void)::close(fd_);
     fd_ = fd;

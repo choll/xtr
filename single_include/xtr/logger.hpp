@@ -21,8 +21,9 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-#ifndef XTR_TIMESPEC_HPP
-#define XTR_TIMESPEC_HPP
+
+#ifndef XTR_LOGGER_HPP
+#define XTR_LOGGER_HPP
 
 #include <ctime>
 
@@ -30,16 +31,11 @@ SOFTWARE.
 
 namespace xtr
 {
-    // This class exists to avoid clashing with user code---if a formatter
-    // was created for std::timespec then it may conflict with a user
-    // defined formatter.
     struct timespec : std::timespec
     {
         timespec() = default;
 
-        timespec(std::timespec ts)
-        :
-            std::timespec(ts)
+        timespec(std::timespec ts) : std::timespec(ts)
         {
         }
     };
@@ -51,30 +47,23 @@ namespace fmt
     struct formatter<xtr::timespec>
     {
         template<typename ParseContext>
-        constexpr auto parse(ParseContext &ctx)
+        constexpr auto parse(ParseContext& ctx)
         {
             return ctx.begin();
         }
 
         template<typename FormatContext>
-        auto format(const xtr::timespec ts, FormatContext &ctx)
+        auto format(const xtr::timespec ts, FormatContext& ctx)
         {
             std::tm temp;
-            return
-                fmt::format_to(
-                    ctx.out(),
-                    "{:%Y-%m-%d %T}.{:06}",
-                    *::gmtime_r(&ts.tv_sec, &temp),
-                    ts.tv_nsec / 1000);
+            return fmt::format_to(
+                ctx.out(),
+                "{:%Y-%m-%d %T}.{:06}",
+                *::gmtime_r(&ts.tv_sec, &temp),
+                ts.tv_nsec / 1000);
         }
     };
 }
-
-#endif
-
-
-#ifndef XTR_TAGS_HPP
-#define XTR_TAGS_HPP
 
 namespace xtr
 {
@@ -82,44 +71,25 @@ namespace xtr
     struct timestamp_tag;
 }
 
-#endif
-
-
-#ifndef XTR_DETAIL_THROW_HPP
-#define XTR_DETAIL_THROW_HPP
-
 namespace xtr::detail
 {
-    // errno isn't passed as an argument just to make the calling code
-    // marginally smaller (i.e. avoid a call to __errno_location)
     [[noreturn, gnu::cold]] void throw_system_error(const char* what);
 
-    [[noreturn, gnu::cold, gnu::format(printf, 1, 2)]]
-    void throw_system_error_fmt(const char* format, ...);
+    [[noreturn, gnu::cold, gnu::format(printf, 1, 2)]] void throw_system_error_fmt(
+        const char* format, ...);
 
     [[noreturn, gnu::cold]] void throw_invalid_argument(const char* what);
 }
 
-#endif
-
-
-#ifndef XTR_DETAIL_RETRY_HPP
-#define XTR_DETAIL_RETRY_HPP
-
 #define XTR_TEMP_FAILURE_RETRY(expr)                    \
-    (__extension__                                      \
-        ({                                              \
+    (__extension__(                                     \
+        {                                               \
             decltype(expr) xtr_result;                  \
-            do xtr_result = (expr);                     \
+            do                                          \
+                xtr_result = (expr);                    \
             while (xtr_result == -1 && errno == EINTR); \
             xtr_result;                                 \
         }))
-
-#endif
-
-
-#ifndef XTR_DETAIL_ALIGN_HPP
-#define XTR_DETAIL_ALIGN_HPP
 
 #include <bit>
 #include <cassert>
@@ -129,7 +99,6 @@ namespace xtr::detail
 
 namespace xtr::detail
 {
-    // value is unchanged if it is already aligned
     template<typename T>
     constexpr T align(T value, T alignment) noexcept
     {
@@ -138,27 +107,18 @@ namespace xtr::detail
         return (value + (alignment - 1)) & ~(alignment - 1);
     }
 
-    // Align is only a template argument to allow it to be used with
-    // assume_aligned. Improvement: Make Align a plain argument if it is
-    // possible to do so while still marking the return value as aligned.
     template<std::size_t Align, typename T>
     __attribute__((assume_aligned(Align))) T* align(T* ptr) noexcept
     {
         static_assert(
             std::is_same_v<std::remove_cv_t<T>, std::byte> ||
-            std::is_same_v<std::remove_cv_t<T>, char> ||
-            std::is_same_v<std::remove_cv_t<T>, unsigned char> ||
-            std::is_same_v<std::remove_cv_t<T>, signed char>,
+                std::is_same_v<std::remove_cv_t<T>, char> ||
+                std::is_same_v<std::remove_cv_t<T>, unsigned char> ||
+                std::is_same_v<std::remove_cv_t<T>, signed char>,
             "value must be a char or byte pointer");
         return reinterpret_cast<T*>(align(std::uintptr_t(ptr), Align));
     }
 }
-
-#endif
-
-
-#ifndef XTR_DETAIL_PAGESIZE_HPP
-#define XTR_DETAIL_PAGESIZE_HPP
 
 #include <cstddef>
 
@@ -167,47 +127,33 @@ namespace xtr::detail
     std::size_t align_to_page_size(std::size_t length);
 }
 
-#endif
-
-#ifndef XTR_DETAIL_CPUID_HPP
-#define XTR_DETAIL_CPUID_HPP
-
 #include <array>
 #include <cstdint>
 
-
 namespace xtr::detail
 {
-    constexpr inline std::uint32_t intel_fam6_skylake_l          = 0x4E;
-    constexpr inline std::uint32_t intel_fam6_skylake            = 0x5E;
-    constexpr inline std::uint32_t intel_fam6_kabylake_l         = 0x8E;
-    constexpr inline std::uint32_t intel_fam6_kabylake           = 0x9E;
-    constexpr inline std::uint32_t intel_fam6_cometlake          = 0xA5;
-    constexpr inline std::uint32_t intel_fam6_cometlake_l        = 0xA6;
-    constexpr inline std::uint32_t intel_fam6_atom_tremont_d     = 0x86;
-    constexpr inline std::uint32_t intel_fam6_atom_goldmont_d    = 0x5F;
-    constexpr inline std::uint32_t intel_fam6_atom_goldmont      = 0x5C;
+    constexpr inline std::uint32_t intel_fam6_skylake_l = 0x4E;
+    constexpr inline std::uint32_t intel_fam6_skylake = 0x5E;
+    constexpr inline std::uint32_t intel_fam6_kabylake_l = 0x8E;
+    constexpr inline std::uint32_t intel_fam6_kabylake = 0x9E;
+    constexpr inline std::uint32_t intel_fam6_cometlake = 0xA5;
+    constexpr inline std::uint32_t intel_fam6_cometlake_l = 0xA6;
+    constexpr inline std::uint32_t intel_fam6_atom_tremont_d = 0x86;
+    constexpr inline std::uint32_t intel_fam6_atom_goldmont_d = 0x5F;
+    constexpr inline std::uint32_t intel_fam6_atom_goldmont = 0x5C;
     constexpr inline std::uint32_t intel_fam6_atom_goldmont_plus = 0x7A;
 
     inline std::array<std::uint32_t, 4> cpuid(int leaf, int subleaf = 0) noexcept
     {
         std::array<std::uint32_t, 4> out;
-        asm (
-            "cpuid" :
-            // output
-            "=a" (out[0]),
-            "=b" (out[1]),
-            "=c" (out[2]),
-            "=d" (out[3]) :
-            // input
-            "a" (leaf),
-            "c" (subleaf));
+        asm("cpuid"
+            : "=a"(out[0]), "=b"(out[1]), "=c"(out[2]), "=d"(out[3])
+            : "a"(leaf), "c"(subleaf));
         return out;
     }
 
     inline std::array<std::uint16_t, 2> get_family_model() noexcept
     {
-        // See https://www.felixcloutier.com/x86/cpuid#fig-3-6
         const std::uint32_t fms = cpuid(0x1)[0];
         std::uint16_t model = (fms & 0xF0) >> 4;
         std::uint16_t family = (fms & 0xF00) >> 8;
@@ -215,31 +161,18 @@ namespace xtr::detail
             family |= std::uint16_t((fms & 0xFF00000) >> 16);
         if (family == 0x6 || family == 0xF)
             model |= std::uint16_t((fms & 0xF0000) >> 12);
-        return {family,  model};
+        return {family, model};
     }
 }
-
-#endif
-
-
-#ifndef XTR_DETAIL_IS_C_STRING_HPP
-#define XTR_DETAIL_IS_C_STRING_HPP
 
 #include <type_traits>
 
 namespace xtr::detail
 {
-    // This is long-winded because remove_cv on a const pointer removes const
-    // from the pointer, not from the the object being pointed to, so we have
-    // to use remove_pointer before applying remove_cv. decay turns arrays
-    // into pointers and removes references.
     template<typename T>
-    using is_c_string =
-        std::conjunction<
-            std::is_pointer<std::decay_t<T>>,
-            std::is_same<
-                char,
-                std::remove_cv_t<std::remove_pointer_t<std::decay_t<T>>>>>;
+    using is_c_string = std::conjunction<
+        std::is_pointer<std::decay_t<T>>,
+        std::is_same<char, std::remove_cv_t<std::remove_pointer_t<std::decay_t<T>>>>>;
 
 #if defined(XTR_ENABLE_TEST_STATIC_ASSERTIONS)
     static_assert(is_c_string<char*>::value);
@@ -261,12 +194,6 @@ namespace xtr::detail
 #endif
 }
 
-#endif
-
-
-#ifndef XTR_DETAIL_FILE_DESCRIPTOR_HPP
-#define XTR_DETAIL_FILE_DESCRIPTOR_HPP
-
 #include <utility>
 
 namespace xtr::detail
@@ -279,9 +206,7 @@ class xtr::detail::file_descriptor
 public:
     file_descriptor() = default;
 
-    explicit file_descriptor(int fd)
-    :
-        fd_(fd)
+    explicit file_descriptor(int fd) : fd_(fd)
     {
     }
 
@@ -289,9 +214,7 @@ public:
 
     file_descriptor(const file_descriptor&) = delete;
 
-    file_descriptor(file_descriptor&& other) noexcept
-    :
-        fd_(other.fd_)
+    file_descriptor(file_descriptor&& other) noexcept : fd_(other.fd_)
     {
         other.release();
     }
@@ -334,12 +257,6 @@ private:
     }
 };
 
-#endif
-
-
-#ifndef XTR_DETAIL_MEMORY_MEMORY_MAPPING_HPP
-#define XTR_DETAIL_MEMORY_MEMORY_MAPPING_HPP
-
 #include <cstddef>
 #include <utility>
 
@@ -360,7 +277,7 @@ public:
         std::size_t length,
         int prot,
         int flags,
-        int fd = - 1,
+        int fd = -1,
         std::size_t offset = 0);
 
     memory_mapping(const memory_mapping&) = delete;
@@ -412,16 +329,8 @@ private:
     }
 };
 
-#endif
-
-
-#ifndef XTR_DETAIL_MEMORY_MIRRORED_MEMORY_MAPPING_HPP
-#define XTR_DETAIL_MEMORY_MIRRORED_MEMORY_MAPPING_HPP
-
-
 #include <cstddef>
 #include <utility>
-
 
 namespace xtr::detail
 {
@@ -467,16 +376,9 @@ private:
     memory_mapping m_;
 };
 
-#endif
-
-
-#ifndef XTR_DETAIL_PAUSE_HPP
-#define XTR_DETAIL_PAUSE_HPP
-
 #if defined(__x86_64__)
 #include <emmintrin.h>
 #endif
-
 
 namespace xtr::detail
 {
@@ -488,17 +390,8 @@ namespace xtr::detail
     }
 }
 
-#endif
-
-
-#ifndef XTR_DETAIL_SANITIZE_HPP
-#define XTR_DETAIL_SANITIZE_HPP
-
 namespace xtr::detail
 {
-    // Transforms non-printable characters and backslash to hex (\xFF).
-    // Backslash is treated like this to prevent terminal escape
-    // sequence injection attacks.
     template<typename OutputIterator>
     void sanitize_char_to(OutputIterator& pos, char c)
     {
@@ -517,13 +410,6 @@ namespace xtr::detail
     }
 }
 
-#endif
-
-
-#ifndef XTR_DETAIL_STRING_REF_HPP
-#define XTR_DETAIL_STRING_REF_HPP
-
-
 #include <fmt/core.h>
 
 #include <string>
@@ -537,31 +423,25 @@ namespace xtr::detail
     template<>
     struct string_ref<const char*>
     {
-        explicit string_ref(const char* s)
-        :
-            str(s)
+        explicit string_ref(const char* s) : str(s)
         {
         }
 
-        explicit string_ref(const std::string& s)
-        :
-            str(s.c_str())
+        explicit string_ref(const std::string& s) : str(s.c_str())
         {
         }
 
         const char* str;
     };
 
-    string_ref(const char*) -> string_ref<const char*>;
-    string_ref(const std::string&) -> string_ref<const char*>;
-    string_ref(const std::string_view&) -> string_ref<std::string_view>;
+    string_ref(const char*)->string_ref<const char*>;
+    string_ref(const std::string&)->string_ref<const char*>;
+    string_ref(const std::string_view&)->string_ref<std::string_view>;
 
     template<>
     struct string_ref<std::string_view>
     {
-        explicit string_ref(std::string_view s)
-        :
-            str(s)
+        explicit string_ref(std::string_view s) : str(s)
         {
         }
 
@@ -575,13 +455,13 @@ namespace fmt
     struct formatter<xtr::detail::string_ref<const char*>>
     {
         template<typename ParseContext>
-        constexpr auto parse(ParseContext &ctx)
+        constexpr auto parse(ParseContext& ctx)
         {
             return ctx.begin();
         }
 
         template<typename FormatContext>
-        auto format(xtr::detail::string_ref<const char*> ref, FormatContext &ctx)
+        auto format(xtr::detail::string_ref<const char*> ref, FormatContext& ctx)
         {
             auto pos = ctx.out();
             while (*ref.str != '\0')
@@ -594,13 +474,15 @@ namespace fmt
     struct formatter<xtr::detail::string_ref<std::string_view>>
     {
         template<typename ParseContext>
-        constexpr auto parse(ParseContext &ctx)
+        constexpr auto parse(ParseContext& ctx)
         {
             return ctx.begin();
         }
 
         template<typename FormatContext>
-        auto format(const xtr::detail::string_ref<std::string_view> ref, FormatContext &ctx)
+        auto format(
+            const xtr::detail::string_ref<std::string_view> ref,
+            FormatContext& ctx)
         {
             auto pos = ctx.out();
             for (const char c : ref.str)
@@ -609,13 +491,6 @@ namespace fmt
         }
     };
 }
-
-#endif
-
-
-#ifndef XTR_DETAIL_TAGS_HPP
-#define XTR_DETAIL_TAGS_HPP
-
 
 #include <type_traits>
 
@@ -657,13 +532,6 @@ namespace xtr::detail
         detect_tag<timestamp_tag, Tags>::value;
 }
 
-#endif
-
-
-#ifndef XTR_DETAIL_SYNCHRONIZED_RING_BUFFER_HPP
-#define XTR_DETAIL_SYNCHRONIZED_RING_BUFFER_HPP
-
-
 #include <atomic>
 #include <bit>
 #include <cstddef>
@@ -688,17 +556,17 @@ namespace xtr::detail
     template<std::size_t N>
     struct least_uint
     {
-        typedef
+        typedef std::conditional_t<
+            N <= std::size_t{std::numeric_limits<std::uint8_t>::max()},
+            std::uint8_t,
             std::conditional_t<
-                N <= std::size_t{std::numeric_limits<std::uint8_t>::max()},
-                std::uint8_t,
+                N <= std::size_t{std::numeric_limits<std::uint16_t>::max()},
+                std::uint16_t,
                 std::conditional_t<
-                    N <= std::size_t{std::numeric_limits<std::uint16_t>::max()},
-                    std::uint16_t,
-                    std::conditional_t<
-                        N <= std::size_t{std::numeric_limits<std::uint32_t>::max()},
-                        std::uint32_t,
-                        std::uint64_t>>> type;
+                    N <= std::size_t{std::numeric_limits<std::uint32_t>::max()},
+                    std::uint32_t,
+                    std::uint64_t>>>
+            type;
     };
 
     template<std::size_t N>
@@ -716,19 +584,17 @@ namespace xtr::detail
     static_assert(std::is_same<std::uint8_t, least_uint_t<0UL>>::value);
     static_assert(std::is_same<std::uint8_t, least_uint_t<255UL>>::value);
 
-    static_assert(std::is_same<std::uint16_t,least_uint_t<256UL>>::value);
+    static_assert(std::is_same<std::uint16_t, least_uint_t<256UL>>::value);
     static_assert(std::is_same<std::uint16_t, least_uint_t<65535UL>>::value);
 
     static_assert(std::is_same<std::uint32_t, least_uint_t<65536UL>>::value);
     static_assert(std::is_same<std::uint32_t, least_uint_t<4294967295UL>>::value);
 
     static_assert(std::is_same<std::uint64_t, least_uint_t<4294967296UL>>::value);
-    static_assert(std::is_same<std::uint64_t, least_uint_t<18446744073709551615UL>>::value);
+    static_assert(
+        std::is_same<std::uint64_t, least_uint_t<18446744073709551615UL>>::value);
 #endif
 
-    // XXX Put in detail/ directory? explain non-use of std::span?
-    // Probably ring buffer should be in detail too,
-    // everything except the logger really
     template<typename T, typename SizeType>
     class span
     {
@@ -739,8 +605,7 @@ namespace xtr::detail
 
         span() = default;
 
-        span(const span<std::remove_const_t<T>, SizeType>& other) noexcept
-        :
+        span(const span<std::remove_const_t<T>, SizeType>& other) noexcept :
             begin_(other.begin()),
             size_(other.size())
         {
@@ -753,15 +618,13 @@ namespace xtr::detail
             return *this;
         }
 
-        span(iterator begin, iterator end)
-        :
+        span(iterator begin, iterator end) :
             begin_(begin),
             size_(size_type(end - begin))
         {
             assert(begin <= end);
             assert(
-                size_type(end - begin) <=
-                    std::numeric_limits<size_type>::max());
+                size_type(end - begin) <= std::numeric_limits<size_type>::max());
         }
 
         [[nodiscard]] constexpr size_type size() const noexcept
@@ -797,10 +660,6 @@ public:
     using iterator = std::byte*;
     using const_iterator = const std::byte*;
     using size_type = std::size_t;
-
-    //using span = yeti::span<std::byte>;
-    //using const_span = yeti::span<const std::byte>;
-
     using span = detail::span<std::byte, size_type>;
     using const_span = detail::span<const std::byte, size_type>;
 
@@ -810,8 +669,7 @@ public:
     synchronized_ring_buffer(
         int fd = -1,
         std::size_t offset = 0,
-        int flags = srb_flags)
-    requires (!is_dynamic)
+        int flags = srb_flags) requires(!is_dynamic)
     {
         m_ = mirrored_memory_mapping{capacity(), fd, offset, flags};
         nread_plus_capacity_ = wrnread_plus_capacity_ = capacity();
@@ -822,19 +680,16 @@ public:
         size_type min_capacity,
         int fd = -1,
         std::size_t offset = 0,
-        int flags = srb_flags)
-    requires is_dynamic
-    :
-        m_(
-            align_to_page_size(
+        int flags = srb_flags) requires is_dynamic :
+        m_(align_to_page_size(
 #if defined(__cpp_lib_int_pow2) && __cpp_lib_int_pow2 >= 202002L
-                std::bit_ceil(min_capacity)),
+               std::bit_ceil(min_capacity)),
 #else
-                std::ceil2(min_capacity)),
+               std::ceil2(min_capacity)),
 #endif
-            fd,
-            offset,
-            flags)
+           fd,
+           offset,
+           flags)
     {
         assert(capacity() <= std::numeric_limits<size_type>::max());
         wrbase_ = begin();
@@ -850,8 +705,6 @@ public:
             return Capacity;
     }
 
-    // write_span() returns a contiguous span of bytes currently available
-    // for writing into the buffer.
     template<typename Tags = void()>
     span write_span(size_type minsize = 0) noexcept
     {
@@ -866,18 +719,19 @@ public:
         size_type sz = wrnread_plus_capacity_ - wrnwritten_;
         const auto b = wrbase_ + clamp(wrnwritten_, wrcapacity());
 
-        while (sz < minsize) [[unlikely]]
-        {
-            if constexpr (!is_non_blocking_v<Tags>)
-                pause();
+        while (sz < minsize)
+            [[unlikely]]
+            {
+                if constexpr (!is_non_blocking_v<Tags>)
+                    pause();
 
-            wrnread_plus_capacity_ =
-                nread_plus_capacity_.load(std::memory_order_acquire);
-            sz = wrnread_plus_capacity_ - wrnwritten_;
+                wrnread_plus_capacity_ =
+                    nread_plus_capacity_.load(std::memory_order_acquire);
+                sz = wrnread_plus_capacity_ - wrnwritten_;
 
-            if constexpr (is_non_blocking_v<Tags>)
-                break;
-        }
+                if constexpr (is_non_blocking_v<Tags>)
+                    break;
+            }
 
         if (is_non_blocking_v<Tags> && sz < minsize) [[unlikely]]
         {
@@ -885,7 +739,6 @@ public:
             return span{};
         }
 
-        // span must always begin in the first mapping
         assert(b >= begin());
         assert(b < end());
         return {b, b + sz};
@@ -900,8 +753,6 @@ public:
     void reduce_writable(size_type nbytes) noexcept
     {
         assert(nbytes <= nread_plus_capacity_.load() - nwritten_.load());
-        // This release pairs with the acquire in read_span(). No reads or writes
-        // in the current thread can be reordered after this store.
         nwritten_.fetch_add(nbytes, std::memory_order_release);
         wrnwritten_ += nbytes;
     }
@@ -913,15 +764,10 @@ public:
 
     span read_span() noexcept
     {
-        // read_span() returns a contiguous span of bytes currently available to
-        // be read from the buffer.
         const size_type nr =
             nread_plus_capacity_.load(std::memory_order_relaxed) - capacity();
         const auto b = begin() + clamp(nr, capacity());
-        // This acquire pairs with the release in reduce_writable(). No reads or
-        // writes in the current thread can be reordered before this load.
         const size_type sz = nwritten_.load(std::memory_order_acquire) - nr;
-        // span must always begin in the first mapping
         assert(b >= begin());
         assert(b < end());
         return {b, b + sz};
@@ -929,10 +775,10 @@ public:
 
     void reduce_readable(size_type nbytes) noexcept
     {
-        // This release pairs with the acquire in write_span(). No reads or writes
-        // in the current thread can be reordered after this store.
         nread_plus_capacity_.fetch_add(nbytes, std::memory_order_release);
+#if !defined(XTR_THREAD_SANITIZER_ENABLED)
         assert(nread_plus_capacity_.load() - nwritten_.load() <= capacity());
+#endif
     }
 
     iterator begin() noexcept
@@ -968,7 +814,7 @@ private:
 #else
         std::ispow2(Capacity)
 #endif
-        );
+    );
     static_assert(is_dynamic || Capacity > 0);
     static_assert(is_dynamic || Capacity <= std::numeric_limits<size_type>::max());
 
@@ -983,134 +829,27 @@ private:
     size_type clamp(size_type n, size_type capacity)
     {
         assert(capacity > 0);
-        // Clamping/wrapping can be optimised away if one minus the buffer
-        // capacity is the same as the maximum value representible by rdoff
-        // and wroff
         using clamp_type =
-            std::conditional_t<
-                is_dynamic,
-                size_type,
-                least_uint_t<Capacity - 1>>;
+            std::conditional_t<is_dynamic, size_type, least_uint_t<Capacity - 1>>;
         return clamp_type(n) & clamp_type(capacity - 1);
     }
 
-    struct empty{};
+    struct empty
+    {
+    };
     using capacity_type = std::conditional_t<is_dynamic, size_type, empty>;
 
-    // Shared, but written by the writer only:
     alignas(cacheline_size) std::atomic<size_type> nwritten_{};
-    // Writer data, wrbase shadows m_.get() and wrcapacity shadows m_.length()
-    // to reduce the number of cache lines accessed while also avoiding false
-    // sharing (otherwise m_ would need to be cache-line aligned to avoid false
-    // sharing):
     alignas(cacheline_size) std::byte* wrbase_{};
     [[no_unique_address]] capacity_type wrcapacity_;
     size_type wrnread_plus_capacity_;
     size_type wrnwritten_{};
 
-    // Shared, but written by the reader only:
     alignas(cacheline_size) std::atomic<size_type> nread_plus_capacity_{};
-    // Reader data, note that the first member of mirrored_memory_mapping
-    // is a pointer to the mapping:
     mirrored_memory_mapping m_;
 
-    // Written by both the reader and writer
     alignas(cacheline_size) std::atomic<size_type> dropped_count_{};
 };
-
-#endif
-
-
-#ifndef XTR_DETAIL_INTERPROCESS_RING_BUFFER_HPP
-#define XTR_DETAIL_INTERPROCESS_RING_BUFFER_HPP
-
-
-#include <cassert>
-
-namespace xtr::detail
-{
-    class interprocess_ring_buffer;
-}
-
-    // So, the issue is that this will not store control variables in the
-    // buffer... what you actually need is to create a normal memory mapping,
-    //
-    // synchronized_ring_buffer could accept a mirrored_memory_mapping?
-    //
-    // So:
-    //
-    // open fd, ftruncate to getpagesize()+64*1024
-    //
-    // memory_mapping control_{nullptr, getpagesize(), prot, flags, fd};
-    // mirrored_memory_mapping buf_{64*1024, fd, getpagesize(), ;
-    //
-    // synchronized_ring_buffer* ring_buffer =
-    //     new(control_.get()) synchronized_ring_buffer
-    //
-    //
-    //    const int fd = /*YETI_TEMP_FAILURE_RETRY*/(open(path, flags, mode));
-    //    if (fd == -1)
-    //    {
-            //throw_system_error_fmt(
-            //    "xtr::synchronized_ring_buffer::synchronized_ring_buffer: "
-            //    "Failed to open `%s'", path);
-    //    }
-    //
-    //
-
-class xtr::detail::interprocess_ring_buffer
-{
-private:
-    static constexpr std::size_t capacity = 64 * 1024;
-
-    using ring_buffer = synchronized_ring_buffer<capacity>;
-
-public:
-    using span = ring_buffer::span;
-    using const_span = ring_buffer::const_span;
-    using size_type = ring_buffer::size_type;
-
-    explicit interprocess_ring_buffer(const char* path, int flags, int mode = 0);
-
-    interprocess_ring_buffer() = default;
-    interprocess_ring_buffer(interprocess_ring_buffer&&) = default;
-    interprocess_ring_buffer& operator=(interprocess_ring_buffer&&) = default;
-
-    ~interprocess_ring_buffer();
-
-    const_span read_span() noexcept
-    {
-        if (!buf_) [[unlikely]]
-            return span{};
-        return ring_buf()->read_span();
-    }
-
-    span write_span() noexcept
-    {
-        if (!buf_) [[unlikely]]
-            return span{};
-        return ring_buf()->write_span();
-    }
-
-    void reduce_readable(size_type nbytes) noexcept
-    {
-        ring_buf()->reduce_readable(nbytes);
-    }
-
-private:
-    ring_buffer* ring_buf() noexcept
-    {
-        return static_cast<ring_buffer*>(buf_.get());
-    }
-
-    memory_mapping buf_;
-};
-
-#endif
-
-#ifndef XTR_DETAIL_TSC_HPP
-#define XTR_DETAIL_TSC_HPP
-
 
 #include <cstdint>
 #include <ctime>
@@ -1137,11 +876,9 @@ struct xtr::detail::tsc
     inline static tsc now() noexcept
     {
         std::uint32_t a, d;
-        asm volatile(
-            "rdtsc;"
-            : "=a" (a), "=d" (d)); // output, a=eax, d=edx
-        return
-            {static_cast<std::uint64_t>(a) | (static_cast<uint64_t>(d) << 32)};
+        asm volatile("rdtsc;" : "=a"(a), "=d"(d)); // output, a=eax, d=edx
+        return {
+            static_cast<std::uint64_t>(a) | (static_cast<uint64_t>(d) << 32)};
     }
 
     static std::timespec to_timespec(tsc ts);
@@ -1155,13 +892,13 @@ namespace fmt
     struct formatter<xtr::detail::tsc>
     {
         template<typename ParseContext>
-        constexpr auto parse(ParseContext &ctx)
+        constexpr auto parse(ParseContext& ctx)
         {
             return ctx.begin();
         }
 
         template<typename FormatContext>
-        auto format(const xtr::detail::tsc ticks, FormatContext &ctx)
+        auto format(const xtr::detail::tsc ticks, FormatContext& ctx)
         {
             const auto ts = xtr::detail::tsc::to_timespec(ticks);
             return formatter<xtr::timespec>().format(ts, ctx);
@@ -1169,16 +906,11 @@ namespace fmt
     };
 }
 
-#endif
-
-#ifndef XTR_DETAIL_CLOCK_IDS_HPP
-#define XTR_DETAIL_CLOCK_IDS_HPP
-
 #include <time.h>
 
 #if defined(CLOCK_REALTIME_COARSE)
 #define XTR_CLOCK_REALTIME_FAST CLOCK_REALTIME_COARSE
-#elif defined (CLOCK_REALTIME_FAST)
+#elif defined(CLOCK_REALTIME_FAST)
 #define XTR_CLOCK_REALTIME_FAST CLOCK_REALTIME_FAST
 #else
 #define XTR_CLOCK_REALTIME_FAST CLOCK_REALTIME
@@ -1192,11 +924,13 @@ namespace fmt
 
 #define XTR_CLOCK_WALL CLOCK_REALTIME
 
+#if defined(CLOCK_MONOTONIC_COARSE)
+#define XTR_CLOCK_MONOTONIC_FAST CLOCK_MONOTONIC_COARSE
+#elif defined(CLOCK_MONOTONIC_FAST)
+#define XTR_CLOCK_MONOTONIC_FAST CLOCK_MONOTONIC_FAST
+#else
+#define XTR_CLOCK_MONOTONIC_FAST CLOCK_MONOTONIC
 #endif
-
-#ifndef XTR_DETAIL_GET_TIME_HPP
-#define XTR_DETAIL_GET_TIME_HPP
-
 
 #include <ctime>
 
@@ -1213,13 +947,6 @@ namespace xtr::detail
     }
 }
 
-#endif
-
-
-#ifndef XTR_DETAIL_PRINT_HPP
-#define XTR_DETAIL_PRINT_HPP
-
-
 #include <fmt/format.h>
 
 #include <cstddef>
@@ -1228,7 +955,7 @@ namespace xtr::detail
 
 namespace xtr::detail
 {
-    template<typename ErrorFunction,typename Timestamp>
+    template<typename ErrorFunction, typename Timestamp>
     [[gnu::cold, gnu::noinline]] void report_error(
         fmt::memory_buffer& mbuf,
         const ErrorFunction& err,
@@ -1238,7 +965,7 @@ namespace xtr::detail
     {
         using namespace std::literals::string_view_literals;
         mbuf.clear();
-        fmt::format_to(mbuf, "{}: {}: Error: {}\n"sv, ts, name, reason);
+        fmt::format_to(mbuf, "E {} {}: Error: {}\n"sv, ts, name, reason);
         err(mbuf.data(), mbuf.size());
     }
 
@@ -1293,12 +1020,6 @@ namespace xtr::detail
         print(mbuf, out, err, fmt, ts, name, args...);
     }
 }
-
-#endif
-
-
-#ifndef XTR_DETAIL_STRING_HPP
-#define XTR_DETAIL_STRING_HPP
 
 #include <cstddef>
 #include <string_view>
@@ -1387,13 +1108,6 @@ namespace xtr::detail
 #endif
 }
 
-#endif
-
-
-#ifndef XTR_DETAIL_STRING_TABLE_HPP
-#define XTR_DETAIL_STRING_TABLE_HPP
-
-
 #include <concepts>
 #include <cstddef>
 #include <string>
@@ -1402,45 +1116,37 @@ namespace xtr::detail
 
 namespace xtr::detail
 {
-    // Forward if T is either:
-    // * std::string&&
-    // * Not a C string, string, or string_view
-    // C string and string_view r-value references are not forwarded because
-    // they are non-owning so being moved is meaningless.
     template<typename Tags, typename T, typename Buffer>
-    requires
-        (std::is_rvalue_reference_v<decltype(std::forward<T>(std::declval<T>()))> &&
-         std::same_as<std::remove_cvref_t<T>, std::string>) ||
+    requires(
+        std::is_rvalue_reference_v<decltype(std::forward<T>(std::declval<T>()))>&&
+            std::same_as<std::remove_cvref_t<T>, std::string>) ||
         (!is_c_string<T>::value &&
          !std::same_as<std::remove_cvref_t<T>, std::string> &&
          !std::same_as<std::remove_cvref_t<T>, std::string_view>)
-    T&& build_string_table(std::byte*&, std::byte*&, Buffer&, T&& value)
+            T&& build_string_table(std::byte*&, std::byte*&, Buffer&, T&& value)
     {
         return std::forward<T>(value);
     }
 
     template<typename Tags, typename Buffer, typename String>
-    requires
-        std::same_as<String, std::string> ||
+    requires std::same_as<String, std::string> ||
         std::same_as<String, std::string_view>
-    string_ref<const char*> build_string_table(
-        std::byte*& pos,
-        std::byte*& end,
-        Buffer& buf,
-        const String& sv)
+            string_ref<const char*> build_string_table(
+                std::byte*& pos, std::byte*& end, Buffer& buf, const String& sv)
     {
         std::byte* str_end = pos + sv.length();
-        while (end < str_end + 1) [[unlikely]]
-        {
-            detail::pause();
-            const auto s = buf.write_span();
-            if (s.end() < str_end + 1) [[unlikely]]
+        while (end < str_end + 1)
+            [[unlikely]]
             {
-                if (s.size() == buf.capacity() || is_non_blocking_v<Tags>)
-                    return string_ref("<truncated>");
+                detail::pause();
+                const auto s = buf.write_span();
+                if (s.end() < str_end + 1) [[unlikely]]
+                {
+                    if (s.size() == buf.capacity() || is_non_blocking_v<Tags>)
+                        return string_ref("<truncated>");
+                }
+                end = s.end();
             }
-            end = s.end();
-        }
         const char* result = reinterpret_cast<char*>(pos);
         const char* str = sv.data();
         while (pos != str_end)
@@ -1451,37 +1157,29 @@ namespace xtr::detail
 
     template<typename Tags, typename Buffer>
     string_ref<const char*> build_string_table(
-        std::byte*& pos,
-        std::byte*& end,
-        Buffer& buf,
-        const char* str)
+        std::byte*& pos, std::byte*& end, Buffer& buf, const char* str)
     {
         const char* result = reinterpret_cast<char*>(pos);
         do
         {
-            while (pos == end) [[unlikely]]
-            {
-                detail::pause();
-                const auto s = buf.write_span();
-                if (s.end() == end) [[unlikely]]
+            while (pos == end)
+                [[unlikely]]
                 {
-                    if (s.size() == buf.capacity() || is_non_blocking_v<Tags>)
-                        return string_ref("<truncated>");
+                    detail::pause();
+                    const auto s = buf.write_span();
+                    if (s.end() == end) [[unlikely]]
+                    {
+                        if (s.size() == buf.capacity() ||
+                            is_non_blocking_v<Tags>)
+                            return string_ref("<truncated>");
+                    }
+                    end = s.end();
                 }
-                end = s.end();
-            }
             new (pos++) char(*str);
         } while (*str++ != '\0');
         return string_ref(result);
     }
 }
-
-#endif
-
-
-#ifndef XTR_DETAIL_TRAMPOLINES_HPP
-#define XTR_DETAIL_TRAMPOLINES_HPP
-
 
 #include <fmt/format.h>
 
@@ -1492,9 +1190,6 @@ namespace xtr::detail
 
 namespace xtr::detail
 {
-    // trampoline_no_capture
-    // trampoline_fixed_size_capture
-    // trampoline_variable_size_capture
 
     template<auto Format, typename State>
     std::byte* trampoline0(
@@ -1502,10 +1197,10 @@ namespace xtr::detail
         std::byte* buf,
         State& state,
         const char* ts,
-        const std::string& name) noexcept
+        std::string& name) noexcept
     {
         print(mbuf, state.out, state.err, *Format, ts, name);
-        return buf + sizeof(void(*)());
+        return buf + sizeof(void (*)());
     }
 
     template<auto Format, typename State, typename Func>
@@ -1514,9 +1209,9 @@ namespace xtr::detail
         std::byte* buf,
         State& state,
         [[maybe_unused]] const char* ts,
-        const std::string& name) noexcept
+        std::string& name) noexcept
     {
-        typedef void(*fptr_t)();
+        typedef void (*fptr_t)();
 
         auto func_pos = buf + sizeof(fptr_t);
         if constexpr (alignof(Func) > alignof(fptr_t))
@@ -1524,11 +1219,9 @@ namespace xtr::detail
 
         assert(std::uintptr_t(func_pos) % alignof(Func) == 0);
 
-        // Invoke lambda, the first call is for commands sent to the consumer
-        // thread such as adding a new producer or modifying the output stream.
         auto& func = *reinterpret_cast<Func*>(func_pos);
         if constexpr (std::is_same_v<decltype(Format), std::nullptr_t>)
-            func(state);
+            func(state, name);
         else
             func(mbuf, state.out, state.err, *Format, ts, name);
 
@@ -1544,9 +1237,9 @@ namespace xtr::detail
         std::byte* buf,
         State& state,
         const char* ts,
-        const std::string& name) noexcept
+        std::string& name) noexcept
     {
-        typedef void(*fptr_t)();
+        typedef void (*fptr_t)();
 
         auto size_pos = buf + sizeof(fptr_t);
         assert(std::uintptr_t(size_pos) % alignof(std::size_t) == 0);
@@ -1566,21 +1259,318 @@ namespace xtr::detail
     }
 }
 
-#endif
+#include <algorithm>
+#include <cstring>
+#include <iterator>
 
+namespace xtr::detail
+{
+    template<std::size_t DstSz, typename Src>
+    void strzcpy(char (&dst)[DstSz], const Src& src)
+    {
+        const std::size_t n = std::min(DstSz - 1, std::size(src));
+        std::memcpy(dst, &src[0], n);
+        dst[n] = '\0';
+    }
+}
 
-#ifndef XTR_LOGGER_HPP
-#define XTR_LOGGER_HPP
+namespace xtr
+{
+    enum class log_level_t
+    {
+        none,
+        fatal,
+        error,
+        warning,
+        info,
+        debug
+    };
+}
 
+#include <type_traits>
+
+namespace xtr::detail
+{
+    enum class frame_id_t
+    {
+        status,
+        set_level,
+        sink_info,
+        success,
+        error
+    };
+
+    struct frame_header
+    {
+        frame_id_t frame_id;
+    };
+
+    template<typename Payload>
+    struct frame : frame_header
+    {
+        static_assert(std::is_standard_layout_v<Payload>);
+        static_assert(std::is_trivially_destructible_v<Payload>);
+        static_assert(std::is_trivially_copyable_v<Payload>);
+
+        using payload_type = Payload;
+
+        frame()
+        {
+            frame_id = Payload::frame_id;
+        }
+
+        Payload* operator->()
+        {
+            return &payload;
+        }
+
+        [[no_unique_address]] Payload payload{};
+    };
+}
+
+namespace xtr::detail
+{
+    enum class pattern_type_t
+    {
+        none,
+        regex,
+        wildcard
+    };
+
+    struct pattern
+    {
+        pattern_type_t type;
+        bool ignore_case;
+        char text[256];
+    };
+}
+
+namespace xtr::detail
+{
+    struct status
+    {
+        static constexpr auto frame_id = frame_id_t::status;
+
+        struct pattern pattern;
+    };
+
+    struct set_level
+    {
+        static constexpr auto frame_id = frame_id_t::set_level;
+
+        log_level_t level;
+        struct pattern pattern;
+    };
+}
+
+namespace xtr::detail
+{
+    struct sink_info
+    {
+        static constexpr auto frame_id = frame_id_t::sink_info;
+
+        log_level_t level;
+        std::size_t buf_capacity;
+        std::size_t buf_nbytes;
+        std::size_t dropped_count;
+        char name[128];
+    };
+
+    struct success
+    {
+        static constexpr auto frame_id = frame_id_t::success;
+    };
+
+    struct error
+    {
+        static constexpr auto frame_id = frame_id_t::error;
+
+        char reason[256];
+    };
+}
+
+namespace xtr::detail
+{
+    class command_dispatcher;
+
+    struct command_dispatcher_deleter
+    {
+        void operator()(command_dispatcher*);
+    };
+}
+
+#include <cstddef>
+#include <cstdint>
+#include <functional>
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include <vector>
+
+#include <poll.h>
+
+namespace xtr::detail
+{
+    class command_dispatcher;
+}
+
+class xtr::detail::command_dispatcher
+{
+private:
+    struct pollfd
+    {
+        detail::file_descriptor fd;
+        short events;
+        short revents;
+    };
+
+    static_assert(sizeof(pollfd) == sizeof(::pollfd));
+    static_assert(alignof(pollfd) == alignof(::pollfd));
+
+    struct buffer
+    {
+        buffer(const void* srcbuf, std::size_t srcsize);
+
+        std::unique_ptr<char[]> buf;
+        std::size_t size;
+    };
+
+    struct callback_result
+    {
+        std::vector<buffer> bufs;
+        std::size_t pos = 0;
+    };
+
+    struct callback
+    {
+        std::function<void(int, void*)> func;
+        std::size_t size;
+    };
+
+public:
+    explicit command_dispatcher(std::string path);
+
+    ~command_dispatcher();
+
+    template<typename Payload, typename Callback>
+    void register_callback(Callback&& c)
+    {
+        using frame_type = detail::frame<Payload>;
+        callbacks_[Payload::frame_id] = callback{
+            [c = std::forward<Callback>(c)](int fd, void* buf)
+            { c(fd, static_cast<frame_type*>(buf)->payload); },
+            sizeof(frame_type)};
+    }
+
+    void send(int fd, const void* buf, std::size_t nbytes);
+
+    template<typename FrameType>
+    void send(int fd, const FrameType& frame)
+    {
+        send(fd, &frame, sizeof(frame));
+    }
+
+    void send_error(int fd, std::string_view reason);
+
+    void read_commands() noexcept;
+
+    bool is_open() const noexcept
+    {
+        return !pollfds_.empty();
+    }
+
+private:
+    void disconnect(std::size_t n);
+
+    std::unordered_map<frame_id_t, callback> callbacks_;
+    std::vector<pollfd> pollfds_;
+    std::unordered_map<int, callback_result> results_;
+    std::string path_;
+};
+
+#include <cstddef>
+#include <memory>
+
+namespace xtr::detail
+{
+    class matcher;
+
+    std::unique_ptr<matcher> make_matcher(
+        pattern_type_t pattern_type, const char* pattern, bool ignore_case);
+}
+
+class xtr::detail::matcher
+{
+public:
+    virtual bool operator()(const char*) const
+    {
+        return true;
+    }
+
+    virtual bool valid() const
+    {
+        return true;
+    }
+
+    virtual void error_reason(char*, std::size_t) const
+    {
+    }
+};
+
+#include <regex.h>
+
+namespace xtr::detail
+{
+    class regex_matcher;
+}
+
+class xtr::detail::regex_matcher : public matcher
+{
+public:
+    regex_matcher(const char* pattern, bool ignore_case);
+
+    ~regex_matcher();
+
+    regex_matcher(const regex_matcher&) = delete;
+    regex_matcher& operator=(const regex_matcher&) = delete;
+
+    bool valid() const override;
+
+    void error_reason(char* buf, std::size_t bufsz) const override;
+
+    bool operator()(const char* str) const override;
+
+private:
+    ::regex_t regex_;
+    int errnum_;
+};
+
+namespace xtr::detail
+{
+    class wildcard_matcher;
+}
+
+class xtr::detail::wildcard_matcher : public matcher
+{
+public:
+    wildcard_matcher(const char* pattern, bool ignore_case);
+
+    bool operator()(const char* str) const override;
+
+private:
+    const char* pattern_ = nullptr;
+    int flags_;
+};
 
 #include <fmt/format.h>
 
 #include <algorithm>
-#include <concepts>
+#include <atomic>
 #include <chrono>
+#include <concepts>
 #include <cstddef>
-#include <cstdio>
 #include <cstdint>
+#include <cstdio>
 #include <ctime>
 #include <functional>
 #include <memory>
@@ -1596,75 +1586,85 @@ namespace xtr::detail
 
 #include <unistd.h>
 
-#define XTR_LIKELY(x)      __builtin_expect(!!(x), 1)
-#define XTR_UNLIKELY(x)    __builtin_expect(!!(x), 0)
+#define XTR_LIKELY(x)   __builtin_expect(!!(x), 1)
+#define XTR_UNLIKELY(x) __builtin_expect(!!(x), 0)
 
+#define XTR_LOG(...) \
+    (__extension__({ XTR_LOG_TAGS(void(), "I", __VA_ARGS__); }))
 
-#define XTR_LOG(...)                            \
-    (__extension__                              \
-        ({                                      \
-            XTR_LOG_TAGS(void(), __VA_ARGS__);  \
-        }))
+#define XTR_TRY_LOG(...) \
+    (__extension__({ XTR_LOG_TAGS(xtr::non_blocking_tag, "I", __VA_ARGS__); }))
 
-#define XTR_TRY_LOG(...)                                        \
-    (__extension__                                              \
-        ({                                                      \
-            XTR_LOG_TAGS(xtr::non_blocking_tag, __VA_ARGS__);   \
-        }))
+#define XTR_LOG_TS(...) XTR_LOG_TAGS(xtr::timestamp_tag, "I", __VA_ARGS__)
 
-#define XTR_LOG_TS(...)            \
-    XTR_LOG_TAGS(                  \
-        xtr::timestamp_tag         \
-        __VA_OPT__(,) __VA_ARGS__)
+#define XTR_TRY_LOG_TS(...) \
+    XTR_LOG_TAGS((xtr::non_blocking_tag, xtr::timestamp_tag), "I", __VA_ARGS__)
 
-#define XTR_TRY_LOG_TS(...)         \
-    XTR_LOG_TAGS(                   \
-        (xtr::non_blocking_tag,     \
-            xtr::timestamp_tag)     \
-        __VA_OPT__(,) __VA_ARGS__)
+#define XTR_LOG_RTC(SINK, FMT, ...)                                     \
+    XTR_LOG_TS(                                                         \
+        SINK,                                                           \
+        FMT,                                                            \
+        xtr::detail::get_time<XTR_CLOCK_REALTIME_FAST>() __VA_OPT__(, ) \
+            __VA_ARGS__)
 
-#define XTR_LOG_RTC(SINK, FMT, ...)                         \
-    XTR_LOG_TS(                                             \
-        SINK,                                               \
-        FMT,                                                \
-        xtr::detail::get_time<XTR_CLOCK_REALTIME_FAST>()    \
-        __VA_OPT__(,) __VA_ARGS__)
-
-#define XTR_TRY_LOG_RTC(SINK, FMT, ...)                     \
-    XTR_TRY_LOG_TS(                                         \
-        SINK,                                               \
-        FMT,                                                \
-        xtr::detail::get_time<XTR_CLOCK_REALTIME_FAST>()    \
-        __VA_OPT__(,) __VA_ARGS__)
+#define XTR_TRY_LOG_RTC(SINK, FMT, ...)                                 \
+    XTR_TRY_LOG_TS(                                                     \
+        SINK,                                                           \
+        FMT,                                                            \
+        xtr::detail::get_time<XTR_CLOCK_REALTIME_FAST>() __VA_OPT__(, ) \
+            __VA_ARGS__)
 
 #define XTR_LOG_TSC(SINK, FMT, ...) \
-    XTR_LOG_TS(                     \
-        SINK,                       \
-        FMT,                        \
-        xtr::detail::tsc::now()     \
-        __VA_OPT__(,) __VA_ARGS__)
+    XTR_LOG_TS(SINK, FMT, xtr::detail::tsc::now() __VA_OPT__(, ) __VA_ARGS__)
 
 #define XTR_TRY_LOG_TSC(SINK, FMT, ...) \
-    XTR_TRY_LOG_TS(                     \
-        SINK,                           \
-        FMT,                            \
-        xtr::detail::tsc::now()         \
-        __VA_OPT__(,) __VA_ARGS__)
+    XTR_TRY_LOG_TS(SINK, FMT, xtr::detail::tsc::now() __VA_OPT__(, ) __VA_ARGS__)
+
+#define XTR_LOG_LEVEL(LEVELSTR, LEVEL, SINK, FMT, ...)                  \
+    (__extension__(                                                     \
+        {                                                               \
+            if ((SINK).level() >= xtr::log_level_t::LEVEL)              \
+                XTR_LOG_TAGS(void(), LEVELSTR, SINK, FMT, __VA_ARGS__); \
+        }))
+
+#define XTR_LOG_FATAL(SINK, ...)                          \
+    (__extension__(                                       \
+        {                                                 \
+            XTR_LOG_LEVEL("F", fatal, SINK, __VA_ARGS__); \
+            (SINK).sync();                                \
+            std::abort();                                 \
+        }))
+
+#define XTR_LOG_ERROR(...) XTR_LOG_LEVEL("E", error, __VA_ARGS__)
+#define XTR_LOG_WARN(...)  XTR_LOG_LEVEL("W", warning, __VA_ARGS__)
+#define XTR_LOG_INFO(...)  XTR_LOG_LEVEL("I", info, __VA_ARGS__)
+
+#if defined(XTR_NDEBUG)
+#define XTR_LOG_DEBUG(...)
+#else
+#define XTR_LOG_DEBUG(...) XTR_LOG_LEVEL("D", debug, __VA_ARGS__)
+#endif
+
+#define XTR_LOGF(...) XTR_LOG_FATAL(__VA_ARGS__)
+#define XTR_LOGE(...) XTR_LOG_ERROR(__VA_ARGS__)
+#define XTR_LOGW(...) XTR_LOG_WARN(__VA_ARGS__)
+#define XTR_LOGI(...) XTR_LOG_INFO(__VA_ARGS__)
+#define XTR_LOGD(...) XTR_LOG_DEBUG(__VA_ARGS__)
 
 #define XTR_XSTR(s) XTR_STR(s)
-#define XTR_STR(s) #s
+#define XTR_STR(s)  #s
 
-#define XTR_LOG_TAGS(TAGS, SINK, FORMAT, ...)                               \
-    (__extension__                                                          \
-        ({                                                                  \
-            static constexpr auto xtr_fmt =                                 \
-                xtr::detail::string{"{}: {}: "} +                           \
-                xtr::detail::rcut<                                          \
-                    xtr::detail::rindex(__FILE__, '/') + 1>(__FILE__) +     \
-                xtr::detail::string{":"} +                                  \
-                xtr::detail::string{XTR_XSTR(__LINE__) ": " FORMAT "\n"};   \
-            using xtr::nocopy;                                              \
-            (SINK).log<&xtr_fmt, void(TAGS)>(__VA_ARGS__);                  \
+#define XTR_LOG_TAGS(TAGS, LEVELSTR, SINK, FORMAT, ...)                    \
+    (__extension__(                                                        \
+        {                                                                  \
+            static constexpr auto xtr_fmt =                                \
+                xtr::detail::string{LEVELSTR " {} {} "} +                  \
+                xtr::detail::rcut<xtr::detail::rindex(__FILE__, '/') + 1>( \
+                    __FILE__) +                                            \
+                xtr::detail::string{":"} +                                 \
+                xtr::detail::string{XTR_XSTR(__LINE__) ": " FORMAT "\n"};  \
+            using xtr::nocopy;                                             \
+            (SINK).log<&xtr_fmt, void(TAGS)>(__VA_ARGS__);                 \
         }))
 
 namespace xtr
@@ -1672,49 +1672,44 @@ namespace xtr
     class logger;
 
     template<typename T>
-    using nocopy = detail::string_ref<T>;
+    inline auto nocopy(const T& arg)
+    {
+        return detail::string_ref(arg);
+    }
 }
 
 namespace xtr::detail
 {
     inline auto make_output_func(FILE* stream)
     {
-        return
-            [stream](const char* buf, std::size_t size)
-            {
-                return std::fwrite(buf, 1, size, stream);
-            };
+        return [stream](const char* buf, std::size_t size)
+        { return std::fwrite(buf, 1, size, stream); };
     }
 
     inline auto make_error_func(FILE* stream)
     {
-        return
-            [stream](const char* buf, std::size_t size)
-            {
-                (void)std::fwrite(buf, 1, size, stream);
-            };
+        return [stream](const char* buf, std::size_t size)
+        { (void)std::fwrite(buf, 1, size, stream); };
     }
 
     inline auto make_flush_func(FILE* stream, FILE* err_stream)
     {
-        return
-            [stream, err_stream]()
-            {
-                std::fflush(stream);
-                std::fflush(err_stream);
-            };
+        return [stream, err_stream]()
+        {
+            std::fflush(stream);
+            std::fflush(err_stream);
+        };
     }
 
     inline auto make_sync_func(FILE* stream, FILE* err_stream)
     {
-        return
-            [stream, err_stream]()
-            {
+        return [stream, err_stream]()
+        {
 #if defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L
-                ::fsync(::fileno(stream));
-                ::fsync(::fileno(err_stream));
+            ::fsync(::fileno(stream));
+            ::fsync(::fileno(err_stream));
 #endif
-            };
+        };
     }
 }
 
@@ -1731,20 +1726,25 @@ private:
             std::byte* buf, // pointer to log record
             consumer&,
             const char* timestamp,
-            const std::string& name) noexcept;
+            std::string& name) noexcept;
 
 public:
-    // XXX is sink a better name? log_sink? logger::sink?
     class producer
     {
     public:
+        producer() = default;
+
+        producer(const producer& other);
+
+        producer& operator=(const producer& other);
+
         ~producer();
 
         void close();
 
         void sync()
         {
-            sync(/*destruct=*/false);
+            sync(/*destroy=*/false);
         }
 
         void set_name(std::string name);
@@ -1752,74 +1752,83 @@ public:
         template<auto Format, typename Tags = void()>
         void log() noexcept;
 
-        // FIXME: noexcept check is stricter than necessary
         template<auto Format, typename Tags = void(), typename... Args>
-        void log(Args&&... args)
-            noexcept(std::conjunction_v<
+        void log(Args&&... args) noexcept(
+            std::conjunction_v<
                 std::is_nothrow_copy_constructible<Args>...,
                 std::is_nothrow_move_constructible<Args>...>);
 
-    private:
-        producer() = default;
+        void set_level(log_level_t l)
+        {
+            level_.store(l, std::memory_order_relaxed);
+        }
 
+        log_level_t level() const
+        {
+            return level_.load(std::memory_order_relaxed);
+        }
+
+    private:
         producer(logger& owner, std::string name);
 
         template<typename T>
         void copy(std::byte* pos, T&& value) noexcept; // XXX noexcept
 
-        template<
-            auto Format = nullptr,
-            typename Tags = void(),
-            typename Func>
-        void post(Func&& func)
-            noexcept(std::is_nothrow_move_constructible_v<Func>);
+        template<auto Format = nullptr, typename Tags = void(), typename Func>
+        void post(Func&& func) noexcept(
+            std::is_nothrow_move_constructible_v<Func>);
 
         template<auto Format, typename Tags, typename... Args>
-        void post_with_str_table(Args&&... args)
-            noexcept(std::conjunction_v<
+        void post_with_str_table(Args&&... args) noexcept(
+            std::conjunction_v<
                 std::is_nothrow_copy_constructible<Args>...,
                 std::is_nothrow_move_constructible<Args>...>);
 
         template<typename Tags, typename... Args>
-        auto make_lambda(Args&&... args)
-            noexcept(std::conjunction_v<
+        auto make_lambda(Args&&... args) noexcept(
+            std::conjunction_v<
                 std::is_nothrow_copy_constructible<Args>...,
                 std::is_nothrow_move_constructible<Args>...>);
 
         void sync(bool destruct);
 
         ring_buffer buf_;
-        std::string name_;
-        bool closed_ = false;
+        std::atomic<log_level_t> level_{log_level_t::info};
+        bool open_ = false;
         friend logger;
     };
 
 private:
     class consumer
     {
+    private:
+        struct producer_handle
+        {
+            producer* operator->()
+            {
+                return p;
+            }
+
+            producer* p;
+            std::string name;
+            std::size_t dropped_count = 0;
+        };
+
     public:
         void run(std::function<::timespec()> clock) noexcept;
-        void process_commands() noexcept;
         void set_command_path(std::string path) noexcept;
 
         template<typename O, typename E, typename F, typename S>
-        consumer(O&& o, E&& e, F&& f, S&& s, producer* control)
-        :
+        consumer(O&& o, E&& e, F&& f, S&& s, producer* control) :
             out(std::move(o)),
             err(std::move(e)),
             flush(std::move(f)),
             sync(std::move(s)),
-            producers_({control})
+            producers_({{control, "control", 0}})
         {
         }
 
-        consumer(consumer&&) = default;
-        ~consumer();
-
-        void add_producer(producer& p)
-        {
-            producers_.push_back(&p);
-        }
+        void add_producer(producer& p, const std::string& name);
 
         std::function<::ssize_t(const char* buf, std::size_t size)> out;
         std::function<void(const char* buf, std::size_t size)> err;
@@ -1828,41 +1837,28 @@ private:
         bool destroy = false;
 
     private:
-        std::vector<producer*> producers_;
-        int cmd_fd_; // XXX file_descriptor
-        std::string cmd_path_;
+        void status_handler(int fd, detail::status&);
+        void set_level_handler(int fd, detail::set_level&);
+
+        std::vector<producer_handle> producers_;
+        std::unique_ptr<detail::command_dispatcher, detail::command_dispatcher_deleter>
+            cmds_;
     };
 
 public:
-
-    // XXX
-    // const char* path option?
-    //
-    // should logs auto-rotate? don't think so, just write to one file,
-    // other issue is if you should overwrite, append or create a new
-    // file?
-    //
-    // rotating files?
-    //
-    // Also perhaps have a single constructor that accepts
-    // variadic args, then just check the type of them? eg
-    // is_same<FILE*>, is_clock_v?
-    //
-    //
-    //
-
     template<typename Clock = std::chrono::system_clock>
     logger(
         FILE* stream = stderr,
         FILE* err_stream = stderr,
-        Clock&& clock = Clock())
-    :
+        Clock&& clock = Clock(),
+        std::string command_path = default_command_path()) :
         logger(
             detail::make_output_func(stream),
             detail::make_error_func(err_stream),
             detail::make_flush_func(stream, err_stream),
             detail::make_sync_func(stream, err_stream),
-            std::forward<Clock>(clock))
+            std::forward<Clock>(clock),
+            std::move(command_path))
     {
     }
 
@@ -1870,20 +1866,18 @@ public:
         typename OutputFunction,
         typename ErrorFunction,
         typename Clock = std::chrono::system_clock>
-    requires
-        std::invocable<OutputFunction, const char*, std::size_t> &&
+    requires std::invocable<OutputFunction, const char*, std::size_t> &&
         std::invocable<ErrorFunction, const char*, std::size_t>
-    logger(
-        OutputFunction&& out,
-        ErrorFunction&& err,
-        Clock&& clock = Clock(),
-        std::string command_path = default_command_path())
-    :
+        logger(
+            OutputFunction&& out,
+            ErrorFunction&& err,
+            Clock&& clock = Clock(),
+            std::string command_path = default_command_path()) :
         logger(
             std::forward<OutputFunction>(out),
             std::forward<ErrorFunction>(err),
-            [](){}, // flush
-            [](){}, // sync
+            []() {}, // flush
+            []() {}, // sync
             std::forward<Clock>(clock),
             std::move(command_path))
     {
@@ -1895,49 +1889,37 @@ public:
         typename FlushFunction,
         typename SyncFunction,
         typename Clock = std::chrono::system_clock>
-    requires
-        std::invocable<OutputFunction, const char*, std::size_t> &&
+    requires std::invocable<OutputFunction, const char*, std::size_t> &&
         std::invocable<ErrorFunction, const char*, std::size_t> &&
-        std::invocable<FlushFunction> &&
-        std::invocable<SyncFunction>
-    logger(
-        OutputFunction&& out,
-        ErrorFunction&& err,
-        FlushFunction&& flush,
-        SyncFunction&& sync,
-        Clock&& clock = Clock(),
-        std::string command_path = default_command_path())
+        std::invocable<FlushFunction> && std::invocable<SyncFunction>
+        logger(
+            OutputFunction&& out,
+            ErrorFunction&& err,
+            FlushFunction&& flush,
+            SyncFunction&& sync,
+            Clock&& clock = Clock(),
+            std::string command_path = default_command_path())
     {
-        // The consumer thread must be started after control_ has been
-        // constructed
-        consumer_ =
-            std::jthread(
-                &consumer::run,
-                consumer(
-                    std::forward<OutputFunction>(out),
-                    std::forward<ErrorFunction>(err),
-                    std::forward<FlushFunction>(flush),
-                    std::forward<SyncFunction>(sync),
-                    &control_),
-                make_clock(std::forward<Clock>(clock)));
+        consumer_ = std::jthread(
+            &consumer::run,
+            consumer(
+                std::forward<OutputFunction>(out),
+                std::forward<ErrorFunction>(err),
+                std::forward<FlushFunction>(flush),
+                std::forward<SyncFunction>(sync),
+                &control_),
+            make_clock(std::forward<Clock>(clock)));
+        control_.open_ = true;
         set_command_path(std::move(command_path));
     }
 
-    ~logger()
-    {
-        control_.close();
-    }
+    ~logger();
 
-    auto consumer_thread_native_handle()
-    {
-        return consumer_.native_handle();
-    }
+    std::thread::native_handle_type consumer_thread_native_handle();
 
-    // XXX Rename as create? people might assume that multiple get
-    // calls return the same producer.
     [[nodiscard]] producer get_producer(std::string name);
 
-    void register_producer(producer& p) noexcept;
+    void register_producer(producer& p, const std::string& name) noexcept;
 
     void set_output_stream(FILE* stream) noexcept;
     void set_error_stream(FILE* stream) noexcept;
@@ -1951,7 +1933,8 @@ public:
                 ::ssize_t>,
             "Output function type must be of type ssize_t(const char*, size_t) "
             "(returning the number of bytes written or -1 on error)");
-        post([f = std::forward<Func>(f)](consumer& c) { c.out = std::move(f); });
+        post([f = std::forward<Func>(f)](consumer& c, auto&)
+             { c.out = std::move(f); });
         control_.sync();
     }
 
@@ -1959,11 +1942,10 @@ public:
     void set_error_function(Func&& f) noexcept
     {
         static_assert(
-            std::is_same_v<
-                std::invoke_result_t<Func, const char*, std::size_t>,
-                void>,
+            std::is_same_v<std::invoke_result_t<Func, const char*, std::size_t>, void>,
             "Error function must be of type void(const char*, size_t)");
-        post([f = std::forward<Func>(f)](consumer& c) { c.err = std::move(f); });
+        post([f = std::forward<Func>(f)](consumer& c, auto&)
+             { c.err = std::move(f); });
         control_.sync();
     }
 
@@ -1973,7 +1955,8 @@ public:
         static_assert(
             std::is_same_v<std::invoke_result_t<Func>, void>,
             "Flush function must be of type void()");
-        post([f = std::forward<Func>(f)](consumer& c) { c.flush = std::move(f); });
+        post([f = std::forward<Func>(f)](consumer& c, auto&)
+             { c.flush = std::move(f); });
         control_.sync();
     }
 
@@ -1983,15 +1966,12 @@ public:
         static_assert(
             std::is_same_v<std::invoke_result_t<Func>, void>,
             "Sync function must be of type void()");
-        post([f = std::forward<Func>(f)](consumer& c) { c.sync = std::move(f); });
+        post([f = std::forward<Func>(f)](consumer& c, auto&)
+             { c.sync = std::move(f); });
         control_.sync();
     }
 
-    void set_command_path(std::string path) noexcept
-    {
-        post([p = std::move(path)](consumer& c) { c.set_command_path(std::move(p)); });
-        control_.sync();
-    }
+    void set_command_path(std::string path) noexcept;
 
 private:
     static std::string default_command_path();
@@ -2006,21 +1986,17 @@ private:
     template<typename Clock>
     std::function<std::timespec()> make_clock(Clock&& clock)
     {
-        return
-            [clock_{std::forward<Clock>(clock)}]() -> std::timespec
-            {
-                // Note: to_time_t would be useful here except it is unspecified
-                // whether time_t rounds up or truncates if time_t has a lower
-                // precision than the input time_point.
-                using namespace std::chrono;
-                const auto now = clock_.now();
-                auto sec = time_point_cast<seconds>(now);
-                if (sec > now)
-                    sec - seconds{1};
-                return std::timespec{
-                    .tv_sec=sec.time_since_epoch().count(),
-                    .tv_nsec=duration_cast<nanoseconds>(now - sec).count()};
-            };
+        return [clock_{std::forward<Clock>(clock)}]() -> std::timespec
+        {
+            using namespace std::chrono;
+            const auto now = clock_.now();
+            auto sec = time_point_cast<seconds>(now);
+            if (sec > now)
+                sec - seconds{1};
+            return std::timespec{
+                .tv_sec = sec.time_since_epoch().count(),
+                .tv_nsec = duration_cast<nanoseconds>(now - sec).count()};
+        };
     }
 
     producer control_; // aligned to cache line so first to avoid extra padding
@@ -2031,9 +2007,6 @@ private:
 template<auto Format, typename Tags>
 void xtr::logger::producer::log() noexcept
 {
-    // This function is just an optimisation; if the log line has no arguments
-    // then creating a lambda for it would waste space in the queue (as even
-    // if the lambda captures nothing it still has a non-zero size).
     const ring_buffer::span s = buf_.write_span_spec<Tags>(sizeof(fptr_t));
     if (detail::is_non_blocking_v<Tags> && s.empty()) [[unlikely]]
         return;
@@ -2042,17 +2015,16 @@ void xtr::logger::producer::log() noexcept
 }
 
 template<auto Format, typename Tags, typename... Args>
-void xtr::logger::producer::log(Args&&... args)
-    noexcept(std::conjunction_v<
+void xtr::logger::producer::log(Args&&... args) noexcept(
+    std::conjunction_v<
         std::is_nothrow_copy_constructible<Args>...,
         std::is_nothrow_move_constructible<Args>...>)
 {
     static_assert(sizeof...(Args) > 0);
-    constexpr bool is_str =
-        std::disjunction_v<
-            detail::is_c_string<decltype(std::forward<Args>(args))>...,
-            std::is_same<std::remove_cvref_t<Args>, std::string_view>...,
-            std::is_same<std::remove_cvref_t<Args>, std::string>...>;
+    constexpr bool is_str = std::disjunction_v<
+        detail::is_c_string<decltype(std::forward<Args>(args))>...,
+        std::is_same<std::remove_cvref_t<Args>, std::string_view>...,
+        std::is_same<std::remove_cvref_t<Args>, std::string>...>;
     if constexpr (is_str)
         post_with_str_table<Format, Tags>(std::forward<Args>(args)...);
     else
@@ -2060,19 +2032,16 @@ void xtr::logger::producer::log(Args&&... args)
 }
 
 template<auto Format, typename Tags, typename... Args>
-void xtr::logger::producer::post_with_str_table(Args&&... args)
-    noexcept(std::conjunction_v<
+void xtr::logger::producer::post_with_str_table(Args&&... args) noexcept(
+    std::conjunction_v<
         std::is_nothrow_copy_constructible<Args>...,
         std::is_nothrow_move_constructible<Args>...>)
 {
-    using lambda_t =
-        decltype(
-            make_lambda<Tags>(
-                detail::build_string_table<Tags>(
-                    std::declval<std::byte*&>(),
-                    std::declval<std::byte*&>(),
-                    buf_,
-                    std::forward<Args>(args))...));
+    using lambda_t = decltype(make_lambda<Tags>(detail::build_string_table<Tags>(
+        std::declval<std::byte*&>(),
+        std::declval<std::byte*&>(),
+        buf_,
+        std::forward<Args>(args))...));
 
     ring_buffer::span s = buf_.write_span_spec();
 
@@ -2087,29 +2056,27 @@ void xtr::logger::producer::post_with_str_table(Args&&... args)
     const auto str_pos = func_pos + sizeof(lambda_t);
     const auto size = ring_buffer::size_type(str_pos - s.begin());
 
-    while (XTR_UNLIKELY(s.size() < size)) [[unlikely]]
-    {
-        if constexpr (!detail::is_non_blocking_v<Tags>)
-            detail::pause();
-        s = buf_.write_span<Tags>();
-        if (detail::is_non_blocking_v<Tags> && s.empty()) [[unlikely]]
-            return;
-    }
+    while (XTR_UNLIKELY(s.size() < size))
+        [[unlikely]]
+        {
+            if constexpr (!detail::is_non_blocking_v<Tags>)
+                detail::pause();
+            s = buf_.write_span<Tags>();
+            if (detail::is_non_blocking_v<Tags> && s.empty()) [[unlikely]]
+                return;
+        }
 
-    // str_cur and str_end are mutated by build_string_table as the
-    // table is built
     auto str_cur = str_pos;
     auto str_end = s.end();
 
     copy(s.begin(), &detail::trampolineS<Format, consumer, lambda_t>);
     copy(
         func_pos,
-        make_lambda<Tags>(
-            detail::build_string_table<Tags>(
-                str_cur,
-                str_end,
-                buf_,
-                std::forward<Args>(args))...));
+        make_lambda<Tags>(detail::build_string_table<Tags>(
+            str_cur,
+            str_end,
+            buf_,
+            std::forward<Args>(args))...));
 
     const auto next = detail::align<alignof(fptr_t)>(str_cur);
     const auto total_size = ring_buffer::size_type(next - s.begin());
@@ -2122,40 +2089,32 @@ template<typename T>
 void xtr::logger::producer::copy(std::byte* pos, T&& value) noexcept
 {
     assert(std::uintptr_t(pos) % alignof(T) == 0);
-    // C++20: std::assume_aligned
-    pos =
-        static_cast<std::byte*>(
-            __builtin_assume_aligned(pos, alignof(T)));
+    pos = static_cast<std::byte*>(__builtin_assume_aligned(pos, alignof(T)));
     new (pos) std::remove_reference_t<T>(std::forward<T>(value));
 }
 
 template<auto Format, typename Tags, typename Func>
-void xtr::logger::producer::post(Func&& func)
-    noexcept(std::is_nothrow_move_constructible_v<Func>)
+void xtr::logger::producer::post(Func&& func) noexcept(
+    std::is_nothrow_move_constructible_v<Func>)
 {
     ring_buffer::span s = buf_.write_span_spec();
 
-    // GCC as of 9.2.1 does not optimise away this call to align if pos
-    // is marked as aligned, hence these constexpr conditionals. Clang
-    // does optimise as of 8.0.1-3+b1.
     auto func_pos = s.begin() + sizeof(fptr_t);
     if constexpr (alignof(Func) > alignof(fptr_t))
         func_pos = detail::align<alignof(Func)>(func_pos);
 
-    // We can calculate 'next' aligned to fptr_t in this way because we know
-    // that func_pos has alignment that is at least alignof(fptr_t), so the
-    // size of Func can simply be rounded up.
     const auto next = func_pos + detail::align(sizeof(Func), alignof(fptr_t));
     const auto size = ring_buffer::size_type(next - s.begin());
 
-    while (XTR_UNLIKELY(s.size() < size)) [[unlikely]] // XXX UNLIKELY
-    {
-        if constexpr (!detail::is_non_blocking_v<Tags>)
-            detail::pause();
-        s = buf_.write_span<Tags>();
-        if (detail::is_non_blocking_v<Tags> && s.empty()) [[unlikely]]
-            return;
-    }
+    while (XTR_UNLIKELY(s.size() < size))
+        [[unlikely]] // XXX UNLIKELY
+        {
+            if constexpr (!detail::is_non_blocking_v<Tags>)
+                detail::pause();
+            s = buf_.write_span<Tags>();
+            if (detail::is_non_blocking_v<Tags> && s.empty()) [[unlikely]]
+                return;
+        }
 
     copy(s.begin(), &detail::trampolineN<Format, consumer, Func>);
     copy(func_pos, std::forward<Func>(func));
@@ -2164,212 +2123,342 @@ void xtr::logger::producer::post(Func&& func)
 }
 
 template<typename Tags, typename... Args>
-auto xtr::logger::producer::make_lambda(Args&&... args)
-    noexcept(std::conjunction_v<
+auto xtr::logger::producer::make_lambda(Args&&... args) noexcept(
+    std::conjunction_v<
         std::is_nothrow_copy_constructible<Args>...,
         std::is_nothrow_move_constructible<Args>...>)
 {
-    // This lambda is mutable so that std::forward works correctly, without it
-    // there is a mismatch between Args and args, due to args becoming const
-    // if the lambda is not mutable.
-    return
-        [... args = std::forward<Args>(args)](
-            fmt::memory_buffer& mbuf,
-            const auto& out,
-            const auto& err,
-            std::string_view fmt,
-            [[maybe_unused]] const char* ts,
-            const std::string& name) mutable noexcept
+    return [... args = std::forward<Args>(args)](
+               fmt::memory_buffer& mbuf,
+               const auto& out,
+               const auto& err,
+               std::string_view fmt,
+               [[maybe_unused]] const char* ts,
+               const std::string& name) mutable noexcept
+    {
+        if constexpr (detail::is_timestamp_v<Tags>)
         {
-            // args are passed by reference because although they were
-            // forwarded into the lambda, they were still captured by copy,
-            // so there is no point in moving them out of the lambda.
-            if constexpr (detail::is_timestamp_v<Tags>)
-            {
-                xtr::detail::print_ts(
-                    mbuf,
-                    out,
-                    err,
-                    fmt,
-                    name,
-                    args...);
-            }
-            else
-            {
-                xtr::detail::print(
-                    mbuf,
-                    out,
-                    err,
-                    fmt,
-                    ts,
-                    name,
-                    args...);
-            }
-        };
+            xtr::detail::print_ts(mbuf, out, err, fmt, name, args...);
+        }
+        else
+        {
+            xtr::detail::print(mbuf, out, err, fmt, ts, name, args...);
+        }
+    };
 }
 
-#endif
-
-#define XTR_FUNC inline
-
-
 #include <cassert>
+#include <cstring>
+#include <iostream>
+#include <stdexcept>
+#include <string_view>
+
+#include <sys/socket.h>
+#include <sys/un.h>
+#include <time.h>
+#include <unistd.h>
+
+namespace
+{
+    template<typename... Args>
+    void err(Args&&... args)
+    {
+        const int errnum = errno;
+        (std::cerr << ... << args) << ": " << std::strerror(errnum) << "\n";
+    }
+}
+
+xtr::detail::command_dispatcher::command_dispatcher(std::string path)
+{
+    sockaddr_un addr;
+
+    if (path.size() > sizeof(addr.sun_path) - 1)
+    {
+        err("Error: Command path '", path, "' is too long");
+        return;
+    }
+
+    detail::file_descriptor fd(
+        ::socket(AF_LOCAL, SOCK_SEQPACKET | SOCK_NONBLOCK, 0));
+
+    if (!fd)
+    {
+        err("Error: Failed to create command socket");
+        return;
+    }
+
+    addr.sun_family = AF_LOCAL;
+    std::strncpy(addr.sun_path, path.c_str(), sizeof(addr.sun_path));
+
+    if (::bind(fd.get(), reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) == -1)
+    {
+        err("Error: Failed to bind command socket to path '", path, "'");
+        return;
+    }
+
+    path_ = std::move(path);
+
+    if (::listen(fd.get(), 5) == -1)
+    {
+        err("Error: Failed to listen on command socket");
+        return;
+    }
+
+    pollfds_.push_back(pollfd{std::move(fd), POLLIN, 0});
+}
+
+xtr::detail::command_dispatcher::~command_dispatcher()
+{
+    if (!path_.empty())
+        ::unlink(path_.c_str());
+}
+
+xtr::detail::command_dispatcher::buffer::buffer(
+    const void* srcbuf, std::size_t srcsize) :
+    buf(new char[srcsize]),
+    size(srcsize)
+{
+    std::memcpy(buf.get(), srcbuf, size);
+}
+
+void xtr::detail::command_dispatcher::send(
+    int fd, const void* buf, std::size_t nbytes)
+{
+    results_[fd].bufs.emplace_back(buf, nbytes);
+}
+
+void xtr::detail::command_dispatcher::read_commands() noexcept
+{
+    int nfds =
+        ::poll(reinterpret_cast<::pollfd*>(&pollfds_[0]), pollfds_.size(), 0);
+
+    if (pollfds_[0].revents & POLLIN)
+    {
+        detail::file_descriptor fd(
+            ::accept4(pollfds_[0].fd.get(), nullptr, nullptr, SOCK_NONBLOCK));
+        if (fd)
+            pollfds_.push_back(pollfd{std::move(fd), POLLIN, 0});
+        else
+            err("Error: Failed to accept connection on command socket");
+        --nfds;
+    }
+
+    for (std::size_t i = 1; i < pollfds_.size() && nfds > 0; ++i)
+    {
+        const int fd = pollfds_[i].fd.get();
+
+        if (pollfds_[i].revents & POLLOUT)
+        {
+            --nfds;
+
+            ::msghdr mhdr{};
+            ::iovec iov;
+
+            mhdr.msg_iov = &iov;
+            mhdr.msg_iovlen = 1;
+
+            callback_result& cr = results_[fd];
+
+            ::ssize_t nwritten = 0;
+
+            for (; cr.pos < cr.bufs.size(); ++cr.pos)
+            {
+                iov.iov_base = cr.bufs[cr.pos].buf.get();
+                iov.iov_len = cr.bufs[cr.pos].size;
+
+                nwritten =
+                    XTR_TEMP_FAILURE_RETRY(::sendmsg(fd, &mhdr, MSG_NOSIGNAL));
+
+                if (nwritten != ::ssize_t(iov.iov_len))
+                    break;
+            }
+
+            if ((nwritten == -1 && errno != EAGAIN) || cr.pos == cr.bufs.size())
+            {
+                results_.erase(fd);
+                disconnect(i);
+            }
+        }
+        else if (pollfds_[i].revents & (POLLHUP | POLLIN))
+        {
+            --nfds;
+
+            union
+            {
+                frame_header hdr;
+                char buf[1204];
+            } buf;
+
+            ::msghdr mhdr{};
+            ::iovec iov;
+
+            mhdr.msg_iov = &iov;
+            mhdr.msg_iovlen = 1;
+
+            iov.iov_base = &buf;
+            iov.iov_len = sizeof(buf);
+
+            const ::ssize_t nbytes =
+                XTR_TEMP_FAILURE_RETRY(::recvmsg(fd, &mhdr, 0));
+
+            if (nbytes == 0) // EOF
+            {
+                disconnect(i);
+                continue;
+            }
+
+            if (nbytes == -1)
+            {
+                err("Error: Failed to read command");
+                continue;
+            }
+
+            const auto cpos = callbacks_.find(buf.hdr.frame_id);
+
+            pollfds_[i].events |= POLLOUT;
+
+            if (cpos == callbacks_.end())
+            {
+                send_error(fd, "Invalid frame id");
+                continue;
+            }
+
+            if (nbytes != ::ssize_t(cpos->second.size))
+            {
+                send_error(fd, "Invalid frame length");
+                continue;
+            }
+
+#if __cpp_exceptions
+            try
+            {
+#endif
+                cpos->second.func(fd, &buf);
+#if __cpp_exceptions
+            }
+            catch (const std::exception& e)
+            {
+                send_error(fd, "Invalid frame length");
+            }
+#endif
+        }
+    }
+}
+
+void xtr::detail::command_dispatcher::disconnect(std::size_t n)
+{
+    assert(n < pollfds_.size());
+    assert(results_.count(pollfds_[n].fd.get()) == 0);
+    std::swap(pollfds_[n], pollfds_.back());
+    pollfds_.pop_back();
+}
+
+void xtr::detail::command_dispatcher::send_error(int fd, std::string_view reason)
+{
+    frame<error> ef;
+    strzcpy(ef->reason, reason);
+    send(fd, ef);
+}
+
+void xtr::detail::command_dispatcher_deleter::operator()(command_dispatcher* d)
+{
+    delete d;
+}
+
 #include <cerrno>
 
 #include <fcntl.h>
 #include <unistd.h>
 
-XTR_FUNC
-xtr::detail::file_descriptor::file_descriptor(
-    const char* path,
-    int flags,
-    int mode)
-:
+inline xtr::detail::file_descriptor::file_descriptor(
+    const char* path, int flags, int mode) :
     fd_(XTR_TEMP_FAILURE_RETRY(::open(path, flags, mode)))
 {
     if (fd_ == -1)
     {
         throw_system_error_fmt(
             "xtr::detail::file_descriptor::file_descriptor: "
-            "Failed to open `%s'", path);
+            "Failed to open `%s'",
+            path);
     }
 }
 
-XTR_FUNC
-xtr::detail::file_descriptor& xtr::detail::file_descriptor::operator=(
+inline xtr::detail::file_descriptor& xtr::detail::file_descriptor::operator=(
     xtr::detail::file_descriptor&& other) noexcept
 {
     swap(*this, other);
     return *this;
 }
 
-XTR_FUNC
-xtr::detail::file_descriptor::~file_descriptor()
+inline xtr::detail::file_descriptor::~file_descriptor()
 {
     reset();
 }
 
-XTR_FUNC
-void xtr::detail::file_descriptor::reset(int fd) noexcept
+inline void xtr::detail::file_descriptor::reset(int fd) noexcept
 {
     if (is_open())
-    {
-#ifndef NDEBUG
-        const int result =
-#endif
-            XTR_TEMP_FAILURE_RETRY(::close(fd_));
-        assert(result == 0);
-    }
+        (void)::close(fd_);
     fd_ = fd;
 }
-
-
-
-#include <memory>
-
-#include <fcntl.h>
-#include <unistd.h>
-
-/*
- XXX Needs to be shared with mirrored mapping
-namespace xtr::detail
-{
-    struct fd_closer
-    {
-        ~fd_closer()
-        {
-            if (fd != -1)
-                ::close(fd);
-        }
-
-        int fd = -1;
-    };
-}*/
-
-XTR_FUNC
-xtr::detail::interprocess_ring_buffer::interprocess_ring_buffer(
-    const char* path,
-    int flags,
-    int mode)
-{
-    // XXX NEED RAII
-    const int fd = XTR_TEMP_FAILURE_RETRY(::open(path, flags, mode));
-
-    if (fd == -1)
-    {
-        throw_system_error_fmt(
-            "xtr::detail::interprocess_ring_buffer: "
-            "Failed to open `%s'", path);
-    }
-
-    const std::size_t sz = align_to_page_size(sizeof(ring_buffer));
-
-    if (XTR_TEMP_FAILURE_RETRY(::ftruncate(fd, ::off_t(sz + capacity))) == -1)
-    {
-        throw_system_error(
-            "xtr::detail::interprocess_ring_buffer: "
-            "Failed to ftruncate backing file");
-    }
-
-    buf_ = memory_mapping(nullptr, sz, PROT_READ|PROT_WRITE, MAP_SHARED, fd);
-
-    new (buf_.get()) ring_buffer(fd, sz);
-}
-
-XTR_FUNC
-xtr::detail::interprocess_ring_buffer::~interprocess_ring_buffer()
-{
-    if (buf_)
-        std::destroy_at(ring_buf());
-}
-
-
 
 #include <fmt/chrono.h>
 
 #include <algorithm>
+#include <climits>
 #include <condition_variable>
 #include <cstring>
-#include <climits>
 
-#include <iostream> // XXX TESTING
-
-#include <sys/select.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-
-#include <unistd.h>
-
-XTR_FUNC
-xtr::logger::producer xtr::logger::get_producer(std::string name)
+inline xtr::logger::~logger()
 {
-    return producer{*this, std::move(name)};
+    control_.close();
 }
 
-XTR_FUNC
-void xtr::logger::register_producer(producer& p) noexcept
+inline std::string xtr::logger::default_command_path()
 {
-    post(
-        [&p](consumer& c)
-        {
-            c.add_producer(p);
-        });
+    static std::atomic<unsigned> ctl_count{0};
+    const long pid = ::getpid();
+    const unsigned long uid = ::geteuid();
+    const unsigned n = ctl_count++;
+    char path[PATH_MAX];
+    std::snprintf(path, sizeof(path), "/run/user/%lu/xtrctl.%ld.%u", uid, pid, n);
+    return path;
 }
 
-XTR_FUNC
-void xtr::logger::set_output_stream(FILE* stream) noexcept
+inline xtr::logger::producer xtr::logger::get_producer(std::string name)
+{
+    return producer(*this, std::move(name));
+}
+
+inline void xtr::logger::register_producer(
+    producer& p, const std::string& name) noexcept
+{
+    post([&p, name](consumer& c, auto&) { c.add_producer(p, name); });
+}
+
+inline void xtr::logger::set_output_stream(FILE* stream) noexcept
 {
     set_output_function(detail::make_output_func(stream));
 }
 
-XTR_FUNC
-void xtr::logger::set_error_stream(FILE* stream) noexcept
+inline void xtr::logger::set_error_stream(FILE* stream) noexcept
 {
     set_error_function(detail::make_error_func(stream));
 }
 
-XTR_FUNC
-void xtr::logger::consumer::run(std::function<::timespec()> clock) noexcept
+inline void xtr::logger::set_command_path(std::string path) noexcept
+{
+    post([p = std::move(path)](consumer& c, auto&)
+         { c.set_command_path(std::move(p)); });
+    control_.sync();
+}
+
+inline std::thread::native_handle_type xtr::logger::consumer_thread_native_handle()
+{
+    return consumer_.native_handle();
+}
+
+inline void xtr::logger::consumer::run(std::function<::timespec()> clock) noexcept
 {
     char ts[32] = {};
     bool ts_stale = true;
@@ -2379,19 +2468,17 @@ void xtr::logger::consumer::run(std::function<::timespec()> clock) noexcept
     for (std::size_t i = 0; !producers_.empty(); ++i)
     {
         ring_buffer::span span;
-        // The inner loop below can modify producers so a reference cannot be taken
         const std::size_t n = i % producers_.size();
 
         if (n == 0)
         {
-            // Read the clock and commands once per loop over producers
             ts_stale |= true;
-            process_commands();
+            if (cmds_)
+                cmds_->read_commands();
         }
 
         if ((span = producers_[n]->buf_.read_span()).empty())
         {
-            // flush if no further data available (all producers empty)
             if (flush_count != 0 && flush_count-- == 1)
                 flush();
             continue;
@@ -2405,32 +2492,25 @@ void xtr::logger::consumer::run(std::function<::timespec()> clock) noexcept
             ts_stale = false;
         }
 
-        // span.end is capped to the end of the first mapping to guarantee that
-        // data is only read from the same address that it was written to (the
-        // producer always begins log records in the first mapping, so we do not
-        // read a record beginning in the second mapping). This is done to
-        // avoid undefined behaviour---reading an object from a different
-        // address than it was written to will work on Intel and probably many
-        // other CPUs but is outside of what is permitted by the C++ memory
-        // model.
         std::byte* pos = span.begin();
         std::byte* end = std::min(span.end(), producers_[n]->buf_.end());
         do
         {
             assert(std::uintptr_t(pos) % alignof(fptr_t) == 0);
             fptr_t fptr = *reinterpret_cast<const fptr_t*>(pos);
-            pos = fptr(mbuf, pos, *this, ts, producers_[n]->name_);
-            if (destroy)
-            {
-                using std::swap;
-                swap(producers_[n], producers_.back()); // possible self-swap, ok
-                producers_.pop_back();
-                goto next;
-            }
-        } while (pos < end);
+            pos = fptr(mbuf, pos, *this, ts, producers_[n].name);
+        } while (pos < end && !destroy);
 
         producers_[n]->buf_.reduce_readable(
             ring_buffer::size_type(pos - span.begin()));
+
+        if (destroy)
+        {
+            using std::swap;
+            swap(producers_[n], producers_.back()); // possible self-swap, ok
+            producers_.pop_back();
+            continue;
+        }
 
         std::size_t n_dropped;
         if (producers_[n]->buf_.read_span().empty() &&
@@ -2440,270 +2520,164 @@ void xtr::logger::consumer::run(std::function<::timespec()> clock) noexcept
                 mbuf,
                 out,
                 err,
-                "{}: {}: {} messages dropped\n",
+                "W {} {}: {} messages dropped\n",
                 ts,
-                producers_[n]->name_,
+                producers_[n].name,
                 n_dropped);
+            producers_[n].dropped_count += n_dropped;
         }
 
-        // flushing may be late/early if producers is modified, doesn't matter
         flush_count = producers_.size();
-
-        next:;
     }
 }
 
-namespace xtr::detail
+inline void xtr::logger::consumer::add_producer(
+    producer& p, const std::string& name)
 {
-/*
-    std::generator<interprocess_ring_buffer::span> get_write_span(
-        interprocess_ring_buffer& buf)
+    producers_.push_back(producer_handle{&p, name});
+}
+
+inline void xtr::logger::consumer::set_command_path(std::string path) noexcept
+{
+    cmds_.reset(new detail::command_dispatcher(std::move(path)));
+
+    if (!cmds_->is_open())
+        cmds_.reset();
+
+    cmds_->register_callback<detail::status>(
+        [this](auto&... args) { return status_handler(args...); });
+
+    cmds_->register_callback<detail::set_level>(
+        [this](auto&... args) { return set_level_handler(args...); });
+}
+
+inline void xtr::logger::consumer::status_handler(int fd, detail::status& st)
+{
+    st.pattern.text[sizeof(st.pattern.text) - 1] = '\0';
+
+    const auto matcher = detail::make_matcher(
+        st.pattern.type,
+        st.pattern.text,
+        st.pattern.ignore_case);
+
+    if (!matcher->valid())
     {
-        co_await std::suspend_always();
-    }
-*/
-
-
-}
-
-XTR_FUNC
-void xtr::logger::consumer::process_commands() noexcept
-{
-/*
-    const auto now = detail::tsc::now().ticks;
-
-    if (now < process_cmd_next_)
+        detail::frame<detail::error> ef;
+        matcher->error_reason(ef->reason, sizeof(ef->reason));
+        cmds_->send(fd, ef);
         return;
-
-    process_cmd_next_ = now + 123;
-
-    // This is admittedly hacky, however
-
-    fd_set fds;
-    struct timeval tv;
-
-    FD_ZERO(&rfds);
-    FD_SET(cmd_fd_, &rfds);
-
-    tv.tv_sec = 0;
-    tv.tv_usec = 0;
-
-    // first arg is the max fd
-
-    ::select(cmd_fd_, &fds,  )
-*/
-/*
-    // co_await, co_return, co_yield
-
-    detail::interprocess_ring_buffer::span rs;
-    detail::interprocess_ring_buffer::span ws;
-
-    //while ((ws = cmd_buf_.write_span()).size() < 42)
-    //    co_await std::suspend_always();
-
-
-    while ((ws = cmd_buf_.write_span()).size() < 42)
-        co_await std::suspend_always();
-
-
-    // Need to define a structure,
-    //
-    // also need to write tests---you can just make a free function
-    // or class that communicates with the logger.
-    //
-    // generate a random name then set the output function to test?
-    //
-    // or query the name?
-    //
-    //
-    //
-    // include/xtr/detail/command.hpp
-    // include/xtr/detail/send_command.hpp
-    //
-    // void send_command
-    //
-    // So, command types, you want to be able to:
-    //
-    // * Modify producers based on a regular expression
-    //   - ie set the log level on them
-    // * Dry run of modify
-    // * Wildcards?
-    //
-    // XXX HOW TO HANDLE THE COMMAND LINE TOOL BLOCKING WHEN SENDING REPLY?
-    //
-    // XXX fnmatch
-
-    // int socket(int domain, int type, int protocol)
-    // ::socket(AF_LOCAL, SOCK_SEQPACKET, 0);
-    //
-    // ::socket(AF_LOCAL, SOCK_STREAM, IPPROTO_SCTP)
-    //
-    // set non blocking
-    // listen
-    // add to epoll?
-    // accept
-
-    const auto span = cmd_buf_.read_span();
-    if (span.size() > 0)
-    {
-        cmd_buf_.reduce_readable(span.size());
     }
-*/
-}
 
-XTR_FUNC
-std::string xtr::logger::default_command_path()
-{
-    static std::atomic<unsigned> ctl_count{0};
-
-    const unsigned long pid = ::getpid();
-    const unsigned long uid = ::geteuid();
-    const unsigned n = ctl_count++;
-    char path[PATH_MAX];
-    std::snprintf(path, sizeof(path), "/run/user/%lu/xtrctl.%lu.%u", uid, pid, n);
-    return path;
-}
-
-XTR_FUNC
-void xtr::logger::consumer::set_command_path(std::string path) noexcept
-{
-    // XXX Should you just read from a fifo?
-    // no, because you need connect/disconnect behaviour,
-    // same issue as with a shm buffer, if a request is made
-    // and the program disconnects, you need to know.
-
-#if 0
-#if __cpp_exceptions
-    try
+    for (std::size_t i = 1; i < producers_.size(); ++i)
     {
-#endif
-        if (path.size() > sizeof(std::declval<sockaddr_un>().sun_path))
-        {
-        }
+        auto& p = producers_[i];
 
-        cmd_fd_ = ::socket(AF_LOCAL, SOCK_SEQPACKET|SOCK_NONBLOCK, 0);
+        if (!(*matcher)(p.name.c_str()))
+            continue;
 
-        sockaddr_un addr;
-        //struct sockaddr* = &addrp;
+        detail::frame<detail::sink_info> sif;
 
+        sif->level = p->level();
+        sif->buf_capacity = p->buf_.capacity();
+        sif->buf_nbytes = p->buf_.read_span().size();
+        sif->dropped_count = p.dropped_count;
+        detail::strzcpy(sif->name, p.name);
 
-
-
-        addr.sun_family = AF_LOCAL;
-        // XXX strncpy, maybe use std::copy?
-        strncpy(addr.sun_path, path.c_str(), sizeof(addr.sun_path));
-
-        //oldmask = umask(S_IXUSR | S_IRWXG | S_IRWXO);
-
-        if (::bind(cmd_fd_, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) == -1)
-        {
-            std::cout << "bind error\n";
-        }
-
-        if (::listen(cmd_fd_, 5) == -1)
-        {
-            std::cout << "listen error\n";
-        }
-
-        //int connfd;
-
-        //::fcntl(cmd_fd_, F_SETFD, 
-
-        // SET O_NONBLOCK, then select
-
-        //if ((connfd = ::accept(cmd_fd_, NULL, NULL)) == -1)
-        //{
-        //    std::cout << "accept error\n";
-        //}
-
-        // XXX Need to do something about signals, e.g. SIGPIPE
-        //
-        // - can use send with MSG_NOSIGNAL
-
-        // so, if you want to maintain portability you can't use epoll, but,
-        // you will probably only have 2 fds at a time anyway
-
-        //cmd_buf_ =
-        //    detail::interprocess_ring_buffer(
-        //        path.c_str(),
-        //        O_CREAT|O_EXCL|O_RDWR,
-        //        S_IRUSR|S_IWUSR);
-
-        cmd_path_ = std::move(path);
-#if __cpp_exceptions
+        cmds_->send(fd, sif);
     }
-    catch (const std::exception& e)
+}
+
+inline void xtr::logger::consumer::set_level_handler(int fd, detail::set_level& sl)
+{
+    sl.pattern.text[sizeof(sl.pattern.text) - 1] = '\0';
+
+    if (sl.level > xtr::log_level_t::debug)
     {
+        cmds_->send_error(fd, "Invalid level");
+        return;
     }
-#endif
-#endif
+
+    const auto matcher = detail::make_matcher(
+        sl.pattern.type,
+        sl.pattern.text,
+        sl.pattern.ignore_case);
+
+    if (!matcher->valid())
+    {
+        detail::frame<detail::error> ef;
+        matcher->error_reason(ef->reason, sizeof(ef->reason));
+        cmds_->send(fd, ef);
+        return;
+    }
+
+    for (std::size_t i = 1; i < producers_.size(); ++i)
+    {
+        auto& p = producers_[i];
+
+        if (!(*matcher)(p.name.c_str()))
+            continue;
+
+        p->set_level(sl.level);
+    }
+
+    cmds_->send(fd, detail::frame<detail::success>());
 }
 
-XTR_FUNC
-xtr::logger::consumer::~consumer()
+inline xtr::logger::producer::producer(const producer& other)
 {
-    if (!cmd_path_.empty())
-        ::unlink(cmd_path_.c_str());
+    *this = other;
 }
 
-XTR_FUNC
-xtr::logger::producer::producer(logger& owner, std::string name)
-:
-    name_(std::move(name))
+inline xtr::logger::producer& xtr::logger::producer::operator=(
+    const producer& other)
 {
-    owner.register_producer(*this);
+    level_ = other.level_.load(std::memory_order_relaxed);
+    if (!std::exchange(open_, other.open_)) // if previously closed, register
+    {
+        const_cast<producer&>(other).post([this](consumer& c, const auto& name)
+                                          { c.add_producer(*this, name); });
+    }
+    return *this;
 }
 
-XTR_FUNC
-void xtr::logger::producer::close()
+inline xtr::logger::producer::producer(logger& owner, std::string name) :
+    open_(true)
 {
-    if (!closed_)
+    owner.register_producer(*this, name);
+}
+
+inline void xtr::logger::producer::close()
+{
+    if (open_)
     {
         sync(/*destruct=*/true);
-        closed_ = true;
+        open_ = false;
+#if defined(XTR_THREAD_SANITIZER_ENABLED)
+
+        while (buf_.read_span().size() > 0)
+            ;
+        buf_.write_span();
+#endif
     }
 }
 
-XTR_FUNC
-void xtr::logger::producer::sync(bool destruct)
+inline void xtr::logger::producer::sync(bool destroy)
 {
     std::condition_variable cv;
     std::mutex m;
-    bool notified = false;
+    bool notified = false; // protected by m
 
     post(
-        [&cv, &m, &notified, destruct](consumer& c)
+        [&cv, &m, &notified, destroy](consumer& c, auto&)
         {
-            c.destroy = destruct;
+            c.destroy = destroy;
 
             c.flush();
             c.sync();
 
             std::scoped_lock lock{m};
             notified = true;
-            // Do not move this notify outside of the protection of m. The
-            // standard guarantees that a mutex may be destructed while
-            // another thread is still inside unlock (but does not hold the
-            // lock). From the mutex requirements:
-            //
-            // ``Note: After a thread A has called unlock(), releasing a
-            // mutex, it is possible for another thread B to lock the same
-            // mutex, observe that it is no longer in use, unlock it, and
-            // destroy it, before thread A appears to have returned from
-            // its unlock call. Implementations are required to handle such
-            // scenarios correctly, as long as thread A doesn't access the
-            // mutex after the unlock call returns.''
-            //
-            // No such requirement exists for condition_variable and notify,
-            // which may access memory (e.g. an internal mutex in pthreads) in
-            // the signalling thread after the waiting thread has woken up---so
-            // if the lock is not held, the condition_variable could already
-            // have been destructed at this time (due to the stack being
-            // unwound).
             cv.notify_one();
-            // Do not access any captured variables after notifying because if
-            // the producer is destructing then the underlying storage may have
-            // been freed already.
         });
 
     std::unique_lock lock{m};
@@ -2711,38 +2685,44 @@ void xtr::logger::producer::sync(bool destruct)
         cv.wait(lock);
 }
 
-XTR_FUNC
-void xtr::logger::producer::set_name(std::string name)
+inline void xtr::logger::producer::set_name(std::string name)
 {
-    post(
-        [this, name = std::move(name)](auto&)
-        {
-            this->name_ = std::move(name);
-        });
+    post([name = std::move(name)](auto&, auto& oldname)
+         { oldname = std::move(name); });
     sync();
 }
 
-XTR_FUNC
-xtr::logger::producer::~producer()
+inline xtr::logger::producer::~producer()
 {
     close();
 }
 
-
+inline std::unique_ptr<xtr::detail::matcher> xtr::detail::make_matcher(
+    pattern_type_t pattern_type, const char* pattern, bool ignore_case)
+{
+    switch (pattern_type)
+    {
+    case pattern_type_t::wildcard:
+        return std::make_unique<wildcard_matcher>(pattern, ignore_case);
+    case pattern_type_t::regex:
+        return std::make_unique<regex_matcher>(pattern, ignore_case);
+    case pattern_type_t::none:
+        break;
+    }
+    return std::make_unique<matcher>();
+}
 
 #include <cassert>
 
 #include <unistd.h>
 
-XTR_FUNC
-xtr::detail::memory_mapping::memory_mapping(
+inline xtr::detail::memory_mapping::memory_mapping(
     void* addr,
     std::size_t length,
     int prot,
     int flags,
     int fd,
-    std::size_t offset)
-:
+    std::size_t offset) :
     mem_(::mmap(addr, length, prot, flags, fd, ::off_t(offset))),
     length_(length)
 {
@@ -2753,30 +2733,28 @@ xtr::detail::memory_mapping::memory_mapping(
     }
 }
 
-XTR_FUNC
-xtr::detail::memory_mapping::memory_mapping(memory_mapping&& other) noexcept
-:
+inline xtr::detail::memory_mapping::memory_mapping(memory_mapping&& other) noexcept
+    :
     mem_(other.mem_),
     length_(other.length_)
 {
     other.release();
 }
 
-XTR_FUNC
-xtr::detail::memory_mapping& xtr::detail::memory_mapping::operator=(
+inline xtr::detail::memory_mapping& xtr::detail::memory_mapping::operator=(
     memory_mapping&& other) noexcept
 {
     swap(*this, other);
     return *this;
 }
 
-XTR_FUNC xtr::detail::memory_mapping::~memory_mapping()
+inline xtr::detail::memory_mapping::~memory_mapping()
 {
     reset();
 }
 
-XTR_FUNC
-void xtr::detail::memory_mapping::reset(void* addr, std::size_t length) noexcept
+inline void xtr::detail::memory_mapping::reset(
+    void* addr, std::size_t length) noexcept
 {
     if (mem_ != MAP_FAILED)
     {
@@ -2790,30 +2768,25 @@ void xtr::detail::memory_mapping::reset(void* addr, std::size_t length) noexcept
     length_ = length;
 }
 
-
-
 #include <cassert>
 #include <cstdlib>
 #include <random>
 
+#include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
-#include <fcntl.h>
 #include <unistd.h>
 
 #if !defined(__linux__)
 namespace xtr::detail
 {
-    XTR_FUNC
-    file_descriptor shm_open_anon(int oflag, mode_t mode)
+    inline file_descriptor shm_open_anon(int oflag, mode_t mode)
     {
 #if defined(SHM_ANON) // FreeBSD extension
         return XTR_TEMP_FAILURE_RETRY(::shm_open(SHM_ANON, oflag, mode));
 #else
         int fd;
 
-        // Some platforms don't allow slashes in shm object names except
-        // for the first character, hence not using the usual base64 table
         const char ctable[] =
             "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
             "abcdefghijklmnopqrstuvwxyz"
@@ -2823,16 +2796,14 @@ namespace xtr::detail
         std::random_device rd;
         std::uniform_int_distribution<> udist(0, sizeof(ctable) - 2);
 
-        // As there is no way to create an anonymous shm object we generate
-        // random names, retrying up to 64 times if the name already exists.
         std::size_t retries = 64;
         do
         {
             for (char* pos = name + 5; *pos != '\0'; ++pos)
                 *pos = ctable[udist(rd)];
-            fd = XTR_TEMP_FAILURE_RETRY(::shm_open(name, oflag|O_EXCL|O_CREAT, mode));
-        }
-        while (--retries > 0 && fd == -1 && errno == EEXIST);
+            fd = XTR_TEMP_FAILURE_RETRY(
+                ::shm_open(name, oflag | O_EXCL | O_CREAT, mode));
+        } while (--retries > 0 && fd == -1 && errno == EEXIST);
 
         if (fd != -1)
             ::shm_unlink(name);
@@ -2843,19 +2814,15 @@ namespace xtr::detail
 }
 #endif
 
-XTR_FUNC
-xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping(
-    std::size_t length,
-    int fd,
-    std::size_t offset,
-    int flags)
+inline xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping(
+    std::size_t length, int fd, std::size_t offset, int flags)
 {
     assert(!(flags & MAP_ANONYMOUS) || fd == -1);
     assert((flags & MAP_FIXED) == 0); // Not implemented (would be easy though)
-    assert((flags & MAP_PRIVATE) == 0); // Can't be private, must be shared for mirroring to work
+    assert(
+        (flags & MAP_PRIVATE) ==
+        0); // Can't be private, must be shared for mirroring to work
 
-    // length is not automatically rounded up because it would make the class
-    // error prone---mirroring would not take place where the user expects.
     if (length != align_to_page_size(length))
     {
         throw_invalid_argument(
@@ -2863,19 +2830,9 @@ xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping(
             "Length argument is not page-aligned");
     }
 
-    // To create two adjacent mappings without race conditions:
-    // 1.) Create a mapping A of twice the requested size, L*2
-    // 2.) Create a mapping of size L at A+L using MAP_FIXED
-    // 3.) Create a mapping at of size L at A using MAP_FIXED, this will
-    //     also destroy the mapping created in (1).
+    const int prot = PROT_READ | PROT_WRITE;
 
-    const int prot = PROT_READ|PROT_WRITE;
-
-    memory_mapping reserve(
-        nullptr,
-        length * 2,
-        prot,
-        MAP_PRIVATE|MAP_ANONYMOUS);
+    memory_mapping reserve(nullptr, length * 2, prot, MAP_PRIVATE | MAP_ANONYMOUS);
 
 #if !defined(__linux__)
     file_descriptor temp_fd;
@@ -2884,30 +2841,26 @@ xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping(
     if (fd == -1)
     {
 #if defined(__linux__)
-        // Note that it is possible to just do a single mmap of length * 2 for
-        // m_ then an mremap of length with target address m_.get() + length
-        // for mirror. I have not done this just to make the rest of the class
-        // cleaner, as with the below method we don't have to deal with the
-        // first mapping's length being length * 2.
         memory_mapping mirror(
             static_cast<std::byte*>(reserve.get()) + length,
             length,
             prot,
-            MAP_FIXED|MAP_SHARED|MAP_ANONYMOUS|flags);
+            MAP_FIXED | MAP_SHARED | MAP_ANONYMOUS | flags);
 
         m_.reset(
             ::mremap(
                 mirror.get(),
                 0,
                 length,
-                MREMAP_FIXED|MREMAP_MAYMOVE,
+                MREMAP_FIXED | MREMAP_MAYMOVE,
                 reserve.get()),
             length);
 
         if (!m_)
         {
             throw_system_error(
-                "xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping: "
+                "xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping:"
+                " "
                 "mremap failed");
         }
 
@@ -2915,10 +2868,11 @@ xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping(
         mirror.release(); // mirror will be recreated in ~mirrored_memory_mapping
         return;
 #else
-        if (!(temp_fd = shm_open_anon(O_RDWR, S_IRUSR|S_IWUSR)))
+        if (!(temp_fd = shm_open_anon(O_RDWR, S_IRUSR | S_IWUSR)))
         {
             throw_system_error(
-                "xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping: "
+                "xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping:"
+                " "
                 "Failed to shm_open backing file");
         }
 
@@ -2927,7 +2881,8 @@ xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping(
         if (::ftruncate(fd, ::off_t(length)) == -1)
         {
             throw_system_error(
-                "xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping: "
+                "xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping:"
+                " "
                 "Failed to ftruncate backing file");
         }
 #endif
@@ -2947,11 +2902,10 @@ xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping(
     m_ = memory_mapping(reserve.get(), length, prot, flags, fd, offset);
 
     reserve.release(); // mapping was destroyed when m_ was created
-    mirror.release(); // mirror will be recreated in ~mirrored_memory_mapping
+    mirror.release();  // mirror will be recreated in ~mirrored_memory_mapping
 }
 
-XTR_FUNC
-xtr::detail::mirrored_memory_mapping::~mirrored_memory_mapping()
+inline xtr::detail::mirrored_memory_mapping::~mirrored_memory_mapping()
 {
     if (m_)
     {
@@ -2961,11 +2915,9 @@ xtr::detail::mirrored_memory_mapping::~mirrored_memory_mapping()
     }
 }
 
-
-
 #include <unistd.h>
 
-XTR_FUNC std::size_t xtr::detail::align_to_page_size(std::size_t length)
+inline std::size_t xtr::detail::align_to_page_size(std::size_t length)
 {
     static const long pagesize(::sysconf(_SC_PAGESIZE));
     if (pagesize == -1)
@@ -2973,44 +2925,78 @@ XTR_FUNC std::size_t xtr::detail::align_to_page_size(std::size_t length)
     return align(length, std::size_t(pagesize));
 }
 
+#include <cassert>
 
+inline xtr::detail::regex_matcher::regex_matcher(
+    const char* pattern, bool ignore_case)
+{
+    const int flags = REG_EXTENDED | REG_NOSUB | (ignore_case ? REG_ICASE : 0);
+    errnum_ = ::regcomp(&regex_, pattern, flags);
+}
+
+inline xtr::detail::regex_matcher::~regex_matcher()
+{
+    if (valid())
+        ::regfree(&regex_);
+}
+
+inline bool xtr::detail::regex_matcher::valid() const
+{
+    return errnum_ == 0;
+}
+
+inline void xtr::detail::regex_matcher::error_reason(
+    char* buf, std::size_t bufsz) const
+{
+    assert(errnum_ != 0);
+    ::regerror(errnum_, &regex_, buf, bufsz);
+}
+
+inline bool xtr::detail::regex_matcher::operator()(const char* str) const
+{
+    return ::regexec(&regex_, str, 0, nullptr, 0) == 0;
+}
 
 #include <cerrno>
-#include <cstdio>
 #include <cstdarg>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <stdexcept>
 #include <system_error>
 
-XTR_FUNC void xtr::detail::throw_system_error(const char* what)
+inline void xtr::detail::throw_system_error(const char* what)
 {
 #if __cpp_exceptions
-    throw std::system_error(std::error_code(errno, std::generic_category()), what);
+    throw std::system_error(
+        std::error_code(errno, std::generic_category()),
+        what);
 #else
     std::fprintf(stderr, "system error: %s: %s\n", what, std::strerror(errno));
     std::abort();
 #endif
 }
 
-XTR_FUNC
-void xtr::detail::throw_system_error_fmt(const char* format, ...)
+inline void xtr::detail::throw_system_error_fmt(const char* format, ...)
 {
     const int errnum = errno; // in case vsnprintf modifies errno
     va_list args;
-    va_start(args, format);;
+    va_start(args, format);
+    ;
     char buf[1024];
     std::vsnprintf(buf, sizeof(buf), format, args);
     va_end(args);
 #if __cpp_exceptions
-    throw std::system_error(std::error_code(errnum, std::generic_category()), buf);
+    throw std::system_error(
+        std::error_code(errnum, std::generic_category()),
+        buf);
 #else
     std::fprintf(stderr, "system error: %s: %s\n", buf, std::strerror(errnum));
     std::abort();
 #endif
 }
 
-XTR_FUNC void xtr::detail::throw_invalid_argument(const char* what)
+inline void xtr::detail::throw_invalid_argument(const char* what)
 {
 #if __cpp_exceptions
     throw std::invalid_argument(what);
@@ -3020,40 +3006,26 @@ XTR_FUNC void xtr::detail::throw_invalid_argument(const char* what)
 #endif
 }
 
-
-
 #include <array>
 #include <chrono>
 #include <thread>
 
 #include <time.h>
 
-
-XTR_FUNC
-std::uint64_t xtr::detail::read_tsc_hz() noexcept
+inline std::uint64_t xtr::detail::read_tsc_hz() noexcept
 {
     constexpr int tsc_leaf = 0x15;
 
-    // Check if CPU supports TSC info leaf
     if (cpuid(0)[0] < tsc_leaf)
         return 0;
 
-    // ratio_den (EAX) : An unsigned integer which is the denominator of the
-    //                   TSC / CCC ratio.
-    // ratio_num (EBX) : An unsigned integer which is the numerator of the
-    //                   TSC / CCC ratio.
-    // ccc_hz (ECX)    : An unsigned integer which is the nominal frequency of
-    //                   the CCC in Hz.
-    //
-    // Where CCC = core crystal clock.
     auto [ratio_den, ratio_num, ccc_hz, unused] = cpuid(0x15);
 
     if (ccc_hz == 0)
     {
-        // Core crystal clock frequency not provided, must infer
-        // from CPU model number.
         const std::uint16_t model = get_family_model()[1];
-        switch(model) {
+        switch (model)
+        {
         case intel_fam6_skylake_l:
         case intel_fam6_skylake:
         case intel_fam6_kabylake_l:
@@ -3064,9 +3036,6 @@ std::uint64_t xtr::detail::read_tsc_hz() noexcept
             break;
         case intel_fam6_atom_tremont_d:
         case intel_fam6_atom_goldmont_d:
-        // Skylake-X is not included as the crystal clock may be either 24 MHz
-        // or 25 MHz, with further issues on the 25 MHz variant, for details
-        // see: // https://bugzilla.kernel.org/show_bug.cgi?id=197299
             ccc_hz = 25000000; // 25 MHz
             break;
         case intel_fam6_atom_goldmont:
@@ -3078,22 +3047,10 @@ std::uint64_t xtr::detail::read_tsc_hz() noexcept
         }
     }
 
-    // As we have:
-    //
-    // TSC Hz = ccc_hz * TSC/CCR
-    //
-    // and:
-    //
-    // TSC/CCR = ratio_num/ratio_den
-    //
-    // then:
-    //
-    // TSC Hz = ccc_hz * ratio_num/ratio_den
     return std::uint64_t(ccc_hz) * ratio_num / ratio_den;
 }
 
-XTR_FUNC
-std::uint64_t xtr::detail::estimate_tsc_hz() noexcept
+inline std::uint64_t xtr::detail::estimate_tsc_hz() noexcept
 {
     const std::uint64_t tsc0 = tsc::now().ticks;
     std::timespec ts0;
@@ -3107,10 +3064,6 @@ std::uint64_t xtr::detail::estimate_tsc_hz() noexcept
     const std::size_t tick_range = 1000;
     const std::size_t max_iters = max_sleep_time / sleep_time;
 
-    // Read the TSC and system clock every 10ms for up to 2 seconds or until
-    // last 5 TSC frequency estimations are within a 1000 tick range, whichever
-    // occurs first.
-
     for (;;)
     {
         std::this_thread::sleep_for(sleep_time);
@@ -3121,7 +3074,7 @@ std::uint64_t xtr::detail::estimate_tsc_hz() noexcept
 
         const auto elapsed_nanos =
             std::uint64_t(ts1.tv_sec - ts0.tv_sec) * 1000000000UL +
-                std::uint64_t(ts1.tv_nsec) - std::uint64_t(ts0.tv_nsec);
+            std::uint64_t(ts1.tv_nsec) - std::uint64_t(ts0.tv_nsec);
 
         const std::uint64_t elapsed_ticks = tsc1 - tsc0;
 
@@ -3140,15 +3093,13 @@ std::uint64_t xtr::detail::estimate_tsc_hz() noexcept
     }
 }
 
-XTR_FUNC
-std::timespec xtr::detail::tsc::to_timespec(tsc ts)
+inline std::timespec xtr::detail::tsc::to_timespec(tsc ts)
 {
     thread_local tsc last_tsc{};
     thread_local std::int64_t last_epoch_nanos;
     static const std::uint64_t one_minute_ticks = 60 * get_tsc_hz();
     static const double tsc_multiplier = 1e9 / double(get_tsc_hz());
 
-    // Sync up TSC and wall clocks every minute
     if (ts.ticks > last_tsc.ticks + one_minute_ticks)
     {
         last_tsc = tsc::now();
@@ -3168,3 +3119,18 @@ std::timespec xtr::detail::tsc::to_timespec(tsc ts)
     return result;
 }
 
+#include <fnmatch.h>
+
+inline xtr::detail::wildcard_matcher::wildcard_matcher(
+    const char* pattern, bool ignore_case) :
+    pattern_(pattern),
+    flags_(FNM_EXTMATCH | (ignore_case ? FNM_CASEFOLD : 0))
+{
+}
+
+inline bool xtr::detail::wildcard_matcher::operator()(const char* str) const
+{
+    return ::fnmatch(pattern_, str, flags_) == 0;
+}
+
+#endif

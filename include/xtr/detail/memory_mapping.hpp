@@ -61,14 +61,14 @@ public:
         mem_ = MAP_FAILED;
     }
 
-    std::byte* get()
+    void* get()
     {
-        return static_cast<std::byte*>(mem_);
+        return mem_;
     }
 
-    const std::byte* get() const
+    const void* get() const
     {
-        return static_cast<std::byte*>(mem_);
+        return mem_;
     }
 
     std::size_t length() const
@@ -94,4 +94,3 @@ private:
 };
 
 #endif
-

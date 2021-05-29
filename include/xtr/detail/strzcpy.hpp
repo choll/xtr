@@ -1,4 +1,4 @@
-// Copyright 2014, 2015, 2019 Chris E. Holloway
+// Copyright 2020 Chris E. Holloway
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,14 +18,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef XTR_DETAIL_PAGESIZE_HPP
-#define XTR_DETAIL_PAGESIZE_HPP
+#ifndef XTR_DETAIL_STRZCPY_HPP
+#define XTR_DETAIL_STRZCPY_HPP
 
-#include <cstddef>
+#include <algorithm>
+#include <cstring>
+#include <iterator>
 
 namespace xtr::detail
 {
-    std::size_t align_to_page_size(std::size_t length);
+    template<std::size_t DstSz, typename Src>
+    void strzcpy(char (&dst)[DstSz], const Src& src)
+    {
+        const std::size_t n = std::min(DstSz - 1, std::size(src));
+        std::memcpy(dst, &src[0], n);
+        dst[n] = '\0';
+    }
 }
 
 #endif

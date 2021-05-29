@@ -21,6 +21,7 @@
 #ifndef XTR_DETAIL_SYNCHRONIZED_RING_BUFFER_HPP
 #define XTR_DETAIL_SYNCHRONIZED_RING_BUFFER_HPP
 
+#include "config.hpp"
 #include "tags.hpp"
 #include "mirrored_memory_mapping.hpp"
 #include "pagesize.hpp"
@@ -89,7 +90,7 @@ namespace xtr::detail
     static_assert(std::is_same<std::uint64_t, least_uint_t<18446744073709551615UL>>::value);
 #endif
 
-    // XXX Put in detail/ directory
+    // XXX Put in detail/ directory? explain non-use of std::span?
     // Probably ring buffer should be in detail too,
     // everything except the logger really
     template<typename T, typename SizeType>
@@ -160,27 +161,29 @@ public:
     using iterator = std::byte*;
     using const_iterator = const std::byte*;
     using size_type = std::size_t;
-
-    //using span = yeti::span<std::byte>;
-    //using const_span = yeti::span<const std::byte>;
-
     using span = detail::span<std::byte, size_type>;
     using const_span = detail::span<const std::byte, size_type>;
 
     static constexpr bool is_dynamic = Capacity == dynamic_capacity;
 
 public:
-    synchronized_ring_buffer()
+    synchronized_ring_buffer(
+        int fd = -1,
+        std::size_t offset = 0,
+        int flags = srb_flags)
+    requires (!is_dynamic)
     {
-        if (!is_dynamic)
-        {
-            m_ = mirrored_memory_mapping{capacity(), -1, 0, srb_flags};
-            nread_plus_capacity_ = wrnread_plus_capacity_ = capacity();
-            wrbase_ = m_.get();
-        }
+        m_ = mirrored_memory_mapping{capacity(), fd, offset, flags};
+        nread_plus_capacity_ = wrnread_plus_capacity_ = capacity();
+        wrbase_ = begin();
     }
 
-    explicit synchronized_ring_buffer(size_type min_capacity)
+    explicit synchronized_ring_buffer(
+        size_type min_capacity,
+        int fd = -1,
+        std::size_t offset = 0,
+        int flags = srb_flags)
+    requires is_dynamic
     :
         m_(
             align_to_page_size(
@@ -189,11 +192,12 @@ public:
 #else
                 std::ceil2(min_capacity)),
 #endif
-            -1, 0, srb_flags)
+            fd,
+            offset,
+            flags)
     {
-        static_assert(is_dynamic);
         assert(capacity() <= std::numeric_limits<size_type>::max());
-        wrbase_ = m_.get();
+        wrbase_ = begin();
         wrcapacity_ = capacity();
         nread_plus_capacity_ = wrnread_plus_capacity_ = capacity();
     }
@@ -273,7 +277,7 @@ public:
         // be read from the buffer.
         const size_type nr =
             nread_plus_capacity_.load(std::memory_order_relaxed) - capacity();
-        const auto b = m_.get() + clamp(nr, capacity());
+        const auto b = begin() + clamp(nr, capacity());
         // This acquire pairs with the release in reduce_writable(). No reads or
         // writes in the current thread can be reordered before this load.
         const size_type sz = nwritten_.load(std::memory_order_acquire) - nr;
@@ -288,12 +292,14 @@ public:
         // This release pairs with the acquire in write_span(). No reads or writes
         // in the current thread can be reordered after this store.
         nread_plus_capacity_.fetch_add(nbytes, std::memory_order_release);
+#if !defined(XTR_THREAD_SANITIZER_ENABLED)
         assert(nread_plus_capacity_.load() - nwritten_.load() <= capacity());
+#endif
     }
 
     iterator begin() noexcept
     {
-        return m_.get();
+        return static_cast<iterator>(m_.get());
     }
 
     iterator end() noexcept
@@ -303,7 +309,7 @@ public:
 
     const_iterator begin() const noexcept
     {
-        return m_.get();
+        return static_cast<const_iterator>(m_.get());
     }
 
     const_iterator end() const noexcept
@@ -375,4 +381,3 @@ private:
 };
 
 #endif
-

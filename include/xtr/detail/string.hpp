@@ -109,4 +109,3 @@ namespace xtr::detail
 }
 
 #endif
-

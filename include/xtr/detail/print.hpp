@@ -21,8 +21,6 @@
 #ifndef XTR_DETAIL_PRINT_HPP
 #define XTR_DETAIL_PRINT_HPP
 
-#include "throw.hpp"
-
 #include <fmt/format.h>
 
 #include <cstddef>
@@ -41,7 +39,7 @@ namespace xtr::detail
     {
         using namespace std::literals::string_view_literals;
         mbuf.clear();
-        fmt::format_to(mbuf, "{}: {}: Error: {}\n"sv, ts, name, reason);
+        fmt::format_to(mbuf, "E {} {}: Error: {}\n"sv, ts, name, reason);
         err(mbuf.data(), mbuf.size());
     }
 
@@ -98,4 +96,3 @@ namespace xtr::detail
 }
 
 #endif
-

@@ -19,8 +19,10 @@
 // SOFTWARE.
 
 #include "xtr/detail/mirrored_memory_mapping.hpp"
-#include "xtr/detail/throw.hpp"
+#include "xtr/detail/file_descriptor.hpp"
 #include "xtr/detail/pagesize.hpp"
+#include "xtr/detail/retry.hpp"
+#include "xtr/detail/throw.hpp"
 
 #include <cassert>
 #include <cstdlib>
@@ -34,22 +36,11 @@
 #if !defined(__linux__)
 namespace xtr::detail
 {
-    struct fd_closer
-    {
-        ~fd_closer()
-        {
-            if (fd != -1)
-                ::close(fd);
-        }
-
-        int fd = -1;
-    };
-
     XTR_FUNC
-    int shm_open_anon(int oflag, mode_t mode)
+    file_descriptor shm_open_anon(int oflag, mode_t mode)
     {
 #if defined(SHM_ANON) // FreeBSD extension
-        return ::shm_open(SHM_ANON, oflag, mode);
+        return XTR_TEMP_FAILURE_RETRY(::shm_open(SHM_ANON, oflag, mode));
 #else
         int fd;
 
@@ -71,14 +62,14 @@ namespace xtr::detail
         {
             for (char* pos = name + 5; *pos != '\0'; ++pos)
                 *pos = ctable[udist(rd)];
-            fd = ::shm_open(name, oflag|O_EXCL, mode);
+            fd = XTR_TEMP_FAILURE_RETRY(::shm_open(name, oflag|O_EXCL|O_CREAT, mode));
         }
         while (--retries > 0 && fd == -1 && errno == EEXIST);
 
         if (fd != -1)
             ::shm_unlink(name);
 
-        return fd;
+        return file_descriptor(fd);
 #endif
     }
 }
@@ -119,7 +110,7 @@ xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping(
         MAP_PRIVATE|MAP_ANONYMOUS);
 
 #if !defined(__linux__)
-    fd_closer closer;
+    file_descriptor temp_fd;
 #endif
 
     if (fd == -1)
@@ -131,7 +122,7 @@ xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping(
         // cleaner, as with the below method we don't have to deal with the
         // first mapping's length being length * 2.
         memory_mapping mirror(
-            reserve.get() + length,
+            static_cast<std::byte*>(reserve.get()) + length,
             length,
             prot,
             MAP_FIXED|MAP_SHARED|MAP_ANONYMOUS|flags);
@@ -148,7 +139,7 @@ xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping(
         if (!m_)
         {
             throw_system_error(
-                "xtr::detail::mirrored_memory_mapping::memory_mapping: "
+                "xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping: "
                 "mremap failed");
         }
 
@@ -156,16 +147,14 @@ xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping(
         mirror.release(); // mirror will be recreated in ~mirrored_memory_mapping
         return;
 #else
-        fd = shm_open_anon(O_RDWR|O_CREAT, S_IRUSR|S_IWUSR);
-
-        if (fd == -1)
+        if (!(temp_fd = shm_open_anon(O_RDWR, S_IRUSR|S_IWUSR)))
         {
             throw_system_error(
                 "xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping: "
                 "Failed to shm_open backing file");
         }
 
-        closer.fd = fd;
+        fd = temp_fd.get();
 
         if (::ftruncate(fd, ::off_t(length)) == -1)
         {
@@ -180,7 +169,7 @@ xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping(
     flags |= MAP_FIXED | MAP_SHARED;
 
     memory_mapping mirror(
-        reserve.get() + length,
+        static_cast<std::byte*>(reserve.get()) + length,
         length,
         prot,
         flags,
@@ -197,6 +186,10 @@ XTR_FUNC
 xtr::detail::mirrored_memory_mapping::~mirrored_memory_mapping()
 {
     if (m_)
-        memory_mapping{}.reset(m_.get() + m_.length(), m_.length());
+    {
+        memory_mapping{}.reset(
+            static_cast<std::byte*>(m_.get()) + m_.length(),
+            m_.length());
+    }
 }
 

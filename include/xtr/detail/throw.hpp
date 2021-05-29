@@ -23,6 +23,10 @@
 
 namespace xtr::detail
 {
+    [[noreturn, gnu::cold]] void throw_runtime_error(const char* what);
+    [[noreturn, gnu::cold, gnu::format(printf, 1, 2)]]
+    void throw_runtime_error_fmt(const char* format, ...);
+
     // errno isn't passed as an argument just to make the calling code
     // marginally smaller (i.e. avoid a call to __errno_location)
     [[noreturn, gnu::cold]] void throw_system_error(const char* what);
@@ -34,4 +38,3 @@ namespace xtr::detail
 }
 
 #endif
-

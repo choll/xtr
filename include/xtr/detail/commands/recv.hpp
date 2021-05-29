@@ -1,4 +1,4 @@
-// Copyright 2014, 2015, 2019 Chris E. Holloway
+// Copyright 2021 Chris E. Holloway
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,14 +18,32 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef XTR_DETAIL_PAGESIZE_HPP
-#define XTR_DETAIL_PAGESIZE_HPP
+#ifndef XTR_DETAIL_COMMANDS_RECV_HPP
+#define XTR_DETAIL_COMMANDS_RECV_HPP
 
-#include <cstddef>
+#include "xtr/detail/commands/frame.hpp"
+#include "xtr/detail/retry.hpp"
+
+#include <sys/socket.h>
+#include <sys/types.h>
 
 namespace xtr::detail
 {
-    std::size_t align_to_page_size(std::size_t length);
+    [[nodiscard]] ::ssize_t command_recv(int fd, frame_buf& buf);
+}
+
+inline ::ssize_t xtr::detail::command_recv(int fd, frame_buf& buf)
+{
+    ::msghdr hdr{};
+    ::iovec iov;
+
+    hdr.msg_iov = &iov;
+    hdr.msg_iovlen = 1;
+
+    iov.iov_base = &buf;
+    iov.iov_len = sizeof(buf);
+
+    return XTR_TEMP_FAILURE_RETRY(::recvmsg(fd, &hdr, 0));
 }
 
 #endif

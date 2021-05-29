@@ -1,4 +1,4 @@
-// Copyright 2014, 2015, 2019 Chris E. Holloway
+// Copyright 2021 Chris E. Holloway
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,14 +18,38 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef XTR_DETAIL_PAGESIZE_HPP
-#define XTR_DETAIL_PAGESIZE_HPP
+#ifndef XTR_DETAIL_COMMANDS_RESPONSES_HPP
+#define XTR_DETAIL_COMMANDS_RESPONSES_HPP
 
-#include <cstddef>
+#include "message_id.hpp"
+#include "xtr/log_level.hpp"
+
+#include <ostream>
 
 namespace xtr::detail
 {
-    std::size_t align_to_page_size(std::size_t length);
+    struct sink_info
+    {
+        static constexpr auto frame_id = frame_id_t(message_id::sink_info);
+
+        log_level_t level;
+        std::size_t buf_capacity;
+        std::size_t buf_nbytes;
+        std::size_t dropped_count;
+        char name[128];
+    };
+
+    struct success
+    {
+        static constexpr auto frame_id = frame_id_t(message_id::success);
+    };
+
+    struct error
+    {
+        static constexpr auto frame_id = frame_id_t(message_id::error);
+
+        char reason[256];
+    };
 }
 
 #endif

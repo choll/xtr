@@ -61,4 +61,3 @@ namespace fmt
 }
 
 #endif
-

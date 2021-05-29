@@ -1,4 +1,4 @@
-// Copyright 2014, 2015, 2019 Chris E. Holloway
+// Copyright 2021 Chris E. Holloway
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,14 +18,44 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef XTR_DETAIL_PAGESIZE_HPP
-#define XTR_DETAIL_PAGESIZE_HPP
+#include "xtr/detail/commands/regex_matcher.hpp"
 
-#include <cstddef>
+#include <cassert>
 
-namespace xtr::detail
+XTR_FUNC
+xtr::detail::regex_matcher::regex_matcher(
+    const char* pattern,
+    bool ignore_case,
+    bool extended)
 {
-    std::size_t align_to_page_size(std::size_t length);
+    const int flags =
+        REG_NOSUB | (ignore_case ? REG_ICASE : 0) | (extended ? REG_EXTENDED : 0);
+    errnum_ = ::regcomp(&regex_, pattern, flags);
 }
 
-#endif
+XTR_FUNC
+xtr::detail::regex_matcher::~regex_matcher()
+{
+    if (valid())
+        ::regfree(&regex_);
+}
+
+XTR_FUNC
+bool xtr::detail::regex_matcher::valid() const
+{
+    return errnum_ == 0;
+}
+
+XTR_FUNC
+void xtr::detail::regex_matcher::error_reason(char* buf, std::size_t bufsz) const
+{
+    assert(errnum_ != 0);
+    ::regerror(errnum_, &regex_, buf, bufsz);
+}
+
+XTR_FUNC
+bool xtr::detail::regex_matcher::operator()(const char* str) const
+{
+    return ::regexec(&regex_, str, 0, nullptr, 0) == 0;
+}
+

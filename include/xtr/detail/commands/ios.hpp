@@ -1,4 +1,4 @@
-// Copyright 2014, 2015, 2019 Chris E. Holloway
+// Copyright 2021 Chris E. Holloway
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,14 +18,43 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef XTR_DETAIL_PAGESIZE_HPP
-#define XTR_DETAIL_PAGESIZE_HPP
+#ifndef XTR_DETAIL_COMMANDS_IOS_HPP
+#define XTR_DETAIL_COMMANDS_IOS_HPP
 
-#include <cstddef>
+#include "requests.hpp"
+#include "responses.hpp"
 
 namespace xtr::detail
 {
-    std::size_t align_to_page_size(std::size_t length);
+    inline std::ostream& operator<<(std::ostream& os, log_level_t level)
+    {
+        switch (level)
+        {
+        case log_level_t::none:
+            return os << "none";
+        case log_level_t::fatal:
+            return os << "fatal";
+        case log_level_t::error:
+            return os << "error";
+        case log_level_t::warning:
+            return os << "warning";
+        case log_level_t::info:
+            return os << "info";
+        case log_level_t::debug:
+            return os << "debug";
+        }
+        return os << "<invalid>";
+    }
+
+    inline std::ostream& operator<<(std::ostream& os, const sink_info& si)
+    {
+        return os
+            << si.name
+            << " (" << si.level << ") "
+            << si.buf_capacity / 1024 << "K capacity, "
+            << si.buf_nbytes / 1024 << "K size, "
+            << si.dropped_count << " dropped";
+    }
 }
 
 #endif

@@ -1,4 +1,4 @@
-// Copyright 2014, 2015, 2019 Chris E. Holloway
+// Copyright 2021 Chris E. Holloway
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,14 +18,26 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef XTR_DETAIL_PAGESIZE_HPP
-#define XTR_DETAIL_PAGESIZE_HPP
+#ifndef XTR_DETAIL_COMMANDS_WILDCARD_MATCHER_HPP
+#define XTR_DETAIL_COMMANDS_WILDCARD_MATCHER_HPP
 
-#include <cstddef>
+#include "matcher.hpp"
 
 namespace xtr::detail
 {
-    std::size_t align_to_page_size(std::size_t length);
+    class wildcard_matcher;
 }
+
+class xtr::detail::wildcard_matcher : public matcher
+{
+public:
+    wildcard_matcher(const char* pattern, bool ignore_case);
+
+    bool operator()(const char* str) const override;
+
+private:
+    const char* pattern_ = nullptr;
+    int flags_;
+};
 
 #endif

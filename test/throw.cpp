@@ -23,6 +23,16 @@
 #include <catch2/catch.hpp>
 
 #if __cpp_exceptions
+TEST_CASE("runtime_error", "[throw]")
+{
+    REQUIRE_THROWS_AS(xtr::detail::throw_runtime_error(""), std::runtime_error);
+}
+
+TEST_CASE("runtime_error_fmt", "[throw]")
+{
+    REQUIRE_THROWS_WITH(xtr::detail::throw_runtime_error_fmt("error text"), "error text");
+}
+
 TEST_CASE("system_error", "[throw]")
 {
     REQUIRE_THROWS_AS(xtr::detail::throw_system_error(""), std::system_error);
@@ -39,6 +49,4 @@ TEST_CASE("invalid_argument", "[throw]")
 {
     REQUIRE_THROWS_AS(xtr::detail::throw_invalid_argument(""), std::invalid_argument);
 }
-
 #endif
-

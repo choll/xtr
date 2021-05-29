@@ -51,4 +51,3 @@ namespace xtr::detail
 }
 
 #endif
-

@@ -45,4 +45,3 @@ namespace xtr::detail
 }
 
 #endif
-
