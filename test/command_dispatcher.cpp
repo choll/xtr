@@ -34,10 +34,12 @@ namespace xtrd = xtr::detail;
 
 namespace
 {
+#if __cpp_exceptions
     struct thrower
     {
         static constexpr auto frame_id = 1;
     };
+#endif
 
     struct sum
     {
@@ -76,11 +78,13 @@ namespace
 
             cmd_thread_ = std::jthread([&](std::stop_token st){ run(st); });
 
+#if __cpp_exceptions
             cmd_.register_callback<thrower>(
                 [](int, const thrower&)
                 {
                     throw std::runtime_error("Reason");
                 });
+#endif
 
             cmd_.register_callback<sum>(
                 [&](int fd, const sum& s)
@@ -129,6 +133,7 @@ TEST_CASE_METHOD(fixture, "command_dispatcher request response test", "[command_
     REQUIRE(responses[0].result == 3);
 }
 
+#if __cpp_exceptions
 TEST_CASE_METHOD(fixture, "command_dispatcher throw test", "[command_dispatcher]")
 {
     const auto errors = send_frame<xtrd::error>(xtrd::frame<thrower>());
@@ -138,6 +143,7 @@ TEST_CASE_METHOD(fixture, "command_dispatcher throw test", "[command_dispatcher]
     REQUIRE(errors.size() == 1);
     REQUIRE(errors[0].reason == "Reason"sv);
 }
+#endif
 
 TEST_CASE_METHOD(fixture, "command_dispatcher incomplete header test", "[command_dispatcher]")
 {
