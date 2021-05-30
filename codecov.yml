@@ -2,4 +2,5 @@ ignore:
   - "test"
   - "src/tsc.cpp"
   - "include/xtr/detail/cpuid.hpp"
+  - "src/xtrctl/main.cpp"
 
