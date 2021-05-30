@@ -92,7 +92,7 @@ else
 endif
 
 ifneq ($(SANITIZER),)
-	CXXFLAGS += -fno-omit-frame-pointer -fsanitize=$(SANITIZER) -D
+	CXXFLAGS += -fno-omit-frame-pointer -fsanitize=$(SANITIZER)
 	BUILD_DIR := $(BUILD_DIR)-$(SANITIZER)-sanitizer
 endif
 
