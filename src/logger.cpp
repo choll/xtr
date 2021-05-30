@@ -48,7 +48,7 @@ std::string xtr::logger::default_command_path()
     const unsigned long uid = ::geteuid();
     const unsigned n = ctl_count++;
     char path[PATH_MAX];
-    std::snprintf(path, sizeof(path), "/var/run/user/%lu/xtrctl.%ld.%u", uid, pid, n);
+    std::snprintf(path, sizeof(path), "/run/user/%lu/xtrctl.%ld.%u", uid, pid, n);
     return path;
 }
 
@@ -186,6 +186,9 @@ void xtr::logger::consumer::add_producer(producer& p, const std::string& name)
 XTR_FUNC
 void xtr::logger::consumer::set_command_path(std::string path) noexcept
 {
+    if (path == null_command_path)
+        return;
+
     cmds_.reset(new detail::command_dispatcher(std::move(path)));
 
     // Reset if failed to open

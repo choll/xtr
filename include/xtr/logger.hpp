@@ -171,6 +171,8 @@ namespace xtr
 {
     class logger;
 
+    inline constexpr auto null_command_path = "";
+
     // TODO: A template alias should be possible:
     //
     // template<typename T>

@@ -63,12 +63,12 @@ namespace xtrd = xtr::detail;
 
 namespace
 {
-    struct clock
+    struct test_clock
     {
         typedef std::int64_t rep;
         typedef std::ratio<1, 1000000000> period;
         typedef std::chrono::duration<rep, period> duration;
-        typedef std::chrono::time_point<clock> time_point;
+        typedef std::chrono::time_point<test_clock> time_point;
 
         time_point now() const noexcept
         {
@@ -188,7 +188,8 @@ namespace
         xtr::logger log_{
             make_write_func(lines_, m_),
             make_write_func(errors_, m_),
-            clock{&clock_nanos_}};
+            test_clock{&clock_nanos_},
+            xtr::null_command_path};
         xtr::logger::producer p_ = log_.get_producer("Name");
     };
 
@@ -203,7 +204,11 @@ namespace
     {
         file_fixture()
         :
-            fixture(outbuf_.fp_, errbuf_.fp_, clock{&clock_nanos_})
+            fixture(
+                outbuf_.fp_,
+                errbuf_.fp_,
+                test_clock{&clock_nanos_},
+                xtr::null_command_path)
         {
         }
 
@@ -236,7 +241,8 @@ namespace
             path_,
             fp_,
             fp_,
-            clock{&clock_nanos_}};
+            test_clock{&clock_nanos_},
+            xtr::null_command_path};
         xtr::logger::producer p_ = log_.get_producer("Name");
     };
 
@@ -2070,7 +2076,10 @@ TEST_CASE_METHOD(fixture, "logger socket bind error test", "[logger]")
 
 TEST_CASE("logger open path test", "[logger]")
 {
-    xtr::logger log("/dev/null");
+    xtr::logger log(
+        "/dev/null",
+        std::chrono::system_clock(),
+        xtr::null_command_path);
 
     auto p = log.get_producer("Name");
 
