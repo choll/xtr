@@ -48,7 +48,7 @@ std::string xtr::logger::default_command_path()
     const unsigned long uid = ::geteuid();
     const unsigned n = ctl_count++;
     char path[PATH_MAX];
-    std::snprintf(path, sizeof(path), "/run/user/%lu/xtrctl.%ld.%u", uid, pid, n);
+    std::snprintf(path, sizeof(path), "/var/run/user/%lu/xtrctl.%ld.%u", uid, pid, n);
     return path;
 }
 
