@@ -3,6 +3,7 @@
 PREFIX ?= /usr/local
 EXCEPTIONS ?= 1
 COVERAGE ?= 0
+DEBUG ?= 0
 PIC ?= 0
 RTTI ?= 0
 
@@ -15,7 +16,7 @@ FMT_LDFLAGS = $(addprefix -L, $(CONAN_LIB_DIRS_FMT) $(FMT_LIB_DIR))
 BUILD_DIR := build/$(CXX)
 
 CXXFLAGS = \
-	-std=c++2a -Wall -Wextra -Wconversion -Wshadow -Wcast-qual -Wformat=2 \
+	-std=c++20 -Wall -Wextra -Wconversion -Wshadow -Wcast-qual -Wformat=2 \
 	-pedantic -pipe -pthread
 CPPFLAGS = -MMD -MP -I include $(FMT_CPPFLAGS) -DXTR_FUNC=
 LDFLAGS = -fuse-ld=gold
@@ -25,7 +26,7 @@ DEBUG_CXXFLAGS = -O0 -ggdb -ftrapv
 DEBUG_CPPFLAGS = -DXTR_ENABLE_TEST_STATIC_ASSERTIONS
 
 OPT_CXXFLAGS = -O3 -march=native -flto
-OPT_CPPFLAGS = -DNDEBUG 
+OPT_CPPFLAGS = -DNDEBUG
 
 TEST_CPPFLAGS = $(CATCH2_CPPFLAGS) 
 TEST_LDFLAGS = -L $(BUILD_DIR) $(FMT_LDFLAGS)
@@ -33,6 +34,8 @@ TEST_LDFLAGS = -L $(BUILD_DIR) $(FMT_LDFLAGS)
 BENCH_CPPFLAGS = $(GOOGLE_BENCH_CPPFLAGS)
 BENCH_LDFLAGS = -L $(BUILD_DIR) $(GOOGLE_BENCH_LDFLAGS) $(FMT_LDFLAGS)
 BENCH_LDLIBS = -lbenchmark
+
+XTRCTL_LDFLAGS = -L $(BUILD_DIR)
 
 COVERAGE_CXXFLAGS = --coverage -DNDEBUG
 
@@ -89,7 +92,7 @@ else
 endif
 
 ifneq ($(SANITIZER),)
-	CXXFLAGS += -fno-omit-frame-pointer -fsanitize=$(SANITIZER)
+	CXXFLAGS += -fno-omit-frame-pointer -fsanitize=$(SANITIZER) -D
 	BUILD_DIR := $(BUILD_DIR)-$(SANITIZER)-sanitizer
 endif
 
@@ -99,18 +102,30 @@ ifeq ($(EXCEPTIONS), 0)
 endif
 
 TARGET = $(BUILD_DIR)/libxtr.a
-SRCS := $(sort $(wildcard src/*.cpp))
+SRCS := \
+	src/command_dispatcher.cpp src/file_descriptor.cpp src/logger.cpp \
+	src/matcher.cpp src/memory_mapping.cpp src/mirrored_memory_mapping.cpp \
+	src/pagesize.cpp src/regex_matcher.cpp src/throw.cpp src/tsc.cpp \
+	src/wildcard_matcher.cpp
 OBJS = $(SRCS:%=$(BUILD_DIR)/%.o)
 
 TEST_TARGET = $(BUILD_DIR)/test/test
-TEST_SRCS := $(sort $(wildcard test/*.cpp))
+TEST_SRCS := \
+	test/align.cpp test/command_client.cpp test/command_dispatcher.cpp \
+	test/file_descriptor.cpp test/llvm_mca.cpp test/logger.cpp \
+	test/main.cpp test/memory_mapping.cpp  test/mirrored_memory_mapping.cpp \
+	test/pagesize.cpp test/synchronized_ring_buffer.cpp	test/throw.cpp
 TEST_OBJS = $(TEST_SRCS:%=$(BUILD_DIR)/%.o)
 
 BENCH_TARGET = $(BUILD_DIR)/benchmark/benchmark
-BENCH_SRCS := $(sort $(wildcard benchmark/*.cpp))
+BENCH_SRCS := logger.cpp  main.cpp
 BENCH_OBJS = $(BENCH_SRCS:%=$(BUILD_DIR)/%.o)
 
-DEPS = $(OBJS:.o=.d) $(TEST_OBJS:.o=.d)
+XTRCTL_TARGET = $(BUILD_DIR)/xtrctl
+XTRCTL_SRCS := src/xtrctl/main.cpp
+XTRCTL_OBJS = $(XTRCTL_SRCS:%=$(BUILD_DIR)/%.o)
+
+DEPS = $(OBJS:.o=.d) $(TEST_OBJS:.o=.d) $(BENCH_OBJS:.o=.d) $(XTRCTL_OBJS:.o=.d)
 
 $(TARGET): $(OBJS)
 	$(AR) rc $@ $^
@@ -121,6 +136,9 @@ $(TEST_TARGET): $(TARGET) $(TEST_OBJS)
 
 $(BENCH_TARGET): $(TARGET) $(BENCH_OBJS)
 	$(LINK.cc) -o $@ $(BENCH_LDFLAGS) $(BENCH_OBJS) $(LDLIBS) $(BENCH_LDLIBS)
+
+$(XTRCTL_TARGET): $(XTRCTL_OBJS)
+	$(LINK.cc) -o $@ $(XTRCTL_LDFLAGS) $(XTRCTL_OBJS) $(LDLIBS)
 
 $(OBJS): $(BUILD_DIR)/%.cpp.o: %.cpp
 	@mkdir -p $(@D)
@@ -134,6 +152,10 @@ $(BENCH_OBJS): $(BUILD_DIR)/%.cpp.o: %.cpp
 	@mkdir -p $(@D)
 	$(CXX) -o $@ -c $(CPPFLAGS) $(BENCH_CPPFLAGS) $(CXXFLAGS) $<
 
+$(XTRCTL_OBJS): $(BUILD_DIR)/%.cpp.o: %.cpp
+	@mkdir -p $(@D)
+	$(CXX) -o $@ -c $(CPPFLAGS) $(CXXFLAGS) $<
+
 all: $(TARGET)
 
 check: $(TEST_TARGET)
@@ -141,6 +163,8 @@ check: $(TEST_TARGET)
 
 benchmark: $(BENCH_TARGET)
 	$<
+
+xtrctl: $(XTRCTL_TARGET)
 
 single_include:
 	scripts/make_single_include.sh
@@ -167,4 +191,3 @@ endif
 -include $(DEPS)
 
 .PHONY: all check benchmark single_include install clean coverage_report
-
