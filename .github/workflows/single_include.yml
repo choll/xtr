@@ -30,10 +30,7 @@ jobs:
       run: make single_include
 
     - name: build
-      run: g++-10 -DFMT_HEADER_ONLY -std=c++20 -Wall -pedantic test/logger.cpp test/main.cpp -I single_include -isystem third_party/include -pthread -o unit_test
-
-    - name: test
-      run: ./unit_test
+      run: g++ -DFMT_HEADER_ONLY -std=c++20 -Wall -pedantic test/single_include.cpp -I single_include -isystem third_party/include -pthread -o /dev/null
 
     - name: commit and push
       run: |

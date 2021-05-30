@@ -73,6 +73,10 @@ namespace xtr
 
 namespace xtr::detail
 {
+    [[noreturn, gnu::cold]] void throw_runtime_error(const char* what);
+    [[noreturn, gnu::cold, gnu::format(printf, 1, 2)]] void throw_runtime_error_fmt(
+        const char* format, ...);
+
     [[noreturn, gnu::cold]] void throw_system_error(const char* what);
 
     [[noreturn, gnu::cold, gnu::format(printf, 1, 2)]] void throw_system_error_fmt(
@@ -80,6 +84,8 @@ namespace xtr::detail
 
     [[noreturn, gnu::cold]] void throw_invalid_argument(const char* what);
 }
+
+#include <cerrno>
 
 #define XTR_TEMP_FAILURE_RETRY(expr)                    \
     (__extension__(                                     \
@@ -1287,22 +1293,26 @@ namespace xtr
     };
 }
 
+#include <cstddef>
+#include <cstdint>
 #include <type_traits>
 
 namespace xtr::detail
 {
-    enum class frame_id_t
-    {
-        status,
-        set_level,
-        sink_info,
-        success,
-        error
-    };
+    using frame_id_t = std::uint32_t;
 
     struct frame_header
     {
         frame_id_t frame_id;
+    };
+
+    inline constexpr std::size_t max_frame_alignment = alignof(std::max_align_t);
+    inline constexpr std::size_t max_frame_size = 512;
+
+    union alignas(max_frame_alignment) frame_buf
+    {
+        frame_header hdr;
+        char buf[max_frame_size];
     };
 
     template<typename Payload>
@@ -1316,6 +1326,9 @@ namespace xtr::detail
 
         frame()
         {
+            static_assert(alignof(frame<Payload>) <= max_frame_alignment);
+            static_assert(sizeof(frame<Payload>) <= max_frame_size);
+
             frame_id = Payload::frame_id;
         }
 
@@ -1333,7 +1346,8 @@ namespace xtr::detail
     enum class pattern_type_t
     {
         none,
-        regex,
+        extended_regex,
+        basic_regex,
         wildcard
     };
 
@@ -1347,27 +1361,47 @@ namespace xtr::detail
 
 namespace xtr::detail
 {
+    enum class message_id
+    {
+        status,
+        set_level,
+        sink_info,
+        success,
+        error,
+        reopen
+    };
+}
+
+namespace xtr::detail
+{
     struct status
     {
-        static constexpr auto frame_id = frame_id_t::status;
+        static constexpr auto frame_id = frame_id_t(message_id::status);
 
         struct pattern pattern;
     };
 
     struct set_level
     {
-        static constexpr auto frame_id = frame_id_t::set_level;
+        static constexpr auto frame_id = frame_id_t(message_id::set_level);
 
         log_level_t level;
         struct pattern pattern;
     };
+
+    struct reopen
+    {
+        static constexpr auto frame_id = frame_id_t(message_id::reopen);
+    };
 }
+
+#include <ostream>
 
 namespace xtr::detail
 {
     struct sink_info
     {
-        static constexpr auto frame_id = frame_id_t::sink_info;
+        static constexpr auto frame_id = frame_id_t(message_id::sink_info);
 
         log_level_t level;
         std::size_t buf_capacity;
@@ -1378,15 +1412,107 @@ namespace xtr::detail
 
     struct success
     {
-        static constexpr auto frame_id = frame_id_t::success;
+        static constexpr auto frame_id = frame_id_t(message_id::success);
     };
 
     struct error
     {
-        static constexpr auto frame_id = frame_id_t::error;
+        static constexpr auto frame_id = frame_id_t(message_id::error);
 
         char reason[256];
     };
+}
+
+#include <string_view>
+
+#include <sys/socket.h>
+#include <sys/un.h>
+
+namespace xtr::detail
+{
+    [[nodiscard]] file_descriptor command_connect(std::string_view path);
+}
+
+inline xtr::detail::file_descriptor xtr::detail::command_connect(
+    std::string_view path)
+{
+    file_descriptor fd(::socket(AF_LOCAL, SOCK_SEQPACKET, 0));
+
+    if (!fd)
+        return {};
+
+    sockaddr_un addr;
+    addr.sun_family = AF_LOCAL;
+
+    if (path.size() >= sizeof(addr.sun_path))
+    {
+        errno = ENAMETOOLONG;
+        return {};
+    }
+
+    strzcpy(addr.sun_path, path);
+
+#if defined(__linux__)
+    if (addr.sun_path[0] == '\0') // abstract socket
+    {
+        std::memset(
+            addr.sun_path + path.size(),
+            '\0',
+            sizeof(addr.sun_path) - path.size());
+    }
+#endif
+
+    if (::connect(fd.get(), reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) !=
+        0)
+        return {};
+
+    return fd;
+}
+
+#include <sys/socket.h>
+#include <sys/types.h>
+
+namespace xtr::detail
+{
+    [[nodiscard]] ::ssize_t command_send(
+        int fd, const void* buf, std::size_t nbytes);
+}
+
+inline ::ssize_t xtr::detail::command_send(
+    int fd, const void* buf, std::size_t nbytes)
+{
+    ::msghdr hdr{};
+    ::iovec iov;
+
+    hdr.msg_iov = &iov;
+    hdr.msg_iovlen = 1;
+
+    iov.iov_base = const_cast<void*>(buf);
+    iov.iov_len = nbytes;
+
+    return XTR_TEMP_FAILURE_RETRY(::sendmsg(fd, &hdr, MSG_NOSIGNAL));
+}
+
+#include <sys/socket.h>
+#include <sys/types.h>
+
+namespace xtr::detail
+{
+    [[nodiscard]] ::ssize_t command_recv(int fd, frame_buf& buf);
+}
+
+inline ::ssize_t xtr::detail::command_recv(int fd, frame_buf& buf)
+{
+    ::msghdr hdr{};
+    ::iovec iov;
+
+    hdr.msg_iov = &iov;
+    hdr.msg_iovlen = 1;
+
+    iov.iov_base = &buf;
+    iov.iov_len = sizeof(buf);
+
+    return XTR_TEMP_FAILURE_RETRY(::recvmsg(fd, &hdr, 0));
 }
 
 namespace xtr::detail
@@ -1400,7 +1526,6 @@ namespace xtr::detail
 }
 
 #include <cstddef>
-#include <cstdint>
 #include <functional>
 #include <memory>
 #include <string>
@@ -1456,6 +1581,10 @@ public:
     void register_callback(Callback&& c)
     {
         using frame_type = detail::frame<Payload>;
+
+        static_assert(sizeof(frame_type) <= max_frame_size);
+        static_assert(alignof(frame_type) <= max_frame_alignment);
+
         callbacks_[Payload::frame_id] = callback{
             [c = std::forward<Callback>(c)](int fd, void* buf)
             { c(fd, static_cast<frame_type*>(buf)->payload); },
@@ -1472,7 +1601,7 @@ public:
 
     void send_error(int fd, std::string_view reason);
 
-    void read_commands() noexcept;
+    void process_commands(int timeout) noexcept;
 
     bool is_open() const noexcept
     {
@@ -1480,7 +1609,9 @@ public:
     }
 
 private:
-    void disconnect(std::size_t n);
+    void process_socket_read(pollfd& pfd) noexcept;
+    void process_socket_write(pollfd& pfd) noexcept;
+    void disconnect(pollfd& pfd) noexcept;
 
     std::unordered_map<frame_id_t, callback> callbacks_;
     std::vector<pollfd> pollfds_;
@@ -1512,9 +1643,11 @@ public:
         return true;
     }
 
-    virtual void error_reason(char*, std::size_t) const
+    virtual void error_reason(char*, std::size_t) const // LCOV_EXCL_LINE
     {
     }
+
+    virtual ~matcher(){};
 };
 
 #include <regex.h>
@@ -1527,7 +1660,7 @@ namespace xtr::detail
 class xtr::detail::regex_matcher : public matcher
 {
 public:
-    regex_matcher(const char* pattern, bool ignore_case);
+    regex_matcher(const char* pattern, bool ignore_case, bool extended);
 
     ~regex_matcher();
 
@@ -1620,11 +1753,11 @@ private:
 #define XTR_TRY_LOG_TSC(SINK, FMT, ...) \
     XTR_TRY_LOG_TS(SINK, FMT, xtr::detail::tsc::now() __VA_OPT__(, ) __VA_ARGS__)
 
-#define XTR_LOG_LEVEL(LEVELSTR, LEVEL, SINK, FMT, ...)                  \
-    (__extension__(                                                     \
-        {                                                               \
-            if ((SINK).level() >= xtr::log_level_t::LEVEL)              \
-                XTR_LOG_TAGS(void(), LEVELSTR, SINK, FMT, __VA_ARGS__); \
+#define XTR_LOG_LEVEL(LEVELSTR, LEVEL, SINK, ...)                  \
+    (__extension__(                                                \
+        {                                                          \
+            if ((SINK).level() >= xtr::log_level_t::LEVEL)         \
+                XTR_LOG_TAGS(void(), LEVELSTR, SINK, __VA_ARGS__); \
         }))
 
 #define XTR_LOG_FATAL(SINK, ...)                          \
@@ -1671,6 +1804,8 @@ namespace xtr
 {
     class logger;
 
+    inline constexpr auto null_command_path = "";
+
     template<typename T>
     inline auto nocopy(const T& arg)
     {
@@ -1710,6 +1845,20 @@ namespace xtr::detail
             ::fsync(::fileno(err_stream));
 #endif
         };
+    }
+
+    inline auto make_reopen_func(std::string path, FILE* stream)
+    {
+        return [path = std::move(path), stream]()
+        { return std::freopen(path.c_str(), "a", stream) != nullptr; };
+    }
+
+    inline FILE* open_path(const char* path)
+    {
+        FILE* const fp = std::fopen(path, "a");
+        if (fp == nullptr)
+            detail::throw_system_error_fmt("Failed to open `%s'", path);
+        return fp;
     }
 }
 
@@ -1818,12 +1967,27 @@ private:
         void run(std::function<::timespec()> clock) noexcept;
         void set_command_path(std::string path) noexcept;
 
-        template<typename O, typename E, typename F, typename S>
-        consumer(O&& o, E&& e, F&& f, S&& s, producer* control) :
-            out(std::move(o)),
-            err(std::move(e)),
-            flush(std::move(f)),
-            sync(std::move(s)),
+        template<
+            typename OutputFunction,
+            typename ErrorFunction,
+            typename FlushFunction,
+            typename SyncFunction,
+            typename ReopenFunction,
+            typename CloseFunction>
+        consumer(
+            OutputFunction&& o,
+            ErrorFunction&& e,
+            FlushFunction&& f,
+            SyncFunction&& s,
+            ReopenFunction&& r,
+            CloseFunction&& c,
+            producer* control) :
+            out(std::forward<OutputFunction>(o)),
+            err(std::forward<ErrorFunction>(e)),
+            flush(std::forward<FlushFunction>(f)),
+            sync(std::forward<SyncFunction>(s)),
+            reopen(std::forward<ReopenFunction>(r)),
+            close(std::forward<CloseFunction>(c)),
             producers_({{control, "control", 0}})
         {
         }
@@ -1834,11 +1998,14 @@ private:
         std::function<void(const char* buf, std::size_t size)> err;
         std::function<void()> flush;
         std::function<void()> sync;
+        std::function<bool()> reopen;
+        std::function<void()> close;
         bool destroy = false;
 
     private:
         void status_handler(int fd, detail::status&);
         void set_level_handler(int fd, detail::set_level&);
+        void reopen_handler(int fd, detail::reopen&);
 
         std::vector<producer_handle> producers_;
         std::unique_ptr<detail::command_dispatcher, detail::command_dispatcher_deleter>
@@ -1846,6 +2013,39 @@ private:
     };
 
 public:
+    template<typename Clock = std::chrono::system_clock>
+    logger(
+        const char* path,
+        Clock&& clock = Clock(),
+        std::string command_path = default_command_path()) :
+        logger(
+            path,
+            detail::open_path(path),
+            stderr,
+            std::forward<Clock>(clock),
+            std::move(command_path))
+    {
+    }
+
+    template<typename Clock = std::chrono::system_clock>
+    logger(
+        const char* path,
+        FILE* stream,
+        FILE* err_stream = stderr,
+        Clock&& clock = Clock(),
+        std::string command_path = default_command_path()) :
+        logger(
+            detail::make_output_func(stream),
+            detail::make_error_func(err_stream),
+            detail::make_flush_func(stream, err_stream),
+            detail::make_sync_func(stream, err_stream),
+            detail::make_reopen_func(path, stream),
+            [stream]() { std::fclose(stream); }, // close
+            std::forward<Clock>(clock),
+            std::move(command_path))
+    {
+    }
+
     template<typename Clock = std::chrono::system_clock>
     logger(
         FILE* stream = stderr,
@@ -1857,6 +2057,8 @@ public:
             detail::make_error_func(err_stream),
             detail::make_flush_func(stream, err_stream),
             detail::make_sync_func(stream, err_stream),
+            []() { return true; }, // reopen
+            []() {},               // close
             std::forward<Clock>(clock),
             std::move(command_path))
     {
@@ -1876,8 +2078,10 @@ public:
         logger(
             std::forward<OutputFunction>(out),
             std::forward<ErrorFunction>(err),
-            []() {}, // flush
-            []() {}, // sync
+            []() {},               // flush
+            []() {},               // sync
+            []() { return true; }, // reopen
+            []() {},               // close
             std::forward<Clock>(clock),
             std::move(command_path))
     {
@@ -1888,15 +2092,20 @@ public:
         typename ErrorFunction,
         typename FlushFunction,
         typename SyncFunction,
+        typename ReopenFunction,
+        typename CloseFunction,
         typename Clock = std::chrono::system_clock>
     requires std::invocable<OutputFunction, const char*, std::size_t> &&
         std::invocable<ErrorFunction, const char*, std::size_t> &&
-        std::invocable<FlushFunction> && std::invocable<SyncFunction>
+        std::invocable<FlushFunction> && std::invocable<SyncFunction> &&
+        std::invocable<ReopenFunction> && std::invocable<CloseFunction>
         logger(
             OutputFunction&& out,
             ErrorFunction&& err,
             FlushFunction&& flush,
             SyncFunction&& sync,
+            ReopenFunction&& reopen,
+            CloseFunction&& close,
             Clock&& clock = Clock(),
             std::string command_path = default_command_path())
     {
@@ -1907,6 +2116,8 @@ public:
                 std::forward<ErrorFunction>(err),
                 std::forward<FlushFunction>(flush),
                 std::forward<SyncFunction>(sync),
+                std::forward<ReopenFunction>(reopen),
+                std::forward<CloseFunction>(close),
                 &control_),
             make_clock(std::forward<Clock>(clock)));
         control_.open_ = true;
@@ -1915,7 +2126,10 @@ public:
 
     ~logger();
 
-    std::thread::native_handle_type consumer_thread_native_handle();
+    std::thread::native_handle_type consumer_thread_native_handle()
+    {
+        return consumer_.native_handle();
+    }
 
     [[nodiscard]] producer get_producer(std::string name);
 
@@ -1969,6 +2183,28 @@ public:
         post([f = std::forward<Func>(f)](consumer& c, auto&)
              { c.sync = std::move(f); });
         control_.sync();
+    }
+
+    template<typename Func>
+    void set_reopen_function(Func&& f) noexcept
+    {
+        static_assert(
+            std::is_same_v<std::invoke_result_t<Func>, bool>,
+            "Reopen function must be of type bool()");
+        post([f = std::forward<Func>(f)](consumer& c, auto&)
+             { c.reopen = std::move(f); });
+        control_.sync();
+    }
+
+    template<typename Func>
+    void set_close_function(Func&& f) noexcept
+    {
+        static_assert(
+            std::is_same_v<std::invoke_result_t<Func>, void>,
+            "Close function must be of type void()");
+        post([f = std::forward<Func>(f)](consumer& c, auto&)
+             { c.close = std::move(f); });
+        control_.close();
     }
 
     void set_command_path(std::string path) noexcept;
@@ -2158,23 +2394,29 @@ auto xtr::logger::producer::make_lambda(Args&&... args) noexcept(
 #include <time.h>
 #include <unistd.h>
 
-namespace
+namespace xtr::detail
 {
+    template<typename... Args>
+    void errx(Args&&... args)
+    {
+        (std::cerr << ... << args) << "\n";
+    }
+
     template<typename... Args>
     void err(Args&&... args)
     {
         const int errnum = errno;
-        (std::cerr << ... << args) << ": " << std::strerror(errnum) << "\n";
+        errx(std::forward<Args>(args)..., ": ", std::strerror(errnum));
     }
 }
 
-xtr::detail::command_dispatcher::command_dispatcher(std::string path)
+inline xtr::detail::command_dispatcher::command_dispatcher(std::string path)
 {
     sockaddr_un addr;
 
     if (path.size() > sizeof(addr.sun_path) - 1)
     {
-        err("Error: Command path '", path, "' is too long");
+        errx("Error: Command path '", path, "' is too long");
         return;
     }
 
@@ -2188,7 +2430,17 @@ xtr::detail::command_dispatcher::command_dispatcher(std::string path)
     }
 
     addr.sun_family = AF_LOCAL;
-    std::strncpy(addr.sun_path, path.c_str(), sizeof(addr.sun_path));
+    std::memcpy(addr.sun_path, path.c_str(), path.size() + 1);
+
+#if defined(__linux__)
+    if (addr.sun_path[0] == '\0') // abstract socket
+    {
+        std::memset(
+            addr.sun_path + path.size(),
+            '\0',
+            sizeof(addr.sun_path) - path.size());
+    }
+#endif
 
     if (::bind(fd.get(), reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) == -1)
     {
@@ -2207,13 +2459,13 @@ xtr::detail::command_dispatcher::command_dispatcher(std::string path)
     pollfds_.push_back(pollfd{std::move(fd), POLLIN, 0});
 }
 
-xtr::detail::command_dispatcher::~command_dispatcher()
+inline xtr::detail::command_dispatcher::~command_dispatcher()
 {
     if (!path_.empty())
         ::unlink(path_.c_str());
 }
 
-xtr::detail::command_dispatcher::buffer::buffer(
+inline xtr::detail::command_dispatcher::buffer::buffer(
     const void* srcbuf, std::size_t srcsize) :
     buf(new char[srcsize]),
     size(srcsize)
@@ -2221,16 +2473,18 @@ xtr::detail::command_dispatcher::buffer::buffer(
     std::memcpy(buf.get(), srcbuf, size);
 }
 
-void xtr::detail::command_dispatcher::send(
+inline void xtr::detail::command_dispatcher::send(
     int fd, const void* buf, std::size_t nbytes)
 {
     results_[fd].bufs.emplace_back(buf, nbytes);
 }
 
-void xtr::detail::command_dispatcher::read_commands() noexcept
+inline void xtr::detail::command_dispatcher::process_commands(int timeout) noexcept
 {
-    int nfds =
-        ::poll(reinterpret_cast<::pollfd*>(&pollfds_[0]), pollfds_.size(), 0);
+    int nfds = ::poll(
+        reinterpret_cast<::pollfd*>(&pollfds_[0]),
+        pollfds_.size(),
+        timeout);
 
     if (pollfds_[0].revents & POLLIN)
     {
@@ -2246,121 +2500,117 @@ void xtr::detail::command_dispatcher::read_commands() noexcept
     for (std::size_t i = 1; i < pollfds_.size() && nfds > 0; ++i)
     {
         const int fd = pollfds_[i].fd.get();
-
         if (pollfds_[i].revents & POLLOUT)
         {
+            process_socket_write(pollfds_[i]);
             --nfds;
-
-            ::msghdr mhdr{};
-            ::iovec iov;
-
-            mhdr.msg_iov = &iov;
-            mhdr.msg_iovlen = 1;
-
-            callback_result& cr = results_[fd];
-
-            ::ssize_t nwritten = 0;
-
-            for (; cr.pos < cr.bufs.size(); ++cr.pos)
-            {
-                iov.iov_base = cr.bufs[cr.pos].buf.get();
-                iov.iov_len = cr.bufs[cr.pos].size;
-
-                nwritten =
-                    XTR_TEMP_FAILURE_RETRY(::sendmsg(fd, &mhdr, MSG_NOSIGNAL));
-
-                if (nwritten != ::ssize_t(iov.iov_len))
-                    break;
-            }
-
-            if ((nwritten == -1 && errno != EAGAIN) || cr.pos == cr.bufs.size())
-            {
-                results_.erase(fd);
-                disconnect(i);
-            }
         }
         else if (pollfds_[i].revents & (POLLHUP | POLLIN))
         {
+            process_socket_read(pollfds_[i]);
             --nfds;
-
-            union
-            {
-                frame_header hdr;
-                char buf[1204];
-            } buf;
-
-            ::msghdr mhdr{};
-            ::iovec iov;
-
-            mhdr.msg_iov = &iov;
-            mhdr.msg_iovlen = 1;
-
-            iov.iov_base = &buf;
-            iov.iov_len = sizeof(buf);
-
-            const ::ssize_t nbytes =
-                XTR_TEMP_FAILURE_RETRY(::recvmsg(fd, &mhdr, 0));
-
-            if (nbytes == 0) // EOF
-            {
-                disconnect(i);
-                continue;
-            }
-
-            if (nbytes == -1)
-            {
-                err("Error: Failed to read command");
-                continue;
-            }
-
-            const auto cpos = callbacks_.find(buf.hdr.frame_id);
-
-            pollfds_[i].events |= POLLOUT;
-
-            if (cpos == callbacks_.end())
-            {
-                send_error(fd, "Invalid frame id");
-                continue;
-            }
-
-            if (nbytes != ::ssize_t(cpos->second.size))
-            {
-                send_error(fd, "Invalid frame length");
-                continue;
-            }
-
-#if __cpp_exceptions
-            try
-            {
-#endif
-                cpos->second.func(fd, &buf);
-#if __cpp_exceptions
-            }
-            catch (const std::exception& e)
-            {
-                send_error(fd, "Invalid frame length");
-            }
-#endif
         }
+        if (fd != pollfds_[i].fd.get())
+            --i; // Adjust for erased item
     }
 }
 
-void xtr::detail::command_dispatcher::disconnect(std::size_t n)
+inline void xtr::detail::command_dispatcher::process_socket_read(pollfd& pfd) noexcept
 {
-    assert(n < pollfds_.size());
-    assert(results_.count(pollfds_[n].fd.get()) == 0);
-    std::swap(pollfds_[n], pollfds_.back());
+    const int fd = pfd.fd.get();
+    frame_buf buf;
+
+    const ::ssize_t nbytes = command_recv(fd, buf);
+
+    if (nbytes == -1)
+    {
+        err("Error: Failed to read command");
+        return;
+    }
+
+    if (nbytes == 0) // EOF
+    {
+        disconnect(pfd);
+        return;
+    }
+
+    pfd.events |= POLLOUT;
+
+    if (nbytes < ::ssize_t(sizeof(frame_header)))
+    {
+        send_error(fd, "Incomplete frame header");
+        return;
+    }
+
+    const auto cpos = callbacks_.find(buf.hdr.frame_id);
+
+    if (cpos == callbacks_.end())
+    {
+        send_error(fd, "Invalid frame id");
+        return;
+    }
+
+    if (nbytes != ::ssize_t(cpos->second.size))
+    {
+        send_error(fd, "Invalid frame length");
+        return;
+    }
+
+#if __cpp_exceptions
+    try
+    {
+#endif
+        cpos->second.func(fd, &buf);
+#if __cpp_exceptions
+    }
+    catch (const std::exception& e)
+    {
+        send_error(fd, e.what());
+    }
+#endif
+}
+
+inline void xtr::detail::command_dispatcher::process_socket_write(
+    pollfd& pfd) noexcept
+{
+    const int fd = pfd.fd.get();
+
+    callback_result& cr = results_[fd];
+
+    ::ssize_t nwritten = 0;
+
+    for (; cr.pos < cr.bufs.size(); ++cr.pos)
+    {
+        nwritten =
+            command_send(fd, cr.bufs[cr.pos].buf.get(), cr.bufs[cr.pos].size);
+        if (nwritten != ::ssize_t(cr.bufs[cr.pos].size))
+            break;
+    }
+
+    if ((nwritten == -1 && errno != EAGAIN) || cr.pos == cr.bufs.size())
+    {
+        results_.erase(fd);
+        disconnect(pfd);
+    }
+}
+
+inline void xtr::detail::command_dispatcher::disconnect(pollfd& pfd) noexcept
+{
+    assert(results_.count(pfd.fd.get()) == 0);
+    std::swap(pfd, pollfds_.back());
     pollfds_.pop_back();
 }
 
-void xtr::detail::command_dispatcher::send_error(int fd, std::string_view reason)
+inline void xtr::detail::command_dispatcher::send_error(
+    int fd, std::string_view reason)
 {
     frame<error> ef;
     strzcpy(ef->reason, reason);
     send(fd, ef);
 }
 
-void xtr::detail::command_dispatcher_deleter::operator()(command_dispatcher* d)
+inline void xtr::detail::command_dispatcher_deleter::operator()(
+    command_dispatcher* d)
 {
     delete d;
 }
@@ -2453,11 +2703,6 @@ inline void xtr::logger::set_command_path(std::string path) noexcept
     control_.sync();
 }
 
-inline std::thread::native_handle_type xtr::logger::consumer_thread_native_handle()
-{
-    return consumer_.native_handle();
-}
-
 inline void xtr::logger::consumer::run(std::function<::timespec()> clock) noexcept
 {
     char ts[32] = {};
@@ -2474,7 +2719,7 @@ inline void xtr::logger::consumer::run(std::function<::timespec()> clock) noexce
         {
             ts_stale |= true;
             if (cmds_)
-                cmds_->read_commands();
+                cmds_->process_commands(/* timeout= */ 0);
         }
 
         if ((span = producers_[n]->buf_.read_span()).empty())
@@ -2529,6 +2774,8 @@ inline void xtr::logger::consumer::run(std::function<::timespec()> clock) noexce
 
         flush_count = producers_.size();
     }
+
+    close();
 }
 
 inline void xtr::logger::consumer::add_producer(
@@ -2539,16 +2786,25 @@ inline void xtr::logger::consumer::add_producer(
 
 inline void xtr::logger::consumer::set_command_path(std::string path) noexcept
 {
+    if (path == null_command_path)
+        return;
+
     cmds_.reset(new detail::command_dispatcher(std::move(path)));
 
     if (!cmds_->is_open())
+    {
         cmds_.reset();
+        return;
+    }
 
     cmds_->register_callback<detail::status>(
-        [this](auto&... args) { return status_handler(args...); });
+        std::bind_front(&consumer::status_handler, this));
 
     cmds_->register_callback<detail::set_level>(
-        [this](auto&... args) { return set_level_handler(args...); });
+        std::bind_front(&consumer::set_level_handler, this));
+
+    cmds_->register_callback<detail::reopen>(
+        std::bind_front(&consumer::reopen_handler, this));
 }
 
 inline void xtr::logger::consumer::status_handler(int fd, detail::status& st)
@@ -2621,6 +2877,14 @@ inline void xtr::logger::consumer::set_level_handler(int fd, detail::set_level& 
     }
 
     cmds_->send(fd, detail::frame<detail::success>());
+}
+
+inline void xtr::logger::consumer::reopen_handler(int fd, detail::reopen&)
+{
+    if (!reopen())
+        cmds_->send_error(fd, std::strerror(errno));
+    else
+        cmds_->send(fd, detail::frame<detail::success>());
 }
 
 inline xtr::logger::producer::producer(const producer& other)
@@ -2704,8 +2968,10 @@ inline std::unique_ptr<xtr::detail::matcher> xtr::detail::make_matcher(
     {
     case pattern_type_t::wildcard:
         return std::make_unique<wildcard_matcher>(pattern, ignore_case);
-    case pattern_type_t::regex:
-        return std::make_unique<regex_matcher>(pattern, ignore_case);
+    case pattern_type_t::extended_regex:
+        return std::make_unique<regex_matcher>(pattern, ignore_case, true);
+    case pattern_type_t::basic_regex:
+        return std::make_unique<regex_matcher>(pattern, ignore_case, false);
     case pattern_type_t::none:
         break;
     }
@@ -2928,9 +3194,10 @@ inline std::size_t xtr::detail::align_to_page_size(std::size_t length)
 #include <cassert>
 
 inline xtr::detail::regex_matcher::regex_matcher(
-    const char* pattern, bool ignore_case)
+    const char* pattern, bool ignore_case, bool extended)
 {
-    const int flags = REG_EXTENDED | REG_NOSUB | (ignore_case ? REG_ICASE : 0);
+    const int flags = REG_NOSUB | (ignore_case ? REG_ICASE : 0) |
+                      (extended ? REG_EXTENDED : 0);
     errnum_ = ::regcomp(&regex_, pattern, flags);
 }
 
@@ -2964,6 +3231,32 @@ inline bool xtr::detail::regex_matcher::operator()(const char* str) const
 #include <cstring>
 #include <stdexcept>
 #include <system_error>
+
+inline void xtr::detail::throw_runtime_error(const char* what)
+{
+#if __cpp_exceptions
+    throw std::runtime_error(what);
+#else
+    std::fprintf(stderr, "runtime error: %s\n", what);
+    std::abort();
+#endif
+}
+
+inline void xtr::detail::throw_runtime_error_fmt(const char* format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    ;
+    char buf[1024];
+    std::vsnprintf(buf, sizeof(buf), format, args);
+    va_end(args);
+#if __cpp_exceptions
+    throw std::runtime_error(buf);
+#else
+    std::fprintf(stderr, "runtime error: %s\n", buf);
+    std::abort();
+#endif
+}
 
 inline void xtr::detail::throw_system_error(const char* what)
 {

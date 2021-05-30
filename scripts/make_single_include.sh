@@ -39,6 +39,9 @@ for file in \
     include/xtr/detail/commands/message_id.hpp \
     include/xtr/detail/commands/requests.hpp \
     include/xtr/detail/commands/responses.hpp \
+    include/xtr/detail/commands/connect.hpp \
+    include/xtr/detail/commands/send.hpp \
+    include/xtr/detail/commands/recv.hpp \
     include/xtr/detail/commands/command_dispatcher_fwd.hpp \
     include/xtr/detail/commands/command_dispatcher.hpp \
     include/xtr/detail/commands/matcher.hpp \

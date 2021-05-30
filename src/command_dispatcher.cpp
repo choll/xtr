@@ -36,7 +36,7 @@
 #include <time.h>
 #include <unistd.h>
 
-namespace
+namespace xtr::detail
 {
     template<typename... Args>
     void errx(Args&&... args)
@@ -52,6 +52,7 @@ namespace
     }
 }
 
+XTR_FUNC
 xtr::detail::command_dispatcher::command_dispatcher(std::string path)
 {
     sockaddr_un addr;
@@ -107,12 +108,14 @@ xtr::detail::command_dispatcher::command_dispatcher(std::string path)
     pollfds_.push_back(pollfd{std::move(fd), POLLIN, 0});
 }
 
+XTR_FUNC
 xtr::detail::command_dispatcher::~command_dispatcher()
 {
     if (!path_.empty())
         ::unlink(path_.c_str());
 }
 
+XTR_FUNC
 xtr::detail::command_dispatcher::buffer::buffer(
     const void* srcbuf, std::size_t srcsize)
 :
@@ -122,6 +125,7 @@ xtr::detail::command_dispatcher::buffer::buffer(
     std::memcpy(buf.get(), srcbuf, size);
 }
 
+XTR_FUNC
 void xtr::detail::command_dispatcher::send(
     int fd,
     const void* buf,
@@ -130,6 +134,7 @@ void xtr::detail::command_dispatcher::send(
     results_[fd].bufs.emplace_back(buf, nbytes);
 }
 
+XTR_FUNC
 void xtr::detail::command_dispatcher::process_commands(int timeout) noexcept
 {
     int nfds =
@@ -167,6 +172,7 @@ void xtr::detail::command_dispatcher::process_commands(int timeout) noexcept
     }
 }
 
+XTR_FUNC
 void xtr::detail::command_dispatcher::process_socket_read(pollfd& pfd) noexcept
 {
     const int fd = pfd.fd.get();
@@ -226,6 +232,7 @@ void xtr::detail::command_dispatcher::process_socket_read(pollfd& pfd) noexcept
 #endif
 }
 
+XTR_FUNC
 void xtr::detail::command_dispatcher::process_socket_write(pollfd& pfd) noexcept
 {
     const int fd = pfd.fd.get();
@@ -249,6 +256,7 @@ void xtr::detail::command_dispatcher::process_socket_write(pollfd& pfd) noexcept
     }
 }
 
+XTR_FUNC
 void xtr::detail::command_dispatcher::disconnect(pollfd& pfd) noexcept
 {
     assert(results_.count(pfd.fd.get()) == 0);
@@ -256,6 +264,7 @@ void xtr::detail::command_dispatcher::disconnect(pollfd& pfd) noexcept
     pollfds_.pop_back();
 }
 
+XTR_FUNC
 void xtr::detail::command_dispatcher::send_error(int fd, std::string_view reason)
 {
     frame<error> ef;
@@ -263,8 +272,8 @@ void xtr::detail::command_dispatcher::send_error(int fd, std::string_view reason
     send(fd, ef);
 }
 
+XTR_FUNC
 void xtr::detail::command_dispatcher_deleter::operator()(command_dispatcher* d)
 {
     delete d;
 }
-

@@ -27,4 +27,3 @@ namespace xtr::detail
 }
 
 #endif
-
