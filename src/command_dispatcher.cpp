@@ -140,7 +140,7 @@ void xtr::detail::command_dispatcher::process_commands(int timeout) noexcept
     int nfds =
         ::poll(
             reinterpret_cast<::pollfd*>(&pollfds_[0]),
-            pollfds_.size(),
+            ::nfds_t(pollfds_.size()),
             timeout);
 
     if (pollfds_[0].revents & POLLIN)
