@@ -1,0 +1,37 @@
+name: Ubuntu-GCC
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        except: [1, 0]
+        pic: [1, 0]
+        rtti: [1, 0]
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: install gcc
+      run: |
+        sudo apt-get install clang++-12
+        sudo update-alternatives \
+          --install /usr/bin/clang clang /usr/bin/clang-12 100 \
+          --slave /usr/bin/clang++ clang++ /usr/bin/clang++-12 \
+          --slave /usr/bin/llvm-ar llvm-ar /usr/bin/llvm-ar-12 \
+          --slave /usr/bin/llvm-ranlib llvm-ranlib /usr/bin/llvm-ranlib-12
+
+    - name: init submodules
+      run: git submodule init
+    - name: update submodules
+      run: git submodule update
+
+    - name: make
+      run: make -j2 EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}} RTTI=${{matrix.rtti}}
+    - name: test
+      run: make -j2 EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}} RTTI=${{matrix.rtti}} check
