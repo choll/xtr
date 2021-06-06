@@ -28,7 +28,7 @@ xtr::detail::wildcard_matcher::wildcard_matcher(
     bool ignore_case)
 :
     pattern_(pattern),
-    flags_(FNM_EXTMATCH | (ignore_case ? FNM_CASEFOLD : 0))
+    flags_(ignore_case ? FNM_CASEFOLD : 0)
 {
 }
 

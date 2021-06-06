@@ -39,11 +39,11 @@ namespace xtr::detail
     XTR_FUNC
     file_descriptor shm_open_anon(int oflag, mode_t mode)
     {
-#if defined(SHM_ANON) // FreeBSD extension
-        return XTR_TEMP_FAILURE_RETRY(::shm_open(SHM_ANON, oflag, mode));
-#else
         int fd;
 
+#if defined(SHM_ANON) // FreeBSD extension
+        fd = XTR_TEMP_FAILURE_RETRY(::shm_open(SHM_ANON, oflag, mode));
+#else
         // Some platforms don't allow slashes in shm object names except
         // for the first character, hence not using the usual base64 table
         const char ctable[] =
@@ -68,9 +68,9 @@ namespace xtr::detail
 
         if (fd != -1)
             ::shm_unlink(name);
+#endif
 
         return file_descriptor(fd);
-#endif
     }
 }
 #endif
