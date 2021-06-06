@@ -34,7 +34,15 @@ std::string xtr::default_command_path()
     const long pid = ::getpid();
     const unsigned long uid = ::geteuid();
     const unsigned n = ctl_count++;
+    char dpath[PATH_MAX];
     char path[PATH_MAX];
-    std::snprintf(path, sizeof(path), "/run/user/%lu/xtrctl.%ld.%u", uid, pid, n);
+
+    std::snprintf(dpath, sizeof(dpath), "/run/user/%lu", uid);
+
+    if (::access(dpath, W_OK) != 0)
+        std::snprintf(dpath, sizeof(dpath), "/tmp");
+
+    std::snprintf(path, sizeof(path), "%s/xtrctl.%ld.%u", dpath, pid, n);
+
     return path;
 }
