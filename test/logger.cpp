@@ -251,8 +251,7 @@ namespace
     {
         command_fixture()
         {
-            using namespace std::literals::string_literals;
-            const std::string path = "\0command_socket"s; // abstract socket
+            const std::string& path = xtr::default_command_path();
             this->log_.set_command_path(path);
             connect(path);
         }

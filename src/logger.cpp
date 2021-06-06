@@ -1,4 +1,4 @@
-// Copyright 2019, 2020 Chris E. Holloway
+// Copyright 2019, 2020, 2021 Chris E. Holloway
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -38,18 +38,6 @@ XTR_FUNC
 xtr::logger::~logger()
 {
     control_.close();
-}
-
-XTR_FUNC
-std::string xtr::logger::default_command_path()
-{
-    static std::atomic<unsigned> ctl_count{0};
-    const long pid = ::getpid();
-    const unsigned long uid = ::geteuid();
-    const unsigned n = ctl_count++;
-    char path[PATH_MAX];
-    std::snprintf(path, sizeof(path), "/run/user/%lu/xtrctl.%ld.%u", uid, pid, n);
-    return path;
 }
 
 XTR_FUNC

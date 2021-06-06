@@ -26,6 +26,7 @@
 #ifndef XTR_LOGGER_HPP
 #define XTR_LOGGER_HPP
 
+#include "command_path.hpp"
 #include "detail/align.hpp"
 #include "detail/clock_ids.hpp"
 #include "detail/commands/command_dispatcher_fwd.hpp"
@@ -170,8 +171,6 @@
 namespace xtr
 {
     class logger;
-
-    inline constexpr auto null_command_path = "";
 
     // TODO: A template alias should be possible:
     //
@@ -628,8 +627,6 @@ public:
     void set_command_path(std::string path) noexcept;
 
 private:
-    static std::string default_command_path();
-
     template<typename Func>
     void post(Func&& f)
     {

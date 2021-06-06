@@ -18,17 +18,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#include "xtr/command_path.hpp"
 #include "xtr/detail/commands/command_dispatcher.hpp"
 #include "xtr/detail/commands/responses.hpp"
 
 #include "command_client.hpp"
 
+#include <catch2/catch.hpp>
+
 #include <string>
 #include <stdexcept>
 #include <stop_token>
 #include <thread>
-
-#include <catch2/catch.hpp>
 
 namespace xtrd = xtr::detail;
 
@@ -68,13 +69,13 @@ namespace
 
     struct fixture : xtrd::command_client
     {
-        fixture()
+        fixture(const std::string& path = xtr::default_command_path())
         :
-            cmd_(socket_path())
+            cmd_(path)
         {
             REQUIRE(cmd_.is_open());
 
-            connect(socket_path());
+            connect(path);
 
             cmd_thread_ = std::jthread([&](std::stop_token st){ run(st); });
 
@@ -98,13 +99,9 @@ namespace
         ~fixture()
         {
             cmd_thread_.request_stop();
+            // reconnect is called to cause process_commands to return,
+            // so that the stop token is received
             reconnect();
-        }
-
-        std::string socket_path() const
-        {
-            using namespace std::literals::string_literals;
-            return "\0command_socket"s;
         }
 
         void run(std::stop_token st)
@@ -116,6 +113,23 @@ namespace
         xtrd::command_dispatcher cmd_;
         std::jthread cmd_thread_;
     };
+
+#if defined(__linux__)
+    struct abstract_socket_fixture : fixture
+    {
+        abstract_socket_fixture()
+        :
+            fixture(socket_path())
+        {
+        }
+
+        std::string socket_path() const
+        {
+            using namespace std::literals::string_literals;
+            return "\0command_socket"s;
+        }
+    };
+#endif
 }
 
 TEST_CASE_METHOD(fixture, "command_dispatcher request response test", "[command_dispatcher]")
@@ -132,6 +146,26 @@ TEST_CASE_METHOD(fixture, "command_dispatcher request response test", "[command_
     REQUIRE(responses.size() == 1);
     REQUIRE(responses[0].result == 3);
 }
+
+#if defined(__linux__)
+TEST_CASE_METHOD(
+    abstract_socket_fixture,
+    "command_dispatcher abstract socket test",
+    "[command_dispatcher]")
+{
+    xtrd::frame<sum> request;
+
+    request->x = 1;
+    request->y = 2;
+
+    const auto responses = send_frame<sum_reply>(request);
+
+    using namespace std::literals::string_view_literals;
+
+    REQUIRE(responses.size() == 1);
+    REQUIRE(responses[0].result == 3);
+}
+#endif
 
 #if __cpp_exceptions
 TEST_CASE_METHOD(fixture, "command_dispatcher throw test", "[command_dispatcher]")
