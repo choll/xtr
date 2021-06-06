@@ -7,15 +7,33 @@
 
 [![codecov](https://codecov.io/gh/choll/xtr/branch/master/graph/badge.svg?token=FDdI0ZM5tv)](https://codecov.io/gh/choll/xtr)
 
+## What is it?
+
+An asynchronous logger designed to minimise the cost of log statements by delegating as much work as possible to a worker thread.
+
+## Status
+
+Work in progress
+
 ## Features
+
+* No allocations when logging, even when logging strings.
+* Safe: No references taken to arguments unless explicitly requested.
+* Log sinks with independent log levels (so that levels for different subsystems may be modified independently).
+* Ability to modify log levels via an external command.
+* Non-printable characters are sanitized for safety.
+* Formatting done via fmtlib.
+* Support for custom back-ends.
 
 ## Supported platforms
 
-* Linux
-* FreeBSD
-* MacOS
+* Linux (x86-64)
+* FreeBSD (x86-64)
+* MacOS (x86-64)
 
 ## Documentation
+
+## Benchmarks
 
 ## Installation notes
 
