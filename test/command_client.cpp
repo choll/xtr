@@ -20,10 +20,15 @@
 
 #include "command_client.hpp"
 #include "xtr/detail/commands/connect.hpp"
+#include "xtr/detail/throw.hpp"
+
+#include <cassert>
 
 void xtr::detail::command_client::connect(const std::string& path)
 {
     fd_ = command_connect(path);
+    if (!fd_)
+        throw_system_error_fmt("Failed to connect to `%s'", path.c_str());
     cmd_path_ = path;
 }
 
