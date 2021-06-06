@@ -1632,7 +1632,9 @@ TEST_CASE_METHOD(command_fixture<>, "logger status command invalid regex test", 
     using namespace std::literals::string_view_literals;
 
     REQUIRE(errors.size() == 1);
-    REQUIRE(errors[0].reason == "Invalid preceding regular expression"sv);
+    REQUIRE_THAT(
+        errors[0].reason,
+        Catch::Matchers::Contains("invalid", Catch::CaseSensitive::No));
 }
 
 TEST_CASE_METHOD(command_fixture<>, "logger status command regex case test", "[logger]")
@@ -1863,7 +1865,9 @@ TEST_CASE_METHOD(command_fixture<>, "logger set_level command invalid regex test
     using namespace std::literals::string_view_literals;
 
     REQUIRE(errors.size() == 1);
-    REQUIRE(errors[0].reason == "Invalid preceding regular expression"sv);
+    REQUIRE_THAT(
+        errors[0].reason,
+        Catch::Matchers::Contains("invalid", Catch::CaseSensitive::No));
 }
 
 TEST_CASE_METHOD(command_fixture<>, "logger set_level command wildcard test", "[logger]")
@@ -1982,9 +1986,6 @@ TEST_CASE_METHOD(command_fixture<>, "logger command multiple clients test", "[lo
 
     xtrd::frame<xtrd::status> st;
     st->pattern.type = xtrd::pattern_type_t::none;
-
-    for (auto& c : clients)
-        c.connect(cmd_path_);
 
     for (auto& c : clients)
         c.send_frame(st);
