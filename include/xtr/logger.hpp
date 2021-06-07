@@ -366,20 +366,20 @@ private:
             typename ReopenFunction,
             typename CloseFunction>
         consumer(
-            OutputFunction&& o,
-            ErrorFunction&& e,
-            FlushFunction&& f,
-            SyncFunction&& s,
-            ReopenFunction&& r,
-            CloseFunction&& c,
+            OutputFunction&& of,
+            ErrorFunction&& ef,
+            FlushFunction&& ff,
+            SyncFunction&& sf,
+            ReopenFunction&& rf,
+            CloseFunction&& cf,
             producer* control)
         :
-            out(std::forward<OutputFunction>(o)),
-            err(std::forward<ErrorFunction>(e)),
-            flush(std::forward<FlushFunction>(f)),
-            sync(std::forward<SyncFunction>(s)),
-            reopen(std::forward<ReopenFunction>(r)),
-            close(std::forward<CloseFunction>(c)),
+            out(std::forward<OutputFunction>(of)),
+            err(std::forward<ErrorFunction>(ef)),
+            flush(std::forward<FlushFunction>(ff)),
+            sync(std::forward<SyncFunction>(sf)),
+            reopen(std::forward<ReopenFunction>(rf)),
+            close(std::forward<CloseFunction>(cf)),
             producers_({{control, "control", 0}})
         {
         }
