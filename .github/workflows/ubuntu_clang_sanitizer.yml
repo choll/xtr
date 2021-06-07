@@ -1,0 +1,31 @@
+name: Ubuntu-Clang-Sanitizer
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        sanitizer: [address, undefined, thread, leak]
+        except: [1, 0]
+    steps:
+    - uses: actions/checkout@v2
+    - name: install clang
+      run: |
+        sudo apt-get install clang++-12 llvm-12
+        sudo update-alternatives \
+          --install /usr/lib/llvm llvm /usr/lib/llvm-12 100 \
+          --slave /usr/bin/llvm-ar llvm-ar /usr/bin/llvm-ar-12 \
+          --slave /usr/bin/llvm-ranlib llvm-ranlib /usr/bin/llvm-ranlib-12
+    - name: init submodules
+      run: git submodule init
+    - name: update submodules
+      run: git submodule update
+    - name: sanitizer
+      run: CXX=clang++ make -j2 EXCEPTIONS=${{matrix.except}} SANITIZER=${{matrix.sanitizer}} check
+
