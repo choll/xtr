@@ -17,8 +17,12 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: install clang
-      run: sudo apt-get install clang++-12 llvm-12
+    - name: install clan g
+      run: |
+        sudo apt-get install clang++-12 llvm-12
+        sudo update-alternatives \
+          --slave /usr/bin/llvm-ar llvm-ar /usr/bin/llvm-ar-12 \
+          --slave /usr/bin/llvm-ranlib llvm-ranlib /usr/bin/llvm-ranlib-12
 
     - name: init submodules
       run: git submodule init
