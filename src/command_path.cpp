@@ -34,7 +34,7 @@ std::string xtr::default_command_path()
     const long pid = ::getpid();
     const unsigned long uid = ::geteuid();
     const unsigned n = ctl_count++;
-    char dpath[PATH_MAX];
+    char dpath[32];
     char path[PATH_MAX];
 
     std::snprintf(dpath, sizeof(dpath), "/run/user/%lu", uid);
