@@ -1736,6 +1736,8 @@ TEST_CASE_METHOD(command_fixture<>, "logger status command extended regex test",
 {
     auto p = log_.get_producer("foo");
 
+    p.sync();
+
     xtrd::frame<xtrd::status> st;
 
     st->pattern.type = xtrd::pattern_type_t::extended_regex;
