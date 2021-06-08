@@ -32,11 +32,10 @@ jobs:
     - name: build
       run: g++ -DFMT_HEADER_ONLY -std=c++20 -Wall -pedantic test/single_include.cpp -I single_include -isystem third_party/include -pthread -o /dev/null
 
-    - name: commit and push
-      run: |
-        git config user.name github-actions
-        git config user.email github-actions@github.com
-        git remote add github "https://$GITHUB_ACTOR:$GITHUB_TOKEN@github.com/$GITHUB_REPOSITORY.git"
-        git pull github ${GITHUB_REF} --ff-only
-        git diff-index --quiet HEAD && git pull && git commit -m 'Update single include' single_include/xtr/logger.hpp
-        git push github HEAD:${GITHUB_REF}
+    - name: Commit changes
+      uses: EndBug/add-and-commit@v7
+      with:
+        author_name: github-actions
+        author_email: github-actions@github.com
+        message: 'Update single include header'
+        add: single_include/xtr/logger.hpp
