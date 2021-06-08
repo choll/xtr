@@ -58,4 +58,4 @@ echo '#endif' >> $target
 
 sed -i 's/XTR_FUNC/inline/g' $target
 
-clang-format -i single_include/xtr/logger.hpp
+clang-format-12 -i single_include/xtr/logger.hpp
