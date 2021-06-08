@@ -904,9 +904,9 @@ static_assert(rindex("/", '/') == 0);
 
 namespace xtr::detail {
 template <typename Tags, typename T, typename Buffer>
-requires(
-    std::is_rvalue_reference_v<decltype(std::forward<T>(std::declval<T>()))>
-        &&std::same_as<std::remove_cvref_t<T>, std::string>) ||
+    requires(
+        std::is_rvalue_reference_v<decltype(std::forward<T>(std::declval<T>()))>
+            &&std::same_as<std::remove_cvref_t<T>, std::string>) ||
     (!is_c_string<T>::value &&
      !std::same_as<std::remove_cvref_t<T>, std::string> &&
      !std::same_as<std::remove_cvref_t<T>, std::string_view>)
@@ -916,11 +916,10 @@ requires(
 }
 
 template <typename Tags, typename Buffer, typename String>
-requires std::same_as<String, std::string> ||
-    std::same_as<String, std::string_view>
-        string_ref<const char *>
-        build_string_table(std::byte *&pos, std::byte *&end, Buffer &buf,
-                           const String &sv) {
+    requires std::same_as<String, std::string> ||
+    std::same_as<String, std::string_view> string_ref<const char *>
+    build_string_table(std::byte *&pos, std::byte *&end, Buffer &buf,
+                       const String &sv) {
   std::byte *str_end = pos + sv.length();
   while (end < str_end + 1)
     [[unlikely]] {
@@ -1701,12 +1700,13 @@ public:
             typename Clock = std::chrono::system_clock>
   requires std::invocable<OutputFunction, const char *, std::size_t> &&
       std::invocable<ErrorFunction, const char *, std::size_t> &&
-      std::invocable<FlushFunction> && std::invocable<SyncFunction> &&
-      std::invocable<ReopenFunction> && std::invocable<CloseFunction>
-      logger(OutputFunction &&out, ErrorFunction &&err, FlushFunction &&flush,
-             SyncFunction &&sync, ReopenFunction &&reopen,
-             CloseFunction &&close, Clock &&clock = Clock(),
-             std::string command_path = default_command_path()) {
+          std::invocable<FlushFunction> &&std::invocable<SyncFunction> &&
+              std::invocable<ReopenFunction> &&std::invocable<CloseFunction>
+              logger(OutputFunction &&out, ErrorFunction &&err,
+                     FlushFunction &&flush, SyncFunction &&sync,
+                     ReopenFunction &&reopen, CloseFunction &&close,
+                     Clock &&clock = Clock(),
+                     std::string command_path = default_command_path()) {
     consumer_ =
         std::jthread(&consumer::run,
                      consumer(std::forward<OutputFunction>(out),
