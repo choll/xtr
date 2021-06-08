@@ -1737,9 +1737,6 @@ namespace xtr
 
 #include <unistd.h>
 
-#define XTR_LIKELY(x)   __builtin_expect(!!(x), 1)
-#define XTR_UNLIKELY(x) __builtin_expect(!!(x), 0)
-
 #define XTR_LOG(...) \
     (__extension__({ XTR_LOG_TAGS(void(), "I", __VA_ARGS__); }))
 
@@ -1937,7 +1934,10 @@ public:
         producer(logger& owner, std::string name);
 
         template<typename T>
-        void copy(std::byte* pos, T&& value) noexcept; // XXX noexcept
+        void copy(std::byte* pos, T&& value) noexcept(
+            std::conjunction_v<
+                std::is_nothrow_copy_constructible<T>,
+                std::is_nothrow_move_constructible<T>>);
 
         template<auto Format = nullptr, typename Tags = void(), typename Func>
         void post(Func&& func) noexcept(
@@ -2306,7 +2306,7 @@ void xtr::logger::producer::post_with_str_table(Args&&... args) noexcept(
     const auto str_pos = func_pos + sizeof(lambda_t);
     const auto size = ring_buffer::size_type(str_pos - s.begin());
 
-    while (XTR_UNLIKELY(s.size() < size))
+    while (s.size() < size)
         [[unlikely]]
         {
             if constexpr (!detail::is_non_blocking_v<Tags>)
@@ -2336,10 +2336,13 @@ void xtr::logger::producer::post_with_str_table(Args&&... args) noexcept(
 }
 
 template<typename T>
-void xtr::logger::producer::copy(std::byte* pos, T&& value) noexcept
+void xtr::logger::producer::copy(std::byte* pos, T&& value) noexcept(
+    std::conjunction_v<
+        std::is_nothrow_copy_constructible<T>,
+        std::is_nothrow_move_constructible<T>>)
 {
     assert(std::uintptr_t(pos) % alignof(T) == 0);
-    pos = static_cast<std::byte*>(__builtin_assume_aligned(pos, alignof(T)));
+    pos = static_cast<std::byte*>(std::assume_aligned<alignof(T)>(pos));
     new (pos) std::remove_reference_t<T>(std::forward<T>(value));
 }
 
@@ -2356,8 +2359,8 @@ void xtr::logger::producer::post(Func&& func) noexcept(
     const auto next = func_pos + detail::align(sizeof(Func), alignof(fptr_t));
     const auto size = ring_buffer::size_type(next - s.begin());
 
-    while (XTR_UNLIKELY(s.size() < size))
-        [[unlikely]] // XXX UNLIKELY
+    while ((s.size() < size))
+        [[unlikely]]
         {
             if constexpr (!detail::is_non_blocking_v<Tags>)
                 detail::pause();
