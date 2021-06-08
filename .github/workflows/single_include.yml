@@ -34,6 +34,7 @@ jobs:
 
     - name: commit and push
       run: |
-        git config --global user.name 'GitHub Actions'
+        git config user.name github-actions
+        git config user.email github-actions@github.com
         git diff-index --quiet HEAD && git pull && git commit -m 'Update single include' single_include/xtr/logger.hpp
         git push
