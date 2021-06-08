@@ -69,10 +69,6 @@
 
 #include <unistd.h>
 
-// FIXME C++20: [[likely]]
-#define XTR_LIKELY(x)      __builtin_expect(!!(x), 1)
-#define XTR_UNLIKELY(x)    __builtin_expect(!!(x), 0)
-
 // __extension__ is to silence the gnu-zero-variadic-macro-arguments warning in clang
 
 #define XTR_LOG(...)                                \
@@ -718,7 +714,7 @@ void xtr::logger::producer::post_with_str_table(Args&&... args)
     const auto str_pos = func_pos + sizeof(lambda_t);
     const auto size = ring_buffer::size_type(str_pos - s.begin());
 
-    while (XTR_UNLIKELY(s.size() < size)) [[unlikely]]
+    while (s.size() < size) [[unlikely]]
     {
         if constexpr (!detail::is_non_blocking_v<Tags>)
             detail::pause();
@@ -779,7 +775,7 @@ void xtr::logger::producer::post(Func&& func)
     const auto next = func_pos + detail::align(sizeof(Func), alignof(fptr_t));
     const auto size = ring_buffer::size_type(next - s.begin());
 
-    while (XTR_UNLIKELY(s.size() < size)) [[unlikely]] // XXX UNLIKELY
+    while ((s.size() < size)) [[unlikely]]
     {
         if constexpr (!detail::is_non_blocking_v<Tags>)
             detail::pause();
