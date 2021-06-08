@@ -1935,8 +1935,6 @@ TEST_CASE_METHOD(command_fixture<>, "logger set_level command wildcard case test
 
     reconnect();
 
-    reconnect();
-
     xtrd::frame<xtrd::status> st;
 
     st->pattern.type = xtrd::pattern_type_t::none;
@@ -2078,10 +2076,7 @@ TEST_CASE_METHOD(fixture, "logger socket bind error test", "[logger]")
 
 TEST_CASE("logger open path test", "[logger]")
 {
-    xtr::logger log(
-        "/dev/null",
-        std::chrono::system_clock(),
-        xtr::null_command_path);
+    xtr::logger log("/dev/null");
 
     auto p = log.get_producer("Name");
 
