@@ -20,8 +20,9 @@
 
 // XXX TODO:
 //
-// Double check use of noexcept, should only mark functions if they do not
-// throw. Maybe only in the main api?
+// Double check use of noexcept, see
+// http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2011/n3248.pdf
+// http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2011/n3248.pdf
 
 #ifndef XTR_LOGGER_HPP
 #define XTR_LOGGER_HPP
@@ -305,7 +306,10 @@ public:
         producer(logger& owner, std::string name);
 
         template<typename T>
-        void copy(std::byte* pos, T&& value) noexcept; // XXX noexcept
+        void copy(std::byte* pos, T&& value)
+            noexcept(std::conjunction_v<
+                std::is_nothrow_copy_constructible<T>,
+                std::is_nothrow_move_constructible<T>>);
 
         template<
             auto Format = nullptr,
@@ -402,19 +406,6 @@ private:
     };
 
 public:
-    // XXX
-    // const char* path option, err set to stderr, 
-    //
-    // should logs auto-reopen? don't think so, just write to one file,
-    // other issue is if you should overwrite, append or create a new
-    // file?
-    //
-    // rotating files?
-    //
-    // Also perhaps have a single constructor that accepts
-    // variadic args, then just check the type of them? eg
-    // is_same<FILE*>, is_clock_v?
-
     template<typename Clock = std::chrono::system_clock>
     logger(
         const char* path,
@@ -746,13 +737,13 @@ void xtr::logger::producer::post_with_str_table(Args&&... args)
 }
 
 template<typename T>
-void xtr::logger::producer::copy(std::byte* pos, T&& value) noexcept
+void xtr::logger::producer::copy(std::byte* pos, T&& value)
+    noexcept(std::conjunction_v<
+        std::is_nothrow_copy_constructible<T>,
+        std::is_nothrow_move_constructible<T>>)
 {
     assert(std::uintptr_t(pos) % alignof(T) == 0);
-    // C++20: std::assume_aligned
-    pos =
-        static_cast<std::byte*>(
-            __builtin_assume_aligned(pos, alignof(T)));
+    pos = static_cast<std::byte*>(std::assume_aligned<alignof(T)>(pos));
     new (pos) std::remove_reference_t<T>(std::forward<T>(value));
 }
 
