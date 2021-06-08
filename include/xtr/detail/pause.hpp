@@ -25,8 +25,6 @@
 #include <emmintrin.h>
 #endif
 
-// XXX Check for header, if found use _mm, else fall back to asm volatile?
-
 namespace xtr::detail
 {
     __attribute__((always_inline)) inline void pause() noexcept
