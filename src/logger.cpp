@@ -23,7 +23,6 @@
 #include "xtr/detail/commands/matcher.hpp"
 #include "xtr/detail/commands/requests.hpp"
 #include "xtr/detail/commands/responses.hpp"
-#include "xtr/detail/config.hpp"
 #include "xtr/detail/strzcpy.hpp"
 #include "xtr/detail/tsc.hpp"
 
@@ -128,12 +127,10 @@ void xtr::logger::consumer::run(std::function<::timespec()> clock) noexcept
         do
         {
             assert(std::uintptr_t(pos) % alignof(fptr_t) == 0);
+            assert(!destroy);
             fptr_t fptr = *reinterpret_cast<const fptr_t*>(pos);
             pos = fptr(mbuf, pos, *this, ts, producers_[n].name);
-        } while (pos < end && !destroy);
-
-        producers_[n]->buf_.reduce_readable(
-            ring_buffer::size_type(pos - span.begin()));
+        } while (pos < end);
 
         if (destroy)
         {
@@ -142,6 +139,9 @@ void xtr::logger::consumer::run(std::function<::timespec()> clock) noexcept
             producers_.pop_back();
             continue;
         }
+
+        producers_[n]->buf_.reduce_readable(
+            ring_buffer::size_type(pos - span.begin()));
 
         std::size_t n_dropped;
         if (producers_[n]->buf_.read_span().empty() &&
@@ -311,21 +311,14 @@ void xtr::logger::producer::close()
     {
         sync(/*destruct=*/true);
         open_ = false;
-#if defined(XTR_THREAD_SANITIZER_ENABLED)
-    // This is done to prevent thread sanitizer complaining that the last
-    // release operation performed by the consumer was not synchronized with a
-    // corresponding acquire operation. This will happen if the memory used
-    // for synchronized_ring_buffer's atomic variables are accessed
-    // non-atomically, e.g. by free(3) or when stack addresses are reused.
-    // As the last operation the consumer calls is reduce_readable, we must
-    // call write_span to 'balance' the atomic operations.
-
-    // Wait for consumer to perform the offending release
-    while (buf_.read_span().size() > 0)
-        ;
-    // Perform matching acquire operation
-    buf_.write_span();
-#endif
+        // clear() is called here in case the producer is registered with the
+        // logger again, e.g. via assignment. This is because when the
+        // 'destruct' flag is received by the consumer it cannot perform any
+        // further operations on the producer (as the producer may no longer
+        // exist), including updating the read offset of the ring buffer, which
+        // means that some residual data will be left in the buffer that needs
+        // to be cleared.
+        buf_.clear();
     }
 }
 

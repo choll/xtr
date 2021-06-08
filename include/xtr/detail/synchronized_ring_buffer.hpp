@@ -202,6 +202,15 @@ public:
         nread_plus_capacity_ = wrnread_plus_capacity_ = capacity();
     }
 
+    void clear() noexcept
+    {
+        nwritten_ = 0;
+        wrnread_plus_capacity_ = capacity();
+        wrnwritten_ = 0;
+        nread_plus_capacity_ = capacity();
+        dropped_count_ = 0;
+    }
+
     constexpr size_type capacity() const noexcept
     {
         if constexpr (is_dynamic)
