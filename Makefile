@@ -118,7 +118,7 @@ TEST_SRCS := \
 TEST_OBJS = $(TEST_SRCS:%=$(BUILD_DIR)/%.o)
 
 BENCH_TARGET = $(BUILD_DIR)/benchmark/benchmark
-BENCH_SRCS := logger.cpp  main.cpp
+BENCH_SRCS := benchmark/logger.cpp benchmark/main.cpp
 BENCH_OBJS = $(BENCH_SRCS:%=$(BUILD_DIR)/%.o)
 
 XTRCTL_TARGET = $(BUILD_DIR)/xtrctl
