@@ -1815,6 +1815,10 @@ namespace xtr
             (SINK).log<&xtr_fmt, void(TAGS)>(__VA_ARGS__);                 \
         }))
 
+#define XTR_NOTHROW_INGESTIBLE(TYPE, VALUE)                     \
+    (noexcept(std::decay_t<TYPE>{std::forward<TYPE>(VALUE)}) || \
+     std::is_same_v<std::remove_cvref_t<TYPE>, std::string>)
+
 namespace xtr
 {
     class logger;
@@ -1916,9 +1920,7 @@ public:
 
         template<auto Format, typename Tags = void(), typename... Args>
         void log(Args&&... args) noexcept(
-            std::conjunction_v<
-                std::is_nothrow_copy_constructible<Args>...,
-                std::is_nothrow_move_constructible<Args>...>);
+            (XTR_NOTHROW_INGESTIBLE(Args, args) && ...));
 
         void set_level(log_level_t l)
         {
@@ -1935,25 +1937,18 @@ public:
 
         template<typename T>
         void copy(std::byte* pos, T&& value) noexcept(
-            std::conjunction_v<
-                std::is_nothrow_copy_constructible<T>,
-                std::is_nothrow_move_constructible<T>>);
+            XTR_NOTHROW_INGESTIBLE(T, value));
 
         template<auto Format = nullptr, typename Tags = void(), typename Func>
-        void post(Func&& func) noexcept(
-            std::is_nothrow_move_constructible_v<Func>);
+        void post(Func&& func) noexcept(XTR_NOTHROW_INGESTIBLE(Func, func));
 
         template<auto Format, typename Tags, typename... Args>
         void post_with_str_table(Args&&... args) noexcept(
-            std::conjunction_v<
-                std::is_nothrow_copy_constructible<Args>...,
-                std::is_nothrow_move_constructible<Args>...>);
+            (XTR_NOTHROW_INGESTIBLE(Args, args) && ...));
 
         template<typename Tags, typename... Args>
         auto make_lambda(Args&&... args) noexcept(
-            std::conjunction_v<
-                std::is_nothrow_copy_constructible<Args>...,
-                std::is_nothrow_move_constructible<Args>...>);
+            (XTR_NOTHROW_INGESTIBLE(Args, args) && ...));
 
         void sync(bool destruct);
 
@@ -2266,9 +2261,7 @@ void xtr::logger::producer::log() noexcept
 
 template<auto Format, typename Tags, typename... Args>
 void xtr::logger::producer::log(Args&&... args) noexcept(
-    std::conjunction_v<
-        std::is_nothrow_copy_constructible<Args>...,
-        std::is_nothrow_move_constructible<Args>...>)
+    (XTR_NOTHROW_INGESTIBLE(Args, args) && ...))
 {
     static_assert(sizeof...(Args) > 0);
     constexpr bool is_str = std::disjunction_v<
@@ -2283,9 +2276,7 @@ void xtr::logger::producer::log(Args&&... args) noexcept(
 
 template<auto Format, typename Tags, typename... Args>
 void xtr::logger::producer::post_with_str_table(Args&&... args) noexcept(
-    std::conjunction_v<
-        std::is_nothrow_copy_constructible<Args>...,
-        std::is_nothrow_move_constructible<Args>...>)
+    (XTR_NOTHROW_INGESTIBLE(Args, args) && ...))
 {
     using lambda_t = decltype(make_lambda<Tags>(detail::build_string_table<Tags>(
         std::declval<std::byte*&>(),
@@ -2337,9 +2328,7 @@ void xtr::logger::producer::post_with_str_table(Args&&... args) noexcept(
 
 template<typename T>
 void xtr::logger::producer::copy(std::byte* pos, T&& value) noexcept(
-    std::conjunction_v<
-        std::is_nothrow_copy_constructible<T>,
-        std::is_nothrow_move_constructible<T>>)
+    XTR_NOTHROW_INGESTIBLE(T, value))
 {
     assert(std::uintptr_t(pos) % alignof(T) == 0);
     pos = static_cast<std::byte*>(std::assume_aligned<alignof(T)>(pos));
@@ -2348,7 +2337,7 @@ void xtr::logger::producer::copy(std::byte* pos, T&& value) noexcept(
 
 template<auto Format, typename Tags, typename Func>
 void xtr::logger::producer::post(Func&& func) noexcept(
-    std::is_nothrow_move_constructible_v<Func>)
+    XTR_NOTHROW_INGESTIBLE(Func, func))
 {
     ring_buffer::span s = buf_.write_span_spec();
 
@@ -2377,9 +2366,7 @@ void xtr::logger::producer::post(Func&& func) noexcept(
 
 template<typename Tags, typename... Args>
 auto xtr::logger::producer::make_lambda(Args&&... args) noexcept(
-    std::conjunction_v<
-        std::is_nothrow_copy_constructible<Args>...,
-        std::is_nothrow_move_constructible<Args>...>)
+    (XTR_NOTHROW_INGESTIBLE(Args, args) && ...))
 {
     return [... args = std::forward<Args>(args)](
                fmt::memory_buffer& mbuf,
