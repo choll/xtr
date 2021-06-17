@@ -18,12 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-// XXX TODO:
-//
-// Double check use of noexcept, see
-// http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2011/n3248.pdf
-// http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2011/n3248.pdf
-
 #ifndef XTR_LOGGER_HPP
 #define XTR_LOGGER_HPP
 
