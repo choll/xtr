@@ -165,16 +165,22 @@
             (SINK).log<&xtr_fmt, void(TAGS)>(__VA_ARGS__);                  \
         }))
 
+// Returns true if the given value is nothrow `ingestible', i.e. the value can
+// be nothrow copied/moved into the logger because either:
+// * The value is nothrow-copyable or nothrow-movable (dependent upon the
+//   value being passed by value/reference/r-value reference), or
+// * The value is a std::string, which is nothrow ingestible because the string
+//   contents are directly copied into the log buffer.
+#define XTR_NOTHROW_INGESTIBLE(TYPE, VALUE)                     \
+    (noexcept(std::decay_t<TYPE>{std::forward<TYPE>(VALUE)}) || \
+    std::is_same_v<std::remove_cvref_t<TYPE>, std::string>)
+
 namespace xtr
 {
     class logger;
 
-    // TODO: A template alias should be possible:
-    //
-    // template<typename T>
-    // using nocopy = detail::string_ref<T>;
-    //
-    // However only gcc accepts it, so for now we have:
+    // This can be replaced with a template alias once clang supports it:
+    // template<typename T> using nocopy = detail::string_ref<T>;
     template<typename T>
     inline auto nocopy(const T& arg)
     {
@@ -285,12 +291,8 @@ public:
         template<auto Format, typename Tags = void()>
         void log() noexcept;
 
-        // FIXME: noexcept check is stricter than necessary
         template<auto Format, typename Tags = void(), typename... Args>
-        void log(Args&&... args)
-            noexcept(std::conjunction_v<
-                std::is_nothrow_copy_constructible<Args>...,
-                std::is_nothrow_move_constructible<Args>...>);
+        void log(Args&&... args) noexcept((XTR_NOTHROW_INGESTIBLE(Args, args) && ...));
 
         void set_level(log_level_t l)
         {
@@ -307,28 +309,21 @@ public:
 
         template<typename T>
         void copy(std::byte* pos, T&& value)
-            noexcept(std::conjunction_v<
-                std::is_nothrow_copy_constructible<T>,
-                std::is_nothrow_move_constructible<T>>);
+            noexcept(XTR_NOTHROW_INGESTIBLE(T, value));
 
         template<
             auto Format = nullptr,
             typename Tags = void(),
             typename Func>
-        void post(Func&& func)
-            noexcept(std::is_nothrow_move_constructible_v<Func>);
+        void post(Func&& func) noexcept(XTR_NOTHROW_INGESTIBLE(Func, func));
 
         template<auto Format, typename Tags, typename... Args>
         void post_with_str_table(Args&&... args)
-            noexcept(std::conjunction_v<
-                std::is_nothrow_copy_constructible<Args>...,
-                std::is_nothrow_move_constructible<Args>...>);
+            noexcept((XTR_NOTHROW_INGESTIBLE(Args, args) && ...));
 
         template<typename Tags, typename... Args>
         auto make_lambda(Args&&... args)
-            noexcept(std::conjunction_v<
-                std::is_nothrow_copy_constructible<Args>...,
-                std::is_nothrow_move_constructible<Args>...>);
+            noexcept((XTR_NOTHROW_INGESTIBLE(Args, args) && ...));
 
         void sync(bool destruct);
 
@@ -661,9 +656,7 @@ void xtr::logger::producer::log() noexcept
 
 template<auto Format, typename Tags, typename... Args>
 void xtr::logger::producer::log(Args&&... args)
-    noexcept(std::conjunction_v<
-        std::is_nothrow_copy_constructible<Args>...,
-        std::is_nothrow_move_constructible<Args>...>)
+    noexcept((XTR_NOTHROW_INGESTIBLE(Args, args) && ...))
 {
     static_assert(sizeof...(Args) > 0);
     constexpr bool is_str =
@@ -679,9 +672,7 @@ void xtr::logger::producer::log(Args&&... args)
 
 template<auto Format, typename Tags, typename... Args>
 void xtr::logger::producer::post_with_str_table(Args&&... args)
-    noexcept(std::conjunction_v<
-        std::is_nothrow_copy_constructible<Args>...,
-        std::is_nothrow_move_constructible<Args>...>)
+    noexcept((XTR_NOTHROW_INGESTIBLE(Args, args) && ...))
 {
     using lambda_t =
         decltype(
@@ -738,9 +729,7 @@ void xtr::logger::producer::post_with_str_table(Args&&... args)
 
 template<typename T>
 void xtr::logger::producer::copy(std::byte* pos, T&& value)
-    noexcept(std::conjunction_v<
-        std::is_nothrow_copy_constructible<T>,
-        std::is_nothrow_move_constructible<T>>)
+    noexcept(XTR_NOTHROW_INGESTIBLE(T, value))
 {
     assert(std::uintptr_t(pos) % alignof(T) == 0);
     pos = static_cast<std::byte*>(std::assume_aligned<alignof(T)>(pos));
@@ -749,7 +738,7 @@ void xtr::logger::producer::copy(std::byte* pos, T&& value)
 
 template<auto Format, typename Tags, typename Func>
 void xtr::logger::producer::post(Func&& func)
-    noexcept(std::is_nothrow_move_constructible_v<Func>)
+    noexcept(XTR_NOTHROW_INGESTIBLE(Func, func))
 {
     ring_buffer::span s = buf_.write_span_spec();
 
@@ -783,9 +772,7 @@ void xtr::logger::producer::post(Func&& func)
 
 template<typename Tags, typename... Args>
 auto xtr::logger::producer::make_lambda(Args&&... args)
-    noexcept(std::conjunction_v<
-        std::is_nothrow_copy_constructible<Args>...,
-        std::is_nothrow_move_constructible<Args>...>)
+    noexcept((XTR_NOTHROW_INGESTIBLE(Args, args) && ...))
 {
     // This lambda is mutable so that std::forward works correctly, without it
     // there is a mismatch between Args and args, due to args becoming const

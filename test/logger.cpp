@@ -2083,6 +2083,55 @@ TEST_CASE("logger open path test", "[logger]")
     XTR_LOG(p, "Test");
 }
 
+    struct move_thrower
+    {
+        move_thrower() = default;
+        move_thrower(move_thrower&&);
+        move_thrower(const move_thrower&) noexcept;
+    };
+
+    std::ostream& operator<<(std::ostream&, const move_thrower&);
+
+    struct copy_thrower
+    {
+        copy_thrower() = default;
+        copy_thrower(copy_thrower&&) noexcept;
+        copy_thrower(const copy_thrower&);
+    };
+
+    std::ostream& operator<<(std::ostream&, const copy_thrower&);
+
+TEST_CASE_METHOD(fixture, "logger noexcept test", "[logger]")
+{
+    CHECK(noexcept(XTR_LOG(p_, "Hello world")));
+    CHECK(noexcept(XTR_LOG(p_, "Hello world {}", 123)));
+    CHECK(noexcept(XTR_LOG(p_, "Hello {}", "world")));
+
+    std::string s1("world");
+    CHECK(noexcept(XTR_LOG(p_, "Hello {}", s1)));
+    CHECK(noexcept(XTR_LOG(p_, "Hello {}", std::move(s1))));
+
+    std::string_view s2("world");
+    CHECK(noexcept(XTR_LOG(p_, "Hello {}", s2)));
+    CHECK(noexcept(XTR_LOG(p_, "Hello {}", std::move(s2))));
+
+    const char* s3 = "world";
+    CHECK(noexcept(XTR_LOG(p_, "Hello {}", s3)));
+    CHECK(noexcept(XTR_LOG(p_, "Hello {}", std::move(s3))));
+
+    const char s4[] = "world";
+    CHECK(noexcept(XTR_LOG(p_, "Hello {}", s4)));
+    CHECK(noexcept(XTR_LOG(p_, "Hello {}", std::move(s4))));
+
+    move_thrower mt;
+    CHECK(noexcept(XTR_LOG(p_, "Hello {}", mt)));
+    CHECK(!noexcept(XTR_LOG(p_, "Hello {}", std::move(mt))));
+
+    copy_thrower ct;
+    CHECK(!noexcept(XTR_LOG(p_, "Hello {}", ct)));
+    CHECK(noexcept(XTR_LOG(p_, "Hello {}", std::move(ct))));
+}
+
 #if __cpp_exceptions
 TEST_CASE("logger open invalid path test", "[logger]")
 {
