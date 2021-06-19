@@ -244,6 +244,10 @@ namespace xtr::detail
 
 // TODO: Specify buffer size via template parameter, or as dynamic,
 // dynamic_capacity will need to become part of the interface.
+
+/**
+    A logger
+*/
 class xtr::logger
 {
 private:
@@ -251,7 +255,6 @@ private:
 
     class consumer;
 
-    // XXX TODO: fptr_t is not a very helpful name
     using fptr_t =
         std::byte* (*)(
             fmt::memory_buffer& mbuf,
@@ -262,6 +265,11 @@ private:
 
 public:
     // XXX is sink a better name? log_sink? logger::sink?
+    //
+
+    /**
+        A sink
+    */
     class producer
     {
     public:
