@@ -1879,6 +1879,9 @@ namespace xtr::detail
     }
 }
 
+/**
+    A logger
+*/
 class xtr::logger
 {
 private:
@@ -1895,6 +1898,9 @@ private:
             std::string& name) noexcept;
 
 public:
+    /**
+        A sink
+    */
     class producer
     {
     public:
