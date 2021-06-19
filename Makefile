@@ -187,7 +187,10 @@ build/doxygen/xml/index.xml: docs-src/Doxyfile $(wildcard include/xtr/*.hpp)
 docs/index.html: docs-src/conf.py docs-src/index.rst build/doxygen/xml/index.xml
 	sphinx-build -b html docs-src docs -Dbreathe_projects.xtr=../build/doxygen/xml
 
-docs: docs/index.html
+docs/.nojekyll:
+	touch docs/.nojekyll
+
+docs: docs/index.html docs/.nojekyll
 
 $(BUILD_DIR)/coverage_report/index.html: $(TEST_TARGET)
 ifeq ($(COVERAGE), 0)
