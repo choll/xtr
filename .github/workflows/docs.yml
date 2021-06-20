@@ -14,7 +14,7 @@ jobs:
 
     - name: install packages
       run: |
-        sudo apt-get install doxygen breathe
+        sudo apt-get install doxygen
         pip install breathe
         pip install sphinx-bootstrap-theme
     - name: make docs
