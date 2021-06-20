@@ -127,6 +127,11 @@ XTRCTL_OBJS = $(XTRCTL_SRCS:%=$(BUILD_DIR)/%.o)
 
 DEPS = $(OBJS:.o=.d) $(TEST_OBJS:.o=.d) $(BENCH_OBJS:.o=.d) $(XTRCTL_OBJS:.o=.d)
 
+INCLUDES = \
+	$(wildcard include/xtr/*.hpp) \
+	$(wildcard include/xtr/detail/*.hpp) \
+	$(wildcard include/xtr/detail/commands/*.hpp)
+
 $(TARGET): $(OBJS)
 	$(AR) rc $@ $^
 	$(RANLIB) $@
@@ -156,7 +161,7 @@ $(XTRCTL_OBJS): $(BUILD_DIR)/%.cpp.o: %.cpp
 	@mkdir -p $(@D)
 	$(CXX) -o $@ -c $(CPPFLAGS) $(CXXFLAGS) $<
 
-all: $(TARGET)
+all: $(TARGET) single_include docs
 
 check: $(TEST_TARGET)
 	$< --order rand
@@ -166,8 +171,10 @@ benchmark: $(BENCH_TARGET)
 
 xtrctl: $(XTRCTL_TARGET)
 
-single_include:
+single_include/xtr/logger.hpp: $(SRCS) $(INCLUDES)
 	scripts/make_single_include.sh
+
+single_include: single_include/xtr/logger.hpp
 
 install: $(TARGET)
 	mkdir -p $(PREFIX)/lib $(PREFIX)/include/xtr/detail
@@ -180,7 +187,7 @@ clean:
 
 coverage_report: $(BUILD_DIR)/coverage_report/index.html
 
-build/doxygen/xml/index.xml: docs-src/Doxyfile $(wildcard include/xtr/*.hpp)
+build/doxygen/xml/index.xml: docs-src/Doxyfile $(INCLUDES)
 	@mkdir -p $(@D)
 	doxygen $<
 
