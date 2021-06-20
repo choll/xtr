@@ -12,9 +12,9 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: install gcc
+    - name: install packages
       run: |
-        apt-get install doxygen breathe
+        sudo apt-get install doxygen breathe
         pip install breathe
         pip install sphinx-bootstrap-theme
     - name: make docs
