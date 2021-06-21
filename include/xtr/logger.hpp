@@ -145,7 +145,7 @@
 #define XTR_XSTR(s) XTR_STR(s)
 #define XTR_STR(s) #s
 
-// '{}{}:' in the format string is for the timestamp and producer name
+// '{}{}:' in the format string is for the timestamp and sink name
 #define XTR_LOG_TAGS(TAGS, LEVELSTR, SINK, FORMAT, ...)                     \
     (__extension__                                                          \
         ({                                                                  \
@@ -264,22 +264,19 @@ private:
             std::string& name) noexcept;
 
 public:
-    // XXX is sink a better name? log_sink? logger::sink?
-    //
-
     /**
         A sink
     */
-    class producer
+    class sink
     {
     public:
-        producer() = default;
+        sink() = default;
 
-        producer(const producer& other);
+        sink(const sink& other);
 
-        producer& operator=(const producer& other);
+        sink& operator=(const sink& other);
 
-        ~producer();
+        ~sink();
 
         void close();
 
@@ -307,7 +304,7 @@ public:
         }
 
     private:
-        producer(logger& owner, std::string name);
+        sink(logger& owner, std::string name);
 
         template<typename T>
         void copy(std::byte* pos, T&& value)
@@ -339,14 +336,14 @@ private:
     class consumer
     {
     private:
-        struct producer_handle
+        struct sink_handle
         {
-            producer* operator->()
+            sink* operator->()
             {
                 return p;
             }
 
-            producer* p;
+            sink* p;
             std::string name;
             std::size_t dropped_count = 0;
         };
@@ -369,7 +366,7 @@ private:
             SyncFunction&& sf,
             ReopenFunction&& rf,
             CloseFunction&& cf,
-            producer* control)
+            sink* control)
         :
             out(std::forward<OutputFunction>(of)),
             err(std::forward<ErrorFunction>(ef)),
@@ -377,11 +374,11 @@ private:
             sync(std::forward<SyncFunction>(sf)),
             reopen(std::forward<ReopenFunction>(rf)),
             close(std::forward<CloseFunction>(cf)),
-            producers_({{control, "control", 0}})
+            sinks_({{control, "control", 0}})
         {
         }
 
-        void add_producer(producer& p, const std::string& name);
+        void add_sink(sink& p, const std::string& name);
 
         std::function<::ssize_t(const char* buf, std::size_t size)> out;
         std::function<void(const char* buf, std::size_t size)> err;
@@ -396,7 +393,7 @@ private:
         void set_level_handler(int fd, detail::set_level&);
         void reopen_handler(int fd, detail::reopen&);
 
-        std::vector<producer_handle> producers_;
+        std::vector<sink_handle> sinks_;
         std::unique_ptr<
             detail::command_dispatcher,
             detail::command_dispatcher_deleter> cmds_;
@@ -522,7 +519,7 @@ public:
                     &control_),
                 make_clock(std::forward<Clock>(clock)));
         // Passing control_ to the consumer is equivalent to calling
-        // register_producer, so mark it as open.
+        // register_sink, so mark it as open.
         control_.open_ = true;
         set_command_path(std::move(command_path));
     }
@@ -535,10 +532,10 @@ public:
     }
 
     // XXX Rename as create? people might assume that multiple get
-    // calls return the same producer.
-    [[nodiscard]] producer get_producer(std::string name);
+    // calls return the same sink.
+    [[nodiscard]] sink get_sink(std::string name);
 
-    void register_producer(producer& p, const std::string& name) noexcept;
+    void register_sink(sink& p, const std::string& name) noexcept;
 
     void set_output_stream(FILE* stream) noexcept;
     void set_error_stream(FILE* stream) noexcept;
@@ -638,13 +635,13 @@ private:
             };
     }
 
-    producer control_; // aligned to cache line so first to avoid extra padding
+    sink control_; // aligned to cache line so first to avoid extra padding
     std::jthread consumer_;
     std::mutex control_mutex_;
 };
 
 template<auto Format, typename Tags>
-void xtr::logger::producer::log() noexcept
+void xtr::logger::sink::log() noexcept
 {
     // This function is just an optimisation; if the log line has no arguments
     // then creating a lambda for it would waste space in the queue (as even
@@ -657,7 +654,7 @@ void xtr::logger::producer::log() noexcept
 }
 
 template<auto Format, typename Tags, typename... Args>
-void xtr::logger::producer::log(Args&&... args)
+void xtr::logger::sink::log(Args&&... args)
     noexcept((XTR_NOTHROW_INGESTIBLE(Args, args) && ...))
 {
     static_assert(sizeof...(Args) > 0);
@@ -673,7 +670,7 @@ void xtr::logger::producer::log(Args&&... args)
 }
 
 template<auto Format, typename Tags, typename... Args>
-void xtr::logger::producer::post_with_str_table(Args&&... args)
+void xtr::logger::sink::post_with_str_table(Args&&... args)
     noexcept((XTR_NOTHROW_INGESTIBLE(Args, args) && ...))
 {
     using lambda_t =
@@ -730,7 +727,7 @@ void xtr::logger::producer::post_with_str_table(Args&&... args)
 }
 
 template<typename T>
-void xtr::logger::producer::copy(std::byte* pos, T&& value)
+void xtr::logger::sink::copy(std::byte* pos, T&& value)
     noexcept(XTR_NOTHROW_INGESTIBLE(T, value))
 {
     assert(std::uintptr_t(pos) % alignof(T) == 0);
@@ -739,7 +736,7 @@ void xtr::logger::producer::copy(std::byte* pos, T&& value)
 }
 
 template<auto Format, typename Tags, typename Func>
-void xtr::logger::producer::post(Func&& func)
+void xtr::logger::sink::post(Func&& func)
     noexcept(XTR_NOTHROW_INGESTIBLE(Func, func))
 {
     ring_buffer::span s = buf_.write_span_spec();
@@ -773,7 +770,7 @@ void xtr::logger::producer::post(Func&& func)
 }
 
 template<typename Tags, typename... Args>
-auto xtr::logger::producer::make_lambda(Args&&... args)
+auto xtr::logger::sink::make_lambda(Args&&... args)
     noexcept((XTR_NOTHROW_INGESTIBLE(Args, args) && ...))
 {
     // This lambda is mutable so that std::forward works correctly, without it

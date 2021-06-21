@@ -40,21 +40,23 @@ xtr::logger::~logger()
 }
 
 XTR_FUNC
-xtr::logger::producer xtr::logger::get_producer(std::string name)
+xtr::logger::sink xtr::logger::get_sink(std::string name)
 {
-    return producer(*this, std::move(name));
+    return sink(*this, std::move(name));
 }
 
 XTR_FUNC
-void xtr::logger::register_producer(
-    producer& p,
+void xtr::logger::register_sink(
+    sink& s,
     const std::string& name) noexcept
 {
+    assert(!s.open_);
     post(
-        [&p, name](consumer& c, auto&)
+        [&s, name](consumer& c, auto&)
         {
-            c.add_producer(p, name);
+            c.add_sink(s, name);
         });
+    s.open_ = true;
 }
 
 XTR_FUNC
@@ -84,23 +86,23 @@ void xtr::logger::consumer::run(std::function<::timespec()> clock) noexcept
     std::size_t flush_count = 0;
     fmt::memory_buffer mbuf;
 
-    for (std::size_t i = 0; !producers_.empty(); ++i)
+    for (std::size_t i = 0; !sinks_.empty(); ++i)
     {
         ring_buffer::span span;
-        // The inner loop below can modify producers so a reference cannot be taken
-        const std::size_t n = i % producers_.size();
+        // The inner loop below can modify sinks so a reference cannot be taken
+        const std::size_t n = i % sinks_.size();
 
         if (n == 0)
         {
-            // Read the clock and commands once per loop over producers
+            // Read the clock and commands once per loop over sinks
             ts_stale |= true;
             if (cmds_)
                 cmds_->process_commands(/* timeout= */0);
         }
 
-        if ((span = producers_[n]->buf_.read_span()).empty())
+        if ((span = sinks_[n]->buf_.read_span()).empty())
         {
-            // flush if no further data available (all producers empty)
+            // flush if no further data available (all sinks empty)
             if (flush_count != 0 && flush_count-- == 1)
                 flush();
             continue;
@@ -116,36 +118,36 @@ void xtr::logger::consumer::run(std::function<::timespec()> clock) noexcept
 
         // span.end is capped to the end of the first mapping to guarantee that
         // data is only read from the same address that it was written to (the
-        // producer always begins log records in the first mapping, so we do not
+        // sink always begins log records in the first mapping, so we do not
         // read a record beginning in the second mapping). This is done to
         // avoid undefined behaviour---reading an object from a different
         // address than it was written to will work on Intel and probably many
         // other CPUs but is outside of what is permitted by the C++ memory
         // model.
         std::byte* pos = span.begin();
-        std::byte* end = std::min(span.end(), producers_[n]->buf_.end());
+        std::byte* end = std::min(span.end(), sinks_[n]->buf_.end());
         do
         {
             assert(std::uintptr_t(pos) % alignof(fptr_t) == 0);
             assert(!destroy);
             fptr_t fptr = *reinterpret_cast<const fptr_t*>(pos);
-            pos = fptr(mbuf, pos, *this, ts, producers_[n].name);
+            pos = fptr(mbuf, pos, *this, ts, sinks_[n].name);
         } while (pos < end);
 
         if (destroy)
         {
             using std::swap;
-            swap(producers_[n], producers_.back()); // possible self-swap, ok
-            producers_.pop_back();
+            swap(sinks_[n], sinks_.back()); // possible self-swap, ok
+            sinks_.pop_back();
             continue;
         }
 
-        producers_[n]->buf_.reduce_readable(
+        sinks_[n]->buf_.reduce_readable(
             ring_buffer::size_type(pos - span.begin()));
 
         std::size_t n_dropped;
-        if (producers_[n]->buf_.read_span().empty() &&
-            (n_dropped = producers_[n]->buf_.dropped_count()) > 0)
+        if (sinks_[n]->buf_.read_span().empty() &&
+            (n_dropped = sinks_[n]->buf_.dropped_count()) > 0)
         {
             detail::print(
                 mbuf,
@@ -153,22 +155,22 @@ void xtr::logger::consumer::run(std::function<::timespec()> clock) noexcept
                 err,
                 "W {} {}: {} messages dropped\n",
                 ts,
-                producers_[n].name,
+                sinks_[n].name,
                 n_dropped);
-            producers_[n].dropped_count += n_dropped;
+            sinks_[n].dropped_count += n_dropped;
         }
 
-        // flushing may be late/early if producers is modified, doesn't matter
-        flush_count = producers_.size();
+        // flushing may be late/early if sinks is modified, doesn't matter
+        flush_count = sinks_.size();
     }
 
     close();
 }
 
 XTR_FUNC
-void xtr::logger::consumer::add_producer(producer& p, const std::string& name)
+void xtr::logger::consumer::add_sink(sink& s, const std::string& name)
 {
-    producers_.push_back(producer_handle{&p, name});
+    sinks_.push_back(sink_handle{&s, name});
 }
 
 XTR_FUNC
@@ -214,9 +216,9 @@ void xtr::logger::consumer::status_handler(int fd, detail::status& st)
         return;
     }
 
-    for (std::size_t i = 1; i < producers_.size(); ++i)
+    for (std::size_t i = 1; i < sinks_.size(); ++i)
     {
-        auto& p = producers_[i];
+        auto& p = sinks_[i];
 
         if (!(*matcher)(p.name.c_str()))
             continue;
@@ -256,9 +258,9 @@ void xtr::logger::consumer::set_level_handler(int fd, detail::set_level& sl)
         return;
     }
 
-    for (std::size_t i = 1; i < producers_.size(); ++i)
+    for (std::size_t i = 1; i < sinks_.size(); ++i)
     {
-        auto& p = producers_[i];
+        auto& p = sinks_[i];
 
         if (!(*matcher)(p.name.c_str()))
             continue;
@@ -279,42 +281,40 @@ void xtr::logger::consumer::reopen_handler(int fd, detail::reopen&)
 }
 
 XTR_FUNC
-xtr::logger::producer::producer(const producer& other)
+xtr::logger::sink::sink(const sink& other)
 {
     *this = other;
 }
 
 XTR_FUNC
-xtr::logger::producer& xtr::logger::producer::operator=(const producer& other)
+xtr::logger::sink& xtr::logger::sink::operator=(const sink& other)
 {
     level_ = other.level_.load(std::memory_order_relaxed);
     if (!std::exchange(open_, other.open_)) // if previously closed, register
     {
-        const_cast<producer&>(other).post(
-            [this](consumer& c, const auto& name) { c.add_producer(*this, name); });
+        const_cast<sink&>(other).post(
+            [this](consumer& c, const auto& name) { c.add_sink(*this, name); });
     }
     return *this;
 }
 
 XTR_FUNC
-xtr::logger::producer::producer(logger& owner, std::string name)
-:
-    open_(true)
+xtr::logger::sink::sink(logger& owner, std::string name)
 {
-    owner.register_producer(*this, name);
+    owner.register_sink(*this, name);
 }
 
 XTR_FUNC
-void xtr::logger::producer::close()
+void xtr::logger::sink::close()
 {
     if (open_)
     {
         sync(/*destruct=*/true);
         open_ = false;
-        // clear() is called here in case the producer is registered with the
+        // clear() is called here in case the sink is registered with the
         // logger again, e.g. via assignment. This is because when the
         // 'destruct' flag is received by the consumer it cannot perform any
-        // further operations on the producer (as the producer may no longer
+        // further operations on the sink (as the sink may no longer
         // exist), including updating the read offset of the ring buffer, which
         // means that some residual data will be left in the buffer that needs
         // to be cleared.
@@ -323,7 +323,7 @@ void xtr::logger::producer::close()
 }
 
 XTR_FUNC
-void xtr::logger::producer::sync(bool destroy)
+void xtr::logger::sink::sync(bool destroy)
 {
     std::condition_variable cv;
     std::mutex m;
@@ -360,7 +360,7 @@ void xtr::logger::producer::sync(bool destroy)
             // unwound).
             cv.notify_one();
             // Do not access any captured variables after notifying because if
-            // the producer is destructing then the underlying storage may have
+            // the sink is destructing then the underlying storage may have
             // been freed already.
         });
 
@@ -370,7 +370,7 @@ void xtr::logger::producer::sync(bool destroy)
 }
 
 XTR_FUNC
-void xtr::logger::producer::set_name(std::string name)
+void xtr::logger::sink::set_name(std::string name)
 {
     post(
         [name = std::move(name)](auto&, auto& oldname)
@@ -381,7 +381,7 @@ void xtr::logger::producer::set_name(std::string name)
 }
 
 XTR_FUNC
-xtr::logger::producer::~producer()
+xtr::logger::sink::~sink()
 {
     close();
 }
