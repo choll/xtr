@@ -3,8 +3,8 @@
 int main()
 {
     xtr::logger log("/dev/stdout");
-    auto p = log.get_producer("test");
-    XTR_LOG(p, "Hello world");
+    auto s = log.get_sink("test");
+    XTR_LOG(s, "Hello world");
     return 0;
 }
 
