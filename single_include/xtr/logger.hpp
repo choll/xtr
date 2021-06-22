@@ -1901,16 +1901,16 @@ public:
     /**
         A sink
     */
-    class producer
+    class sink
     {
     public:
-        producer() = default;
+        sink() = default;
 
-        producer(const producer& other);
+        sink(const sink& other);
 
-        producer& operator=(const producer& other);
+        sink& operator=(const sink& other);
 
-        ~producer();
+        ~sink();
 
         void close();
 
@@ -1939,7 +1939,7 @@ public:
         }
 
     private:
-        producer(logger& owner, std::string name);
+        sink(logger& owner, std::string name);
 
         template<typename T>
         void copy(std::byte* pos, T&& value) noexcept(
@@ -1968,14 +1968,14 @@ private:
     class consumer
     {
     private:
-        struct producer_handle
+        struct sink_handle
         {
-            producer* operator->()
+            sink* operator->()
             {
                 return p;
             }
 
-            producer* p;
+            sink* p;
             std::string name;
             std::size_t dropped_count = 0;
         };
@@ -1998,18 +1998,18 @@ private:
             SyncFunction&& sf,
             ReopenFunction&& rf,
             CloseFunction&& cf,
-            producer* control) :
+            sink* control) :
             out(std::forward<OutputFunction>(of)),
             err(std::forward<ErrorFunction>(ef)),
             flush(std::forward<FlushFunction>(ff)),
             sync(std::forward<SyncFunction>(sf)),
             reopen(std::forward<ReopenFunction>(rf)),
             close(std::forward<CloseFunction>(cf)),
-            producers_({{control, "control", 0}})
+            sinks_({{control, "control", 0}})
         {
         }
 
-        void add_producer(producer& p, const std::string& name);
+        void add_sink(sink& p, const std::string& name);
 
         std::function<::ssize_t(const char* buf, std::size_t size)> out;
         std::function<void(const char* buf, std::size_t size)> err;
@@ -2024,7 +2024,7 @@ private:
         void set_level_handler(int fd, detail::set_level&);
         void reopen_handler(int fd, detail::reopen&);
 
-        std::vector<producer_handle> producers_;
+        std::vector<sink_handle> sinks_;
         std::unique_ptr<detail::command_dispatcher, detail::command_dispatcher_deleter>
             cmds_;
     };
@@ -2148,9 +2148,9 @@ public:
         return consumer_.native_handle();
     }
 
-    [[nodiscard]] producer get_producer(std::string name);
+    [[nodiscard]] sink get_sink(std::string name);
 
-    void register_producer(producer& p, const std::string& name) noexcept;
+    void register_sink(sink& p, const std::string& name) noexcept;
 
     void set_output_stream(FILE* stream) noexcept;
     void set_error_stream(FILE* stream) noexcept;
@@ -2250,13 +2250,13 @@ private:
         };
     }
 
-    producer control_; // aligned to cache line so first to avoid extra padding
+    sink control_; // aligned to cache line so first to avoid extra padding
     std::jthread consumer_;
     std::mutex control_mutex_;
 };
 
 template<auto Format, typename Tags>
-void xtr::logger::producer::log() noexcept
+void xtr::logger::sink::log() noexcept
 {
     const ring_buffer::span s = buf_.write_span_spec<Tags>(sizeof(fptr_t));
     if (detail::is_non_blocking_v<Tags> && s.empty()) [[unlikely]]
@@ -2266,7 +2266,7 @@ void xtr::logger::producer::log() noexcept
 }
 
 template<auto Format, typename Tags, typename... Args>
-void xtr::logger::producer::log(Args&&... args) noexcept(
+void xtr::logger::sink::log(Args&&... args) noexcept(
     (XTR_NOTHROW_INGESTIBLE(Args, args) && ...))
 {
     static_assert(sizeof...(Args) > 0);
@@ -2281,7 +2281,7 @@ void xtr::logger::producer::log(Args&&... args) noexcept(
 }
 
 template<auto Format, typename Tags, typename... Args>
-void xtr::logger::producer::post_with_str_table(Args&&... args) noexcept(
+void xtr::logger::sink::post_with_str_table(Args&&... args) noexcept(
     (XTR_NOTHROW_INGESTIBLE(Args, args) && ...))
 {
     using lambda_t = decltype(make_lambda<Tags>(detail::build_string_table<Tags>(
@@ -2333,7 +2333,7 @@ void xtr::logger::producer::post_with_str_table(Args&&... args) noexcept(
 }
 
 template<typename T>
-void xtr::logger::producer::copy(std::byte* pos, T&& value) noexcept(
+void xtr::logger::sink::copy(std::byte* pos, T&& value) noexcept(
     XTR_NOTHROW_INGESTIBLE(T, value))
 {
     assert(std::uintptr_t(pos) % alignof(T) == 0);
@@ -2342,7 +2342,7 @@ void xtr::logger::producer::copy(std::byte* pos, T&& value) noexcept(
 }
 
 template<auto Format, typename Tags, typename Func>
-void xtr::logger::producer::post(Func&& func) noexcept(
+void xtr::logger::sink::post(Func&& func) noexcept(
     XTR_NOTHROW_INGESTIBLE(Func, func))
 {
     ring_buffer::span s = buf_.write_span_spec();
@@ -2371,7 +2371,7 @@ void xtr::logger::producer::post(Func&& func) noexcept(
 }
 
 template<typename Tags, typename... Args>
-auto xtr::logger::producer::make_lambda(Args&&... args) noexcept(
+auto xtr::logger::sink::make_lambda(Args&&... args) noexcept(
     (XTR_NOTHROW_INGESTIBLE(Args, args) && ...))
 {
     return [... args = std::forward<Args>(args)](
@@ -2697,15 +2697,16 @@ inline xtr::logger::~logger()
     control_.close();
 }
 
-inline xtr::logger::producer xtr::logger::get_producer(std::string name)
+inline xtr::logger::sink xtr::logger::get_sink(std::string name)
 {
-    return producer(*this, std::move(name));
+    return sink(*this, std::move(name));
 }
 
-inline void xtr::logger::register_producer(
-    producer& p, const std::string& name) noexcept
+inline void xtr::logger::register_sink(sink& s, const std::string& name) noexcept
 {
-    post([&p, name](consumer& c, auto&) { c.add_producer(p, name); });
+    assert(!s.open_);
+    post([&s, name](consumer& c, auto&) { c.add_sink(s, name); });
+    s.open_ = true;
 }
 
 inline void xtr::logger::set_output_stream(FILE* stream) noexcept
@@ -2732,10 +2733,10 @@ inline void xtr::logger::consumer::run(std::function<::timespec()> clock) noexce
     std::size_t flush_count = 0;
     fmt::memory_buffer mbuf;
 
-    for (std::size_t i = 0; !producers_.empty(); ++i)
+    for (std::size_t i = 0; !sinks_.empty(); ++i)
     {
         ring_buffer::span span;
-        const std::size_t n = i % producers_.size();
+        const std::size_t n = i % sinks_.size();
 
         if (n == 0)
         {
@@ -2744,7 +2745,7 @@ inline void xtr::logger::consumer::run(std::function<::timespec()> clock) noexce
                 cmds_->process_commands(/* timeout= */ 0);
         }
 
-        if ((span = producers_[n]->buf_.read_span()).empty())
+        if ((span = sinks_[n]->buf_.read_span()).empty())
         {
             if (flush_count != 0 && flush_count-- == 1)
                 flush();
@@ -2760,29 +2761,29 @@ inline void xtr::logger::consumer::run(std::function<::timespec()> clock) noexce
         }
 
         std::byte* pos = span.begin();
-        std::byte* end = std::min(span.end(), producers_[n]->buf_.end());
+        std::byte* end = std::min(span.end(), sinks_[n]->buf_.end());
         do
         {
             assert(std::uintptr_t(pos) % alignof(fptr_t) == 0);
             assert(!destroy);
             fptr_t fptr = *reinterpret_cast<const fptr_t*>(pos);
-            pos = fptr(mbuf, pos, *this, ts, producers_[n].name);
+            pos = fptr(mbuf, pos, *this, ts, sinks_[n].name);
         } while (pos < end);
 
         if (destroy)
         {
             using std::swap;
-            swap(producers_[n], producers_.back()); // possible self-swap, ok
-            producers_.pop_back();
+            swap(sinks_[n], sinks_.back()); // possible self-swap, ok
+            sinks_.pop_back();
             continue;
         }
 
-        producers_[n]->buf_.reduce_readable(
+        sinks_[n]->buf_.reduce_readable(
             ring_buffer::size_type(pos - span.begin()));
 
         std::size_t n_dropped;
-        if (producers_[n]->buf_.read_span().empty() &&
-            (n_dropped = producers_[n]->buf_.dropped_count()) > 0)
+        if (sinks_[n]->buf_.read_span().empty() &&
+            (n_dropped = sinks_[n]->buf_.dropped_count()) > 0)
         {
             detail::print(
                 mbuf,
@@ -2790,21 +2791,20 @@ inline void xtr::logger::consumer::run(std::function<::timespec()> clock) noexce
                 err,
                 "W {} {}: {} messages dropped\n",
                 ts,
-                producers_[n].name,
+                sinks_[n].name,
                 n_dropped);
-            producers_[n].dropped_count += n_dropped;
+            sinks_[n].dropped_count += n_dropped;
         }
 
-        flush_count = producers_.size();
+        flush_count = sinks_.size();
     }
 
     close();
 }
 
-inline void xtr::logger::consumer::add_producer(
-    producer& p, const std::string& name)
+inline void xtr::logger::consumer::add_sink(sink& s, const std::string& name)
 {
-    producers_.push_back(producer_handle{&p, name});
+    sinks_.push_back(sink_handle{&s, name});
 }
 
 inline void xtr::logger::consumer::set_command_path(std::string path) noexcept
@@ -2847,9 +2847,9 @@ inline void xtr::logger::consumer::status_handler(int fd, detail::status& st)
         return;
     }
 
-    for (std::size_t i = 1; i < producers_.size(); ++i)
+    for (std::size_t i = 1; i < sinks_.size(); ++i)
     {
-        auto& p = producers_[i];
+        auto& p = sinks_[i];
 
         if (!(*matcher)(p.name.c_str()))
             continue;
@@ -2889,9 +2889,9 @@ inline void xtr::logger::consumer::set_level_handler(int fd, detail::set_level& 
         return;
     }
 
-    for (std::size_t i = 1; i < producers_.size(); ++i)
+    for (std::size_t i = 1; i < sinks_.size(); ++i)
     {
-        auto& p = producers_[i];
+        auto& p = sinks_[i];
 
         if (!(*matcher)(p.name.c_str()))
             continue;
@@ -2910,30 +2910,28 @@ inline void xtr::logger::consumer::reopen_handler(int fd, detail::reopen&)
         cmds_->send(fd, detail::frame<detail::success>());
 }
 
-inline xtr::logger::producer::producer(const producer& other)
+inline xtr::logger::sink::sink(const sink& other)
 {
     *this = other;
 }
 
-inline xtr::logger::producer& xtr::logger::producer::operator=(
-    const producer& other)
+inline xtr::logger::sink& xtr::logger::sink::operator=(const sink& other)
 {
     level_ = other.level_.load(std::memory_order_relaxed);
     if (!std::exchange(open_, other.open_)) // if previously closed, register
     {
-        const_cast<producer&>(other).post([this](consumer& c, const auto& name)
-                                          { c.add_producer(*this, name); });
+        const_cast<sink&>(other).post([this](consumer& c, const auto& name)
+                                      { c.add_sink(*this, name); });
     }
     return *this;
 }
 
-inline xtr::logger::producer::producer(logger& owner, std::string name) :
-    open_(true)
+inline xtr::logger::sink::sink(logger& owner, std::string name)
 {
-    owner.register_producer(*this, name);
+    owner.register_sink(*this, name);
 }
 
-inline void xtr::logger::producer::close()
+inline void xtr::logger::sink::close()
 {
     if (open_)
     {
@@ -2943,7 +2941,7 @@ inline void xtr::logger::producer::close()
     }
 }
 
-inline void xtr::logger::producer::sync(bool destroy)
+inline void xtr::logger::sink::sync(bool destroy)
 {
     std::condition_variable cv;
     std::mutex m;
@@ -2967,14 +2965,14 @@ inline void xtr::logger::producer::sync(bool destroy)
         cv.wait(lock);
 }
 
-inline void xtr::logger::producer::set_name(std::string name)
+inline void xtr::logger::sink::set_name(std::string name)
 {
     post([name = std::move(name)](auto&, auto& oldname)
          { oldname = std::move(name); });
     sync();
 }
 
-inline xtr::logger::producer::~producer()
+inline xtr::logger::sink::~sink()
 {
     close();
 }
