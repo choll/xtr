@@ -18,7 +18,7 @@ jobs:
         pip install breathe
         pip install sphinx-bootstrap-theme
     - name: make docs
-      run: make docs
+      run: make -B docs
     - name: Commit changes
       uses: EndBug/add-and-commit@v7
       with:
