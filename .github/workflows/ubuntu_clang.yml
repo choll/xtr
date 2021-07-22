@@ -23,6 +23,7 @@ jobs:
           --install /usr/lib/llvm llvm /usr/lib/llvm-12 100 \
           --slave /usr/bin/llvm-ar llvm-ar /usr/bin/llvm-ar-12 \
           --slave /usr/bin/llvm-ranlib llvm-ranlib /usr/bin/llvm-ranlib-12
+        sudo update-alternatives --remove-all clang++
         sudo update-alternatives \
           --install /usr/bin/clang clang /usr/bin/clang-12 100 \
           --slave /usr/bin/clang++ clang++ /usr/bin/clang++-12
