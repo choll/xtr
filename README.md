@@ -12,6 +12,8 @@
 
 [![codecov](https://codecov.io/gh/choll/xtr/branch/master/graph/badge.svg?token=FDdI0ZM5tv)](https://codecov.io/gh/choll/xtr)
 
+[![Documentation](https://github.com/choll/xtr/actions/workflows/docs.yml/badge.svg)](https://github.com/choll/xtr/actions/workflows/docs.yml)
+
 ## What is it?
 
 An asynchronous logger designed to minimise the cost of log statements by delegating as much work as possible to a worker thread.
