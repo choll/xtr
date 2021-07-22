@@ -63,6 +63,16 @@ jobs:
     #    and modify them (or add more) to build your code if your project
     #    uses a compiled language
 
+    - name: install gcc
+      run: |
+        sudo apt-get install g++-10
+        sudo update-alternatives \
+          --install /usr/bin/gcc gcc /usr/bin/gcc-10 100 \
+          --slave /usr/bin/g++ g++ /usr/bin/g++-10 \
+          --slave /usr/bin/gcov gcov /usr/bin/gcov-10 \
+          --slave /usr/bin/gcc-ar gcc-ar /usr/bin/gcc-ar-10 \
+          --slave /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib-10
+
     - run: make
     #   make bootstrap
     #   make release
