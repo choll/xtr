@@ -16,7 +16,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: set clang symlinks
+    - name: set symlinks
       run: |
         sudo update-alternatives \
           --install /usr/lib/llvm llvm /usr/lib/llvm-12 100 \
