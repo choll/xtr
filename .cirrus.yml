@@ -1,0 +1,4 @@
+container:
+  image: freebsd-14-0-snap
+task:
+  tests_script: make check
