@@ -6,8 +6,18 @@ task:
   submodules_script:
     - git submodule init
     - git submodule update
-  script: CXX=g++ RANLIB=gcc-ranlib10 AR=gcc-ar10 gmake
+  script: CXX= RANLIB=gcc-ranlib10 AR=gcc-ar10 gmake
   tests_script: CXX=g++ RANLIB=gcc-ranlib10 AR=gcc-ar10 gmake check
+task:
+  name: freebsd-14-clang
+  freebsd_instance:
+    image_family: freebsd-14-0-snap
+  install_script: pkg install -y git gmake llvm12
+  submodules_script:
+    - git submodule init
+    - git submodule update
+  script: CXX=clang++12 RANLIB=llvm-ranlib12 AR=llvm-ar12 gmake
+  tests_script: CXX=clang++12 RANLIB=llvm-ranlib12 AR=llvm-ar12 gmake check
 task:
   name: freebsd-13-gcc
   freebsd_instance:
