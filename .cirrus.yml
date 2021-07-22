@@ -1,6 +1,9 @@
 freebsd_instance:
   image_family: freebsd-14-0-snap
 task:
+  submodules_script:
+    - git submodule init
+    - git submodule update
   install_script: pkg install -y gmake gcc
   script: gmake
   tests_script: gmake check
