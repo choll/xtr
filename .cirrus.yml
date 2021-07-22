@@ -16,8 +16,8 @@ task:
   submodules_script:
     - git submodule init
     - git submodule update
-  script: CXX=clang++12 -stdlib=libstdc++ RANLIB=llvm-ranlib12 AR=llvm-ar12 gmake
-  tests_script: CXX=clang++12 -stdlib=libstdc++ RANLIB=llvm-ranlib12 AR=llvm-ar12 gmake check
+  script: CXX=clang++12 EXTRA_CXXFLAGS'-stdlib=libstdc++' RANLIB=llvm-ranlib12 AR=llvm-ar12 gmake
+  tests_script: CXX=clang++12 EXTRA_CXXFLAGS'-stdlib=libstdc++' RANLIB=llvm-ranlib12 AR=llvm-ar12 gmake check
 task:
   name: freebsd-13-gcc
   freebsd_instance:

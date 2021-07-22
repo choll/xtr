@@ -17,7 +17,7 @@ BUILD_DIR := build/$(CXX)
 
 CXXFLAGS = \
 	-std=c++20 -Wall -Wextra -Wconversion -Wshadow -Wcast-qual -Wformat=2 \
-	-pedantic -pipe -pthread
+	-pedantic -pipe -pthread $(EXTRA_CXXFLAGS)
 CPPFLAGS = -MMD -MP -I include $(FMT_CPPFLAGS) -DXTR_FUNC=
 LDFLAGS = -fuse-ld=gold
 LDLIBS = -lxtr
@@ -192,12 +192,15 @@ build/doxygen/xml/index.xml: docs-src/Doxyfile $(INCLUDES)
 	doxygen $<
 
 docs/index.html: docs-src/conf.py docs-src/index.rst build/doxygen/xml/index.xml
-	sphinx-build -b html docs-src docs -Dbreathe_projects.xtr=../build/doxygen/xml
+	sphinx-build -b html docs-src docs -W -Dbreathe_projects.xtr=../build/doxygen/xml
 
 docs/.nojekyll:
 	touch docs/.nojekyll
 
 docs: docs/index.html docs/.nojekyll
+
+clean-docs:
+	$(RM) build/doxygen/xml/index.xml docs/index.html
 
 $(BUILD_DIR)/coverage_report/index.html: $(TEST_TARGET)
 ifeq ($(COVERAGE), 0)
