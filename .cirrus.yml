@@ -4,6 +4,6 @@ task:
   submodules_script:
     - git submodule init
     - git submodule update
-  install_script: pkg install -y gmake gcc
+  install_script: pkg install -y git gmake gcc
   script: gmake
   tests_script: gmake check
