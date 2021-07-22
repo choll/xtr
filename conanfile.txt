@@ -1,6 +1,6 @@
 [requires]
 benchmark/1.5.0@
-fmt/7.0.1@
+fmt/8.0.0@
 catch2/2.13.0@
 
 [generators]

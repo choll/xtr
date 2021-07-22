@@ -447,11 +447,11 @@ TEST_CASE_METHOD(fixture, "logger arithmetic types test", "[logger]")
 TEST_CASE_METHOD(fixture, "logger mixed types test", "[logger]")
 {
     XTR_LOG(s_, "Test {} {}", 42.0, 42), line_ = __LINE__;
-    REQUIRE(last_line() == "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42.0 42"_format(line_));
+    REQUIRE(last_line() == "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42 42"_format(line_));
     XTR_LOG(s_, "Test {} {} {}", 42.0, 42, 42.0), line_ = __LINE__;
-    REQUIRE(last_line() == "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42.0 42 42.0"_format(line_));
+    REQUIRE(last_line() == "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42 42 42"_format(line_));
     XTR_LOG(s_, "Test {} {} {} {}", 42.0, 42, 42.0, 42), line_ = __LINE__;
-    REQUIRE(last_line() == "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42.0 42 42.0 42"_format(line_));
+    REQUIRE(last_line() == "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42 42 42 42"_format(line_));
 }
 
 TEST_CASE_METHOD(file_fixture, "logger file buffer test", "[logger]")
@@ -2103,9 +2103,9 @@ TEST_CASE("logger open path test", "[logger]")
 
 TEST_CASE_METHOD(fixture, "logger noexcept test", "[logger]")
 {
-    CHECK(noexcept(XTR_LOG(s_, "Hello world")));
-    CHECK(noexcept(XTR_LOG(s_, "Hello world {}", 123)));
-    CHECK(noexcept(XTR_LOG(s_, "Hello {}", "world")));
+    static_assert(noexcept(XTR_LOG(s_, "Hello world")));
+    static_assert(noexcept(XTR_LOG(s_, "Hello world {}", 123)));
+    static_assert(noexcept(XTR_LOG(s_, "Hello {}", "world")));
 
     std::string s1("world");
     CHECK(noexcept(XTR_LOG(s_, "Hello {}", s1)));

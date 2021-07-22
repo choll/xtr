@@ -14,11 +14,14 @@ namespace xtr
     {
         timespec() = default;
 
+        // lack of explicit is intentional
         timespec(std::timespec ts)
         :
             std::timespec(ts)
         {
         }
+
+        friend auto operator<=>(const timespec&, const timespec&) = default;
     };
 }
 

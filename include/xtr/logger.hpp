@@ -75,7 +75,7 @@
 #define XTR_TRY_LOG(...)                                            \
     (__extension__                                                  \
         ({                                                          \
-            XTR_LOG_TAGS(xtr::non_blocking_tag, "I", __VA_ARGS__); \
+            XTR_LOG_TAGS(xtr::non_blocking_tag, "I", __VA_ARGS__);  \
         }))
 
 #define XTR_LOG_TS(...) XTR_LOG_TAGS(xtr::timestamp_tag, "I", __VA_ARGS__)
@@ -217,10 +217,8 @@ namespace xtr::detail
         return
             [stream, err_stream]()
             {
-#if defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L
                 ::fsync(::fileno(stream));
                 ::fsync(::fileno(err_stream));
-#endif
             };
     }
 
@@ -245,9 +243,6 @@ namespace xtr::detail
 // TODO: Specify buffer size via template parameter, or as dynamic,
 // dynamic_capacity will need to become part of the interface.
 
-/**
-    A logger
-*/
 class xtr::logger
 {
 private:
@@ -264,9 +259,6 @@ private:
             std::string& name) noexcept;
 
 public:
-    /**
-        A sink
-    */
     class sink
     {
     public:
@@ -278,26 +270,57 @@ public:
 
         ~sink();
 
+        /**
+         *  Closes the sink. After this function returns the sink is closed and
+         *  log() functions may not be called on the sink. The sink may be
+         *  re-opened by calling logger::register_sink.
+         */
         void close();
 
+        /**
+            Synchronizes all log calls previously made by this sink to back-end
+            storage.
+
+            @post All entries in the sink's queue have been delivered to the
+                  back-end, and the flush() and sync() functions associated
+                  with the back-end have been called. For the default (disk)
+                  back-end this means fflush(3) and fsync(2) (if available)
+                  have been called.
+         */
         void sync()
         {
             sync(/*destroy=*/false);
         }
 
+        /**
+            Sets the producer name to the specified name.
+         */
         void set_name(std::string name);
 
-        template<auto Format, typename Tags = void()>
-        void log() noexcept;
+        /**
+            Logs the given format string and arguments. This function is not
+            intended to be used directly, instead one of the XTR_LOG macros
+            should be used. It is provided in case use of a macro is
+            unacceptable.
 
+            @param Format:
+            @param Tags:
+            @param args:
+         */
         template<auto Format, typename Tags = void(), typename... Args>
         void log(Args&&... args) noexcept((XTR_NOTHROW_INGESTIBLE(Args, args) && ...));
 
+        /**
+            Sets the log level of the sink to the specified level.
+         */
         void set_level(log_level_t l)
         {
             level_.store(l, std::memory_order_relaxed);
         }
 
+        /**
+            Returns the current log level.
+         */
         log_level_t level() const
         {
             return level_.load(std::memory_order_relaxed);
@@ -305,6 +328,12 @@ public:
 
     private:
         sink(logger& owner, std::string name);
+
+        template<auto Format, typename Tags = void()>
+        void log_impl() noexcept;
+
+        template<auto Format, typename Tags, typename... Args>
+        void log_impl(Args&&... args) noexcept((XTR_NOTHROW_INGESTIBLE(Args, args) && ...));
 
         template<typename T>
         void copy(std::byte* pos, T&& value)
@@ -526,16 +555,36 @@ public:
 
     ~logger();
 
+    /**
+
+
+    */
     std::thread::native_handle_type consumer_thread_native_handle()
     {
         return consumer_.native_handle();
     }
 
-    // XXX Rename as create? people might assume that multiple get
-    // calls return the same sink.
+    /**
+        Creates a sink with the specified name. Note that each call to this
+        function creates a new sink---if repeated calls are made with the
+        same name, separate sinks with the name name are created.
+
+        @param name: The name for the given sink.
+
+    */
     [[nodiscard]] sink get_sink(std::string name);
 
-    void register_sink(sink& p, const std::string& name) noexcept;
+    /**
+        Registers the sink with the logger. Note that the sink name does not
+        need to be unique---if repeated calls are made with the same name,
+        separate sinks with the same name are registered.
+
+        @param s: The sink to register.
+        @param name: The name for the given sink.
+
+        @pre The sink must be closed.
+    */
+    void register_sink(sink& s, std::string name) noexcept;
 
     void set_output_stream(FILE* stream) noexcept;
     void set_error_stream(FILE* stream) noexcept;
@@ -640,8 +689,15 @@ private:
     std::mutex control_mutex_;
 };
 
+template<auto Format, typename Tags, typename... Args>
+void xtr::logger::sink::log(Args&&... args)
+    noexcept((XTR_NOTHROW_INGESTIBLE(Args, args) && ...))
+{
+    log_impl<Format, Tags>(std::forward<Args>(args)...);
+}
+
 template<auto Format, typename Tags>
-void xtr::logger::sink::log() noexcept
+void xtr::logger::sink::log_impl() noexcept
 {
     // This function is just an optimisation; if the log line has no arguments
     // then creating a lambda for it would waste space in the queue (as even
@@ -654,7 +710,7 @@ void xtr::logger::sink::log() noexcept
 }
 
 template<auto Format, typename Tags, typename... Args>
-void xtr::logger::sink::log(Args&&... args)
+void xtr::logger::sink::log_impl(Args&&... args)
     noexcept((XTR_NOTHROW_INGESTIBLE(Args, args) && ...))
 {
     static_assert(sizeof...(Args) > 0);

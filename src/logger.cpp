@@ -46,13 +46,11 @@ xtr::logger::sink xtr::logger::get_sink(std::string name)
 }
 
 XTR_FUNC
-void xtr::logger::register_sink(
-    sink& s,
-    const std::string& name) noexcept
+void xtr::logger::register_sink(sink& s, std::string name) noexcept
 {
     assert(!s.open_);
     post(
-        [&s, name](consumer& c, auto&)
+        [&s, name = std::move(name)](consumer& c, auto&)
         {
             c.add_sink(s, name);
         });
@@ -74,7 +72,7 @@ void xtr::logger::set_error_stream(FILE* stream) noexcept
 XTR_FUNC
 void xtr::logger::set_command_path(std::string path) noexcept
 {
-    post([p = std::move(path)](consumer& c, auto&) { c.set_command_path(std::move(p)); });
+    post([s = std::move(path)](consumer& c, auto&) { c.set_command_path(std::move(s)); });
     control_.sync();
 }
 
@@ -218,18 +216,18 @@ void xtr::logger::consumer::status_handler(int fd, detail::status& st)
 
     for (std::size_t i = 1; i < sinks_.size(); ++i)
     {
-        auto& p = sinks_[i];
+        auto& s = sinks_[i];
 
-        if (!(*matcher)(p.name.c_str()))
+        if (!(*matcher)(s.name.c_str()))
             continue;
 
         detail::frame<detail::sink_info> sif;
 
-        sif->level = p->level();
-        sif->buf_capacity = p->buf_.capacity();
-        sif->buf_nbytes = p->buf_.read_span().size();
-        sif->dropped_count = p.dropped_count;
-        detail::strzcpy(sif->name, p.name);
+        sif->level = s->level();
+        sif->buf_capacity = s->buf_.capacity();
+        sif->buf_nbytes = s->buf_.read_span().size();
+        sif->dropped_count = s.dropped_count;
+        detail::strzcpy(sif->name, s.name);
 
         cmds_->send(fd, sif);
     }
@@ -260,12 +258,12 @@ void xtr::logger::consumer::set_level_handler(int fd, detail::set_level& sl)
 
     for (std::size_t i = 1; i < sinks_.size(); ++i)
     {
-        auto& p = sinks_[i];
+        auto& s = sinks_[i];
 
-        if (!(*matcher)(p.name.c_str()))
+        if (!(*matcher)(s.name.c_str()))
             continue;
 
-        p->set_level(sl.level);
+        s->set_level(sl.level);
     }
 
     cmds_->send(fd, detail::frame<detail::success>());
@@ -301,7 +299,7 @@ xtr::logger::sink& xtr::logger::sink::operator=(const sink& other)
 XTR_FUNC
 xtr::logger::sink::sink(logger& owner, std::string name)
 {
-    owner.register_sink(*this, name);
+    owner.register_sink(*this, std::move(name));
 }
 
 XTR_FUNC
