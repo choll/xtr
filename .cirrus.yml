@@ -1,6 +1,6 @@
 freebsd_instance:
   image_family: freebsd-14-0-snap
 task:
-  install_script: pkg install -y gmake g++
+  install_script: pkg install -y gmake gcc
   script: gmake
   tests_script: gmake check
