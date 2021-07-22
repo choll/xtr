@@ -90,9 +90,6 @@ namespace xtr::detail
     static_assert(std::is_same<std::uint64_t, least_uint_t<18446744073709551615UL>>::value);
 #endif
 
-    // XXX Put in detail/ directory? explain non-use of std::span?
-    // Probably ring buffer should be in detail too,
-    // everything except the logger really
     template<typename T, typename SizeType>
     class span
     {
