@@ -24,8 +24,9 @@ jobs:
           --slave /usr/bin/llvm-ar llvm-ar /usr/bin/llvm-ar-12 \
           --slave /usr/bin/llvm-ranlib llvm-ranlib /usr/bin/llvm-ranlib-12
         sudo update-alternatives \
-          --install /usr/bin/clang clang /usr/bin/clang-12 100 \
-          --slave /usr/bin/clang++ clang++ /usr/bin/clang++-12
+          --install /usr/bin/clang clang /usr/bin/clang-12 100
+        sudo update-alternatives \
+          --install /usr/bin/clang++ clang++ /usr/bin/clang++-12 100
 
     - name: init submodules
       run: git submodule init
