@@ -5,5 +5,5 @@ task:
   submodules_script:
     - git submodule init
     - git submodule update
-  script: CXX=g++ RANLIB=gcc-ranlib-10 AR=gcc-ar10 gmake
+  script: CXX=g++ RANLIB=gcc-ranlib10 AR=gcc-ar10 gmake
   tests_script: CXX=g++ RANLIB=gcc-ranlib10 AR=gcc-ar10 gmake check
