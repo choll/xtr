@@ -16,7 +16,7 @@ jobs:
       run: |
         sudo apt-get install doxygen
         pip install breathe
-        pip install sphinx-bootstrap-theme
+        pip install sphinx-rtd-theme
     - name: make docs
       run: make -B docs
     - name: Commit changes
