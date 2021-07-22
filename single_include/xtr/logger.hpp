@@ -38,6 +38,8 @@ namespace xtr
         timespec(std::timespec ts) : std::timespec(ts)
         {
         }
+
+        friend auto operator<=>(const timespec&, const timespec&) = default;
     };
 }
 
@@ -1857,10 +1859,8 @@ namespace xtr::detail
     {
         return [stream, err_stream]()
         {
-#if defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L
             ::fsync(::fileno(stream));
             ::fsync(::fileno(err_stream));
-#endif
         };
     }
 
@@ -1879,9 +1879,6 @@ namespace xtr::detail
     }
 }
 
-/**
-    A logger
-*/
 class xtr::logger
 {
 private:
@@ -1898,9 +1895,6 @@ private:
             std::string& name) noexcept;
 
 public:
-    /**
-        A sink
-    */
     class sink
     {
     public:
@@ -1912,27 +1906,58 @@ public:
 
         ~sink();
 
+        /**
+         *  Closes the sink. After this function returns the sink is closed and
+         *  log() functions may not be called on the sink. The sink may be
+         *  re-opened by calling logger::register_sink.
+         */
         void close();
 
+        /**
+            Synchronizes all log calls previously made by this sink to back-end
+            storage.
+
+            @post All entries in the sink's queue have been delivered to the
+                  back-end, and the flush() and sync() functions associated
+                  with the back-end have been called. For the default (disk)
+                  back-end this means fflush(3) and fsync(2) (if available)
+                  have been called.
+         */
         void sync()
         {
             sync(/*destroy=*/false);
         }
 
+        /**
+            Sets the producer name to the specified name.
+         */
         void set_name(std::string name);
 
-        template<auto Format, typename Tags = void()>
-        void log() noexcept;
+        /**
+            Logs the given format string and arguments. This function is not
+            intended to be used directly, instead one of the XTR_LOG macros
+            should be used. It is provided in case use of a macro is
+            unacceptable.
 
+            @param Format:
+            @param Tags:
+            @param args:
+         */
         template<auto Format, typename Tags = void(), typename... Args>
         void log(Args&&... args) noexcept(
             (XTR_NOTHROW_INGESTIBLE(Args, args) && ...));
 
+        /**
+            Sets the log level of the sink to the specified level.
+         */
         void set_level(log_level_t l)
         {
             level_.store(l, std::memory_order_relaxed);
         }
 
+        /**
+            Returns the current log level.
+         */
         log_level_t level() const
         {
             return level_.load(std::memory_order_relaxed);
@@ -1940,6 +1965,13 @@ public:
 
     private:
         sink(logger& owner, std::string name);
+
+        template<auto Format, typename Tags = void()>
+        void log_impl() noexcept;
+
+        template<auto Format, typename Tags, typename... Args>
+        void log_impl(Args&&... args) noexcept(
+            (XTR_NOTHROW_INGESTIBLE(Args, args) && ...));
 
         template<typename T>
         void copy(std::byte* pos, T&& value) noexcept(
@@ -2143,14 +2175,36 @@ public:
 
     ~logger();
 
+    /**
+
+
+    */
     std::thread::native_handle_type consumer_thread_native_handle()
     {
         return consumer_.native_handle();
     }
 
+    /**
+        Creates a sink with the specified name. Note that each call to this
+        function creates a new sink---if repeated calls are made with the
+        same name, separate sinks with the name name are created.
+
+        @param name: The name for the given sink.
+
+    */
     [[nodiscard]] sink get_sink(std::string name);
 
-    void register_sink(sink& p, const std::string& name) noexcept;
+    /**
+        Registers the sink with the logger. Note that the sink name does not
+        need to be unique---if repeated calls are made with the same name,
+        separate sinks with the same name are registered.
+
+        @param s: The sink to register.
+        @param name: The name for the given sink.
+
+        @pre The sink must be closed.
+    */
+    void register_sink(sink& s, std::string name) noexcept;
 
     void set_output_stream(FILE* stream) noexcept;
     void set_error_stream(FILE* stream) noexcept;
@@ -2255,8 +2309,15 @@ private:
     std::mutex control_mutex_;
 };
 
+template<auto Format, typename Tags, typename... Args>
+void xtr::logger::sink::log(Args&&... args) noexcept(
+    (XTR_NOTHROW_INGESTIBLE(Args, args) && ...))
+{
+    log_impl<Format, Tags>(std::forward<Args>(args)...);
+}
+
 template<auto Format, typename Tags>
-void xtr::logger::sink::log() noexcept
+void xtr::logger::sink::log_impl() noexcept
 {
     const ring_buffer::span s = buf_.write_span_spec<Tags>(sizeof(fptr_t));
     if (detail::is_non_blocking_v<Tags> && s.empty()) [[unlikely]]
@@ -2266,7 +2327,7 @@ void xtr::logger::sink::log() noexcept
 }
 
 template<auto Format, typename Tags, typename... Args>
-void xtr::logger::sink::log(Args&&... args) noexcept(
+void xtr::logger::sink::log_impl(Args&&... args) noexcept(
     (XTR_NOTHROW_INGESTIBLE(Args, args) && ...))
 {
     static_assert(sizeof...(Args) > 0);
@@ -2702,10 +2763,11 @@ inline xtr::logger::sink xtr::logger::get_sink(std::string name)
     return sink(*this, std::move(name));
 }
 
-inline void xtr::logger::register_sink(sink& s, const std::string& name) noexcept
+inline void xtr::logger::register_sink(sink& s, std::string name) noexcept
 {
     assert(!s.open_);
-    post([&s, name](consumer& c, auto&) { c.add_sink(s, name); });
+    post([&s, name = std::move(name)](consumer& c, auto&)
+         { c.add_sink(s, name); });
     s.open_ = true;
 }
 
@@ -2721,8 +2783,8 @@ inline void xtr::logger::set_error_stream(FILE* stream) noexcept
 
 inline void xtr::logger::set_command_path(std::string path) noexcept
 {
-    post([p = std::move(path)](consumer& c, auto&)
-         { c.set_command_path(std::move(p)); });
+    post([s = std::move(path)](consumer& c, auto&)
+         { c.set_command_path(std::move(s)); });
     control_.sync();
 }
 
@@ -2849,18 +2911,18 @@ inline void xtr::logger::consumer::status_handler(int fd, detail::status& st)
 
     for (std::size_t i = 1; i < sinks_.size(); ++i)
     {
-        auto& p = sinks_[i];
+        auto& s = sinks_[i];
 
-        if (!(*matcher)(p.name.c_str()))
+        if (!(*matcher)(s.name.c_str()))
             continue;
 
         detail::frame<detail::sink_info> sif;
 
-        sif->level = p->level();
-        sif->buf_capacity = p->buf_.capacity();
-        sif->buf_nbytes = p->buf_.read_span().size();
-        sif->dropped_count = p.dropped_count;
-        detail::strzcpy(sif->name, p.name);
+        sif->level = s->level();
+        sif->buf_capacity = s->buf_.capacity();
+        sif->buf_nbytes = s->buf_.read_span().size();
+        sif->dropped_count = s.dropped_count;
+        detail::strzcpy(sif->name, s.name);
 
         cmds_->send(fd, sif);
     }
@@ -2891,12 +2953,12 @@ inline void xtr::logger::consumer::set_level_handler(int fd, detail::set_level& 
 
     for (std::size_t i = 1; i < sinks_.size(); ++i)
     {
-        auto& p = sinks_[i];
+        auto& s = sinks_[i];
 
-        if (!(*matcher)(p.name.c_str()))
+        if (!(*matcher)(s.name.c_str()))
             continue;
 
-        p->set_level(sl.level);
+        s->set_level(sl.level);
     }
 
     cmds_->send(fd, detail::frame<detail::success>());
@@ -2928,7 +2990,7 @@ inline xtr::logger::sink& xtr::logger::sink::operator=(const sink& other)
 
 inline xtr::logger::sink::sink(logger& owner, std::string name)
 {
-    owner.register_sink(*this, name);
+    owner.register_sink(*this, std::move(name));
 }
 
 inline void xtr::logger::sink::close()
