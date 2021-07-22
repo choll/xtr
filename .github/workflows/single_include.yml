@@ -21,6 +21,11 @@ jobs:
           --slave /usr/bin/gcov gcov /usr/bin/gcov-10 \
           --slave /usr/bin/gcc-ar gcc-ar /usr/bin/gcc-ar-10 \
           --slave /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib-10
+        sudo update-alternatives \
+          --install /usr/bin/clang clang /usr/bin/clang-12 100 \
+          --slave /usr/bin/clang++ clang++ /usr/bin/clang++-12
+          --slave /usr/bin/clang-format clang-format /usr/bin/clang-format
+
     - name: init submodules
       run: git submodule init
     - name: update submodules

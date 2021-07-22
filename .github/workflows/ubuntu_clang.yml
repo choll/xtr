@@ -17,12 +17,22 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
+    - name: set clang symlinks
+      run: |
+        sudo update-alternatives \
+          --install /usr/lib/llvm llvm /usr/lib/llvm-12 100 \
+          --slave /usr/bin/llvm-ar llvm-ar /usr/bin/llvm-ar-12 \
+          --slave /usr/bin/llvm-ranlib llvm-ranlib /usr/bin/llvm-ranlib-12
+        sudo update-alternatives \
+          --install /usr/bin/clang clang /usr/bin/clang-12 100 \
+          --slave /usr/bin/clang++ clang++ /usr/bin/clang++-12
+
     - name: init submodules
       run: git submodule init
     - name: update submodules
       run: git submodule update
 
     - name: make
-      run: CXX=clang++-12 make -j2 EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}} RTTI=${{matrix.rtti}}
+      run: CXX=clang++ make -j2 EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}} RTTI=${{matrix.rtti}}
     - name: test
-      run: CXX=clang++-12 make -j2 EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}} RTTI=${{matrix.rtti}} check
+      run: CXX=clang++ make -j2 EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}} RTTI=${{matrix.rtti}} check
