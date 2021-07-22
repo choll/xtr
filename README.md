@@ -11,8 +11,8 @@
 [![FreeBSD-13-GCC](https://api.cirrus-ci.com/github/choll/xtr.svg?task=freebsd-13-gcc)](https://cirrus-ci.com/github/choll/xtr)
 
 [![codecov](https://codecov.io/gh/choll/xtr/branch/master/graph/badge.svg?token=FDdI0ZM5tv)](https://codecov.io/gh/choll/xtr)
-
 [![Documentation](https://github.com/choll/xtr/actions/workflows/docs.yml/badge.svg)](https://github.com/choll/xtr/actions/workflows/docs.yml)
+[![CodeQL](https://github.com/choll/xtr/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/choll/xtr/actions/workflows/codeql-analysis.yml)
 
 ## What is it?
 
