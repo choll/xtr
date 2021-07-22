@@ -15,6 +15,7 @@ jobs:
     - name: install packages
       run: |
         sudo apt-get install doxygen
+        pip install 'sphinx<4.1.0'
         pip install breathe
         pip install sphinx-rtd-theme
     - name: make docs
