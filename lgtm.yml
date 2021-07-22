@@ -83,8 +83,9 @@ extraction:
     # Each command should be listed on a separate line.
     # This step is useful for C/C++ analysis where you want to prepare the environment
     # for the `configure` step without changing the default behavior for that step. 
-    packages:
-      - g++-10
+    prepare:
+      packages:
+        - g++-10
     after_prepare:
       - export GNU_MAKE=make
       - export GIT=true
