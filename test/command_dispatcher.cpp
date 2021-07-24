@@ -26,9 +26,9 @@
 
 #include <catch2/catch.hpp>
 
+#include <atomic>
 #include <string>
 #include <stdexcept>
-#include <stop_token>
 #include <thread>
 
 namespace xtrd = xtr::detail;
@@ -77,7 +77,7 @@ namespace
 
             connect(path);
 
-            cmd_thread_ = std::jthread([&](std::stop_token st){ run(st); });
+            cmd_thread_ = std::thread([&](){ run(); });
 
 #if __cpp_exceptions
             cmd_.register_callback<thrower>(
@@ -98,20 +98,22 @@ namespace
 
         ~fixture()
         {
-            cmd_thread_.request_stop();
-            // reconnect is called to cause process_commands to return,
-            // so that the stop token is received
+            stop_.store(true);
+            // reconnect is called to cause process_commands() to return,
+            // to allow run() to exit
             reconnect();
+            cmd_thread_.join();
         }
 
-        void run(std::stop_token st)
+        void run()
         {
-            while (!st.stop_requested())
+            while (!stop_)
                 cmd_.process_commands(-1);
         }
 
+        std::atomic<bool> stop_{false};
         xtrd::command_dispatcher cmd_;
-        std::jthread cmd_thread_;
+        std::thread cmd_thread_;
     };
 
 #if defined(__linux__)

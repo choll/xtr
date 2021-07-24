@@ -32,6 +32,7 @@
 #include <climits>
 #include <cstring>
 #include <condition_variable>
+#include <version>
 
 XTR_FUNC
 xtr::logger::~logger()
@@ -187,6 +188,7 @@ void xtr::logger::consumer::set_command_path(std::string path) noexcept
     }
 
     // Set commands
+#if defined(__cpp_lib_bind_front)
     cmds_->register_callback<detail::status>(
         std::bind_front(&consumer::status_handler, this));
 
@@ -195,6 +197,26 @@ void xtr::logger::consumer::set_command_path(std::string path) noexcept
 
     cmds_->register_callback<detail::reopen>(
         std::bind_front(&consumer::reopen_handler, this));
+#else
+    // This can be removed when libc++ supports bind_front
+    cmds_->register_callback<detail::status>(
+        [this](auto&&... args)
+        {
+            status_handler(std::forward<decltype(args)>(args)...);
+        });
+
+    cmds_->register_callback<detail::set_level>(
+        [this](auto&&... args)
+        {
+            set_level_handler(std::forward<decltype(args)>(args)...);
+        });
+
+    cmds_->register_callback<detail::reopen>(
+        [this](auto&&... args)
+        {
+            reopen_handler(std::forward<decltype(args)>(args)...);
+        });
+#endif
 }
 
 XTR_FUNC

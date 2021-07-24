@@ -61,6 +61,7 @@
 #include <type_traits>
 #include <utility>
 #include <vector>
+#include <version>
 
 #include <unistd.h>
 
@@ -238,6 +239,17 @@ namespace xtr::detail
             detail::throw_system_error_fmt("Failed to open `%s'", path);
         return fp;
     }
+
+#if defined(__cpp_lib_invocable)
+    using invocable = std::invocable;
+#else
+    // This can be removed when libc++ supports invocable
+    template<typename F, typename... Args>
+    concept invocable = requires(F&& f, Args&&... args)
+    {
+        std::invoke(std::forward<F>(f), std::forward<Args>(args)...);
+    };
+#endif
 }
 
 // TODO: Specify buffer size via template parameter, or as dynamic,
@@ -428,6 +440,24 @@ private:
             detail::command_dispatcher_deleter> cmds_;
     };
 
+#if defined(__cpp_lib_jthread)
+    using jthread = std::jthread;
+#else
+    // This can be removed when libc++ supports jthread
+    struct jthread : std::thread
+    {
+        using std::thread::thread;
+
+        jthread& operator=(jthread&&) noexcept = default;
+
+        ~jthread()
+        {
+            if (joinable())
+                join();
+        }
+    };
+#endif
+
 public:
     template<typename Clock = std::chrono::system_clock>
     logger(
@@ -488,8 +518,8 @@ public:
         typename ErrorFunction,
         typename Clock = std::chrono::system_clock>
     requires
-        std::invocable<OutputFunction, const char*, std::size_t> &&
-        std::invocable<ErrorFunction, const char*, std::size_t>
+        detail::invocable<OutputFunction, const char*, std::size_t> &&
+        detail::invocable<ErrorFunction, const char*, std::size_t>
     logger(
         OutputFunction&& out,
         ErrorFunction&& err,
@@ -517,12 +547,12 @@ public:
         typename CloseFunction,
         typename Clock = std::chrono::system_clock>
     requires
-        std::invocable<OutputFunction, const char*, std::size_t> &&
-        std::invocable<ErrorFunction, const char*, std::size_t> &&
-        std::invocable<FlushFunction> &&
-        std::invocable<SyncFunction> &&
-        std::invocable<ReopenFunction> &&
-        std::invocable<CloseFunction>
+        detail::invocable<OutputFunction, const char*, std::size_t> &&
+        detail::invocable<ErrorFunction, const char*, std::size_t> &&
+        detail::invocable<FlushFunction> &&
+        detail::invocable<SyncFunction> &&
+        detail::invocable<ReopenFunction> &&
+        detail::invocable<CloseFunction>
     logger(
         OutputFunction&& out,
         ErrorFunction&& err,
@@ -536,7 +566,7 @@ public:
         // The consumer thread must be started after control_ has been
         // constructed
         consumer_ =
-            std::jthread(
+            jthread(
                 &consumer::run,
                 consumer(
                     std::forward<OutputFunction>(out),
@@ -685,7 +715,7 @@ private:
     }
 
     sink control_; // aligned to cache line so first to avoid extra padding
-    std::jthread consumer_;
+    jthread consumer_;
     std::mutex control_mutex_;
 };
 
@@ -787,7 +817,12 @@ void xtr::logger::sink::copy(std::byte* pos, T&& value)
     noexcept(XTR_NOTHROW_INGESTIBLE(T, value))
 {
     assert(std::uintptr_t(pos) % alignof(T) == 0);
+#if defined(__cpp_lib_assume_aligned)
     pos = static_cast<std::byte*>(std::assume_aligned<alignof(T)>(pos));
+#else
+    // This can be removed when libc++ supports assume_aligned
+    pos = static_cast<std::byte*>(__builtin_assume_aligned(pos, alignof(T)));
+#endif
     new (pos) std::remove_reference_t<T>(std::forward<T>(value));
 }
 

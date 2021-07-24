@@ -32,6 +32,7 @@
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 
+#include <array>
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
