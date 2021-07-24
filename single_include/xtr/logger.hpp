@@ -1736,6 +1736,7 @@ namespace xtr
 #include <type_traits>
 #include <utility>
 #include <vector>
+#include <version>
 
 #include <unistd.h>
 
@@ -1877,6 +1878,16 @@ namespace xtr::detail
             detail::throw_system_error_fmt("Failed to open `%s'", path);
         return fp;
     }
+
+#if defined(__cpp_lib_invocable)
+    using invocable = std::invocable;
+#else
+    template<typename F, typename... Args>
+    concept invocable = requires(F&& f, Args&&... args)
+    {
+        std::invoke(std::forward<F>(f), std::forward<Args>(args)...);
+    };
+#endif
 }
 
 class xtr::logger
@@ -2061,6 +2072,23 @@ private:
             cmds_;
     };
 
+#if defined(__cpp_lib_jthread)
+    using jthread = std::jthread;
+#else
+    struct jthread : std::thread
+    {
+        using std::thread::thread;
+
+        jthread& operator=(jthread&&) noexcept = default;
+
+        ~jthread()
+        {
+            if (joinable())
+                join();
+        }
+    };
+#endif
+
 public:
     template<typename Clock = std::chrono::system_clock>
     logger(
@@ -2117,8 +2145,8 @@ public:
         typename OutputFunction,
         typename ErrorFunction,
         typename Clock = std::chrono::system_clock>
-    requires std::invocable<OutputFunction, const char*, std::size_t> &&
-        std::invocable<ErrorFunction, const char*, std::size_t>
+    requires detail::invocable<OutputFunction, const char*, std::size_t> &&
+        detail::invocable<ErrorFunction, const char*, std::size_t>
         logger(
             OutputFunction&& out,
             ErrorFunction&& err,
@@ -2144,10 +2172,10 @@ public:
         typename ReopenFunction,
         typename CloseFunction,
         typename Clock = std::chrono::system_clock>
-    requires std::invocable<OutputFunction, const char*, std::size_t> &&
-        std::invocable<ErrorFunction, const char*, std::size_t> &&
-        std::invocable<FlushFunction> && std::invocable<SyncFunction> &&
-        std::invocable<ReopenFunction> && std::invocable<CloseFunction>
+    requires detail::invocable<OutputFunction, const char*, std::size_t> &&
+        detail::invocable<ErrorFunction, const char*, std::size_t> &&
+        detail::invocable<FlushFunction> && detail::invocable<SyncFunction> &&
+        detail::invocable<ReopenFunction> && detail::invocable<CloseFunction>
         logger(
             OutputFunction&& out,
             ErrorFunction&& err,
@@ -2158,7 +2186,7 @@ public:
             Clock&& clock = Clock(),
             std::string command_path = default_command_path())
     {
-        consumer_ = std::jthread(
+        consumer_ = jthread(
             &consumer::run,
             consumer(
                 std::forward<OutputFunction>(out),
@@ -2305,7 +2333,7 @@ private:
     }
 
     sink control_; // aligned to cache line so first to avoid extra padding
-    std::jthread consumer_;
+    jthread consumer_;
     std::mutex control_mutex_;
 };
 
@@ -2398,7 +2426,11 @@ void xtr::logger::sink::copy(std::byte* pos, T&& value) noexcept(
     XTR_NOTHROW_INGESTIBLE(T, value))
 {
     assert(std::uintptr_t(pos) % alignof(T) == 0);
+#if defined(__cpp_lib_assume_aligned)
     pos = static_cast<std::byte*>(std::assume_aligned<alignof(T)>(pos));
+#else
+    pos = static_cast<std::byte*>(__builtin_assume_aligned(pos, alignof(T)));
+#endif
     new (pos) std::remove_reference_t<T>(std::forward<T>(value));
 }
 
@@ -2752,6 +2784,7 @@ inline void xtr::detail::file_descriptor::reset(int fd) noexcept
 #include <climits>
 #include <condition_variable>
 #include <cstring>
+#include <version>
 
 inline xtr::logger::~logger()
 {
@@ -2882,6 +2915,7 @@ inline void xtr::logger::consumer::set_command_path(std::string path) noexcept
         return;
     }
 
+#if defined(__cpp_lib_bind_front)
     cmds_->register_callback<detail::status>(
         std::bind_front(&consumer::status_handler, this));
 
@@ -2890,6 +2924,19 @@ inline void xtr::logger::consumer::set_command_path(std::string path) noexcept
 
     cmds_->register_callback<detail::reopen>(
         std::bind_front(&consumer::reopen_handler, this));
+#else
+    cmds_->register_callback<detail::status>(
+        [this](auto&&... args)
+        { status_handler(std::forward<decltype(args)>(args)...); });
+
+    cmds_->register_callback<detail::set_level>(
+        [this](auto&&... args)
+        { set_level_handler(std::forward<decltype(args)>(args)...); });
+
+    cmds_->register_callback<detail::reopen>(
+        [this](auto&&... args)
+        { reopen_handler(std::forward<decltype(args)>(args)...); });
+#endif
 }
 
 inline void xtr::logger::consumer::status_handler(int fd, detail::status& st)
