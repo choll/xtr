@@ -598,9 +598,9 @@ TEST_CASE_METHOD(fixture, "logger string move test", "[logger]")
     char* storage = &s[0];
     XTR_LOG(s_, "{}", b);
     XTR_LOG(s_, "Test {}", std::move(s)), line_ = __LINE__;
-    std::strcpy(storage, "Replaced contents");
+    std::strcpy(storage, "Replaced contents............!");
     b.release();
-    REQUIRE(last_line() == "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test Replaced contents"_format(line_));
+    REQUIRE(last_line() == "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test Replaced contents............!"_format(line_));
 }
 
 TEST_CASE_METHOD(fixture, "logger string reference test", "[logger]")
