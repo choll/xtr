@@ -871,7 +871,7 @@ TEST_CASE_METHOD(fixture, "logger sink tsc timestamp test", "[logger]")
     REQUIRE(
         std::abs(
             timestamp_to_micros(logged.c_str()) -
-            timestamp_to_micros(expected.c_str())) < 10);
+            timestamp_to_micros(expected.c_str())) < 100);
 }
 
 TEST_CASE_METHOD(fixture, "tsc estimation test", "[logger]")
@@ -1241,7 +1241,7 @@ TEST_CASE_METHOD(fixture, "logger flush test", "[logger]")
         XTR_LOG(s_, "Test");
         // Wait for flush to be called, unfortunately this is racy, however
         // sync() cannot be called as it would interfere with the test itself. 
-        for (std::size_t j = 0; j < 1000 && flush_count < target_count; ++j)
+        for (std::size_t j = 0; j < 10000 && flush_count < target_count; ++j)
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
         REQUIRE(flush_count == target_count);
     }
