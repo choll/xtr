@@ -594,7 +594,7 @@ TEST_CASE_METHOD(fixture, "logger string copy test", "[logger]")
 TEST_CASE_METHOD(fixture, "logger string move test", "[logger]")
 {
     blocker b;
-    std::string s = "String contents..";
+    std::string s = "String contents...............";
     char* storage = &s[0];
     XTR_LOG(s_, "{}", b);
     XTR_LOG(s_, "Test {}", std::move(s)), line_ = __LINE__;
