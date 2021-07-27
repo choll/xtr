@@ -20,8 +20,6 @@ namespace xtr
             std::timespec(ts)
         {
         }
-
-        friend auto operator<=>(const timespec&, const timespec&) = default;
     };
 }
 
