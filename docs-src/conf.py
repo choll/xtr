@@ -21,7 +21,6 @@ project = 'xtr'
 copyright = '2021, Chris E. Holloway'
 author = 'Chris E. Holloway'
 
-
 # -- General configuration ---------------------------------------------------
 
 # Add any Sphinx extension module names here, as strings. They can be
@@ -44,7 +43,6 @@ exclude_patterns = []
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-#
 html_theme = 'sphinx_rtd_theme'
 
 # Add any paths that contain custom static files (such as style sheets) here,
@@ -53,3 +51,7 @@ html_theme = 'sphinx_rtd_theme'
 #html_static_path = ['_static']
 
 html_title = 'XTR Documentation'
+
+man_pages = \
+    [('xtr', 'libxtr', 'C++ logging library', 'Chris E. Holloway', 3),
+    ('xtrctl', 'xtrctl', 'Control tool for libxtr', 'Chris E. Holloway', 1)]

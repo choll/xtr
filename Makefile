@@ -161,7 +161,7 @@ $(XTRCTL_OBJS): $(BUILD_DIR)/%.cpp.o: %.cpp
 	@mkdir -p $(@D)
 	$(CXX) -o $@ -c $(CPPFLAGS) $(CXXFLAGS) $<
 
-all: $(TARGET) single_include docs
+all: $(TARGET) $(XTRCTL_TARGET) single_include docs
 
 check: $(TEST_TARGET)
 	$< --order rand
@@ -176,11 +176,14 @@ single_include/xtr/logger.hpp: $(SRCS) $(INCLUDES)
 
 single_include: single_include/xtr/logger.hpp
 
-install: $(TARGET)
-	mkdir -p $(PREFIX)/lib $(PREFIX)/include/xtr/detail
-	install $< $(PREFIX)/lib
+install: $(TARGET) $(XTRCTL_TARGET) docs
+	mkdir -p $(PREFIX)/lib $(PREFIX)/bin $(PREFIX)/include/xtr/detail $(PREFIX)/man/man1 $(PREFIX)/man/man3
+	install $(TARGET) $(PREFIX)/lib
+	install $(XTRCTL_TARGET) $(PREFIX)/bin
 	install include/xtr/logger.hpp $(PREFIX)/include/xtr/logger.hpp
 	install include/xtr/detail/*.hpp $(PREFIX)/include/xtr/detail/
+	install docs/xtrctl.1 $(PREFIX)/man/man1
+	install docs/libxtr.3 $(PREFIX)/man/man3
 
 clean:
 	$(RM) $(TARGET) $(TEST_TARGET) $(OBJS) $(TEST_OBJS) $(DEPS) $(COVERAGE_DATA)
@@ -191,13 +194,16 @@ build/doxygen/xml/index.xml: docs-src/Doxyfile $(INCLUDES)
 	@mkdir -p $(@D)
 	doxygen $<
 
-docs/index.html: docs-src/conf.py docs-src/index.rst build/doxygen/xml/index.xml
+docs/index.html: docs-src/conf.py docs-src/xtr.rst docs-src/xtrctl.rst docs-src/index.rst build/doxygen/xml/index.xml
 	sphinx-build -b html docs-src docs -W -Dbreathe_projects.xtr=../build/doxygen/xml
+
+docs/libxtr.3: docs-src/conf.py docs-src/xtr.rst docs-src/xtrctl.rst build/doxygen/xml/index.xml
+	sphinx-build -b man docs-src docs -W -Dbreathe_projects.xtr=../build/doxygen/xml
 
 docs/.nojekyll:
 	touch docs/.nojekyll
 
-docs: docs/index.html docs/.nojekyll
+docs: docs/index.html docs/libxtr.3 docs/.nojekyll
 
 clean-docs:
 	$(RM) build/doxygen/xml/index.xml docs/index.html

@@ -14,12 +14,18 @@
 [![FreeBSD-14-Clang](https://api.cirrus-ci.com/github/choll/xtr.svg?task=freebsd-14-clang)](https://cirrus-ci.com/github/choll/xtr)
 
 [![codecov](https://codecov.io/gh/choll/xtr/branch/master/graph/badge.svg?token=FDdI0ZM5tv)](https://codecov.io/gh/choll/xtr)
-[![Documentation](https://github.com/choll/xtr/actions/workflows/docs.yml/badge.svg)](https://github.com/choll/xtr/actions/workflows/docs.yml)
+[![Documentation](https://github.com/choll/xtr/actions/workflows/docs.yml/badge.svg)](https://choll.github.io/xtr)
 [![CodeQL](https://github.com/choll/xtr/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/choll/xtr/actions/workflows/codeql-analysis.yml)
 
 ## What is it?
 
-An asynchronous logger designed to minimise the cost of log statements by delegating as much work as possible to a worker thread.
+XTR is a C++ logging library aimed at applications with low-latency or real-time
+requirements. The cost of log statements is minimised by delegating as much work
+as possible to a background thread.
+
+It is designed so that the cost of a log statement is consistently fast---i.e.
+every call is fast, not just the average case. No allocations or system calls
+are made when a log statement is made.
 
 ## Status
 
@@ -43,11 +49,9 @@ An asynchronous logger designed to minimise the cost of log statements by delega
 * Linux (x86-64)
 * FreeBSD (x86-64)
 
-NetBSD and non-x86 coming soon.
-
 ## Documentation
 
-Coming soon.
+https://choll.github.io/xtr
 
 ## Benchmarks
 

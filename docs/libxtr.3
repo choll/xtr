@@ -1,0 +1,421 @@
+.\" Man page generated from reStructuredText.
+.
+.TH "LIBXTR" "3" "Jul 28, 2021" "" "xtr"
+.SH NAME
+libxtr \- C++ logging library
+.
+.nr rst2man-indent-level 0
+.
+.de1 rstReportMargin
+\\$1 \\n[an-margin]
+level \\n[rst2man-indent-level]
+level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
+-
+\\n[rst2man-indent0]
+\\n[rst2man-indent1]
+\\n[rst2man-indent2]
+..
+.de1 INDENT
+.\" .rstReportMargin pre:
+. RS \\$1
+. nr rst2man-indent\\n[rst2man-indent-level] \\n[an-margin]
+. nr rst2man-indent-level +1
+.\" .rstReportMargin post:
+..
+.de UNINDENT
+. RE
+.\" indent \\n[an-margin]
+.\" old: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.nr rst2man-indent-level -1
+.\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.in \\n[rst2man-indent\\n[rst2man-indent-level]]u
+..
+.sp
+XTR is a C++ logging library aimed at applications with low\-latency or real\-time
+requirements. The cost of log statements is minimised by delegating as much work
+as possible to a background thread.
+.sp
+It is designed so that the cost of a log statement is consistently fast—i.e.
+every call is fast, not just the average case. No allocations or system calls
+are made when a log statement is made.
+.SH LOGGERS AND SINKS
+.sp
+The XTR API contains two classes; \fI\%xtr::logger\fP and
+\fI\%xtr::logger::sink\fP\&. Sinks each contain a queue [1], and
+pass log messages to the associated logger via these queues. Each logger
+has a background consumer thread which reads from the sinks that were created from the
+logger. The background thread then formats the log message and either writes it
+to disk or passes it to a custom back\-end if one is in use.
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
++\-\-\-\-\-\-+
+| Sink |\-\-\-[queue]\-\-\-+
++\-\-\-\-\-\-+             |
+                     |     +\-\-\-\-\-\-\-\-+
++\-\-\-\-\-\-+             +\-\-\-> |        |     +\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-+
+| Sink |\-\-\-[queue]\-\-\-\-\-\-\-> | Logger |\-\-\-> | Back\-end; file/network/etc |
++\-\-\-\-\-\-+             +\-\-\-> |        |     +\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-+
+                     |     +\-\-\-\-\-\-\-\-+
++\-\-\-\-\-\-+             |
+| Sink |\-\-\-[queue]\-\-\-+
++\-\-\-\-\-\-+
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+An application is expected to use multiple sinks, for example a sink per thread, or
+sink per component. To support this sinks have a name associated with them which
+is included in the output log message. Sink names do not need to be unique.
+.sp
+Sinks are created by calling \fI\%xtr::logger::get_sink()\fP or via normal
+construction followed by a call to \fI\%xtr::logger::register_sink()\fP\&.
+Once a sink has been created or registered, it may be written to using one of several
+log macros which are described \fI\%below\fP\&.
+.SH FORMAT STRING SYNTAX
+.sp
+XTR uses \fI\%{fmt}\fP for formatting, so format strings follow the
+same Python \fI\%str.format\fP
+style formatting as found in \fI{fmt}\fP, the documentation for which can be found
+\fI\%here\fP\&.
+.SH EXAMPLES
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+#include "xtr/logger.hpp"
+
+xtr::logger log;
+
+auto s = log.get_sink("Main");
+
+XTR_LOG(s, "Hello world {} {}", 123, 123.456);
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+#include "xtr/logger.hpp"
+
+xtr::logger log;
+
+xtr::logger::sink s;
+
+log.register_sink(s, "Main");
+
+XTR_LOG(s, "Hello world {} {}", 123, 123.456);
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+LINK TO GODBOLT?
+.INDENT 0.0
+.TP
+.B cpp:enum:log_level_t
+.UNINDENT
+.SH PASSING ARGUMENTS BY VALUE OR REFERENCE
+.sp
+The default behaviour of the logger is to copy format arguments into the
+specified sink by value. No allocations will be performed unless an argument type
+is passed to the sink which has a copy constructor that allocates, with the exception
+of \fIstd::string\fP (see \fI\%below\fP for details). If copying is undesirable then
+arguments may be passed by reference by wrapping them in a call to \fI\%xtr::nocopy()\fP:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+XTR_LOG(sink, "{}", nocopy(arg));
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+versus copying by value:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+XTR_LOG(sink, "{}", arg);
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SH STRING ARGUMENTS
+.sp
+Passing strings to the logger is guaranteed to not allocate memory, and does
+not assume anything about the lifetime of the string data. i.e. for the
+following log statement:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+XTR_LOG(sink, "{}", str);
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+If \fIstr\fP is a std::string, std::string_view,
+char* or char[] then the contents of \fIstr\fP will be copied
+into \fIsink\fP without incurring any allocations. String data is copied in order
+to provide safe default behaviour regarding the lifetime of the string data. If
+copying the string data is undesirable then string arguments may be wrapped in
+a call to \fI\%xtr::nocopy()\fP:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+XTR_LOG(sink, "{}", nocopy(str));
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+If this is done then only a pointer to the string data contained in \fIstr\fP is
+copied. The user is then responsible for ensuring that the string data remains
+valid long enough for the logger to process the log statement. Note that only
+the string data must remain valid—so for std::string_view the
+object itself does not need to remain valid, just the data it references.
+.SH THREAD SAFETY
+.INDENT 0.0
+.INDENT 3.5
+.INDENT 0.0
+.IP \(bu 2
+All functions in \fI\%xtr::logger\fP are thread\-safe.
+.IP \(bu 2
+No functions in \fI\%xtr::logger::sink\fP are thread\-safe other than
+:\fBxtr::logger::level\fP and :\fBxtr::logger::set_level\fP\&.
+This is because each thread is expected to have its own independent
+sink (or set of sinks).
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.SH CUSTOM FORMATTERS
+.sp
+Custom formatters are implemented the same as in \fI\%{fmt}\fP,
+which is done either by:
+.INDENT 0.0
+.IP \(bu 2
+Providing a \fBstd::stream& operator<<(std::stream&, T&)()\fP overload.
+.IP \(bu 2
+Specializing fmt::formatter<T> and implementing the \fIparse\fP and
+\fIformat\fP methods as described by the \fI{fmt}\fP documentation
+\fI\%here\fP\&.
+.UNINDENT
+.SH TIME SOURCES
+.sp
+As reading the current time of day can be done in various different ways, with different
+trade\-offs, XTR supports
+.sp
+XTR supports multiple time\-sources when logging messages.
+.INDENT 0.0
+.IP \(bu 2
+Asynchronous\-default: The default time\-source is to read \fIstd::chrono::system_clock\fP
+\fIin the logger background thread\fP\&. This is to avoid the expense of reading the clock
+at the logging call\-site. The trade\-off is that this comes with a loss of accuracy
+due to the time the log message spends on the queue.
+.IP \(bu 2
+Asynchronous\-custom
+.IP \(bu 2
+Synchronous\-TSC
+.IP \(bu 2
+Synchronous\-Coarse
+.IP \(bu 2
+Synchronous\-Custom
+.UNINDENT
+.SS Default
+.SS TSC
+.sp
+TSC Calibration
+.SS Real\-time Clock (clock_gettime)
+.sp
+XTR_LOG_RTC, XTR_TRY_LOG_RTC
+.SS Arbitrary Sources
+.sp
+XTR_LOG_TS,  XTR_TRY_LOG_TS
+.SH CUSTOMISING THE TIME FORMAT
+.SH BACKGROUND CONSUMER THREAD DETAILS
+.sp
+As no system calls are made when a log statement is made, the consumer
+thread must spin waiting for input (it cannot block/wait as there would
+be no way to signal that doesn’t involve a system call). This is simply
+done as a performance/efficiency trade\-off; log statements become cheaper
+at the cost of the consumer thread being wasteful.
+.SS Lifetime
+.sp
+The consumer thread associated with a given logger will terminate only
+when the logger and all associated sinks have been destructed, and is
+joined by the logger destructor. This means that when the logger
+destructs, it will block until all associated sinks have also destructed.
+.sp
+This is done to make using the logger easier—sinks will never lose data
+and will never be disconnected from the associated logger unless they are
+explicitly disconnected by closing the sink.
+.SS CPU Affinity
+.sp
+To bind the background thread to a specific CPU
+\fBxtr::logger::consumer_thread_native_handle()\fP can be used to obtain
+the consumer thread’s platform specific thread handle. The handle can then be
+used with whatever platform specific functionality is available for setting
+thread affinities—for example
+\fI\%pthread_setaffinity_np(3)\fP
+on Linux.
+.SH LOG MESSAGE SANITIZING
+.sp
+STRINGS ARE SANITIZED, PROVIDE CUSTOM FORMATTER TO WRITE BINARY DATA
+.sp
+Strings containing unprintable characters are sanitized
+.SH CUSTOM BACK-ENDS
+.SH API REFERENCE
+.SS Log Macros
+.SS Logger
+.INDENT 0.0
+.TP
+.B class  logger 
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \fI\%sink\fP  xtr::\fI\%logger\fP::get_sink(std::string  name) 
+Creates a sink with the specified name. Note that each call to this function creates a new sinkif repeated calls are made with the same name, separate sinks with the name name are created.
+.INDENT 7.0
+.TP
+.B Parameters
+\fBname\fP – The name for the given sink. 
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.TP
+.B void  xtr::\fI\%logger\fP::register_sink(\fI\%sink\fP  &s, std::string  name)  noexcept 
+Registers the sink with the logger. Note that the sink name does not need to be uniqueif repeated calls are made with the same name, separate sinks with the same name are registered.
+.INDENT 7.0
+.TP
+.B Parameters
+.INDENT 7.0
+.IP \(bu 2
+\fBs\fP – The sink to register. 
+.IP \(bu 2
+\fBname\fP – The name for the given sink.
+.UNINDENT
+.TP
+.B Pre
+The sink must be closed. 
+.UNINDENT
+.UNINDENT
+.sp
+\fI\%xtr::logger\fP is the main logger class. When constructed a
+background thread will be created. The background thread is joined when the
+logger and all of its sinks have been destructed.
+.SS Sink
+.sp
+In order to write to the logger, an instance of \fI\%xtr::logger::sink\fP
+must must be created via a call to . Each
+sink has its own queue which is used to communicate to the logger. Sink
+operations are not thread safe—threads are instead expected to each use
+one or more sinks which are local to the thread.
+.INDENT 0.0
+.TP
+.B class  sink 
+.UNINDENT
+.INDENT 0.0
+.TP
+.B void  xtr::\fI\%logger\fP::\fI\%sink\fP::close() 
+Closes the sink. After this function returns the sink is closed and \fI\%log()\fP functions may not be called on the sink. The sink may be re\-opened by calling \fI\%logger::register_sink\fP\&. 
+.UNINDENT
+.INDENT 0.0
+.TP
+.B inline  void  xtr::\fI\%logger\fP::\fI\%sink\fP::sync() 
+Synchronizes all log calls previously made by this sink to back\-end storage.
+.INDENT 7.0
+.TP
+.B Post
+All entries in the sink’s queue have been delivered to the back\-end, and the flush() and \fI\%sync()\fP functions associated with the back\-end have been called. For the default (disk) back\-end this means fflush(3) and fsync(2) (if available) have been called. 
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.TP
+.B void  xtr::\fI\%logger\fP::\fI\%sink\fP::set_name(std::string  name) 
+Sets the producer name to the specified name. 
+.UNINDENT
+.INDENT 0.0
+.TP
+.B template<auto  Format,  typename  Tags  =  void(),  typename  \&...Args> void  xtr::\fI\%logger\fP::\fI\%sink\fP::log(\fI\%Args\fP&&\&...  args)  noexcept((XTR_NOTHROW_INGESTIBLE(\fI\%Args\fP,  \fI\%args\fP)  &&  \&...)) 
+Logs the given format string and arguments. This function is not intended to be used directly, instead one of the XTR_LOG macros should be used. It is provided in case use of a macro is unacceptable.
+.INDENT 7.0
+.TP
+.B Parameters
+.INDENT 7.0
+.IP \(bu 2
+\fBFormat\fP – 
+.IP \(bu 2
+\fBTags\fP – 
+.IP \(bu 2
+\fBargs\fP – 
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.TP
+.B inline  void  xtr::\fI\%logger\fP::\fI\%sink\fP::set_level(\fI\%log_level_t\fP  l) 
+Sets the log level of the sink to the specified level. 
+.UNINDENT
+.INDENT 0.0
+.TP
+.B inline  \fI\%log_level_t\fP  xtr::\fI\%logger\fP::\fI\%sink\fP::level()  const 
+Returns the current log level. 
+.UNINDENT
+.SS Misc
+.INDENT 0.0
+.TP
+.B template<typename  T> inline  auto  xtr::nocopy(const  \fI\%T\fP  &arg) 
+.UNINDENT
+.INDENT 0.0
+.TP
+.B enum  xtr::log_level_t 
+\fIValues:\fP
+.INDENT 7.0
+.TP
+.B enumerator  none 
+.UNINDENT
+.INDENT 7.0
+.TP
+.B enumerator  fatal 
+.UNINDENT
+.INDENT 7.0
+.TP
+.B enumerator  error 
+.UNINDENT
+.INDENT 7.0
+.TP
+.B enumerator  warning 
+.UNINDENT
+.INDENT 7.0
+.TP
+.B enumerator  info 
+.UNINDENT
+.INDENT 7.0
+.TP
+.B enumerator  debug 
+.UNINDENT
+.UNINDENT
+.SH FOOTNOTES
+.IP [1] 5
+Specifically the queue is a single\-producer/single\-consumer ring buffer.
+.SH AUTHOR
+Chris E. Holloway
+.SH COPYRIGHT
+2021, Chris E. Holloway
+.\" Generated by docutils manpage writer.
+.
