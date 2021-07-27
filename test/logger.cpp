@@ -363,6 +363,20 @@ namespace
         std::stringstream buf_;
         std::streambuf* prev_buf_;
     };
+
+    struct move_thrower
+    {
+        move_thrower() = default;
+        move_thrower(move_thrower&&);
+        move_thrower(const move_thrower&) noexcept;
+    };
+
+    struct copy_thrower
+    {
+        copy_thrower() = default;
+        copy_thrower(copy_thrower&&) noexcept;
+        copy_thrower(const copy_thrower&);
+    };
 }
 
 namespace fmt
@@ -2083,24 +2097,6 @@ TEST_CASE("logger open path test", "[logger]")
 
     XTR_LOG(p, "Test");
 }
-
-    struct move_thrower
-    {
-        move_thrower() = default;
-        move_thrower(move_thrower&&);
-        move_thrower(const move_thrower&) noexcept;
-    };
-
-    std::ostream& operator<<(std::ostream&, const move_thrower&);
-
-    struct copy_thrower
-    {
-        copy_thrower() = default;
-        copy_thrower(copy_thrower&&) noexcept;
-        copy_thrower(const copy_thrower&);
-    };
-
-    std::ostream& operator<<(std::ostream&, const copy_thrower&);
 
 TEST_CASE_METHOD(fixture, "logger noexcept test", "[logger]")
 {
