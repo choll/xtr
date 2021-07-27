@@ -38,8 +38,6 @@ namespace xtr
         timespec(std::timespec ts) : std::timespec(ts)
         {
         }
-
-        friend auto operator<=>(const timespec&, const timespec&) = default;
     };
 }
 
@@ -580,8 +578,7 @@ namespace xtr::detail
     template<std::size_t N>
     using least_uint_t = typename least_uint<N>::type;
 
-#if defined(__has_cpp_attribute) && \
-    __has_cpp_attribute(__cpp_lib_hardware_interference_size)
+#if defined(__cpp_lib_hardware_interference_size)
     inline constexpr std::size_t cacheline_size =
         std::hardware_destructive_interference_size;
 #else
