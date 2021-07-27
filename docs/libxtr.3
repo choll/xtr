@@ -35,7 +35,7 @@ XTR is a C++ logging library aimed at applications with low\-latency or real\-ti
 requirements. The cost of log statements is minimised by delegating as much work
 as possible to a background thread.
 .sp
-It is designed so that the cost of a log statement is consistently fast—i.e.
+It is designed so that the cost of a log statement is consistently fast\-\-\-i.e.
 every call is fast, not just the average case. No allocations or system calls
 are made when a log statement is made.
 .SH LOGGERS AND SINKS
@@ -187,7 +187,7 @@ XTR_LOG(sink, "{}", nocopy(str));
 If this is done then only a pointer to the string data contained in \fIstr\fP is
 copied. The user is then responsible for ensuring that the string data remains
 valid long enough for the logger to process the log statement. Note that only
-the string data must remain valid—so for std::string_view the
+the string data must remain valid\-\-\-so for std::string_view the
 object itself does not need to remain valid, just the data it references.
 .SH THREAD SAFETY
 .INDENT 0.0
@@ -251,7 +251,7 @@ XTR_LOG_TS,  XTR_TRY_LOG_TS
 .sp
 As no system calls are made when a log statement is made, the consumer
 thread must spin waiting for input (it cannot block/wait as there would
-be no way to signal that doesn’t involve a system call). This is simply
+be no way to signal that doesn\(aqt involve a system call). This is simply
 done as a performance/efficiency trade\-off; log statements become cheaper
 at the cost of the consumer thread being wasteful.
 .SS Lifetime
@@ -261,16 +261,16 @@ when the logger and all associated sinks have been destructed, and is
 joined by the logger destructor. This means that when the logger
 destructs, it will block until all associated sinks have also destructed.
 .sp
-This is done to make using the logger easier—sinks will never lose data
+This is done to make using the logger easier\-\-\-sinks will never lose data
 and will never be disconnected from the associated logger unless they are
 explicitly disconnected by closing the sink.
 .SS CPU Affinity
 .sp
 To bind the background thread to a specific CPU
 \fBxtr::logger::consumer_thread_native_handle()\fP can be used to obtain
-the consumer thread’s platform specific thread handle. The handle can then be
+the consumer thread\(aqs platform specific thread handle. The handle can then be
 used with whatever platform specific functionality is available for setting
-thread affinities—for example
+thread affinities\-\-\-for example
 \fI\%pthread_setaffinity_np(3)\fP
 on Linux.
 .SH LOG MESSAGE SANITIZING
@@ -293,7 +293,7 @@ Creates a sink with the specified name. Note that each call to this function cre
 .INDENT 7.0
 .TP
 .B Parameters
-\fBname\fP – The name for the given sink. 
+\fBname\fP \-\- The name for the given sink. 
 .UNINDENT
 .UNINDENT
 .INDENT 0.0
@@ -305,9 +305,9 @@ Registers the sink with the logger. Note that the sink name does not need to be 
 .B Parameters
 .INDENT 7.0
 .IP \(bu 2
-\fBs\fP – The sink to register. 
+\fBs\fP \-\- The sink to register. 
 .IP \(bu 2
-\fBname\fP – The name for the given sink.
+\fBname\fP \-\- The name for the given sink.
 .UNINDENT
 .TP
 .B Pre
@@ -323,7 +323,7 @@ logger and all of its sinks have been destructed.
 In order to write to the logger, an instance of \fI\%xtr::logger::sink\fP
 must must be created via a call to . Each
 sink has its own queue which is used to communicate to the logger. Sink
-operations are not thread safe—threads are instead expected to each use
+operations are not thread safe\-\-\-threads are instead expected to each use
 one or more sinks which are local to the thread.
 .INDENT 0.0
 .TP
@@ -341,7 +341,7 @@ Synchronizes all log calls previously made by this sink to back\-end storage.
 .INDENT 7.0
 .TP
 .B Post
-All entries in the sink’s queue have been delivered to the back\-end, and the flush() and \fI\%sync()\fP functions associated with the back\-end have been called. For the default (disk) back\-end this means fflush(3) and fsync(2) (if available) have been called. 
+All entries in the sink\(aqs queue have been delivered to the back\-end, and the flush() and \fI\%sync()\fP functions associated with the back\-end have been called. For the default (disk) back\-end this means fflush(3) and fsync(2) (if available) have been called. 
 .UNINDENT
 .UNINDENT
 .INDENT 0.0
@@ -358,11 +358,11 @@ Logs the given format string and arguments. This function is not intended to be 
 .B Parameters
 .INDENT 7.0
 .IP \(bu 2
-\fBFormat\fP – 
+\fBFormat\fP \-\- 
 .IP \(bu 2
-\fBTags\fP – 
+\fBTags\fP \-\- 
 .IP \(bu 2
-\fBargs\fP – 
+\fBargs\fP \-\- 
 .UNINDENT
 .UNINDENT
 .UNINDENT
