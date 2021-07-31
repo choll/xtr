@@ -17,7 +17,6 @@ jobs:
     - uses: actions/checkout@v2
     - name: install gcc
       run: |
-        sudo apt-get install g++-10
         sudo update-alternatives \
           --install /usr/bin/gcc gcc /usr/bin/gcc-10 100 \
           --slave /usr/bin/g++ g++ /usr/bin/g++-10 \
