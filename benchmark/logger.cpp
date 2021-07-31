@@ -41,7 +41,7 @@ namespace
         set_thread_attrs(::pthread_self(), 4);                          \
         set_thread_attrs(log.consumer_thread_native_handle(), 5);       \
                                                                         \
-        xtr::logger::producer p = log.get_producer("Name");             \
+        xtr::logger::sink p = log.get_sink("Name");                     \
         std::size_t n = 0;                                              \
         constexpr std::size_t sync_every = (64 * 1024) / (MSGSIZE);     \
         for (auto _ : state)                                            \
@@ -70,7 +70,7 @@ namespace
         set_thread_attrs(::pthread_self(), 4);                          \
         set_thread_attrs(log.consumer_thread_native_handle(), 5);       \
                                                                         \
-        xtr::logger::producer p = log.get_producer("Name");             \
+        xtr::logger::sink p = log.get_sink("Name");                     \
         std::size_t n = 0;                                              \
         constexpr std::size_t sync_every = (64 * 1024) / (MSGSIZE);     \
         for (auto _ : state)                                            \
@@ -102,4 +102,3 @@ LOG_BENCH(logger_benchmark_c_str, XTR_LOG(p, "Test {}", "Hello"), 32)
 LOG_BENCH(logger_benchmark_str_view, XTR_LOG(p, "Test {}", std::string_view{"Hello"}), 32)
 LOG_BENCH(logger_benchmark_str, XTR_LOG(p, "Test {}", s), 32)
 LOG_BENCH(logger_benchmark_non_blocking, XTR_TRY_LOG(p, "Test"), 8)
-
