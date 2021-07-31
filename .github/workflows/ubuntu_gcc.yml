@@ -32,7 +32,7 @@ jobs:
     - name: update submodules
       run: git submodule update
 
-    - name: make
+    - name: make all
       run: make -j2 EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}} RTTI=${{matrix.rtti}}
     - name: test
       run: make -j2 EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}} RTTI=${{matrix.rtti}} check

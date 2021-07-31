@@ -13,7 +13,7 @@ CATCH2_CPPFLAGS = $(addprefix -isystem, $(CONAN_INCLUDE_DIRS_CATCH2) $(CATCH2_IN
 FMT_CPPFLAGS = $(addprefix -isystem, $(CONAN_INCLUDE_DIRS_FMT) $(FMT_INCLUDE_DIR))
 FMT_LDFLAGS = $(addprefix -L, $(CONAN_LIB_DIRS_FMT) $(FMT_LIB_DIR))
 
-BUILD_DIR := build/$(CXX)
+BUILD_DIR := build/$(notdir $(CXX))
 
 CXXFLAGS = \
 	-std=c++20 -Wall -Wextra -Wconversion -Wshadow -Wcast-qual -Wformat=2 \
@@ -161,7 +161,7 @@ $(XTRCTL_OBJS): $(BUILD_DIR)/%.cpp.o: %.cpp
 	@mkdir -p $(@D)
 	$(CXX) -o $@ -c $(CPPFLAGS) $(CXXFLAGS) $<
 
-all: $(TARGET) $(XTRCTL_TARGET) single_include docs
+all: $(TARGET) $(TEST_TARGET) $(BENCH_TARGET) $(XTRCTL_TARGET) single_include
 
 check: $(TEST_TARGET)
 	$< --order rand
@@ -180,13 +180,15 @@ install: $(TARGET) $(XTRCTL_TARGET) docs
 	mkdir -p $(PREFIX)/lib $(PREFIX)/bin $(PREFIX)/include/xtr/detail $(PREFIX)/man/man1 $(PREFIX)/man/man3
 	install $(TARGET) $(PREFIX)/lib
 	install $(XTRCTL_TARGET) $(PREFIX)/bin
-	install include/xtr/logger.hpp $(PREFIX)/include/xtr/logger.hpp
+	install include/xtr/*.hpp $(PREFIX)/include/xtr/
 	install include/xtr/detail/*.hpp $(PREFIX)/include/xtr/detail/
 	install docs/xtrctl.1 $(PREFIX)/man/man1
 	install docs/libxtr.3 $(PREFIX)/man/man3
 
 clean:
-	$(RM) $(TARGET) $(TEST_TARGET) $(OBJS) $(TEST_OBJS) $(DEPS) $(COVERAGE_DATA)
+	$(RM) $(TARGET) $(TEST_TARGET) $(BENCH_TARGET) $(XTRCTL_TARGET) \
+	$(OBJS) $(TEST_OBJS) $(BENCH_OBJS) $(XTRCTL_OBJS) \
+	$(DEPS) $(COVERAGE_DATA)
 
 coverage_report: $(BUILD_DIR)/coverage_report/index.html
 
@@ -197,16 +199,16 @@ build/doxygen/xml/index.xml: docs-src/Doxyfile $(INCLUDES)
 docs/index.html: docs-src/conf.py docs-src/xtr.rst docs-src/xtrctl.rst docs-src/index.rst build/doxygen/xml/index.xml
 	sphinx-build -b html docs-src docs -W -Dbreathe_projects.xtr=../build/doxygen/xml
 
-docs/libxtr.3: docs-src/conf.py docs-src/xtr.rst docs-src/xtrctl.rst build/doxygen/xml/index.xml
+docs/libxtr.3 docs/xtrctl.1: docs-src/conf.py docs-src/xtr.rst docs-src/xtrctl.rst build/doxygen/xml/index.xml
 	sphinx-build -b man docs-src docs -W -Dbreathe_projects.xtr=../build/doxygen/xml
 
 docs/.nojekyll:
 	touch docs/.nojekyll
 
-docs: docs/index.html docs/libxtr.3 docs/.nojekyll
+docs: docs/index.html docs/libxtr.3 docs/xtrctl.1 docs/.nojekyll
 
 clean-docs:
-	$(RM) build/doxygen/xml/index.xml docs/index.html
+	$(RM) build/doxygen/xml/index.xml docs/index.html docs/libxtr.3 docs/xtrctl.1
 
 $(BUILD_DIR)/coverage_report/index.html: $(TEST_TARGET)
 ifeq ($(COVERAGE), 0)

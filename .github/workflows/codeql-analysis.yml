@@ -78,9 +78,7 @@ jobs:
     - name: update submodules
       run: git submodule update
 
-    - run: make
-    #   make bootstrap
-    #   make release
+    - run: make all
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1

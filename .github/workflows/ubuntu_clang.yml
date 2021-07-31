@@ -33,7 +33,7 @@ jobs:
     - name: update submodules
       run: git submodule update
 
-    - name: make
+    - name: make all
       run: CXX=clang++ make -j2 EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}} RTTI=${{matrix.rtti}}
     - name: test
       run: CXX=clang++ make -j2 EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}} RTTI=${{matrix.rtti}} check
