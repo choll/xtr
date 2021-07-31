@@ -18,27 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-
-// So, the default file is /var/run/user/<uid>/xtrctl.<pid>.<count>
-//
-//
-// So, commands are
-//
-// --status -s
-// --set-level -l
-// --reopen -r
-//
-// plus an optional regular expression or wildcard, what is the default?
-//
-// -E, --extended-regexp
-//
-// Seems like you could support:
-//
-// -G, --basic-regexp
-//
-// -W, --wildcard (the default)
-//
-
 #include "xtr/detail/commands/connect.hpp"
 #include "xtr/detail/commands/ios.hpp"
 #include "xtr/detail/commands/pattern.hpp"
@@ -58,8 +37,6 @@
 
 #include <getopt.h>
 
-// command_client should go into detail?
-
 namespace xtrd = xtr::detail;
 
 namespace
@@ -70,23 +47,25 @@ namespace
         const char* reason = nullptr)
     {
         if (reason != nullptr)
-            std::cout << reason << "\n";
+            std::cout << reason << "\n\n";
 
         (status ? std::cerr : std::cout)
-            << "Usage: " << progname << " <command> [options] <socket path> [pattern]\n"
-            << "Where <command> is one of:\n"
-            << "-s, --status:\n"
-            << "-l, --set-level:\n"
-            << "-r, --reopen:\n"
-            << "and [options] are:\n"
-            << "-E, --extended-regexp:\n"
-            << "-G, --basic-regexp:\n"
-            << "-W, --wildcard:\n"
-            << "-h, --help:\n";
-
-        // [] -> optional
-        // <> -> mandatory
-        // xtrctl [options] <socket path> [pattern]
+            << "Usage: " << progname << " [--help] <command> [<args>] <socket path>\n"
+            "Available commands are:\n"
+            "\n"
+            "  status [pattern]             Displays sink statuses\n"
+            "  level <level> [pattern]      Sets sink log levels. Valid levels are;\n"
+            "                               fatal, error, warning, info, debug\n"
+            "  reopen                       Reopens the log file\n"
+            "\n"
+            "The pattern accepted by the status and level commands is by default a\n"
+            "regular expression. This can be modified by passing the following flags:\n"
+            "\n"
+            "  -E, --extended-regexp        Pattern is an extended regular expression\n"
+            "  -G, --basic-regex            Pattern is a regular expression (the default)\n"
+            "  -W, --wildcard               Pattern is a wildcard pattern\n"
+            "\n"
+            "If no pattern is specified then the command applies to all sinks.\n";
 
         std::exit(status);
     }
@@ -125,15 +104,11 @@ namespace
 int main(int argc, char* argv[])
 {
     const struct option long_options[] = {
-        {"status",          no_argument,       nullptr, 's'},
-        {"set-level",       required_argument, nullptr, 'l'},
-        {"reopen",          no_argument,       nullptr, 'r'},
         {"extended-regexp", no_argument,       nullptr, 'E'},
         {"basic-regexp",    no_argument,       nullptr, 'G'},
         {"wildcard",        no_argument,       nullptr, 'W'},
         {"help",            no_argument,       nullptr, 'h'},
-        {nullptr,           0,                 nullptr,  0}
-    };
+        {nullptr,           0,                 nullptr,  0}};
 
     int optc;
     xtr::log_level_t log_level = xtr::log_level_t::none;
@@ -148,19 +123,39 @@ int main(int argc, char* argv[])
         {"info", xtr::log_level_t::info},
         {"debug", xtr::log_level_t::debug}};
 
-    while ((optc = getopt_long(argc, argv, "sl:rEGWh", long_options, nullptr)) != -1)
+    if (argc < 2)
+        usage(argv[0], EXIT_FAILURE, "Please specify a command");
+
+    using namespace std::literals::string_view_literals;
+
+    optind = 2;
+
+    if (argv[1] == "status"sv)
+    {
+        status = true;
+    }
+    else if (argv[1] == "reopen"sv)
+    {
+        reopen = true;
+    }
+    else if (argv[1] == "level"sv)
+    {
+        if (argc < 3)
+            usage(argv[0], EXIT_FAILURE, "Please specify a log level");
+        if (levels_map.count(argv[2]) == 0)
+            usage(argv[0], EXIT_FAILURE, "Invalid log level");
+        log_level = levels_map[argv[2]];
+        ++optind;
+    }
+    else
+    {
+        usage(argv[0], EXIT_FAILURE, "Invalid command");
+    }
+
+    while ((optc = getopt_long(argc, argv, "EGWh", long_options, nullptr)) != -1)
     {
         switch (optc)
         {
-        case 's':
-            status = true;
-            break;
-        case 'l':
-            log_level = levels_map[optarg];
-            break;
-        case 'r':
-            reopen = true;
-            break;
         case 'E':
             pattern_type = xtrd::pattern_type_t::extended_regex;
             break;
@@ -177,10 +172,10 @@ int main(int argc, char* argv[])
         }
     }
 
-    if (argc > optind + 2)
+    if (argc > optind + 1)
         usage(argv[0], EXIT_FAILURE, "Too many arguments");
 
-    if (argc <= optind)
+    if (argc < optind + 1)
         usage(argv[0], EXIT_FAILURE, "Please specify a socket path");
 
     const char* path = argv[optind];
