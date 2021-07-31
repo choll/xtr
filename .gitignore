@@ -31,5 +31,12 @@
 *.out
 *.app
 
-*.swp
+*.sw?
 build
+docs/.doctrees
+docs/.buildinfo
+conan.lock
+conanbuildinfo.mak
+conanbuildinfo.txt
+conaninfo.txt
+graph_info.json
