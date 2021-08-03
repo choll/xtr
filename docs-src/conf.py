@@ -12,26 +12,28 @@
 #
 # import os
 # import sys
-# sys.path.insert(0, os.path.abspath('.'))
+# sys.path.insert(0, os.path.abspath("."))
 
 
 # -- Project information -----------------------------------------------------
 
-project = 'xtr'
-copyright = '2021, Chris E. Holloway'
-author = 'Chris E. Holloway'
+project = "xtr"
+copyright = "2021, Chris E. Holloway"
+author = "Chris E. Holloway"
 
 # -- General configuration ---------------------------------------------------
 
 # Add any Sphinx extension module names here, as strings. They can be
-# extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
+# extensions coming with Sphinx (named "sphinx.ext.*") or your custom
 # ones.
 extensions = [ "breathe" ]
 
 breathe_default_project = "xtr"
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
+
+today_fmt = "%B %Y"
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -44,15 +46,15 @@ cpp_index_common_prefix = ["xtr::", "xtr::logger::", "xtr::logger::sink::"]
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'sphinx_rtd_theme'
+html_theme = "sphinx_rtd_theme"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-#html_static_path = ['_static']
+#html_static_path = ["_static"]
 
-html_title = 'XTR Documentation'
+html_title = "XTR Documentation"
 
 man_pages = \
-    [('xtr', 'libxtr', 'C++ logging library', 'Chris E. Holloway', 3),
-    ('xtrctl', 'xtrctl', 'Control tool for libxtr', 'Chris E. Holloway', 1)]
+    [("xtr", "libxtr", "C++ logging library", "Chris E. Holloway", 3),
+    ("xtrctl", "xtrctl", "Control tool for libxtr", "Chris E. Holloway", 1)]
