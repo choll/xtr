@@ -5,7 +5,7 @@ EXCEPTIONS ?= 1
 COVERAGE ?= 0
 DEBUG ?= 0
 PIC ?= 0
-RTTI ?= 0
+LTO ?= 1
 
 GOOGLE_BENCH_CPPFLAGS = $(addprefix -isystem, $(CONAN_INCLUDE_DIRS_BENCHMARK) $(GOOGLE_BENCH_INCLUDE_DIR))
 GOOGLE_BENCH_LDFLAGS = $(addprefix -L, $(CONAN_LIB_DIRS_BENCHMARK) $(GOOGLE_BENCH_LIB_DIR))
@@ -15,17 +15,17 @@ FMT_LDFLAGS = $(addprefix -L, $(CONAN_LIB_DIRS_FMT) $(FMT_LIB_DIR))
 
 BUILD_DIR := build/$(notdir $(CXX))
 
-CXXFLAGS = \
+CXXFLAGS += \
 	-std=c++20 -Wall -Wextra -Wconversion -Wshadow -Wcast-qual -Wformat=2 \
 	-pedantic -pipe -pthread $(EXTRA_CXXFLAGS)
-CPPFLAGS = -MMD -MP -I include $(FMT_CPPFLAGS) -DXTR_FUNC=
-LDFLAGS = -fuse-ld=gold
-LDLIBS = -lxtr
+CPPFLAGS += -MMD -MP -I include $(FMT_CPPFLAGS) -DXTR_FUNC=
+LDFLAGS += -fuse-ld=gold
+LDLIBS += -lxtr
 
 DEBUG_CXXFLAGS = -O0 -ggdb -ftrapv
 DEBUG_CPPFLAGS = -DXTR_ENABLE_TEST_STATIC_ASSERTIONS
 
-OPT_CXXFLAGS = -O3 -march=native -flto
+OPT_CXXFLAGS = -O3 -march=native
 OPT_CPPFLAGS = -DNDEBUG
 
 TEST_CPPFLAGS = $(CATCH2_CPPFLAGS) 
@@ -67,10 +67,9 @@ ifeq ($(PIC), 1)
 	BUILD_DIR := $(BUILD_DIR)-pic
 endif
 
-ifeq ($(RTTI), 1)
-	BUILD_DIR := $(BUILD_DIR)-rtti
-else
-	CXXFLAGS += -fno-rtti
+ifeq ($(LTO), 1)
+	CXXFLAGS += -flto
+	BUILD_DIR := $(BUILD_DIR)-lto
 endif
 
 ifeq ($(COVERAGE), 1)
@@ -122,7 +121,7 @@ BENCH_SRCS := benchmark/logger.cpp benchmark/main.cpp
 BENCH_OBJS = $(BENCH_SRCS:%=$(BUILD_DIR)/%.o)
 
 XTRCTL_TARGET = $(BUILD_DIR)/xtrctl
-XTRCTL_SRCS := src/xtrctl/main.cpp
+XTRCTL_SRCS := src/xtrctl.cpp
 XTRCTL_OBJS = $(XTRCTL_SRCS:%=$(BUILD_DIR)/%.o)
 
 DEPS = $(OBJS:.o=.d) $(TEST_OBJS:.o=.d) $(BENCH_OBJS:.o=.d) $(XTRCTL_OBJS:.o=.d)
@@ -142,7 +141,7 @@ $(TEST_TARGET): $(TARGET) $(TEST_OBJS)
 $(BENCH_TARGET): $(TARGET) $(BENCH_OBJS)
 	$(LINK.cc) -o $@ $(BENCH_LDFLAGS) $(BENCH_OBJS) $(LDLIBS) $(BENCH_LDLIBS)
 
-$(XTRCTL_TARGET): $(XTRCTL_OBJS)
+$(XTRCTL_TARGET): $(TARGET) $(XTRCTL_OBJS)
 	$(LINK.cc) -o $@ $(XTRCTL_LDFLAGS) $(XTRCTL_OBJS) $(LDLIBS)
 
 $(OBJS): $(BUILD_DIR)/%.cpp.o: %.cpp
