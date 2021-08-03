@@ -53,7 +53,19 @@ do
     sed '$d' $file|grep -Ev '^ *//|^#include "|^#ifndef XTR_.*HPP|^#define XTR_.*HPP' >> $target
 done
 
-grep -hEv '^ *//|^#include "' src/*.cpp  >> $target
+grep -hEv '^ *//|^#include "' \
+    src/command_dispatcher.cpp \
+    src/command_path.cpp \
+    src/file_descriptor.cpp \
+    src/logger.cpp \
+    src/matcher.cpp \
+    src/memory_mapping.cpp \
+    src/mirrored_memory_mapping.cpp \
+    src/pagesize.cpp \
+    src/regex_matcher.cpp \
+    src/throw.cpp \
+    src/tsc.cpp \
+    src/wildcard_matcher.cpp  >> $target
 echo '#endif' >> $target
 
 sed -i 's/XTR_FUNC/inline/g' $target
