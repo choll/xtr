@@ -22,7 +22,7 @@ CPPFLAGS += -MMD -MP -I include $(FMT_CPPFLAGS) -DXTR_FUNC=
 LDFLAGS += -fuse-ld=gold
 LDLIBS += -lxtr
 
-DEBUG_CXXFLAGS = -O0 -ggdb -ftrapv
+DEBUG_CXXFLAGS = -O0 -ggdb
 DEBUG_CPPFLAGS = -DXTR_ENABLE_TEST_STATIC_ASSERTIONS
 
 OPT_CXXFLAGS = -O3 -march=native
