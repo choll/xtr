@@ -4,6 +4,7 @@ PREFIX ?= /usr/local
 EXCEPTIONS ?= 1
 COVERAGE ?= 0
 DEBUG ?= 0
+RELDEBUG ?= 0
 PIC ?= 0
 LTO ?= 1
 
@@ -15,18 +16,21 @@ FMT_LDFLAGS = $(addprefix -L, $(CONAN_LIB_DIRS_FMT) $(FMT_LIB_DIR))
 
 BUILD_DIR := build/$(notdir $(CXX))
 
+# CXXFLAGS may be set by Conan or other tools, so only set debug/optimization
+# flags if CXXFLAGS is not set.
+ifeq ($(CXXFLAGS),)
+	DEBUG_CXXFLAGS = -O0 -ggdb
+	DEBUG_CPPFLAGS = -DXTR_ENABLE_TEST_STATIC_ASSERTIONS
+	OPT_CXXFLAGS = -O3 -march=native
+	OPT_CPPFLAGS = -DNDEBUG
+endif
+
 CXXFLAGS += \
 	-std=c++20 -Wall -Wextra -Wconversion -Wshadow -Wcast-qual -Wformat=2 \
 	-pedantic -pipe -pthread $(EXTRA_CXXFLAGS)
 CPPFLAGS += -MMD -MP -I include $(FMT_CPPFLAGS) -DXTR_FUNC=
 LDFLAGS += -fuse-ld=gold
 LDLIBS += -lxtr
-
-DEBUG_CXXFLAGS = -O0 -ggdb
-DEBUG_CPPFLAGS = -DXTR_ENABLE_TEST_STATIC_ASSERTIONS
-
-OPT_CXXFLAGS = -O3 -march=native
-OPT_CPPFLAGS = -DNDEBUG
 
 TEST_CPPFLAGS = $(CATCH2_CPPFLAGS) 
 TEST_LDFLAGS = -L $(BUILD_DIR) $(FMT_LDFLAGS)
@@ -80,7 +84,11 @@ ifeq ($(COVERAGE), 1)
 		$(TEST_SRCS:%=$(BUILD_DIR)/%.gcno) $(TEST_SRCS:%=$(BUILD_DIR)/%.gcda)
 endif
 
-ifeq ($(DEBUG), 1)
+ifeq ($(RELDEBUG), 1)
+	CXXFLAGS += $(DEBUG_CXXFLAGS) $(OPT_CXXFLAGS)
+	CPPFLAGS += $(DEBUG_CPPFLAGS) $(OPT_CPPFLAGS)
+	BUILD_DIR := $(BUILD_DIR)-reldebug
+else ifeq ($(DEBUG), 1)
 	CXXFLAGS += $(DEBUG_CXXFLAGS)
 	CPPFLAGS += $(DEBUG_CPPFLAGS)
 	BUILD_DIR := $(BUILD_DIR)-debug

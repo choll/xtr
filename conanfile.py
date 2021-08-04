@@ -1,4 +1,5 @@
 from conans import ConanFile, AutoToolsBuildEnvironment, tools
+from conans.errors import ConanInvalidConfiguration
 
 import os
 
@@ -14,7 +15,7 @@ class XtrConan(ConanFile):
     settings = {
         "os": ["Linux", "FreeBSD"],
         "compiler": ["gcc", "clang"],
-        "build_type": ["Release", "Debug"],
+        "build_type": None,
         "arch": ["x86_64"]}
     options = {
         "fPIC": [True, False],
@@ -27,19 +28,30 @@ class XtrConan(ConanFile):
     generators = "make"
     exports_sources = ["src/*", "include/*", "Makefile", "LICENSE"]
 
+    def configure(self):
+        minimal_cpp_standard = "20";
+        if (self.settings.compiler.cppstd):
+            tools.check_min_cppstd(self, minimal_cpp_standard)
+
+        minimum_version = {"gcc": 10, "clang": 11}
+        compiler = str(self.settings.compiler)
+        version = tools.Version(self.settings.compiler.version)
+
+        if version < minimum_version[compiler]:
+            raise ConanInvalidConfiguration(
+                "%s requires %s version %d or later"
+                % (self.name, compiler, minimum_version[compiler]))
+
     def build(self):
         autotools = AutoToolsBuildEnvironment(self)
         env_build_vars = autotools.vars
         # Conan uses LIBS, presumably following autotools conventions, while
-        # the XTR makefile follows GNU make conventions and uses LDLIBS, so
-        # copy it.
+        # the XTR makefile follows GNU make conventions and uses LDLIBS
         env_build_vars["LDLIBS"] = env_build_vars["LIBS"]
-        # fPIC is handled by AutoToolsBuildEnvironment modifying CXXFLAGS, set
-        # PIC anyway.
-        env_build_vars["PIC"] = str(int(bool(self.options.fPIC)))
+        # fPIC and Release/Debug/RelWithDebInfo etc are set via CXXFLAGS,
+        # CPPFLAGS etc.
         env_build_vars["EXCEPTIONS"] = str(int(bool(self.options.enable_exceptions)))
         env_build_vars["LTO"] = str(int(bool(self.options.enable_lto)))
-        env_build_vars["DEBUG"] = "1" if self.settings.build_type == "Debug" else "0"
         autotools.make(vars=env_build_vars)
         autotools.make(vars=env_build_vars, target="xtrctl")
 
