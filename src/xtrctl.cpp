@@ -245,13 +245,13 @@ int main(int argc, char* argv[])
         switch (buf.hdr.frame_id)
         {
         case xtrd::sink_info::frame_id:
-            infos.push_back(*frame_cast<xtrd::sink_info>(&buf, nbytes));
+            infos.push_back(*frame_cast<xtrd::sink_info>(&buf, std::size_t(nbytes)));
             break;
         case xtrd::success::frame_id:
             std::cout << "Success\n";
             break;
         case xtrd::error::frame_id:
-            errx("Error: ", frame_cast<xtrd::error>(&buf, nbytes)->reason);
+            errx("Error: ", frame_cast<xtrd::error>(&buf, std::size_t(nbytes))->reason);
         default:
             errx("Invalid frame id");
         }
