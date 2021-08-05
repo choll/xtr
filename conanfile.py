@@ -26,7 +26,8 @@ class XtrConan(ConanFile):
         "enable_exceptions": True,
         "enable_lto": False}
     generators = "make"
-    exports_sources = ["src/*", "include/*", "Makefile", "LICENSE"]
+    exports_sources = ["src/*", "include/*", "Makefile"]
+    exports = ["docs/xtrctl.1", "docs/libxtr.3", "LICENSE"]
 
     def configure(self):
         minimal_cpp_standard = "20";
@@ -59,9 +60,12 @@ class XtrConan(ConanFile):
         self.copy("*.hpp", dst="include", src="include")
         self.copy("*/libxtr.a", dst="lib", src="build", keep_path=False)
         self.copy("*/xtrctl", dst="bin", src="build", keep_path=False)
+        self.copy("xtrctl.1", dst="man/man1", src="docs", keep_path=False)
+        self.copy("libxtr.3", dst="man/man3", src="docs", keep_path=False)
         self.copy("LICENSE", "licenses")
 
     def package_info(self):
         self.cpp_info.libs = ["xtr"]
         self.cpp_info.system_libs = ["pthread"]
         self.env_info.PATH.append(os.path.join(self.package_folder, "bin"))
+        self.env_info.MANPATH.append(os.path.join(self.package_folder, "man"))
