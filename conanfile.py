@@ -3,6 +3,7 @@ from conans.errors import ConanInvalidConfiguration
 
 import os
 
+
 class XtrConan(ConanFile):
     requires = "fmt/7.0.1@"
     build_requires = "benchmark/1.5.0@", "catch2/2.13.0@"
@@ -30,7 +31,7 @@ class XtrConan(ConanFile):
     exports = ["docs/xtrctl.1", "docs/libxtr.3", "LICENSE"]
 
     def configure(self):
-        minimal_cpp_standard = "20";
+        minimal_cpp_standard = "20"
         if (self.settings.compiler.cppstd):
             tools.check_min_cppstd(self, minimal_cpp_standard)
 
@@ -51,7 +52,8 @@ class XtrConan(ConanFile):
         env_build_vars["LDLIBS"] = env_build_vars["LIBS"]
         # fPIC and Release/Debug/RelWithDebInfo etc are set via CXXFLAGS,
         # CPPFLAGS etc.
-        env_build_vars["EXCEPTIONS"] = str(int(bool(self.options.enable_exceptions)))
+        env_build_vars["EXCEPTIONS"] = \
+            str(int(bool(self.options.enable_exceptions)))
         env_build_vars["LTO"] = str(int(bool(self.options.enable_lto)))
         autotools.make(vars=env_build_vars)
         autotools.make(vars=env_build_vars, target="xtrctl")
