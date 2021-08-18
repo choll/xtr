@@ -38,6 +38,7 @@
 #include "detail/throw.hpp"
 #include "detail/trampolines.hpp"
 #include "detail/tsc.hpp"
+#include "log_macros.hpp"
 #include "log_level.hpp"
 
 #include <fmt/format.h>
@@ -64,101 +65,6 @@
 #include <version>
 
 #include <unistd.h>
-
-// __extension__ is to silence the gnu-zero-variadic-macro-arguments warning in clang
-
-#define XTR_LOG(...)                                \
-    (__extension__                                  \
-        ({                                          \
-            XTR_LOG_TAGS(void(), "I", __VA_ARGS__); \
-        }))
-
-#define XTR_TRY_LOG(...)                                            \
-    (__extension__                                                  \
-        ({                                                          \
-            XTR_LOG_TAGS(xtr::non_blocking_tag, "I", __VA_ARGS__);  \
-        }))
-
-#define XTR_LOG_TS(...) XTR_LOG_TAGS(xtr::timestamp_tag, "I", __VA_ARGS__)
-
-#define XTR_TRY_LOG_TS(...)         \
-    XTR_LOG_TAGS((xtr::non_blocking_tag, xtr::timestamp_tag), "I", __VA_ARGS__)
-
-#define XTR_LOG_RTC(SINK, FMT, ...)                         \
-    XTR_LOG_TS(                                             \
-        SINK,                                               \
-        FMT,                                                \
-        xtr::detail::get_time<XTR_CLOCK_REALTIME_FAST>()    \
-        __VA_OPT__(,) __VA_ARGS__)
-
-#define XTR_TRY_LOG_RTC(SINK, FMT, ...)                     \
-    XTR_TRY_LOG_TS(                                         \
-        SINK,                                               \
-        FMT,                                                \
-        xtr::detail::get_time<XTR_CLOCK_REALTIME_FAST>()    \
-        __VA_OPT__(,) __VA_ARGS__)
-
-#define XTR_LOG_TSC(SINK, FMT, ...) \
-    XTR_LOG_TS(                     \
-        SINK,                       \
-        FMT,                        \
-        xtr::detail::tsc::now()     \
-        __VA_OPT__(,) __VA_ARGS__)
-
-#define XTR_TRY_LOG_TSC(SINK, FMT, ...) \
-    XTR_TRY_LOG_TS(                     \
-        SINK,                           \
-        FMT,                            \
-        xtr::detail::tsc::now()         \
-        __VA_OPT__(,) __VA_ARGS__)
-
-#define XTR_LOG_LEVEL(LEVELSTR, LEVEL, SINK, ...)                   \
-    (__extension__                                                  \
-        ({                                                          \
-            if ((SINK).level() >= xtr::log_level_t::LEVEL)          \
-                XTR_LOG_TAGS(void(), LEVELSTR, SINK, __VA_ARGS__);  \
-        }))                                                         \
-
-#define XTR_LOG_FATAL(SINK, ...)                            \
-    (__extension__                                          \
-        ({                                                  \
-            XTR_LOG_LEVEL("F", fatal, SINK, __VA_ARGS__);   \
-            (SINK).sync();                                  \
-            std::abort();                                   \
-        }))
-
-#define XTR_LOG_ERROR(...) XTR_LOG_LEVEL("E", error, __VA_ARGS__)
-#define XTR_LOG_WARN(...) XTR_LOG_LEVEL("W", warning, __VA_ARGS__)
-#define XTR_LOG_INFO(...) XTR_LOG_LEVEL("I", info, __VA_ARGS__)
-
-#if defined(XTR_NDEBUG)
-#define XTR_LOG_DEBUG(...)
-#else
-#define XTR_LOG_DEBUG(...) XTR_LOG_LEVEL("D", debug, __VA_ARGS__)
-#endif
-
-#define XTR_LOGF(...) XTR_LOG_FATAL(__VA_ARGS__)
-#define XTR_LOGE(...) XTR_LOG_ERROR(__VA_ARGS__)
-#define XTR_LOGW(...) XTR_LOG_WARN(__VA_ARGS__)
-#define XTR_LOGI(...) XTR_LOG_INFO(__VA_ARGS__)
-#define XTR_LOGD(...) XTR_LOG_DEBUG(__VA_ARGS__)
-
-#define XTR_XSTR(s) XTR_STR(s)
-#define XTR_STR(s) #s
-
-// '{}{}:' in the format string is for the timestamp and sink name
-#define XTR_LOG_TAGS(TAGS, LEVELSTR, SINK, FORMAT, ...)                     \
-    (__extension__                                                          \
-        ({                                                                  \
-            static constexpr auto xtr_fmt =                                 \
-                xtr::detail::string{LEVELSTR " {} {} "} +                   \
-                xtr::detail::rcut<                                          \
-                    xtr::detail::rindex(__FILE__, '/') + 1>(__FILE__) +     \
-                xtr::detail::string{":"} +                                  \
-                xtr::detail::string{XTR_XSTR(__LINE__) ": " FORMAT "\n"};   \
-            using xtr::nocopy;                                              \
-            (SINK).log<&xtr_fmt, void(TAGS)>(__VA_ARGS__);                  \
-        }))
 
 // Returns true if the given value is nothrow `ingestible', i.e. the value can
 // be nothrow copied/moved into the logger because either:
@@ -254,7 +160,15 @@ namespace xtr::detail
 
 // TODO: Specify buffer size via template parameter, or as dynamic,
 // dynamic_capacity will need to become part of the interface.
+// XXX SHOULD GET_SINK SUPPORT SPECIFYING THE SIZE? CONSUMER CAN
+// READ VIA TYPE ERASED FUNC
 
+/**
+ * The main logger class. When constructed a background thread will be created
+ * which is used for formatting log messages and performing I/O. To write to the
+ * logger call @ref logger::sink then pass the sink to a macro such as @ref
+ * XTR_LOG.
+ */
 class xtr::logger
 {
 private:
@@ -271,15 +185,45 @@ private:
             std::string& name) noexcept;
 
 public:
+    /**
+     * Log sink class. A sink is how log messages are written to a log.
+     * Each sink has its own queue which is used to send log messages
+     * to the logger. Sink operations are not thread safe, with the
+     * exception of @ref set_level and @ref level.
+     *
+     * It is expected that an application will have many sinks, such
+     * as a sink per thread or sink per component. A sink that is connected
+     * to a logger may be created by calling @ref get_sink. A sink
+     * that is not connected to a logger may be created simply by default
+     * construction, then the sink may be connected to a logger by calling
+     * @ref register_sink.
+     */
     class sink
     {
     public:
         sink() = default;
 
+        /**
+         * Sink copy constructor. When a sink is copied it is automatically
+         * registered with the same logger object as the source sink, using
+         * the same sink name. The sink name may be modified by calling @ref
+         * set_name.
+         */
         sink(const sink& other);
 
+        /**
+         * Sink copy assignment operator. When a sink is copy assigned it
+         * closed in order to disconnect it from any existing logger object,
+         * and is then automatically registered with the same logger object as
+         * the source sink, using the same sink name. The sink name may be
+         * modified by calling @ref set_name.
+         */
         sink& operator=(const sink& other);
 
+        /**
+         * Sink destructor. When a sink is destructed it is automatically
+         * closed.
+         */
         ~sink();
 
         /**
@@ -290,14 +234,14 @@ public:
         void close();
 
         /**
-            Synchronizes all log calls previously made by this sink to back-end
-            storage.
-
-            @post All entries in the sink's queue have been delivered to the
-                  back-end, and the flush() and sync() functions associated
-                  with the back-end have been called. For the default (disk)
-                  back-end this means fflush(3) and fsync(2) (if available)
-                  have been called.
+         *  Synchronizes all log calls previously made by this sink to back-end
+         *  storage.
+         *
+         *  @post All entries in the sink's queue have been delivered to the
+         *        back-end, and the flush() and sync() functions associated
+         *        with the back-end have been called. For the default (disk)
+         *        back-end this means fflush(3) and fsync(2) (if available)
+         *        have been called.
          */
         void sync()
         {
@@ -305,25 +249,21 @@ public:
         }
 
         /**
-            Sets the producer name to the specified name.
+         *  Sets the sink's name to the specified value.
          */
         void set_name(std::string name);
 
         /**
-            Logs the given format string and arguments. This function is not
-            intended to be used directly, instead one of the XTR_LOG macros
-            should be used. It is provided in case use of a macro is
-            unacceptable.
-
-            @param Format:
-            @param Tags:
-            @param args:
+         *  Logs the given format string and arguments. This function is not
+         *  intended to be used directly, instead one of the XTR_LOG macros
+         *  should be used. It is provided for use in situations where use of
+         *  a macro may be undesirable.
          */
         template<auto Format, typename Tags = void(), typename... Args>
         void log(Args&&... args) noexcept((XTR_NOTHROW_INGESTIBLE(Args, args) && ...));
 
         /**
-            Sets the log level of the sink to the specified level.
+         *  Sets the log level of the sink to the specified level.
          */
         void set_level(log_level_t l)
         {
@@ -331,7 +271,7 @@ public:
         }
 
         /**
-            Returns the current log level.
+         *  Returns the current log level.
          */
         log_level_t level() const
         {
@@ -459,6 +399,9 @@ private:
 #endif
 
 public:
+    /**
+     * TODO
+     */
     template<typename Clock = std::chrono::system_clock>
     logger(
         const char* path,
@@ -474,6 +417,9 @@ public:
     {
     }
 
+    /**
+     * TODO
+     */
     template<typename Clock = std::chrono::system_clock>
     logger(
         const char* path,
@@ -494,6 +440,9 @@ public:
     {
     }
 
+    /**
+     * TODO
+     */
     template<typename Clock = std::chrono::system_clock>
     logger(
         FILE* stream = stderr,
@@ -583,37 +532,42 @@ public:
         set_command_path(std::move(command_path));
     }
 
+    /**
+     * Logger destructor. This function will join the consumer thread. If
+     * sinks are still connected to the logger then the consumer thread
+     * will not terminate until the sinks disconnect, i.e. the destructor
+     * will block until all connected sinks disconnect from the logger.
+     */
     ~logger();
 
     /**
-
-
-    */
+     *  Returns the native handle for the logger's consumer thread. This
+     *  may be used for setting thread affinities or other thread attributes.
+     */
     std::thread::native_handle_type consumer_thread_native_handle()
     {
         return consumer_.native_handle();
     }
 
     /**
-        Creates a sink with the specified name. Note that each call to this
-        function creates a new sink---if repeated calls are made with the
-        same name, separate sinks with the name name are created.
-
-        @param name: The name for the given sink.
-
-    */
+     *  Creates a sink with the specified name. Note that each call to this
+     *  function creates a new sink; if repeated calls are made with the
+     *  same name, separate sinks with the name name are created.
+     *
+     *  @param name: The name for the given sink.
+     */
     [[nodiscard]] sink get_sink(std::string name);
 
     /**
-        Registers the sink with the logger. Note that the sink name does not
-        need to be unique---if repeated calls are made with the same name,
-        separate sinks with the same name are registered.
-
-        @param s: The sink to register.
-        @param name: The name for the given sink.
-
-        @pre The sink must be closed.
-    */
+     *  Registers the sink with the logger. Note that the sink name does not
+     *  need to be unique; if repeated calls are made with the same name,
+     *  separate sinks with the same name are registered.
+     *
+     *  @param s: The sink to register.
+     *  @param name: The name for the given sink.
+     *
+     *  @pre The sink must be closed.
+     */
     void register_sink(sink& s, std::string name) noexcept;
 
     void set_output_stream(FILE* stream) noexcept;

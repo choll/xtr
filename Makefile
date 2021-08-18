@@ -119,9 +119,9 @@ OBJS = $(SRCS:%=$(BUILD_DIR)/%.o)
 TEST_TARGET = $(BUILD_DIR)/test/test
 TEST_SRCS := \
 	test/align.cpp test/command_client.cpp test/command_dispatcher.cpp \
-	test/file_descriptor.cpp test/llvm_mca.cpp test/logger.cpp \
-	test/main.cpp test/memory_mapping.cpp  test/mirrored_memory_mapping.cpp \
-	test/pagesize.cpp test/synchronized_ring_buffer.cpp	test/throw.cpp
+	test/file_descriptor.cpp test/logger.cpp test/main.cpp \
+	test/memory_mapping.cpp test/mirrored_memory_mapping.cpp test/pagesize.cpp \
+	test/synchronized_ring_buffer.cpp test/throw.cpp
 TEST_OBJS = $(TEST_SRCS:%=$(BUILD_DIR)/%.o)
 
 BENCH_TARGET = $(BUILD_DIR)/benchmark/benchmark
@@ -131,6 +131,18 @@ BENCH_OBJS = $(BENCH_SRCS:%=$(BUILD_DIR)/%.o)
 XTRCTL_TARGET = $(BUILD_DIR)/xtrctl
 XTRCTL_SRCS := src/xtrctl.cpp
 XTRCTL_OBJS = $(XTRCTL_SRCS:%=$(BUILD_DIR)/%.o)
+
+DOCS_SRCS := \
+	docs-src/index.rst docs-src/quickstart.rst \
+	docs-src/guide.rst docs-src/api.rst \
+	docs-src/xtrctl.rst docs-src/conf.py
+
+MAN1_PAGES := docs/xtrctl.1
+MAN3_PAGES := docs/libxtr.3 docs/libxtr-quickstart.3 docs/libxtr-userguide.3
+MAN_PAGES := $(MAN1_PAGES) $(MAN3_PAGES)
+HTML_DOC_PAGES := \
+	docs/api.html docs/genindex.html docs/guide.html docs/index.html \
+	docs/quickstart.html docs/search.html docs/xtrctl.html
 
 DEPS = $(OBJS:.o=.d) $(TEST_OBJS:.o=.d) $(BENCH_OBJS:.o=.d) $(XTRCTL_OBJS:.o=.d)
 
@@ -189,8 +201,8 @@ install: $(TARGET) $(XTRCTL_TARGET) docs
 	install $(XTRCTL_TARGET) $(PREFIX)/bin
 	install include/xtr/*.hpp $(PREFIX)/include/xtr/
 	install include/xtr/detail/*.hpp $(PREFIX)/include/xtr/detail/
-	install docs/xtrctl.1 $(PREFIX)/man/man1
-	install docs/libxtr.3 $(PREFIX)/man/man3
+	install $(MAN3_PAGES) $(PREFIX)/man/man3
+	install $(MAN1_PAGES) $(PREFIX)/man/man1
 
 clean:
 	$(RM) $(TARGET) $(TEST_TARGET) $(BENCH_TARGET) $(XTRCTL_TARGET) \
@@ -203,19 +215,19 @@ build/doxygen/xml/index.xml: docs-src/Doxyfile $(INCLUDES)
 	@mkdir -p $(@D)
 	doxygen $<
 
-docs/index.html: docs-src/conf.py docs-src/xtr.rst docs-src/xtrctl.rst docs-src/index.rst build/doxygen/xml/index.xml
+$(HTML_DOC_PAGES): $(DOCS_SRCS) build/doxygen/xml/index.xml
 	sphinx-build -b html docs-src docs -W -Dbreathe_projects.xtr=../build/doxygen/xml
 
-docs/libxtr.3 docs/xtrctl.1: docs-src/conf.py docs-src/xtr.rst docs-src/xtrctl.rst build/doxygen/xml/index.xml
+$(MAN_PAGES): $(DOCS_SRCS) build/doxygen/xml/index.xml
 	sphinx-build -b man docs-src docs -W -Dbreathe_projects.xtr=../build/doxygen/xml
 
 docs/.nojekyll:
 	touch docs/.nojekyll
 
-docs: docs/index.html docs/libxtr.3 docs/xtrctl.1 docs/.nojekyll
+docs: $(HTML_DOC_PAGES) $(MAN_PAGES) docs/.nojekyll
 
 clean-docs:
-	$(RM) build/doxygen/xml/index.xml docs/index.html docs/libxtr.3 docs/xtrctl.1
+	$(RM) build/doxygen/xml/index.xml $(HTML_DOC_PAGES) $(MAN_PAGES)
 
 $(BUILD_DIR)/coverage_report/index.html: $(TEST_TARGET)
 ifeq ($(COVERAGE), 0)

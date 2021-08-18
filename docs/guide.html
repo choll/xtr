@@ -1,0 +1,443 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>XTR Logger User Guide &mdash; XTR Documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="API Reference" href="api.html" />
+    <link rel="prev" title="Quick-Start Guide" href="quickstart.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> xtr
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+    
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quick-Start Guide</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">User Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#examples">Examples</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#format-string-syntax">Format String Syntax</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#creating-and-writing-to-sinks">Creating and Writing to Sinks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#log-levels">Log Levels</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#modifying-or-viewing-log-levels-from-the-command-line">Modifying or Viewing Log Levels From the Command Line</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#passing-arguments-by-value-or-reference">Passing Arguments by Value or Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#string-arguments">String Arguments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#thread-safety">Thread Safety</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#custom-formatters">Custom Formatters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#time-sources">Time Sources</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#default">Default</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#tsc">TSC</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#real-time-clock-clock-gettime">Real-time Clock (clock_gettime)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#arbitrary-sources">Arbitrary Sources</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#customising-the-time-format">Customising the Time Format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#background-consumer-thread-details">Background Consumer Thread Details</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#lifetime">Lifetime</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cpu-affinity">CPU Affinity</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#log-message-sanitizing">Log Message Sanitizing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#custom-back-ends">Custom Back-ends</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xtrctl.html">xtrctl</a></li>
+</ul>
+
+            
+          
+    <a href="genindex.html">Index</a>
+  
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">xtr</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>XTR Logger User Guide</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/guide.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="user-guide">
+<h1>User Guide<a class="headerlink" href="#user-guide" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p>The XTR API contains two classes; <a class="reference internal" href="api.html#_CPPv4N3xtr6loggerE" title="xtr::logger"><code class="xref cpp cpp-class docutils literal notranslate"><span class="pre">xtr::logger</span></code></a> and
+<a class="reference internal" href="api.html#_CPPv4N3xtr6logger4sinkE" title="xtr::logger::sink"><code class="xref cpp cpp-class docutils literal notranslate"><span class="pre">xtr::logger::sink</span></code></a>. Sinks each contain a queue <a class="footnote-reference brackets" href="#queue" id="id1">1</a>, and
+pass log messages to the associated logger via these queues. Each logger
+has a background consumer thread which reads from the sinks that were created from the
+logger. The background thread then formats the log message and either writes it
+to disk or passes it to a custom back-end if one is in use.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">+------+</span>
+<span class="o">|</span> <span class="n">Sink</span> <span class="o">|---</span><span class="p">[</span><span class="n">queue</span><span class="p">]</span><span class="o">---+</span>
+<span class="o">+------+</span>             <span class="o">|</span>
+                     <span class="o">|</span>     <span class="o">+--------+</span>
+<span class="o">+------+</span>             <span class="o">+---&gt;</span> <span class="o">|</span>        <span class="o">|</span>     <span class="o">+----------------------------+</span>
+<span class="o">|</span> <span class="n">Sink</span> <span class="o">|---</span><span class="p">[</span><span class="n">queue</span><span class="p">]</span><span class="o">-------&gt;</span> <span class="o">|</span> <span class="n">Logger</span> <span class="o">|---&gt;</span> <span class="o">|</span> <span class="n">Back</span><span class="o">-</span><span class="n">end</span><span class="p">;</span> <span class="n">file</span><span class="o">/</span><span class="n">network</span><span class="o">/</span><span class="n">etc</span> <span class="o">|</span>
+<span class="o">+------+</span>             <span class="o">+---&gt;</span> <span class="o">|</span>        <span class="o">|</span>     <span class="o">+----------------------------+</span>
+                     <span class="o">|</span>     <span class="o">+--------+</span>
+<span class="o">+------+</span>             <span class="o">|</span>
+<span class="o">|</span> <span class="n">Sink</span> <span class="o">|---</span><span class="p">[</span><span class="n">queue</span><span class="p">]</span><span class="o">---+</span>
+<span class="o">+------+</span>
+</pre></div>
+</div>
+<p>An application is expected to use multiple sinks, for example a sink per thread, or
+sink per component. To support this sinks have a name associated with them which
+is included in the output log message. Sink names do not need to be unique.</p>
+<p>Sinks are created by calling <a class="reference internal" href="api.html#_CPPv4N3xtr6logger8get_sinkENSt6stringE" title="xtr::logger::get_sink"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">xtr::logger::get_sink()</span></code></a> or via normal
+construction followed by a call to <a class="reference internal" href="api.html#_CPPv4N3xtr6logger13register_sinkER4sinkNSt6stringE" title="xtr::logger::register_sink"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">xtr::logger::register_sink()</span></code></a>.
+Once a sink has been created or registered, it may be written to using one of several
+log macros which are described in the <a class="reference internal" href="api.html#log-macros"><span class="std std-ref">log macros</span></a> section.</p>
+<div class="section" id="examples">
+<h3>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;xtr/logger.hpp&gt;</span><span class="cp"></span>
+
+<span class="n">xtr</span><span class="o">::</span><span class="n">logger</span> <span class="n">log</span><span class="p">;</span>
+
+<span class="k">auto</span> <span class="n">s</span> <span class="o">=</span> <span class="n">log</span><span class="p">.</span><span class="n">get_sink</span><span class="p">(</span><span class="s">&quot;Main&quot;</span><span class="p">);</span>
+
+<span class="n">XTR_LOG</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="s">&quot;Hello world&quot;</span><span class="p">);</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="format-string-syntax">
+<span id="copy-val-ref"></span><h2>Format String Syntax<a class="headerlink" href="#format-string-syntax" title="Permalink to this headline">¶</a></h2>
+<p>XTR uses <a class="reference external" href="https://fmt.dev">{fmt}</a> for formatting, so format strings follow the
+same Python <a class="reference external" href="https://docs.python.org/3/library/string.html#formatstrings">str.format</a>
+style formatting as found in {fmt}. The {fmt} format string documentation can be found at
+<a class="reference external" href="https://fmt.dev/latest/syntax.html">https://fmt.dev/latest/syntax.html</a>.</p>
+</div>
+<div class="section" id="creating-and-writing-to-sinks">
+<h2>Creating and Writing to Sinks<a class="headerlink" href="#creating-and-writing-to-sinks" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="log-levels">
+<h2>Log Levels<a class="headerlink" href="#log-levels" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="modifying-or-viewing-log-levels-from-the-command-line">
+<h3>Modifying or Viewing Log Levels From the Command Line<a class="headerlink" href="#modifying-or-viewing-log-levels-from-the-command-line" title="Permalink to this headline">¶</a></h3>
+</div>
+</div>
+<div class="section" id="passing-arguments-by-value-or-reference">
+<h2>Passing Arguments by Value or Reference<a class="headerlink" href="#passing-arguments-by-value-or-reference" title="Permalink to this headline">¶</a></h2>
+<p>The default behaviour of the logger is to copy format arguments into the
+specified sink by value. No allocations will be performed unless an argument type
+is passed to the sink which has a copy constructor that allocates, with the exception
+of <cite>std::string</cite> (see the <a class="reference internal" href="#string-args"><span class="std std-ref">string arguments</span></a> section for details).
+If copying is undesirable then arguments may be passed by reference by wrapping them
+in a call to <a class="reference internal" href="api.html#_CPPv4I0EN3xtr6nocopyEDaRK1T" title="xtr::nocopy"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">xtr::nocopy()</span></code></a>:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">XTR_LOG</span><span class="p">(</span><span class="n">sink</span><span class="p">,</span> <span class="s">&quot;{}&quot;</span><span class="p">,</span> <span class="n">nocopy</span><span class="p">(</span><span class="n">arg</span><span class="p">));</span>
+</pre></div>
+</div>
+<p>versus copying by value:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">XTR_LOG</span><span class="p">(</span><span class="n">sink</span><span class="p">,</span> <span class="s">&quot;{}&quot;</span><span class="p">,</span> <span class="n">arg</span><span class="p">);</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="string-arguments">
+<span id="string-args"></span><h2>String Arguments<a class="headerlink" href="#string-arguments" title="Permalink to this headline">¶</a></h2>
+<p>Passing strings to the logger is guaranteed to not allocate memory, and does
+not assume anything about the lifetime of the string data. i.e. for the
+following log statement:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">XTR_LOG</span><span class="p">(</span><span class="n">sink</span><span class="p">,</span> <span class="s">&quot;{}&quot;</span><span class="p">,</span> <span class="n">str</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>If <cite>str</cite> is a <span class="cpp-expr sig sig-inline cpp"><span class="n">std</span><span class="p">::</span><span class="n">string</span></span>, <span class="cpp-expr sig sig-inline cpp"><span class="n">std</span><span class="p">::</span><span class="n">string_view</span></span>,
+<span class="cpp-expr sig sig-inline cpp"><span class="kt">char</span><span class="p">*</span></span> or <span class="cpp-expr sig sig-inline cpp"><span class="kt">char</span><span class="p">[</span><span class="p">]</span></span> then the contents of <cite>str</cite> will be copied
+into <cite>sink</cite> without incurring any allocations. String data is copied in order
+to provide safe default behaviour regarding the lifetime of the string data. If
+copying the string data is undesirable then string arguments may be wrapped in
+a call to <a class="reference internal" href="api.html#_CPPv4I0EN3xtr6nocopyEDaRK1T" title="xtr::nocopy"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">xtr::nocopy()</span></code></a>:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">XTR_LOG</span><span class="p">(</span><span class="n">sink</span><span class="p">,</span> <span class="s">&quot;{}&quot;</span><span class="p">,</span> <span class="n">nocopy</span><span class="p">(</span><span class="n">str</span><span class="p">));</span>
+</pre></div>
+</div>
+<p>If this is done then only a pointer to the string data contained in <cite>str</cite> is
+copied. The user is then responsible for ensuring that the string data remains
+valid long enough for the logger to process the log statement. Note that only
+the string data must remain valid—so for <span class="cpp-expr sig sig-inline cpp"><span class="n">std</span><span class="p">::</span><span class="n">string_view</span></span> the
+object itself does not need to remain valid, just the data it references.</p>
+</div>
+<div class="section" id="thread-safety">
+<h2>Thread Safety<a class="headerlink" href="#thread-safety" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div><ul class="simple">
+<li><p>All functions in <a class="reference internal" href="api.html#_CPPv4N3xtr6loggerE" title="xtr::logger"><code class="xref cpp cpp-class docutils literal notranslate"><span class="pre">xtr::logger</span></code></a> are thread-safe.</p></li>
+<li><p>No functions in <a class="reference internal" href="api.html#_CPPv4N3xtr6logger4sinkE" title="xtr::logger::sink"><code class="xref cpp cpp-class docutils literal notranslate"><span class="pre">xtr::logger::sink</span></code></a> are thread-safe other than
+:<code class="xref cpp cpp-class docutils literal notranslate"><span class="pre">xtr::logger::level</span></code> and :<code class="xref cpp cpp-class docutils literal notranslate"><span class="pre">xtr::logger::set_level</span></code>.
+This is because each thread is expected to have its own independent
+sink (or set of sinks).</p></li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="custom-formatters">
+<span id="id2"></span><h2>Custom Formatters<a class="headerlink" href="#custom-formatters" title="Permalink to this headline">¶</a></h2>
+<p>Custom formatters are implemented the same as in <a class="reference external" href="https://fmt.dev">{fmt}</a>,
+which is done either by:</p>
+<ul class="simple">
+<li><p>Providing a <code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">std::stream&amp;</span> <span class="pre">operator&lt;&lt;(std::stream&amp;,</span> <span class="pre">T&amp;)()</span></code> overload.</p></li>
+<li><p>Specializing <span class="cpp-expr sig sig-inline cpp"><span class="n">fmt</span><span class="p">::</span><span class="n">formatter</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span></span> and implementing the <cite>parse</cite> and
+<cite>format</cite> methods as described by the <cite>{fmt}</cite> documentation
+<a class="reference external" href="https://fmt.dev/latest/api.html#formatting-user-defined-types">here</a>.</p></li>
+</ul>
+</div>
+<div class="section" id="time-sources">
+<h2>Time Sources<a class="headerlink" href="#time-sources" title="Permalink to this headline">¶</a></h2>
+<p>As reading the current time of day can be done in various different ways, with different
+trade-offs, XTR supports</p>
+<p>XTR supports multiple time-sources when logging messages.</p>
+<ul class="simple">
+<li><p>Asynchronous-default: The default time-source is to read <cite>std::chrono::system_clock</cite>
+<em>in the logger background thread</em>. This is to avoid the expense of reading the clock
+at the logging call-site. The trade-off is that this comes with a loss of accuracy
+due to the time the log message spends on the queue.</p></li>
+<li><p>Asynchronous-custom</p></li>
+<li><p>Synchronous-TSC</p></li>
+<li><p>Synchronous-Coarse</p></li>
+<li><p>Synchronous-Custom</p></li>
+</ul>
+<div class="section" id="default">
+<h3>Default<a class="headerlink" href="#default" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="tsc">
+<h3>TSC<a class="headerlink" href="#tsc" title="Permalink to this headline">¶</a></h3>
+<p>TSC Calibration</p>
+</div>
+<div class="section" id="real-time-clock-clock-gettime">
+<h3>Real-time Clock (clock_gettime)<a class="headerlink" href="#real-time-clock-clock-gettime" title="Permalink to this headline">¶</a></h3>
+<p>XTR_LOG_RTC, XTR_TRY_LOG_RTC</p>
+</div>
+<div class="section" id="arbitrary-sources">
+<h3>Arbitrary Sources<a class="headerlink" href="#arbitrary-sources" title="Permalink to this headline">¶</a></h3>
+<p>XTR_LOG_TS,  XTR_TRY_LOG_TS</p>
+</div>
+</div>
+<div class="section" id="customising-the-time-format">
+<h2>Customising the Time Format<a class="headerlink" href="#customising-the-time-format" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="background-consumer-thread-details">
+<h2>Background Consumer Thread Details<a class="headerlink" href="#background-consumer-thread-details" title="Permalink to this headline">¶</a></h2>
+<p>As no system calls are made when a log statement is made, the consumer
+thread must spin waiting for input (it cannot block/wait as there would
+be no way to signal that doesn’t involve a system call). This is simply
+done as a performance/efficiency trade-off; log statements become cheaper
+at the cost of the consumer thread being wasteful.</p>
+<div class="section" id="lifetime">
+<h3>Lifetime<a class="headerlink" href="#lifetime" title="Permalink to this headline">¶</a></h3>
+<p>The consumer thread associated with a given logger will terminate only
+when the logger and all associated sinks have been destructed, and is
+joined by the logger destructor. This means that when the logger
+destructs, it will block until all associated sinks have also destructed.</p>
+<p>This is done to make using the logger easier—sinks will never lose data
+and will never be disconnected from the associated logger unless they are
+explicitly disconnected by closing the sink.</p>
+</div>
+<div class="section" id="cpu-affinity">
+<h3>CPU Affinity<a class="headerlink" href="#cpu-affinity" title="Permalink to this headline">¶</a></h3>
+<p>To bind the background thread to a specific CPU
+<a class="reference internal" href="api.html#_CPPv4N3xtr6logger29consumer_thread_native_handleEv" title="xtr::logger::consumer_thread_native_handle"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">xtr::logger::consumer_thread_native_handle()</span></code></a> can be used to obtain
+the consumer thread’s platform specific thread handle. The handle can then be
+used with whatever platform specific functionality is available for setting
+thread affinities—for example
+<a class="reference external" href="https://www.man7.org/linux/man-pages/man3/pthread_setaffinity_np.3.html">pthread_setaffinity_np(3)</a>
+on Linux.</p>
+</div>
+</div>
+<div class="section" id="log-message-sanitizing">
+<h2>Log Message Sanitizing<a class="headerlink" href="#log-message-sanitizing" title="Permalink to this headline">¶</a></h2>
+<p>STRINGS ARE SANITIZED, PROVIDE CUSTOM FORMATTER TO WRITE BINARY DATA</p>
+<p>Strings containing unprintable characters are sanitized</p>
+</div>
+<div class="section" id="custom-back-ends">
+<h2>Custom Back-ends<a class="headerlink" href="#custom-back-ends" title="Permalink to this headline">¶</a></h2>
+<p class="rubric">Footnotes</p>
+<dl class="footnote brackets">
+<dt class="label" id="queue"><span class="brackets"><a class="fn-backref" href="#id1">1</a></span></dt>
+<dd><p>Specifically the queue is a single-producer/single-consumer ring buffer.</p>
+</dd>
+</dl>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="api.html" class="btn btn-neutral float-right" title="API Reference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="quickstart.html" class="btn btn-neutral float-left" title="Quick-Start Guide" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Chris E. Holloway.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

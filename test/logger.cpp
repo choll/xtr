@@ -837,7 +837,7 @@ TEST_CASE_METHOD(fixture, "logger sink arbitrary timestamp test", "[logger]")
     xtr::timespec ts1(ts);
     ts1 = ts;
 
-    XTR_LOG_TS(s_, "Test {}", ts1, 42), line_ = __LINE__;
+    XTR_LOG_TS(s_, ts1, "Test {}", 42), line_ = __LINE__;
     REQUIRE(last_line() == "I 1990-01-01 01:02:03.654321 Name logger.cpp:{}: Test 42"_format(line_));
 }
 
@@ -845,7 +845,7 @@ TEST_CASE_METHOD(fixture, "logger sink rtc timestamp test", "[logger]")
 {
     // Only somewhat sane way I can think of to test XTR_LOG_RTC
     const auto ts = xtrd::get_time<XTR_CLOCK_REALTIME_FAST>();
-    XTR_LOG_TS(s_, "Test {}", ts, 42), line_ = __LINE__;
+    XTR_LOG_TS(s_, ts, "Test {}", 42), line_ = __LINE__;
     REQUIRE(last_line() == "I {} Name logger.cpp:{}: Test 42"_format(ts, line_));
 }
 
@@ -853,7 +853,7 @@ TEST_CASE_METHOD(fixture, "logger sink tsc timestamp test", "[logger]")
 {
     // Only somewhat sane way I can think of to test XTR_LOG_TSC
     const auto ts = xtrd::tsc::now();
-    XTR_LOG_TS(s_, "Test {}", ts, 42), line_ = __LINE__;
+    XTR_LOG_TS(s_, ts, "Test {}", 42), line_ = __LINE__;
     const auto logged = last_line();
     const auto expected = "I {} Name logger.cpp:{}: Test 42"_format(ts, line_);
     // The timestamps in logged and expected may be off by a small margin due
@@ -2135,6 +2135,142 @@ TEST_CASE_METHOD(fixture, "logger re-register sink test", "[logger]")
     log_.register_sink(s_, "Reregistered");
     XTR_LOG(s_, "Test"), line_ = __LINE__;
     REQUIRE(last_line() == "I 2000-01-01 01:02:03.123456 Reregistered logger.cpp:{}: Test"_format(line_));
+}
+
+TEST_CASE_METHOD(fixture, "logger macro test", "[logger]")
+{
+    std::timespec ts{};
+
+    // This test just exists to check if clang emits warnings for ``must
+    // specify at least one argument'' in a variadic macro.
+
+    // XTR_LOG and variants
+    XTR_LOG(s_, "Test");
+    XTR_LOG_LEVEL("E", error, s_, "Test");
+    if (true == false)
+        XTR_LOG_FATAL(s_, "Test");
+    XTR_LOG_ERROR(s_, "Test");
+    XTR_LOG_WARN(s_, "Test");
+    XTR_LOG_INFO(s_, "Test");
+    XTR_LOG_DEBUG(s_, "Test");
+    if (true == false)
+        XTR_LOGF(s_, "Test");
+    XTR_LOGE(s_, "Test");
+    XTR_LOGW(s_, "Test");
+    XTR_LOGI(s_, "Test");
+    XTR_LOGD(s_, "Test");
+
+    // XTR_TRY_LOG and variants
+    XTR_TRY_LOG(s_, "Test");
+    XTR_TRY_LOG_LEVEL("E", error, s_, "Test");
+    if (true == false)
+        XTR_TRY_LOG_FATAL(s_, "Test");
+    XTR_TRY_LOG_ERROR(s_, "Test");
+    XTR_TRY_LOG_WARN(s_, "Test");
+    XTR_TRY_LOG_INFO(s_, "Test");
+    XTR_TRY_LOG_DEBUG(s_, "Test");
+    if (true == false)
+        XTR_TRY_LOGF(s_, "Test");
+    XTR_TRY_LOGE(s_, "Test");
+    XTR_TRY_LOGW(s_, "Test");
+    XTR_TRY_LOGI(s_, "Test");
+    XTR_TRY_LOGD(s_, "Test");
+
+    // XTR_LOG_TS and variants
+    XTR_LOG_TS(s_, ts, "Test");
+    XTR_LOG_TS_LEVEL("E", error, s_, ts, "Test");
+    if (true == false)
+        XTR_LOG_TS_FATAL(s_, ts, "Test");
+    XTR_LOG_TS_ERROR(s_, ts, "Test");
+    XTR_LOG_TS_WARN(s_, ts, "Test");
+    XTR_LOG_TS_INFO(s_, ts, "Test");
+    XTR_LOG_TS_DEBUG(s_, ts, "Test");
+    if (true == false)
+        XTR_LOG_TSF(s_, ts, "Test");
+    XTR_LOG_TSE(s_, ts, "Test");
+    XTR_LOG_TSW(s_, ts, "Test");
+    XTR_LOG_TSI(s_, ts, "Test");
+    XTR_LOG_TSD(s_, ts, "Test");
+
+    // XTR_TRY_LOG_TS and variants
+    XTR_TRY_LOG_TS(s_, ts, "Test");
+    XTR_TRY_LOG_TS_LEVEL("E", error, s_, ts, "Test");
+    if (true == false)
+        XTR_TRY_LOG_TS_FATAL(s_, ts, "Test");
+    XTR_TRY_LOG_TS_ERROR(s_, ts, "Test");
+    XTR_TRY_LOG_TS_WARN(s_, ts, "Test");
+    XTR_TRY_LOG_TS_INFO(s_, ts, "Test");
+    XTR_TRY_LOG_TS_DEBUG(s_, ts, "Test");
+    if (true == false)
+        XTR_TRY_LOG_TSF(s_, ts, "Test");
+    XTR_TRY_LOG_TSE(s_, ts, "Test");
+    XTR_TRY_LOG_TSW(s_, ts, "Test");
+    XTR_TRY_LOG_TSI(s_, ts, "Test");
+    XTR_TRY_LOG_TSD(s_, ts, "Test");
+
+    // XTR_LOG_RTC and variants
+    XTR_LOG_RTC(s_, "Test");
+    XTR_LOG_RTC_LEVEL("E", error, s_, "Test");
+    if (true == false)
+        XTR_LOG_RTC_FATAL(s_, "Test");
+    XTR_LOG_RTC_ERROR(s_, "Test");
+    XTR_LOG_RTC_WARN(s_, "Test");
+    XTR_LOG_RTC_INFO(s_, "Test");
+    XTR_LOG_RTC_DEBUG(s_, "Test");
+    if (true == false)
+        XTR_LOG_RTCF(s_, "Test");
+    XTR_LOG_RTCE(s_, "Test");
+    XTR_LOG_RTCW(s_, "Test");
+    XTR_LOG_RTCI(s_, "Test");
+    XTR_LOG_RTCD(s_, "Test");
+
+    // XTR_TRY_LOG_RTC and variants
+    XTR_TRY_LOG_RTC(s_, "Test");
+    XTR_TRY_LOG_RTC_LEVEL("E", error, s_, "Test");
+    if (true == false)
+        XTR_TRY_LOG_RTC_FATAL(s_, "Test");
+    XTR_TRY_LOG_RTC_ERROR(s_, "Test");
+    XTR_TRY_LOG_RTC_WARN(s_, "Test");
+    XTR_TRY_LOG_RTC_INFO(s_, "Test");
+    XTR_TRY_LOG_RTC_DEBUG(s_, "Test");
+    if (true == false)
+        XTR_TRY_LOG_RTCF(s_, "Test");
+    XTR_TRY_LOG_RTCE(s_, "Test");
+    XTR_TRY_LOG_RTCW(s_, "Test");
+    XTR_TRY_LOG_RTCI(s_, "Test");
+    XTR_TRY_LOG_RTCD(s_, "Test");
+
+    // XTR_LOG_TSC and variants
+    XTR_LOG_TSC(s_, "Test");
+    XTR_LOG_TSC_LEVEL("E", error, s_, "Test");
+    if (true == false)
+        XTR_LOG_TSC_FATAL(s_, "Test");
+    XTR_LOG_TSC_ERROR(s_, "Test");
+    XTR_LOG_TSC_WARN(s_, "Test");
+    XTR_LOG_TSC_INFO(s_, "Test");
+    XTR_LOG_TSC_DEBUG(s_, "Test");
+    if (true == false)
+        XTR_LOG_TSCF(s_, "Test");
+    XTR_LOG_TSCE(s_, "Test");
+    XTR_LOG_TSCW(s_, "Test");
+    XTR_LOG_TSCI(s_, "Test");
+    XTR_LOG_TSCD(s_, "Test");
+
+    // XTR_TRY_LOG_TSC and variants
+    XTR_TRY_LOG_TSC(s_, "Test");
+    XTR_TRY_LOG_TSC_LEVEL("E", error, s_, "Test");
+    if (true == false)
+        XTR_TRY_LOG_TSC_FATAL(s_, "Test");
+    XTR_TRY_LOG_TSC_ERROR(s_, "Test");
+    XTR_TRY_LOG_TSC_WARN(s_, "Test");
+    XTR_TRY_LOG_TSC_INFO(s_, "Test");
+    XTR_TRY_LOG_TSC_DEBUG(s_, "Test");
+    if (true == false)
+        XTR_TRY_LOG_TSCF(s_, "Test");
+    XTR_TRY_LOG_TSCE(s_, "Test");
+    XTR_TRY_LOG_TSCW(s_, "Test");
+    XTR_TRY_LOG_TSCI(s_, "Test");
+    XTR_TRY_LOG_TSCD(s_, "Test");
 }
 
 #if __cpp_exceptions

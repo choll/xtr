@@ -41,7 +41,7 @@
     
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="XTR" href="xtr.html" /> 
+    <link rel="next" title="Quick-Start Guide" href="quickstart.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -87,9 +87,10 @@
               
             
             
-              <p class="caption"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="xtr.html">XTR</a></li>
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quick-Start Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="xtrctl.html">xtrctl</a></li>
 </ul>
 
@@ -161,38 +162,65 @@
            <div itemprop="articleBody">
             
   <div class="toctree-wrapper compound">
-<p class="caption"><span class="caption-text">Contents:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="xtr.html">XTR</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="xtr.html#loggers-and-sinks">Loggers and Sinks</a></li>
-<li class="toctree-l2"><a class="reference internal" href="xtr.html#format-string-syntax">Format String Syntax</a></li>
-<li class="toctree-l2"><a class="reference internal" href="xtr.html#examples">Examples</a></li>
-<li class="toctree-l2"><a class="reference internal" href="xtr.html#passing-arguments-by-value-or-reference">Passing Arguments by Value or Reference</a></li>
-<li class="toctree-l2"><a class="reference internal" href="xtr.html#string-arguments">String Arguments</a></li>
-<li class="toctree-l2"><a class="reference internal" href="xtr.html#thread-safety">Thread Safety</a></li>
-<li class="toctree-l2"><a class="reference internal" href="xtr.html#custom-formatters">Custom Formatters</a></li>
-<li class="toctree-l2"><a class="reference internal" href="xtr.html#time-sources">Time Sources</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="xtr.html#default">Default</a></li>
-<li class="toctree-l3"><a class="reference internal" href="xtr.html#tsc">TSC</a></li>
-<li class="toctree-l3"><a class="reference internal" href="xtr.html#real-time-clock-clock-gettime">Real-time Clock (clock_gettime)</a></li>
-<li class="toctree-l3"><a class="reference internal" href="xtr.html#arbitrary-sources">Arbitrary Sources</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quick-Start Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html#installing">Installing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html#examples">Examples</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="xtr.html#customising-the-time-format">Customising the Time Format</a></li>
-<li class="toctree-l2"><a class="reference internal" href="xtr.html#background-consumer-thread-details">Background Consumer Thread Details</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="xtr.html#lifetime">Lifetime</a></li>
-<li class="toctree-l3"><a class="reference internal" href="xtr.html#cpu-affinity">CPU Affinity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide.html">User Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="guide.html#overview">Overview</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="guide.html#examples">Examples</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="xtr.html#log-message-sanitizing">Log Message Sanitizing</a></li>
-<li class="toctree-l2"><a class="reference internal" href="xtr.html#custom-back-ends">Custom Back-ends</a></li>
-<li class="toctree-l2"><a class="reference internal" href="xtr.html#api-reference">API Reference</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="xtr.html#log-macros">Log Macros</a></li>
-<li class="toctree-l3"><a class="reference internal" href="xtr.html#logger">Logger</a></li>
-<li class="toctree-l3"><a class="reference internal" href="xtr.html#sink">Sink</a></li>
-<li class="toctree-l3"><a class="reference internal" href="xtr.html#misc">Misc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guide.html#format-string-syntax">Format String Syntax</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guide.html#creating-and-writing-to-sinks">Creating and Writing to Sinks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guide.html#log-levels">Log Levels</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="guide.html#modifying-or-viewing-log-levels-from-the-command-line">Modifying or Viewing Log Levels From the Command Line</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="guide.html#passing-arguments-by-value-or-reference">Passing Arguments by Value or Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guide.html#string-arguments">String Arguments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guide.html#thread-safety">Thread Safety</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guide.html#custom-formatters">Custom Formatters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guide.html#time-sources">Time Sources</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="guide.html#default">Default</a></li>
+<li class="toctree-l3"><a class="reference internal" href="guide.html#tsc">TSC</a></li>
+<li class="toctree-l3"><a class="reference internal" href="guide.html#real-time-clock-clock-gettime">Real-time Clock (clock_gettime)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="guide.html#arbitrary-sources">Arbitrary Sources</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="guide.html#customising-the-time-format">Customising the Time Format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guide.html#background-consumer-thread-details">Background Consumer Thread Details</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="guide.html#lifetime">Lifetime</a></li>
+<li class="toctree-l3"><a class="reference internal" href="guide.html#cpu-affinity">CPU Affinity</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="guide.html#log-message-sanitizing">Log Message Sanitizing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guide.html#custom-back-ends">Custom Back-ends</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api.html#log-macros">Log Macros</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#basic-macros">Basic Macros</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#timestamped-macros">Timestamped Macros</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#tsc">TSC</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#real-time-clock">Real-time Clock</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#user-supplied-timestamp">User Supplied Timestamp</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#non-blocking-timestamped-macros">Non-Blocking, Timestamped Macros</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#id2">TSC</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#id3">Real-time Clock</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#id4">User Supplied Timestamp</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#logger">Logger</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#sink">Sink</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#misc">Misc</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="xtrctl.html">xtrctl</a><ul>
@@ -210,7 +238,7 @@
           </div>
           <footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-        <a href="xtr.html" class="btn btn-neutral float-right" title="XTR" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="quickstart.html" class="btn btn-neutral float-right" title="Quick-Start Guide" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

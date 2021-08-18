@@ -1,0 +1,232 @@
+.\" Man page generated from reStructuredText.
+.
+.TH "LIBXTR-QUICKSTART" "3" "August 2021" "" "xtr"
+.SH NAME
+libxtr-quickstart \- C++ logging library quick-start guide
+.
+.nr rst2man-indent-level 0
+.
+.de1 rstReportMargin
+\\$1 \\n[an-margin]
+level \\n[rst2man-indent-level]
+level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
+-
+\\n[rst2man-indent0]
+\\n[rst2man-indent1]
+\\n[rst2man-indent2]
+..
+.de1 INDENT
+.\" .rstReportMargin pre:
+. RS \\$1
+. nr rst2man-indent\\n[rst2man-indent-level] \\n[an-margin]
+. nr rst2man-indent-level +1
+.\" .rstReportMargin post:
+..
+.de UNINDENT
+. RE
+.\" indent \\n[an-margin]
+.\" old: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.nr rst2man-indent-level -1
+.\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.in \\n[rst2man-indent\\n[rst2man-indent-level]]u
+..
+.SH INSTALLING
+.sp
+The easiest way to install XTR is via Conan. If you are not using Conan, see the
+\fI\%INSTALL\fP guide, or for the
+truly impatient there is a single\-include file
+\fI\%here\fP\&.
+.SH OVERVIEW
+.sp
+The logger is split into two main components, the logger class
+and the sink class. The logger takes care of opening and closing the log file,
+and is thread\-safe. The sink class is used to write to the log. Sinks are
+created by calling \fBxtr::logger::get_sink()\fP and are not thread
+safe\-\-\-the idea is that applications have many sinks, so threads should each
+have their own set of separate sinks.
+.sp
+Log messages are written using various macros which accept
+a sink as their first argument, followed by a Python
+\fI\%str.format\fP
+style format string. The \fI\%{fmt}\fP library is used for
+formatting.
+.SH EXAMPLES
+.sp
+Creating a sink:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+#include <xtr/logger.hpp>
+
+xtr::logger log;
+
+auto s = log.get_sink("Main");
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Writing to the log, blocking if the sink is full, reading the timestamp
+in the background thread [1]:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+XTR_LOG(s, "Hello world");
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Write to the log, discarding the message if the sink is full, reading the
+timestamp in the background thread:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+XTR_TRY_LOG(s, "Hello world");
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Write to the log, immediately reading the timestamp from the TSC:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+XTR_LOG_TSC(s, "Hello world");
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Write to the log, immediately reading the timestamp using \fB\(gaclock_gettime\(ga\fP
+with a clock of either \fBCLOCK_REALTIME_COARSE\fP, \fBCLOCK_REALTIME_FAST\fP or
+\fBCLOCK_REALTIME\fP, depending upon what is supported:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+XTR_LOG_RTC(s, "Hello world");
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Write to the log if the log level of the sink is at the \(aqinfo\(aq level or a level
+with lower importance than \(aqinfo\(aq. The default sink level \(aqinfo\(aq so this
+message will be logged:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+XTR_LOG_INFO(s, "Hello world");
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+\fBXTR_LOGI\fP is short\-hand for \fBXTR_LOG_INFO\fP, as is \fBXTR_LOGE\fP for
+\fBXTR_LOG_ERROR\fP, etc:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+XTR_LOGI(s, "Hello world");
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Set the log level of the sink \(aqs\(aq to \(aqerror\(aq, causing messages with importance
+lower than \(aqerror\(aq to be dropped. Available log levels are debug, info, warning,
+error and fatal\-\-\-see \fBxtr::log_level_t\fP\&.
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+s.set_level(xtr::log_level_t::error);
+
+XTR_LOG_INFO(s, "Hello world"); // Dropped
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Fatal errors will log and then terminate the program using abort(3):
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+XTR_LOG_FATAL(s, "Goodbye cruel world");
+// NOTREACHED
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+By default, objects and strings are copied into the sink. This is so that the
+default behaviour is safe\-\-\-i.e. to avoid creating dangling references the
+logger does not assume anything about the lifetime of objects passed as
+arguments:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+const std::string str1 = "Hello";
+const char* str2 = "world";
+XTR_LOG("{} {}", str1, str2);
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+To avoid copying, wrap arguments in a call to \fBxtr::nocopy()\fP:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+XTR_LOG("{} {}", nocopy(str1), nocopy(str2));
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Arguments may also be moved in to the logger:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+std::string str3 = "world";
+XTR_LOG("Hello {}", std::move(str3));
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SH FOOTNOTES
+.IP [1] 5
+The behaviour for XTR_LOG is that timestamps are read when
+the background thread reads the event from the sink. This is
+less accurate, but faster than reading the time at the log
+call\-site. If reading the time at the call\-site is preferred,
+use XTR_LOG_TSC or XTR_LOG_RTC.
+.SH AUTHOR
+Chris E. Holloway
+.SH COPYRIGHT
+2021, Chris E. Holloway
+.\" Generated by docutils manpage writer.
+.
