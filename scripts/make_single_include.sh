@@ -48,6 +48,7 @@ for file in \
     include/xtr/detail/commands/regex_matcher.hpp \
     include/xtr/detail/commands/wildcard_matcher.hpp \
     include/xtr/command_path.hpp \
+    include/xtr/log_macros.hpp \
     include/xtr/logger.hpp;
 do
     sed '$d' $file|grep -Ev '^ *//|^#include "|^#ifndef XTR_.*HPP|^#define XTR_.*HPP' >> $target
