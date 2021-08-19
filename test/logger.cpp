@@ -2139,7 +2139,7 @@ TEST_CASE_METHOD(fixture, "logger re-register sink test", "[logger]")
 
 TEST_CASE_METHOD(fixture, "logger macro test", "[logger]")
 {
-    std::timespec ts{};
+    xtr::timespec ts{};
 
     // This test just exists to check if clang emits warnings for ``must
     // specify at least one argument'' in a variadic macro.
