@@ -68,38 +68,79 @@ Basic log macro, logs the specified format string and arguments to the given sin
 .TP
 .B XTR_LOG_TSC(SINK, \&...) 
 .UNINDENT
+.INDENT 0.0
+.TP
+.B XTR_LOG_TSC_DEBUG(SINK, \&...) 
+.UNINDENT
+.INDENT 0.0
+.TP
+.B XTR_LOG_TSC_INFO(SINK, \&...) 
+.UNINDENT
+.INDENT 0.0
+.TP
+.B XTR_LOG_TSC_WARN(SINK, \&...) 
+.UNINDENT
+.INDENT 0.0
+.TP
+.B XTR_LOG_TSC_ERROR(SINK, \&...) 
+.UNINDENT
+.INDENT 0.0
+.TP
+.B XTR_LOG_TSC_FATAL(SINK, \&...) 
+.UNINDENT
 .SS Real\-time Clock
 .INDENT 0.0
 .TP
 .B XTR_LOG_RTC(SINK, \&...) 
 .UNINDENT
-.SS User Supplied Timestamp
+.INDENT 0.0
+.TP
+.B XTR_LOG_RTC_DEBUG(SINK, \&...) 
+.UNINDENT
+.INDENT 0.0
+.TP
+.B XTR_LOG_RTC_INFO(SINK, \&...) 
+.UNINDENT
+.INDENT 0.0
+.TP
+.B XTR_LOG_RTC_WARN(SINK, \&...) 
+.UNINDENT
+.INDENT 0.0
+.TP
+.B XTR_LOG_RTC_ERROR(SINK, \&...) 
+.UNINDENT
+.INDENT 0.0
+.TP
+.B XTR_LOG_RTC_FATAL(SINK, \&...) 
+.UNINDENT
+.SS User\-Supplied Timestamp
 .INDENT 0.0
 .TP
 .B XTR_LOG_TS(SINK, TS, \&...) 
 Timestamped log macro, logs the specified format string and arguments to the given sink along with the specified timestamp, blocking if the sink is full. The timestamp may be any type so long as it has a formatter defined (see :ref:custom\-formatters). xtr::timestamp is provided as a convenience type which is compatible with std::timestamp and has a formatter pre\-defined. A formatter for std::timestamp isn\(aqt defined in order to avoid conflict with user code that also defines such a formatter. 
 .UNINDENT
-.SS Non\-Blocking, Timestamped Macros
-.SS TSC
 .INDENT 0.0
 .TP
-.B XTR_TRY_LOG_TSC(SINK, \&...) 
+.B XTR_LOG_TS_DEBUG(SINK, \&...) 
 .UNINDENT
-.SS Real\-time Clock
 .INDENT 0.0
 .TP
-.B XTR_TRY_LOG_RTC(SINK, \&...) 
+.B XTR_LOG_TS_INFO(SINK, \&...) 
 .UNINDENT
-.SS User Supplied Timestamp
 .INDENT 0.0
 .TP
-.B XTR_TRY_LOG_TS(SINK, TS, \&...) 
+.B XTR_LOG_TS_WARN(SINK, \&...) 
+.UNINDENT
+.INDENT 0.0
+.TP
+.B XTR_LOG_TS_ERROR(SINK, \&...) 
+.UNINDENT
+.INDENT 0.0
+.TP
+.B XTR_LOG_TS_FATAL(SINK, \&...) 
+\(aqFatal\(aq log level variant of XTR_LOG_TS. An equivalent macro XTR_LOG_TSF is provided as a short\-hand alternative. 
 .UNINDENT
 .SH LOGGER
-.sp
-\fI\%xtr::logger\fP is the main logger class. When constructed a
-background thread will be created. The background thread is joined when the
-logger and all of its sinks have been destructed.
 .INDENT 0.0
 .TP
 .B class  logger 
@@ -195,12 +236,6 @@ Returns the native handle for the logger\(aqs consumer thread. This may be used 
 .B void  xtr::\fI\%logger\fP::set_command_path(std::string  path)  noexcept 
 .UNINDENT
 .SH SINK
-.sp
-In order to write to the logger, an instance of \fI\%xtr::logger::sink\fP
-must must be created via a call to . Each
-sink has its own queue which is used to send log messages to the logger. Sink
-operations are not thread safe\-\-\-threads are instead expected to each use
-one or more sinks which are local to the thread.
 .INDENT 0.0
 .TP
 .B class  sink 
