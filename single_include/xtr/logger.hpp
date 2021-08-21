@@ -1204,7 +1204,6 @@ namespace xtr::detail
 
 namespace xtr::detail
 {
-
     template<auto Format, typename State>
     std::byte* trampoline0(
         fmt::memory_buffer& mbuf,
