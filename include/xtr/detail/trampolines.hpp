@@ -58,8 +58,8 @@ namespace xtr::detail
     //    | function pointer (fptr_t) |---+
     //    +---------------------------+   |
     //    | lambda:                   | <-+
-    //    \    variable size          \
-    //    \    known at compile       \
+    //    /    variable size          /
+    //    /    known at compile       /
     //    |    time                   |
     //    +---------------------------+
     template<auto Format, typename State, typename Func>
@@ -102,13 +102,13 @@ namespace xtr::detail
     //                   | record size (size_t)      |---)---+
     //                   +---------------------------+   |   |
     //                   | lambda:                   | <-+   |
-    //             +-----\    variable size          \       |
-    //    pointers | +---\    known at compile       \       |
+    //             +-----/    variable size          /       |
+    //    pointers | +---/    known at compile       /       |
     //    into     | |   |    time                   |       |
     //    string   | |   +---------------------------+       |
     //    table    | |   | string table:             |       |
-    //             | +-> \   variable size           \       |
-    //             +---> \   known at run time       \       |
+    //             | +-> /   variable size           /       |
+    //             +---> /   known at run time       /       |
     //                   |                           |       |
     //                   +---------------------------+ <-----+
     template<auto Format, typename State, typename Func>
