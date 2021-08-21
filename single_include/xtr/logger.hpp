@@ -2017,6 +2017,7 @@ private:
 #include <functional>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include <unistd.h>
 
