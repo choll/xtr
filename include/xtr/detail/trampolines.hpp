@@ -32,11 +32,12 @@
 
 namespace xtr::detail
 {
-    // XXX rename?
-    // trampoline_no_capture
-    // trampoline_fixed_size_capture
-    // trampoline_variable_size_capture
-
+    // Zero-capture trampoline---no log arguments so only a single function
+    // pointer needs to be written to the queue:
+    //
+    //    +---------------------------+
+    //    | function pointer (fptr_t) |---> trampoline0<Format, ...>
+    //    +---------------------------+
     template<auto Format, typename State>
     std::byte* trampoline0(
         fmt::memory_buffer& mbuf,
@@ -49,6 +50,18 @@ namespace xtr::detail
         return buf + sizeof(void(*)());
     }
 
+    // Fixed-size capture trampoline---log has arguments but the sizes of all
+    // arguments are known at compile time. A function pointer and lambda
+    // are written to the queue, with the lambda knowing the size.
+    //
+    //    +---------------------------+
+    //    | function pointer (fptr_t) |---+
+    //    +---------------------------+   |
+    //    | lambda:                   | <-+
+    //    \    variable size          \
+    //    \    known at compile       \
+    //    |    time                   |
+    //    +---------------------------+
     template<auto Format, typename State, typename Func>
     std::byte* trampolineN(
         fmt::memory_buffer& mbuf,
@@ -79,6 +92,25 @@ namespace xtr::detail
         return func_pos + align(sizeof(Func), alignof(fptr_t));
     }
 
+    // String capture---log has arguments, some of which are strings whose
+    // length is only known at run time. A function pointer, lambda, record
+    // size and string table are written to the queue:
+    //
+    //                   +---------------------------+
+    //                   | function pointer (fptr_t) |---+
+    //                   +---------------------------+   |
+    //                   | record size (size_t)      |---)---+
+    //                   +---------------------------+   |   |
+    //                   | lambda:                   | <-+   |
+    //             +-----\    variable size          \       |
+    //    pointers | +---\    known at compile       \       |
+    //    into     | |   |    time                   |       |
+    //    string   | |   +---------------------------+       |
+    //    table    | |   | string table:             |       |
+    //             | +-> \   variable size           \       |
+    //             +---> \   known at run time       \       |
+    //                   |                           |       |
+    //                   +---------------------------+ <-----+
     template<auto Format, typename State, typename Func>
     std::byte* trampolineS(
         fmt::memory_buffer& mbuf,
