@@ -97,13 +97,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#timestamped-macros">Timestamped Macros</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#tsc">TSC</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#real-time-clock">Real-time Clock</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#user-supplied-timestamp">User Supplied Timestamp</a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="#non-blocking-timestamped-macros">Non-Blocking, Timestamped Macros</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#id2">TSC</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id3">Real-time Clock</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id4">User Supplied Timestamp</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#user-supplied-timestamp">User-Supplied Timestamp</a></li>
 </ul>
 </li>
 </ul>
@@ -235,6 +229,31 @@
 <span class="target" id="log__macros_8hpp_1a6ddb487b65cfa3398dd42c5357fe2906"></span><span class="sig-name descname"><span class="n"><span class="pre">XTR_LOG_TSC</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">SINK</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XTR_LOG_TSC" title="Permalink to this definition">¶</a><br /></dt>
 <dd></dd></dl>
 
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.XTR_LOG_TSC_DEBUG">
+<span class="target" id="log__macros_8hpp_1a5dec0b1866ad4a8111d218da46e6dc0a"></span><span class="sig-name descname"><span class="n"><span class="pre">XTR_LOG_TSC_DEBUG</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">SINK</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XTR_LOG_TSC_DEBUG" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.XTR_LOG_TSC_INFO">
+<span class="target" id="log__macros_8hpp_1a7ff599ef4e4bf84233df10b5023b81b2"></span><span class="sig-name descname"><span class="n"><span class="pre">XTR_LOG_TSC_INFO</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">SINK</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XTR_LOG_TSC_INFO" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.XTR_LOG_TSC_WARN">
+<span class="target" id="log__macros_8hpp_1a8bbf0f239c616c5e989b4d1f3972eea2"></span><span class="sig-name descname"><span class="n"><span class="pre">XTR_LOG_TSC_WARN</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">SINK</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XTR_LOG_TSC_WARN" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.XTR_LOG_TSC_ERROR">
+<span class="target" id="log__macros_8hpp_1a7502bc691bb74c78cec9b3bc3d841c0d"></span><span class="sig-name descname"><span class="n"><span class="pre">XTR_LOG_TSC_ERROR</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">SINK</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XTR_LOG_TSC_ERROR" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.XTR_LOG_TSC_FATAL">
+<span class="target" id="log__macros_8hpp_1a8e890844a6aaa07b35b5f6ba8446791d"></span><span class="sig-name descname"><span class="n"><span class="pre">XTR_LOG_TSC_FATAL</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">SINK</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XTR_LOG_TSC_FATAL" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
 </div>
 <div class="section" id="real-time-clock">
 <h4>Real-time Clock<a class="headerlink" href="#real-time-clock" title="Permalink to this headline">¶</a></h4>
@@ -243,50 +262,71 @@
 <span class="target" id="log__macros_8hpp_1a87d6001cf0ec22748893a3275cb4310a"></span><span class="sig-name descname"><span class="n"><span class="pre">XTR_LOG_RTC</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">SINK</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XTR_LOG_RTC" title="Permalink to this definition">¶</a><br /></dt>
 <dd></dd></dl>
 
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.XTR_LOG_RTC_DEBUG">
+<span class="target" id="log__macros_8hpp_1a5146fa19b89ab1b035e142cfaf6456d7"></span><span class="sig-name descname"><span class="n"><span class="pre">XTR_LOG_RTC_DEBUG</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">SINK</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XTR_LOG_RTC_DEBUG" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.XTR_LOG_RTC_INFO">
+<span class="target" id="log__macros_8hpp_1a37e3fa0bd2ec1d60b21efdd875238ac8"></span><span class="sig-name descname"><span class="n"><span class="pre">XTR_LOG_RTC_INFO</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">SINK</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XTR_LOG_RTC_INFO" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.XTR_LOG_RTC_WARN">
+<span class="target" id="log__macros_8hpp_1a57c48d7e42e8659f722c48e55d209f8b"></span><span class="sig-name descname"><span class="n"><span class="pre">XTR_LOG_RTC_WARN</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">SINK</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XTR_LOG_RTC_WARN" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.XTR_LOG_RTC_ERROR">
+<span class="target" id="log__macros_8hpp_1a8a4ba0675c55a63341b040561592b3dc"></span><span class="sig-name descname"><span class="n"><span class="pre">XTR_LOG_RTC_ERROR</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">SINK</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XTR_LOG_RTC_ERROR" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.XTR_LOG_RTC_FATAL">
+<span class="target" id="log__macros_8hpp_1a82c010f1e35a4fabf19e5500e2046e92"></span><span class="sig-name descname"><span class="n"><span class="pre">XTR_LOG_RTC_FATAL</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">SINK</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XTR_LOG_RTC_FATAL" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
 </div>
 <div class="section" id="user-supplied-timestamp">
-<h4>User Supplied Timestamp<a class="headerlink" href="#user-supplied-timestamp" title="Permalink to this headline">¶</a></h4>
+<h4>User-Supplied Timestamp<a class="headerlink" href="#user-supplied-timestamp" title="Permalink to this headline">¶</a></h4>
 <dl class="cpp macro">
 <dt class="sig sig-object cpp" id="c.XTR_LOG_TS">
 <span class="target" id="log__macros_8hpp_1a3b6d7cd3d6c5e7106330a354c3edc1e8"></span><span class="sig-name descname"><span class="n"><span class="pre">XTR_LOG_TS</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">SINK</span></span>, <span class="n"><span class="pre">TS</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XTR_LOG_TS" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Timestamped log macro, logs the specified format string and arguments to the given sink along with the specified timestamp, blocking if the sink is full. The timestamp may be any type so long as it has a formatter defined (see :ref:custom-formatters). xtr::timestamp is provided as a convenience type which is compatible with std::timestamp and has a formatter pre-defined. A formatter for std::timestamp isn’t defined in order to avoid conflict with user code that also defines such a formatter. </p>
 </dd></dl>
 
-</div>
-</div>
-<div class="section" id="non-blocking-timestamped-macros">
-<h3>Non-Blocking, Timestamped Macros<a class="headerlink" href="#non-blocking-timestamped-macros" title="Permalink to this headline">¶</a></h3>
-<div class="section" id="id2">
-<h4>TSC<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h4>
 <dl class="cpp macro">
-<dt class="sig sig-object cpp" id="c.XTR_TRY_LOG_TSC">
-<span class="target" id="log__macros_8hpp_1a5f6d0172da419dc3891a133a3b4b396a"></span><span class="sig-name descname"><span class="n"><span class="pre">XTR_TRY_LOG_TSC</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">SINK</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XTR_TRY_LOG_TSC" title="Permalink to this definition">¶</a><br /></dt>
+<dt class="sig sig-object cpp" id="c.XTR_LOG_TS_DEBUG">
+<span class="target" id="log__macros_8hpp_1a55441cecd84163fdbddc65a555451de6"></span><span class="sig-name descname"><span class="n"><span class="pre">XTR_LOG_TS_DEBUG</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">SINK</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XTR_LOG_TS_DEBUG" title="Permalink to this definition">¶</a><br /></dt>
 <dd></dd></dl>
 
-</div>
-<div class="section" id="id3">
-<h4>Real-time Clock<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h4>
 <dl class="cpp macro">
-<dt class="sig sig-object cpp" id="c.XTR_TRY_LOG_RTC">
-<span class="target" id="log__macros_8hpp_1aa2f20bb9953451c05bb0cddfb6aaf47c"></span><span class="sig-name descname"><span class="n"><span class="pre">XTR_TRY_LOG_RTC</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">SINK</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XTR_TRY_LOG_RTC" title="Permalink to this definition">¶</a><br /></dt>
+<dt class="sig sig-object cpp" id="c.XTR_LOG_TS_INFO">
+<span class="target" id="log__macros_8hpp_1a01a0dc9b8c4db48def60c5110be23df8"></span><span class="sig-name descname"><span class="n"><span class="pre">XTR_LOG_TS_INFO</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">SINK</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XTR_LOG_TS_INFO" title="Permalink to this definition">¶</a><br /></dt>
 <dd></dd></dl>
 
-</div>
-<div class="section" id="id4">
-<h4>User Supplied Timestamp<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h4>
 <dl class="cpp macro">
-<dt class="sig sig-object cpp" id="c.XTR_TRY_LOG_TS">
-<span class="target" id="log__macros_8hpp_1ad3772907ce8e2c048b4130d7dd0efe32"></span><span class="sig-name descname"><span class="n"><span class="pre">XTR_TRY_LOG_TS</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">SINK</span></span>, <span class="n"><span class="pre">TS</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XTR_TRY_LOG_TS" title="Permalink to this definition">¶</a><br /></dt>
+<dt class="sig sig-object cpp" id="c.XTR_LOG_TS_WARN">
+<span class="target" id="log__macros_8hpp_1a42ea99726938202fa49e99276e263e4f"></span><span class="sig-name descname"><span class="n"><span class="pre">XTR_LOG_TS_WARN</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">SINK</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XTR_LOG_TS_WARN" title="Permalink to this definition">¶</a><br /></dt>
 <dd></dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.XTR_LOG_TS_ERROR">
+<span class="target" id="log__macros_8hpp_1a77e22a95698855d1eddb4bd665cfc092"></span><span class="sig-name descname"><span class="n"><span class="pre">XTR_LOG_TS_ERROR</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">SINK</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XTR_LOG_TS_ERROR" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.XTR_LOG_TS_FATAL">
+<span class="target" id="log__macros_8hpp_1a0d16d80e9655d199d696edf1b41c2af5"></span><span class="sig-name descname"><span class="n"><span class="pre">XTR_LOG_TS_FATAL</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">SINK</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XTR_LOG_TS_FATAL" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>‘Fatal’ log level variant of XTR_LOG_TS. An equivalent macro XTR_LOG_TSF is provided as a short-hand alternative. </p>
+</dd></dl>
 
 </div>
 </div>
 </div>
 <div class="section" id="logger">
-<span id="id5"></span><h2>Logger<a class="headerlink" href="#logger" title="Permalink to this headline">¶</a></h2>
-<p><a class="reference internal" href="#_CPPv4N3xtr6loggerE" title="xtr::logger"><code class="xref cpp cpp-class docutils literal notranslate"><span class="pre">xtr::logger</span></code></a> is the main logger class. When constructed a
-background thread will be created. The background thread is joined when the
-logger and all of its sinks have been destructed.</p>
+<span id="id2"></span><h2>Logger<a class="headerlink" href="#logger" title="Permalink to this headline">¶</a></h2>
 <dl class="cpp class">
 <dt class="sig sig-object cpp" id="_CPPv4N3xtr6loggerE">
 <span id="_CPPv3N3xtr6loggerE"></span><span id="_CPPv2N3xtr6loggerE"></span><span id="xtr::logger"></span><span class="target" id="classxtr_1_1logger"></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">logger</span></span></span><a class="headerlink" href="#_CPPv4N3xtr6loggerE" title="Permalink to this definition">¶</a><br /></dt>
@@ -398,12 +438,7 @@ logger and all of its sinks have been destructed.</p>
 
 </div>
 <div class="section" id="sink">
-<span id="id6"></span><h2>Sink<a class="headerlink" href="#sink" title="Permalink to this headline">¶</a></h2>
-<p>In order to write to the logger, an instance of <a class="reference internal" href="#_CPPv4N3xtr6logger4sinkE" title="xtr::logger::sink"><code class="xref cpp cpp-class docutils literal notranslate"><span class="pre">xtr::logger::sink</span></code></a>
-must must be created via a call to . Each
-sink has its own queue which is used to send log messages to the logger. Sink
-operations are not thread safe—threads are instead expected to each use
-one or more sinks which are local to the thread.</p>
+<span id="id3"></span><h2>Sink<a class="headerlink" href="#sink" title="Permalink to this headline">¶</a></h2>
 <dl class="cpp class">
 <dt class="sig sig-object cpp" id="_CPPv4N3xtr6logger4sinkE">
 <span id="_CPPv3N3xtr6logger4sinkE"></span><span id="_CPPv2N3xtr6logger4sinkE"></span><span id="xtr::logger::sink"></span><span class="target" id="classxtr_1_1logger_1_1sink"></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">sink</span></span></span><a class="headerlink" href="#_CPPv4N3xtr6logger4sinkE" title="Permalink to this definition">¶</a><br /></dt>
