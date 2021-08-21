@@ -60,9 +60,10 @@ Write to the log, immediately reading the timestamp from the TSC:
 
     XTR_LOG_TSC(s, "Hello world");
 
-Write to the log, immediately reading the timestamp using ```clock_gettime```
-with a clock of either ``CLOCK_REALTIME_COARSE``, ``CLOCK_REALTIME_FAST`` or
-``CLOCK_REALTIME``, depending upon what is supported:
+Write to the log, immediately reading the timestamp using
+`clock_gettime(3) <https://www.man7.org/linux/man-pages/man3/clock_gettime.3.html>`__
+with a clock of either CLOCK_REALTIME_COARSE, CLOCK_REALTIME_FAST or
+CLOCK_REALTIME, depending upon what is supported:
 
 .. code-block:: c++
 
@@ -76,8 +77,8 @@ message will be logged:
 
     XTR_LOG_INFO(s, "Hello world");
 
-``XTR_LOGI`` is short-hand for ``XTR_LOG_INFO``, as is ``XTR_LOGE`` for
-``XTR_LOG_ERROR``, etc:
+@ref XTR_LOGI is short-hand for @ref XTR_LOG_INFO``, as is @ref XTR_LOGE for
+@ref XTR_LOG_ERROR etc:
 
 .. code-block:: c++
 

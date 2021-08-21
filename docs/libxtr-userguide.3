@@ -33,7 +33,7 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .SH OVERVIEW
 .sp
 The XTR API contains two classes; \fBxtr::logger\fP and
-\fBxtr::logger::sink\fP\&. Sinks each contain a queue [1], and
+\fBxtr::sink\fP\&. Sinks each contain a queue [1], and
 pass log messages to the associated logger via these queues. Each logger
 has a background consumer thread which reads from the sinks that were created from the
 logger. The background thread then formats the log message and either writes it
@@ -168,7 +168,7 @@ object itself does not need to remain valid, just the data it references.
 .IP \(bu 2
 All functions in \fBxtr::logger\fP are thread\-safe.
 .IP \(bu 2
-No functions in \fBxtr::logger::sink\fP are thread\-safe other than
+No functions in \fBxtr::sink\fP are thread\-safe other than
 :\fBxtr::logger::level\fP and :\fBxtr::logger::set_level\fP\&.
 This is because each thread is expected to have its own independent
 sink (or set of sinks).

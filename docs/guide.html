@@ -198,7 +198,7 @@
 <div class="section" id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
 <p>The XTR API contains two classes; <a class="reference internal" href="api.html#_CPPv4N3xtr6loggerE" title="xtr::logger"><code class="xref cpp cpp-class docutils literal notranslate"><span class="pre">xtr::logger</span></code></a> and
-<a class="reference internal" href="api.html#_CPPv4N3xtr6logger4sinkE" title="xtr::logger::sink"><code class="xref cpp cpp-class docutils literal notranslate"><span class="pre">xtr::logger::sink</span></code></a>. Sinks each contain a queue <a class="footnote-reference brackets" href="#queue" id="id1">1</a>, and
+<a class="reference internal" href="api.html#_CPPv4N3xtr4sinkE" title="xtr::sink"><code class="xref cpp cpp-class docutils literal notranslate"><span class="pre">xtr::sink</span></code></a>. Sinks each contain a queue <a class="footnote-reference brackets" href="#queue" id="id1">1</a>, and
 pass log messages to the associated logger via these queues. Each logger
 has a background consumer thread which reads from the sinks that were created from the
 logger. The background thread then formats the log message and either writes it
@@ -296,7 +296,7 @@ object itself does not need to remain valid, just the data it references.</p>
 <blockquote>
 <div><ul class="simple">
 <li><p>All functions in <a class="reference internal" href="api.html#_CPPv4N3xtr6loggerE" title="xtr::logger"><code class="xref cpp cpp-class docutils literal notranslate"><span class="pre">xtr::logger</span></code></a> are thread-safe.</p></li>
-<li><p>No functions in <a class="reference internal" href="api.html#_CPPv4N3xtr6logger4sinkE" title="xtr::logger::sink"><code class="xref cpp cpp-class docutils literal notranslate"><span class="pre">xtr::logger::sink</span></code></a> are thread-safe other than
+<li><p>No functions in <a class="reference internal" href="api.html#_CPPv4N3xtr4sinkE" title="xtr::sink"><code class="xref cpp cpp-class docutils literal notranslate"><span class="pre">xtr::sink</span></code></a> are thread-safe other than
 :<code class="xref cpp cpp-class docutils literal notranslate"><span class="pre">xtr::logger::level</span></code> and :<code class="xref cpp cpp-class docutils literal notranslate"><span class="pre">xtr::logger::set_level</span></code>.
 This is because each thread is expected to have its own independent
 sink (or set of sinks).</p></li>

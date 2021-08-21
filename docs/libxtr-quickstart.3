@@ -106,9 +106,10 @@ XTR_LOG_TSC(s, "Hello world");
 .UNINDENT
 .UNINDENT
 .sp
-Write to the log, immediately reading the timestamp using \fB\(gaclock_gettime\(ga\fP
-with a clock of either \fBCLOCK_REALTIME_COARSE\fP, \fBCLOCK_REALTIME_FAST\fP or
-\fBCLOCK_REALTIME\fP, depending upon what is supported:
+Write to the log, immediately reading the timestamp using
+\fI\%clock_gettime(3)\fP
+with a clock of either CLOCK_REALTIME_COARSE, CLOCK_REALTIME_FAST or
+CLOCK_REALTIME, depending upon what is supported:
 .INDENT 0.0
 .INDENT 3.5
 .sp
@@ -134,8 +135,8 @@ XTR_LOG_INFO(s, "Hello world");
 .UNINDENT
 .UNINDENT
 .sp
-\fBXTR_LOGI\fP is short\-hand for \fBXTR_LOG_INFO\fP, as is \fBXTR_LOGE\fP for
-\fBXTR_LOG_ERROR\fP, etc:
+@ref XTR_LOGI is short\-hand for @ref XTR_LOG_INFO\(ga\(ga, as is @ref XTR_LOGE for
+@ref XTR_LOG_ERROR etc:
 .INDENT 0.0
 .INDENT 3.5
 .sp

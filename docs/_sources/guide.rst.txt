@@ -7,7 +7,7 @@ Overview
 --------
 
 The XTR API contains two classes; :cpp:class:`xtr::logger` and
-:cpp:class:`xtr::logger::sink`. Sinks each contain a queue [#queue]_, and
+:cpp:class:`xtr::sink`. Sinks each contain a queue [#queue]_, and
 pass log messages to the associated logger via these queues. Each logger
 has a background consumer thread which reads from the sinks that were created from the
 logger. The background thread then formats the log message and either writes it
@@ -124,7 +124,7 @@ Thread Safety
 -------------
 
  * All functions in :cpp:class:`xtr::logger` are thread-safe.
- * No functions in :cpp:class:`xtr::logger::sink` are thread-safe other than
+ * No functions in :cpp:class:`xtr::sink` are thread-safe other than
    ::cpp:class:`xtr::logger::level` and ::cpp:class:`xtr::logger::set_level`.
    This is because each thread is expected to have its own independent
    sink (or set of sinks).

@@ -214,9 +214,10 @@ timestamp in the background thread:</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">XTR_LOG_TSC</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="s">&quot;Hello world&quot;</span><span class="p">);</span>
 </pre></div>
 </div>
-<p>Write to the log, immediately reading the timestamp using <code class="docutils literal notranslate"><span class="pre">`clock_gettime`</span></code>
-with a clock of either <code class="docutils literal notranslate"><span class="pre">CLOCK_REALTIME_COARSE</span></code>, <code class="docutils literal notranslate"><span class="pre">CLOCK_REALTIME_FAST</span></code> or
-<code class="docutils literal notranslate"><span class="pre">CLOCK_REALTIME</span></code>, depending upon what is supported:</p>
+<p>Write to the log, immediately reading the timestamp using
+<a class="reference external" href="https://www.man7.org/linux/man-pages/man3/clock_gettime.3.html">clock_gettime(3)</a>
+with a clock of either CLOCK_REALTIME_COARSE, CLOCK_REALTIME_FAST or
+CLOCK_REALTIME, depending upon what is supported:</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">XTR_LOG_RTC</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="s">&quot;Hello world&quot;</span><span class="p">);</span>
 </pre></div>
 </div>
@@ -226,8 +227,8 @@ message will be logged:</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">XTR_LOG_INFO</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="s">&quot;Hello world&quot;</span><span class="p">);</span>
 </pre></div>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">XTR_LOGI</span></code> is short-hand for <code class="docutils literal notranslate"><span class="pre">XTR_LOG_INFO</span></code>, as is <code class="docutils literal notranslate"><span class="pre">XTR_LOGE</span></code> for
-<code class="docutils literal notranslate"><span class="pre">XTR_LOG_ERROR</span></code>, etc:</p>
+<p>&#64;ref XTR_LOGI is short-hand for &#64;ref XTR_LOG_INFO``, as is &#64;ref XTR_LOGE for
+&#64;ref XTR_LOG_ERROR etc:</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">XTR_LOGI</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="s">&quot;Hello world&quot;</span><span class="p">);</span>
 </pre></div>
 </div>

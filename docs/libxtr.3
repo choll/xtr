@@ -35,140 +35,162 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .INDENT 0.0
 .TP
 .B XTR_LOG(SINK, \&...) 
-Basic log macro, logs the specified format string and arguments to the given sink, blocking if the sink is full. The non\-blocking variant of this macro is XTR_TRY_LOG which will discard the message if the sink is full. 
+Basic log macro, logs the specified format string and arguments to the given sink, blocking if the sink is full. The non\-blocking variant of this macro is XTR_TRY_LOG which will discard the message if the sink is full. Timestamps are read in the background threadif this is undesirable use XTR_LOG_RTC or XTR_LOG_TSC which read timestamps at the point of logging. 
 .UNINDENT
 .INDENT 0.0
 .TP
 .B XTR_LOG_DEBUG(SINK, \&...) 
-\(aqDebug\(aq log level variant of XTR_LOG An equivalent macro XTR_LOGD is provided as a short\-hand alternative. This macro can be disabled at build time by defining XTR_NDEBUG. 
+\(aqDebug\(aq log level variant of XTR_LOG. An equivalent macro XTR_LOGD is provided as a short\-hand alternative. This macro can be disabled at build time by defining XTR_NDEBUG. The non\-blocking variants are XTR_TRY_LOG_DEBUG and XTR_TRY_LOGD. 
 .UNINDENT
 .INDENT 0.0
 .TP
 .B XTR_LOG_INFO(SINK, \&...) 
-\(aqInfo\(aq log level variant of XTR_LOG An equivalent macro XTR_LOGI is provided as a short\-hand alternative. 
+\(aqInfo\(aq log level variant of XTR_LOG. An equivalent macro XTR_LOGI is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_INFO and XTR_TRY_LOGI. 
 .UNINDENT
 .INDENT 0.0
 .TP
 .B XTR_LOG_WARN(SINK, \&...) 
-\(aqWarning\(aq log level variant of XTR_LOG An equivalent macro XTR_LOGW is provided as a short\-hand alternative. 
+\(aqWarning\(aq log level variant of XTR_LOG. An equivalent macro XTR_LOGW is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_WARN and XTR_TRY_LOGW. 
 .UNINDENT
 .INDENT 0.0
 .TP
 .B XTR_LOG_ERROR(SINK, \&...) 
-\(aqError\(aq log level variant of XTR_LOG An equivalent macro XTR_LOGE is provided as a short\-hand alternative. 
+\(aqError\(aq log level variant of XTR_LOG. An equivalent macro XTR_LOGE is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_ERROR and XTR_TRY_LOGE. 
 .UNINDENT
 .INDENT 0.0
 .TP
 .B XTR_LOG_FATAL(SINK, \&...) 
-\(aqFatal\(aq log level variant of XTR_LOG. An equivalent macro XTR_LOGF is provided as a short\-hand alternative. When this macro is invoked, the log message is written, \fI\%xtr::logger::sink::sync\fP is invoked, then the program is terminated via abort(3). 
+\(aqFatal\(aq log level variant of XTR_LOG. When this macro is invoked, the log message is written, xtr::logger::sink::sync is invoked, then the program is terminated via abort(3). An equivalent macro XTR_LOGF is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_FATAL and XTR_TRY_LOGF. 
 .UNINDENT
 .SS Timestamped Macros
 .SS TSC
 .INDENT 0.0
 .TP
 .B XTR_LOG_TSC(SINK, \&...) 
+Timestamped log macro, logs the specified format string and arguments to the given sink along with a timestamp obtained by reading the CPU timestamp counter via the RDTSC instruction. The non\-blocking variant of this macro is XTR_TRY_LOG_TSC which will discard the message if the sink is full. 
 .UNINDENT
 .INDENT 0.0
 .TP
 .B XTR_LOG_TSC_DEBUG(SINK, \&...) 
+\(aqDebug\(aq log level variant of XTR_LOG_TSC. An equivalent macro XTR_LOG_TSCD is provided as a short\-hand alternative. This macro can be disabled at build time by defining XTR_NDEBUG. The non\-blocking variants are XTR_TRY_LOG_TSC_DEBUG and XTR_TRY_LOG_TSCD. 
 .UNINDENT
 .INDENT 0.0
 .TP
 .B XTR_LOG_TSC_INFO(SINK, \&...) 
+\(aqInfo\(aq log level variant of XTR_LOG_TSC. An equivalent macro XTR_LOG_TSCI is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_TSC_INFO and XTR_TRY_LOG_TSCI. 
 .UNINDENT
 .INDENT 0.0
 .TP
 .B XTR_LOG_TSC_WARN(SINK, \&...) 
+\(aqWarning\(aq log level variant of XTR_LOG_TSC. An equivalent macro XTR_LOG_TSCW is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_TSC_WARN and XTR_TRY_LOG_TSCW. 
 .UNINDENT
 .INDENT 0.0
 .TP
 .B XTR_LOG_TSC_ERROR(SINK, \&...) 
+\(aqError\(aq log level variant of XTR_LOG_TSC. An equivalent macro XTR_LOG_TSCE is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_TSC_ERROR and XTR_TRY_LOG_TSCE. 
 .UNINDENT
 .INDENT 0.0
 .TP
 .B XTR_LOG_TSC_FATAL(SINK, \&...) 
+\(aqFatal\(aq log level variant of XTR_LOG_TSC. When this macro is invoked, the log message is written, xtr::logger::sink::sync is invoked, then the program is terminated via abort(3). An equivalent macro XTR_LOG_TSCF is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_TSC_FATAL and XTR_TRY_LOG_TSCF. 
 .UNINDENT
 .SS Real\-time Clock
 .INDENT 0.0
 .TP
 .B XTR_LOG_RTC(SINK, \&...) 
+Timestamped log macro, logs the specified format string and arguments to the given sink along with a timestamp obtained by invoking \fI\%clock_gettime(3)\fP with clock source CLOCK_REALTIME_COARSE on Linux or CLOCK_REALTIME_FAST on FreeBSD. Depending on the host CPU this may be faster than XTR_LOG_TSC. The non\-blocking variant of this macro is XTR_TRY_LOG_RTC which will discard the message if the sink is full. 
 .UNINDENT
 .INDENT 0.0
 .TP
 .B XTR_LOG_RTC_DEBUG(SINK, \&...) 
+\(aqDebug\(aq log level variant of XTR_LOG_RTC. An equivalent macro XTR_LOG_RTCD is provided as a short\-hand alternative. This macro can be disabled at build time by defining XTR_NDEBUG. The non\-blocking variants are XTR_TRY_LOG_RTC_DEBUG and XTR_TRY_LOG_RTCD. 
 .UNINDENT
 .INDENT 0.0
 .TP
 .B XTR_LOG_RTC_INFO(SINK, \&...) 
+\(aqInfo\(aq log level variant of XTR_LOG_RTC. An equivalent macro XTR_LOG_RTCI is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_RTC_INFO and XTR_TRY_LOG_RTCI. 
 .UNINDENT
 .INDENT 0.0
 .TP
 .B XTR_LOG_RTC_WARN(SINK, \&...) 
+\(aqWarning\(aq log level variant of XTR_LOG_RTC. An equivalent macro XTR_LOG_RTCW is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_RTC_WARN and XTR_TRY_LOG_RTCW. 
 .UNINDENT
 .INDENT 0.0
 .TP
 .B XTR_LOG_RTC_ERROR(SINK, \&...) 
+\(aqError\(aq log level variant of XTR_LOG_RTC. An equivalent macro XTR_LOG_RTCE is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_RTC_ERROR and XTR_TRY_LOG_RTCE. 
 .UNINDENT
 .INDENT 0.0
 .TP
 .B XTR_LOG_RTC_FATAL(SINK, \&...) 
+\(aqFatal\(aq log level variant of XTR_LOG_RTC. When this macro is invoked, the log message is written, xtr::logger::sink::sync is invoked, then the program is terminated via abort(3). An equivalent macro XTR_LOG_RTCF is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_RTC_FATAL and XTR_TRY_LOG_RTCF. 
 .UNINDENT
 .SS User\-Supplied Timestamp
 .INDENT 0.0
 .TP
 .B XTR_LOG_TS(SINK, TS, \&...) 
-Timestamped log macro, logs the specified format string and arguments to the given sink along with the specified timestamp, blocking if the sink is full. The timestamp may be any type so long as it has a formatter defined (see :ref:custom\-formatters). xtr::timestamp is provided as a convenience type which is compatible with std::timestamp and has a formatter pre\-defined. A formatter for std::timestamp isn\(aqt defined in order to avoid conflict with user code that also defines such a formatter. 
+User\-supplied timestamp log macro, logs the specified format string and arguments to the given sink along with the specified timestamp, blocking if the sink is full. The timestamp may be any type so long as it has a formatter defined (see :ref:custom\-formatters). xtr::timestamp is provided as a convenience type which is compatible with std::timestamp and has a formatter pre\-defined. A formatter for std::timestamp isn\(aqt defined in order to avoid conflict with user code that also defines such a formatter. The non\-blocking variant of this macro is XTR_TRY_LOG_TS which will discard the message if the sink is full. 
 .UNINDENT
 .INDENT 0.0
 .TP
 .B XTR_LOG_TS_DEBUG(SINK, \&...) 
+\(aqDebug\(aq log level variant of XTR_LOG_TS. An equivalent macro XTR_LOG_TSD is provided as a short\-hand alternative. This macro can be disabled at build time by defining XTR_NDEBUG. The non\-blocking variants are XTR_TRY_LOG_TS_DEBUG and XTR_TRY_LOG_TSD. 
 .UNINDENT
 .INDENT 0.0
 .TP
 .B XTR_LOG_TS_INFO(SINK, \&...) 
+\(aqInfo\(aq log level variant of XTR_LOG_TS. An equivalent macro XTR_LOG_TSI is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_TS_INFO and XTR_TRY_LOG_TSI. 
 .UNINDENT
 .INDENT 0.0
 .TP
 .B XTR_LOG_TS_WARN(SINK, \&...) 
+\(aqWarning\(aq log level variant of XTR_LOG_TS. An equivalent macro XTR_LOG_TSW is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_TS_WARN and XTR_TRY_LOG_TSW. 
 .UNINDENT
 .INDENT 0.0
 .TP
 .B XTR_LOG_TS_ERROR(SINK, \&...) 
+\(aqError\(aq log level variant of XTR_LOG_TS. An equivalent macro XTR_LOG_TSE is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_TS_ERROR and XTR_TRY_LOG_TSE. 
 .UNINDENT
 .INDENT 0.0
 .TP
 .B XTR_LOG_TS_FATAL(SINK, \&...) 
-\(aqFatal\(aq log level variant of XTR_LOG_TS. An equivalent macro XTR_LOG_TSF is provided as a short\-hand alternative. 
+\(aqFatal\(aq log level variant of XTR_LOG_TS. When this macro is invoked, the log message is written, xtr::logger::sink::sync is invoked, then the program is terminated via abort(3). An equivalent macro XTR_LOG_TSF is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_TS_FATAL and XTR_TRY_LOG_TSF. 
 .UNINDENT
 .SH LOGGER
 .INDENT 0.0
 .TP
-.B class  logger 
-The main logger class. When constructed a background thread will be created which is used for formatting log messages and performing I/O. To write to the logger call \fI\%logger::sink\fP then pass the sink to a macro such as XTR_LOG. 
-.UNINDENT
-.INDENT 0.0
+.B class  xtr::logger 
+The main logger class. When constructed a background thread will be created which is used for formatting log messages and performing I/O. To write to the logger call logger::sink then pass the sink to a macro such as XTR_LOG. 
+.sp
+Public Functions
+.INDENT 7.0
 .TP
-.B template<typename  Clock  =  std::chrono::system_clock> inline  xtr::\fI\%logger\fP::logger(const  char  *path, \fI\%Clock\fP  &&clock  =  \fI\%Clock\fP(), std::string  command_path  =  default_command_path()) 
-TODO 
+.B template<typename  Clock  =  std::chrono::system_clock> inline  logger(const  char  *path, \fI\%Clock\fP  &&clock  =  \fI\%Clock\fP(), std::string  command_path  =  \fI\%default_command_path\fP()) 
+CTOR 1 
 .UNINDENT
-.INDENT 0.0
+.INDENT 7.0
 .TP
-.B template<typename  Clock  =  std::chrono::system_clock> inline  xtr::\fI\%logger\fP::logger(const  char  *path, FILE  *stream, FILE  *err_stream  =  stderr, \fI\%Clock\fP  &&clock  =  \fI\%Clock\fP(), std::string  command_path  =  default_command_path()) 
-TODO 
+.B template<typename  Clock  =  std::chrono::system_clock> inline  logger(const  char  *path, FILE  *stream, FILE  *err_stream  =  stderr, \fI\%Clock\fP  &&clock  =  \fI\%Clock\fP(), std::string  command_path  =  \fI\%default_command_path\fP()) 
+CTOR 2 
 .UNINDENT
-.INDENT 0.0
+.INDENT 7.0
 .TP
-.B template<typename  Clock  =  std::chrono::system_clock> inline  xtr::\fI\%logger\fP::logger(FILE  *stream  =  stderr, FILE  *err_stream  =  stderr, \fI\%Clock\fP  &&clock  =  \fI\%Clock\fP(), std::string  command_path  =  default_command_path()) 
-TODO 
+.B template<typename  Clock  =  std::chrono::system_clock> inline  logger(FILE  *stream  =  stderr, FILE  *err_stream  =  stderr, \fI\%Clock\fP  &&clock  =  \fI\%Clock\fP(), std::string  command_path  =  \fI\%default_command_path\fP()) 
+CTOR 3 
 .UNINDENT
-.INDENT 0.0
+.INDENT 7.0
 .TP
-.B xtr::\fI\%logger\fP::~logger() 
+.B ~logger() 
 Logger destructor. This function will join the consumer thread. If sinks are still connected to the logger then the consumer thread will not terminate until the sinks disconnect, i.e. the destructor will block until all connected sinks disconnect from the logger. 
 .UNINDENT
-.INDENT 0.0
+.INDENT 7.0
 .TP
-.B \fI\%sink\fP  xtr::\fI\%logger\fP::get_sink(std::string  name) 
+.B inline  std::thread::native_handle_type  consumer_thread_native_handle() 
+Returns the native handle for the logger\(aqs consumer thread. This may be used for setting thread affinities or other thread attributes. 
+.UNINDENT
+.INDENT 7.0
+.TP
+.B \fI\%sink\fP  get_sink(std::string  name) 
 Creates a sink with the specified name. Note that each call to this function creates a new sink; if repeated calls are made with the same name, separate sinks with the name name are created.
 .INDENT 7.0
 .TP
@@ -176,9 +198,9 @@ Creates a sink with the specified name. Note that each call to this function cre
 \fBname\fP \-\- The name for the given sink. 
 .UNINDENT
 .UNINDENT
-.INDENT 0.0
+.INDENT 7.0
 .TP
-.B void  xtr::\fI\%logger\fP::register_sink(\fI\%sink\fP  &s, std::string  name)  noexcept 
+.B void  register_sink(\fI\%sink\fP  &s, std::string  name)  noexcept 
 Registers the sink with the logger. Note that the sink name does not need to be unique; if repeated calls are made with the same name, separate sinks with the same name are registered.
 .INDENT 7.0
 .TP
@@ -194,78 +216,39 @@ Registers the sink with the logger. Note that the sink name does not need to be 
 The sink must be closed. 
 .UNINDENT
 .UNINDENT
-.INDENT 0.0
-.TP
-.B inline  std::thread::native_handle_type  xtr::\fI\%logger\fP::consumer_thread_native_handle() 
-Returns the native handle for the logger\(aqs consumer thread. This may be used for setting thread affinities or other thread attributes. 
-.UNINDENT
-.INDENT 0.0
-.TP
-.B void  xtr::\fI\%logger\fP::set_output_stream(FILE  *stream)  noexcept 
-.UNINDENT
-.INDENT 0.0
-.TP
-.B void  xtr::\fI\%logger\fP::set_error_stream(FILE  *stream)  noexcept 
-.UNINDENT
-.INDENT 0.0
-.TP
-.B template<typename  Func> inline  void  xtr::\fI\%logger\fP::set_output_function(\fI\%Func\fP  &&f)  noexcept 
-.UNINDENT
-.INDENT 0.0
-.TP
-.B template<typename  Func> inline  void  xtr::\fI\%logger\fP::set_error_function(\fI\%Func\fP  &&f)  noexcept 
-.UNINDENT
-.INDENT 0.0
-.TP
-.B template<typename  Func> inline  void  xtr::\fI\%logger\fP::set_flush_function(\fI\%Func\fP  &&f)  noexcept 
-.UNINDENT
-.INDENT 0.0
-.TP
-.B template<typename  Func> inline  void  xtr::\fI\%logger\fP::set_sync_function(\fI\%Func\fP  &&f)  noexcept 
-.UNINDENT
-.INDENT 0.0
-.TP
-.B template<typename  Func> inline  void  xtr::\fI\%logger\fP::set_reopen_function(\fI\%Func\fP  &&f)  noexcept 
-.UNINDENT
-.INDENT 0.0
-.TP
-.B template<typename  Func> inline  void  xtr::\fI\%logger\fP::set_close_function(\fI\%Func\fP  &&f)  noexcept 
-.UNINDENT
-.INDENT 0.0
-.TP
-.B void  xtr::\fI\%logger\fP::set_command_path(std::string  path)  noexcept 
 .UNINDENT
 .SH SINK
 .INDENT 0.0
 .TP
-.B class  sink 
+.B class  xtr::sink 
 Log sink class. A sink is how log messages are written to a log. Each sink has its own queue which is used to send log messages to the logger. Sink operations are not thread safe, with the exception of \fI\%set_level\fP and \fI\%level\fP\&.
 .sp
-It is expected that an application will have many sinks, such as a sink per thread or sink per component. A sink that is connected to a logger may be created by calling \fI\%get_sink\fP\&. A sink that is not connected to a logger may be created simply by default construction, then the sink may be connected to a logger by calling \fI\%register_sink\fP\&. 
-.UNINDENT
-.INDENT 0.0
+It is expected that an application will have many sinks, such as a sink per thread or sink per component. A sink that is connected to a logger may be created by calling get_sink. A sink that is not connected to a logger may be created simply by default construction, then the sink may be connected to a logger by calling register_sink. 
+.sp
+Public Functions
+.INDENT 7.0
 .TP
-.B void  xtr::\fI\%logger\fP::\fI\%sink\fP::set_name(std::string  name) 
-Sets the sink\(aqs name to the specified value. 
+.B sink(const  \fI\%sink\fP  &other) 
+Sink copy constructor. When a sink is copied it is automatically registered with the same logger object as the source sink, using the same sink name. The sink name may be modified by calling \fI\%set_name\fP\&. 
 .UNINDENT
-.INDENT 0.0
+.INDENT 7.0
 .TP
-.B inline  void  xtr::\fI\%logger\fP::\fI\%sink\fP::set_level(\fI\%log_level_t\fP  l) 
-Sets the log level of the sink to the specified level. 
+.B \fI\%sink\fP  &operator=(const  \fI\%sink\fP  &other) 
+Sink copy assignment operator. When a sink is copy assigned it closed in order to disconnect it from any existing logger object, and is then automatically registered with the same logger object as the source sink, using the same sink name. The sink name may be modified by calling \fI\%set_name\fP\&. 
 .UNINDENT
-.INDENT 0.0
+.INDENT 7.0
 .TP
-.B inline  \fI\%log_level_t\fP  xtr::\fI\%logger\fP::\fI\%sink\fP::level()  const 
-Returns the current log level. 
+.B ~sink() 
+Sink destructor. When a sink is destructed it is automatically closed. 
 .UNINDENT
-.INDENT 0.0
+.INDENT 7.0
 .TP
-.B void  xtr::\fI\%logger\fP::\fI\%sink\fP::close() 
+.B void  close() 
 Closes the sink. After this function returns the sink is closed and \fI\%log()\fP functions may not be called on the sink. The sink may be re\-opened by calling \fI\%logger::register_sink\fP\&. 
 .UNINDENT
-.INDENT 0.0
+.INDENT 7.0
 .TP
-.B inline  void  xtr::\fI\%logger\fP::\fI\%sink\fP::sync() 
+.B inline  void  sync() 
 Synchronizes all log calls previously made by this sink to back\-end storage.
 .INDENT 7.0
 .TP
@@ -273,16 +256,33 @@ Synchronizes all log calls previously made by this sink to back\-end storage.
 All entries in the sink\(aqs queue have been delivered to the back\-end, and the flush() and \fI\%sync()\fP functions associated with the back\-end have been called. For the default (disk) back\-end this means fflush(3) and fsync(2) (if available) have been called. 
 .UNINDENT
 .UNINDENT
-.INDENT 0.0
+.INDENT 7.0
 .TP
-.B template<auto  Format,  typename  Tags  =  void(),  typename  \&...Args> void  xtr::\fI\%logger\fP::\fI\%sink\fP::log(\fI\%Args\fP&&\&...  args)  noexcept((XTR_NOTHROW_INGESTIBLE(\fI\%Args\fP,  \fI\%args\fP)  &&  \&...)) 
+.B void  set_name(std::string  name) 
+Sets the sink\(aqs name to the specified value. 
+.UNINDENT
+.INDENT 7.0
+.TP
+.B template<auto  Format,  typename  Tags  =  void(),  typename  \&...Args> void  log(\fI\%Args\fP&&\&...  args)  noexcept((XTR_NOTHROW_INGESTIBLE(\fI\%Args\fP,  \fI\%args\fP)  &&  \&...)) 
 Logs the given format string and arguments. This function is not intended to be used directly, instead one of the XTR_LOG macros should be used. It is provided for use in situations where use of a macro may be undesirable. 
 .UNINDENT
-.SH MISC
+.INDENT 7.0
+.TP
+.B inline  void  set_level(\fI\%log_level_t\fP  l) 
+Sets the log level of the sink to the specified level. 
+.UNINDENT
+.INDENT 7.0
+.TP
+.B inline  \fI\%log_level_t\fP  level()  const 
+Returns the current log level. 
+.UNINDENT
+.UNINDENT
+.SH NOCOPY
 .INDENT 0.0
 .TP
 .B template<typename  T> inline  auto  xtr::nocopy(const  \fI\%T\fP  &arg) 
 .UNINDENT
+.SH LOG LEVELS
 .INDENT 0.0
 .TP
 .B enum  xtr::log_level_t 
@@ -311,6 +311,11 @@ Logs the given format string and arguments. This function is not intended to be 
 .TP
 .B enumerator  debug 
 .UNINDENT
+.UNINDENT
+.SH DEFAULT COMMAND PATH
+.INDENT 0.0
+.TP
+.B std::string  xtr::default_command_path() 
 .UNINDENT
 .SH AUTHOR
 Chris E. Holloway
