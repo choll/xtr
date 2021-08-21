@@ -41,7 +41,7 @@ namespace
         set_thread_attrs(::pthread_self(), 4);                          \
         set_thread_attrs(log.consumer_thread_native_handle(), 5);       \
                                                                         \
-        xtr::logger::sink p = log.get_sink("Name");                     \
+        xtr::sink p = log.get_sink("Name");                             \
         std::size_t n = 0;                                              \
         constexpr std::size_t sync_every = (64 * 1024) / (MSGSIZE);     \
         for (auto _ : state)                                            \
@@ -70,7 +70,7 @@ namespace
         set_thread_attrs(::pthread_self(), 4);                          \
         set_thread_attrs(log.consumer_thread_native_handle(), 5);       \
                                                                         \
-        xtr::logger::sink p = log.get_sink("Name");                     \
+        xtr::sink p = log.get_sink("Name");                             \
         std::size_t n = 0;                                              \
         constexpr std::size_t sync_every = (64 * 1024) / (MSGSIZE);     \
         for (auto _ : state)                                            \

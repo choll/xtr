@@ -34,6 +34,7 @@ for file in \
     include/xtr/detail/trampolines.hpp \
     include/xtr/detail/strzcpy.hpp \
     include/xtr/log_level.hpp \
+    include/xtr/sink.hpp \
     include/xtr/detail/commands/frame.hpp \
     include/xtr/detail/commands/pattern.hpp \
     include/xtr/detail/commands/message_id.hpp \
@@ -47,6 +48,7 @@ for file in \
     include/xtr/detail/commands/matcher.hpp \
     include/xtr/detail/commands/regex_matcher.hpp \
     include/xtr/detail/commands/wildcard_matcher.hpp \
+    include/xtr/detail/consumer.hpp \
     include/xtr/command_path.hpp \
     include/xtr/log_macros.hpp \
     include/xtr/logger.hpp;
@@ -57,6 +59,7 @@ done
 grep -hEv '^ *//|^#include "' \
     src/command_dispatcher.cpp \
     src/command_path.cpp \
+    src/consumer.cpp \
     src/file_descriptor.cpp \
     src/logger.cpp \
     src/matcher.cpp \
@@ -64,6 +67,7 @@ grep -hEv '^ *//|^#include "' \
     src/mirrored_memory_mapping.cpp \
     src/pagesize.cpp \
     src/regex_matcher.cpp \
+    src/sink.cpp \
     src/throw.cpp \
     src/tsc.cpp \
     src/wildcard_matcher.cpp  >> $target

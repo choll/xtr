@@ -110,10 +110,11 @@ endif
 
 TARGET = $(BUILD_DIR)/libxtr.a
 SRCS := \
-	src/command_dispatcher.cpp src/command_path.cpp src/file_descriptor.cpp \
-	src/logger.cpp src/matcher.cpp src/memory_mapping.cpp \
-	src/mirrored_memory_mapping.cpp src/pagesize.cpp src/regex_matcher.cpp \
-	src/throw.cpp src/tsc.cpp src/wildcard_matcher.cpp
+	src/command_dispatcher.cpp src/command_path.cpp src/consumer.cpp \
+	src/file_descriptor.cpp src/logger.cpp src/matcher.cpp \
+	src/memory_mapping.cpp src/mirrored_memory_mapping.cpp src/pagesize.cpp \
+	src/regex_matcher.cpp src/sink.cpp src/throw.cpp \
+	src/tsc.cpp src/wildcard_matcher.cpp
 OBJS = $(SRCS:%=$(BUILD_DIR)/%.o)
 
 TEST_TARGET = $(BUILD_DIR)/test/test
@@ -216,10 +217,10 @@ build/doxygen/xml/index.xml: docs-src/Doxyfile $(INCLUDES)
 	doxygen $<
 
 $(HTML_DOC_PAGES): $(DOCS_SRCS) build/doxygen/xml/index.xml
-	sphinx-build -b html docs-src docs -W -Dbreathe_projects.xtr=../build/doxygen/xml
+	sphinx-build -W -b html docs-src docs
 
 $(MAN_PAGES): $(DOCS_SRCS) build/doxygen/xml/index.xml
-	sphinx-build -b man docs-src docs -W -Dbreathe_projects.xtr=../build/doxygen/xml
+	sphinx-build -W -b man docs-src docs
 
 docs/.nojekyll:
 	touch docs/.nojekyll

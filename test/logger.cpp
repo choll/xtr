@@ -191,7 +191,7 @@ namespace
             make_write_func(errors_, m_),
             test_clock{&clock_nanos_},
             xtr::null_command_path};
-        xtr::logger::sink s_ = log_.get_sink("Name");
+        xtr::sink s_ = log_.get_sink("Name");
     };
 
     struct file_fixture_base
@@ -244,7 +244,7 @@ namespace
             fp_,
             test_clock{&clock_nanos_},
             xtr::null_command_path};
-        xtr::logger::sink s_ = log_.get_sink("Name");
+        xtr::sink s_ = log_.get_sink("Name");
     };
 
     template<typename Fixture = fixture>
@@ -1141,7 +1141,7 @@ TEST_CASE_METHOD(fixture, "logger multiple sink soak test", "[logger]")
     constexpr std::size_t n = 100000;
     constexpr std::size_t n_sinks = 1024;
 
-    std::vector<xtr::logger::sink> sinks;
+    std::vector<xtr::sink> sinks;
 
     for (std::size_t i = 0; i < n_sinks; ++i)
         sinks.push_back(log_.get_sink("Name"));
@@ -1326,7 +1326,7 @@ TEST_CASE("logger no exit test", "[.logger]")
 
     xtr::logger log{"/tmp/testlog"};
 
-    std::vector<xtr::logger::sink> sinks;
+    std::vector<xtr::sink> sinks;
 
     for (std::size_t i = 0; i < 5; ++i)
         sinks.push_back(log.get_sink("Test" + std::to_string(i)));
@@ -1342,13 +1342,13 @@ TEST_CASE("logger no exit test", "[.logger]")
 
 TEST_CASE_METHOD(fixture, "logger sink copy test", "[logger]")
 {
-    xtr::logger::sink p_copy(s_);
+    xtr::sink p_copy(s_);
     p_copy.set_name("p_copy");
-    xtr::logger::sink p_assign;
+    xtr::sink p_assign;
     p_assign = p_copy;
     p_assign.set_name("p_assign");
 
-    std::vector<xtr::logger::sink> v;
+    std::vector<xtr::sink> v;
 
     v.push_back(p_assign);
     v.back().set_name("vec0");
@@ -1392,12 +1392,12 @@ TEST_CASE_METHOD(fixture, "logger sink copy test", "[logger]")
 
     // Copy and assign without calling set_name to verify names are
     // copied correctly.
-    xtr::logger::sink p_copy2(p_copy);
+    xtr::sink p_copy2(p_copy);
     XTR_LOG(p_copy2, "Test"), line_ = __LINE__;
     p_copy2.sync();
     REQUIRE(last_line() == "I 2000-01-01 01:02:03.123456 p_copy logger.cpp:{}: Test"_format(line_));
 
-    xtr::logger::sink p_assign2;
+    xtr::sink p_assign2;
     p_assign2 = p_assign;
     XTR_LOG(p_assign2, "Test"), line_ = __LINE__;
     p_assign2.sync();
@@ -1991,7 +1991,7 @@ TEST_CASE_METHOD(command_fixture<>, "logger set_level command wildcard case test
 TEST_CASE_METHOD(command_fixture<>, "logger command multiple clients test", "[logger]")
 {
     std::array<xtrd::command_client, 64> clients;
-    std::vector<xtr::logger::sink> sinks;
+    std::vector<xtr::sink> sinks;
 
     for (std::size_t i = 0; i < 1024; ++i)
         sinks.push_back(log_.get_sink("P" + std::to_string(i)));

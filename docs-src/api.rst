@@ -57,38 +57,27 @@ Logger
 ------
 
 .. doxygenclass:: xtr::logger
-.. doxygenfunction:: xtr::logger::logger(const char*, Clock&&, std::string)
-.. doxygenfunction:: xtr::logger::logger(const char*, FILE*, FILE*, Clock&&, std::string)
-.. doxygenfunction:: xtr::logger::logger(FILE*, FILE*, Clock&&, std::string)
-.. doxygenfunction:: xtr::logger::~logger
-.. doxygenfunction:: xtr::logger::get_sink
-.. doxygenfunction:: xtr::logger::register_sink
-.. doxygenfunction:: xtr::logger::consumer_thread_native_handle
-.. doxygenfunction:: xtr::logger::set_output_stream
-.. doxygenfunction:: xtr::logger::set_error_stream
-.. doxygenfunction:: xtr::logger::set_output_function
-.. doxygenfunction:: xtr::logger::set_error_function
-.. doxygenfunction:: xtr::logger::set_flush_function
-.. doxygenfunction:: xtr::logger::set_sync_function
-.. doxygenfunction:: xtr::logger::set_reopen_function
-.. doxygenfunction:: xtr::logger::set_close_function
-.. doxygenfunction:: xtr::logger::set_command_path
+    :members:
 
 .. _sink:
 
 Sink
 ----
 
-.. doxygenclass:: xtr::logger::sink
-.. doxygenfunction:: xtr::logger::sink::set_name
-.. doxygenfunction:: xtr::logger::sink::set_level
-.. doxygenfunction:: xtr::logger::sink::level
-.. doxygenfunction:: xtr::logger::sink::close
-.. doxygenfunction:: xtr::logger::sink::sync()
-.. doxygenfunction:: xtr::logger::sink::log
+.. doxygenclass:: xtr::sink
+    :members:
 
-Misc
-----
+Nocopy
+------
 
 .. doxygenfunction:: xtr::nocopy
+
+Log Levels
+----------
+
 .. doxygenenum:: xtr::log_level_t
+
+Default command path
+--------------------
+
+.. doxygenfunction:: default_command_path

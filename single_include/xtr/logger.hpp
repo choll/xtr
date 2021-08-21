@@ -1210,10 +1210,10 @@ namespace xtr::detail
         fmt::memory_buffer& mbuf,
         std::byte* buf,
         State& state,
-        const char* ts,
+        const char* timestamp,
         std::string& name) noexcept
     {
-        print(mbuf, state.out, state.err, *Format, ts, name);
+        print(mbuf, state.out, state.err, *Format, timestamp, name);
         return buf + sizeof(void (*)());
     }
 
@@ -1222,7 +1222,7 @@ namespace xtr::detail
         fmt::memory_buffer& mbuf,
         std::byte* buf,
         State& state,
-        [[maybe_unused]] const char* ts,
+        [[maybe_unused]] const char* timestamp,
         std::string& name) noexcept
     {
         typedef void (*fptr_t)();
@@ -1237,7 +1237,7 @@ namespace xtr::detail
         if constexpr (std::is_same_v<decltype(Format), std::nullptr_t>)
             func(state, name);
         else
-            func(mbuf, state.out, state.err, *Format, ts, name);
+            func(mbuf, state.out, state.err, *Format, timestamp, name);
 
         static_assert(noexcept(func.~Func()));
         std::destroy_at(std::addressof(func));
@@ -1250,7 +1250,7 @@ namespace xtr::detail
         fmt::memory_buffer& mbuf,
         std::byte* buf,
         State& state,
-        const char* ts,
+        const char* timestamp,
         std::string& name) noexcept
     {
         typedef void (*fptr_t)();
@@ -1264,7 +1264,7 @@ namespace xtr::detail
         assert(std::uintptr_t(func_pos) % alignof(Func) == 0);
 
         auto& func = *reinterpret_cast<Func*>(func_pos);
-        func(mbuf, state.out, state.err, *Format, ts, name);
+        func(mbuf, state.out, state.err, *Format, timestamp, name);
 
         static_assert(noexcept(func.~Func()));
         std::destroy_at(std::addressof(func));
@@ -1298,6 +1298,314 @@ namespace xtr
         warning,
         info,
         debug
+    };
+}
+
+#include <atomic>
+#include <cstddef>
+#include <string>
+#include <type_traits>
+#include <utility>
+
+namespace xtr
+{
+    class sink;
+    class logger;
+
+    namespace detail
+    {
+        class consumer;
+    }
+}
+
+#define XTR_NOTHROW_INGESTIBLE(TYPE, VALUE)                     \
+    (noexcept(std::decay_t<TYPE>{std::forward<TYPE>(VALUE)}) || \
+     std::is_same_v<std::remove_cvref_t<TYPE>, std::string>)
+
+/**
+ * Log sink class. A sink is how log messages are written to a log.
+ * Each sink has its own queue which is used to send log messages
+ * to the logger. Sink operations are not thread safe, with the
+ * exception of @ref set_level and @ref level.
+ *
+ * It is expected that an application will have many sinks, such
+ * as a sink per thread or sink per component. A sink that is connected
+ * to a logger may be created by calling @ref get_sink. A sink
+ * that is not connected to a logger may be created simply by default
+ * construction, then the sink may be connected to a logger by calling
+ * @ref register_sink.
+ */
+class xtr::sink
+{
+private:
+    using fptr_t =
+        std::byte* (*)(
+            fmt::memory_buffer& mbuf,
+            std::byte* buf, // pointer to log record
+            detail::consumer&,
+            const char* timestamp,
+            std::string& name) noexcept;
+
+public:
+    sink() = default;
+
+    /**
+     * Sink copy constructor. When a sink is copied it is automatically
+     * registered with the same logger object as the source sink, using
+     * the same sink name. The sink name may be modified by calling @ref
+     * set_name.
+     */
+    sink(const sink& other);
+
+    /**
+     * Sink copy assignment operator. When a sink is copy assigned it
+     * closed in order to disconnect it from any existing logger object,
+     * and is then automatically registered with the same logger object as
+     * the source sink, using the same sink name. The sink name may be
+     * modified by calling @ref set_name.
+     */
+    sink& operator=(const sink& other);
+
+    /**
+     * Sink destructor. When a sink is destructed it is automatically
+     * closed.
+     */
+    ~sink();
+
+    /**
+     *  Closes the sink. After this function returns the sink is closed and
+     *  log() functions may not be called on the sink. The sink may be
+     *  re-opened by calling logger::register_sink.
+     */
+    void close();
+
+    /**
+     *  Synchronizes all log calls previously made by this sink to back-end
+     *  storage.
+     *
+     *  @post All entries in the sink's queue have been delivered to the
+     *        back-end, and the flush() and sync() functions associated
+     *        with the back-end have been called. For the default (disk)
+     *        back-end this means fflush(3) and fsync(2) (if available)
+     *        have been called.
+     */
+    void sync()
+    {
+        sync(/*destroy=*/false);
+    }
+
+    /**
+     *  Sets the sink's name to the specified value.
+     */
+    void set_name(std::string name);
+
+    /**
+     *  Logs the given format string and arguments. This function is not
+     *  intended to be used directly, instead one of the XTR_LOG macros
+     *  should be used. It is provided for use in situations where use of
+     *  a macro may be undesirable.
+     */
+    template<auto Format, typename Tags = void(), typename... Args>
+    void log(Args&&... args) noexcept((XTR_NOTHROW_INGESTIBLE(Args, args) && ...));
+
+    /**
+     *  Sets the log level of the sink to the specified level.
+     */
+    void set_level(log_level_t l)
+    {
+        level_.store(l, std::memory_order_relaxed);
+    }
+
+    /**
+     *  Returns the current log level.
+     */
+    log_level_t level() const
+    {
+        return level_.load(std::memory_order_relaxed);
+    }
+
+private:
+    sink(logger& owner, std::string name);
+
+    template<auto Format, typename Tags = void()>
+    void log_impl() noexcept;
+
+    template<auto Format, typename Tags, typename... Args>
+    void log_impl(Args&&... args) noexcept(
+        (XTR_NOTHROW_INGESTIBLE(Args, args) && ...));
+
+    template<typename T>
+    void copy(std::byte* pos, T&& value) noexcept(
+        XTR_NOTHROW_INGESTIBLE(T, value));
+
+    template<auto Format = nullptr, typename Tags = void(), typename Func>
+    void post(Func&& func) noexcept(XTR_NOTHROW_INGESTIBLE(Func, func));
+
+    template<auto Format, typename Tags, typename... Args>
+    void post_with_str_table(Args&&... args) noexcept(
+        (XTR_NOTHROW_INGESTIBLE(Args, args) && ...));
+
+    template<typename Tags, typename... Args>
+    auto make_lambda(Args&&... args) noexcept(
+        (XTR_NOTHROW_INGESTIBLE(Args, args) && ...));
+
+    void sync(bool destruct);
+
+    using ring_buffer = detail::synchronized_ring_buffer<64 * 1024>;
+
+    ring_buffer buf_;
+    std::atomic<log_level_t> level_{log_level_t::info};
+    bool open_ = false;
+
+    friend detail::consumer;
+    friend logger;
+};
+
+template<auto Format, typename Tags, typename... Args>
+void xtr::sink::log(Args&&... args) noexcept(
+    (XTR_NOTHROW_INGESTIBLE(Args, args) && ...))
+{
+    log_impl<Format, Tags>(std::forward<Args>(args)...);
+}
+
+template<auto Format, typename Tags>
+void xtr::sink::log_impl() noexcept
+{
+    const ring_buffer::span s = buf_.write_span_spec<Tags>(sizeof(fptr_t));
+    if (detail::is_non_blocking_v<Tags> && s.empty()) [[unlikely]]
+        return;
+    copy(s.begin(), &detail::trampoline0<Format, detail::consumer>);
+    buf_.reduce_writable(sizeof(fptr_t));
+}
+
+template<auto Format, typename Tags, typename... Args>
+void xtr::sink::log_impl(Args&&... args) noexcept(
+    (XTR_NOTHROW_INGESTIBLE(Args, args) && ...))
+{
+    static_assert(sizeof...(Args) > 0);
+    constexpr bool is_str = std::disjunction_v<
+        detail::is_c_string<decltype(std::forward<Args>(args))>...,
+        std::is_same<std::remove_cvref_t<Args>, std::string_view>...,
+        std::is_same<std::remove_cvref_t<Args>, std::string>...>;
+    if constexpr (is_str)
+        post_with_str_table<Format, Tags>(std::forward<Args>(args)...);
+    else
+        post<Format, Tags>(make_lambda<Tags>(std::forward<Args>(args)...));
+}
+
+template<auto Format, typename Tags, typename... Args>
+void xtr::sink::post_with_str_table(Args&&... args) noexcept(
+    (XTR_NOTHROW_INGESTIBLE(Args, args) && ...))
+{
+    using lambda_t = decltype(make_lambda<Tags>(detail::build_string_table<Tags>(
+        std::declval<std::byte*&>(),
+        std::declval<std::byte*&>(),
+        buf_,
+        std::forward<Args>(args))...));
+
+    ring_buffer::span s = buf_.write_span_spec();
+
+    static_assert(alignof(std::size_t) <= alignof(fptr_t));
+    const auto size_pos = s.begin() + sizeof(fptr_t);
+
+    auto func_pos = size_pos + sizeof(size_t);
+    if constexpr (alignof(lambda_t) > alignof(size_t))
+        func_pos = align<alignof(lambda_t)>(func_pos);
+
+    static_assert(alignof(char) == 1);
+    const auto str_pos = func_pos + sizeof(lambda_t);
+    const auto size = ring_buffer::size_type(str_pos - s.begin());
+
+    while (s.size() < size)
+        [[unlikely]]
+        {
+            if constexpr (!detail::is_non_blocking_v<Tags>)
+                detail::pause();
+            s = buf_.write_span<Tags>();
+            if (detail::is_non_blocking_v<Tags> && s.empty()) [[unlikely]]
+                return;
+        }
+
+    auto str_cur = str_pos;
+    auto str_end = s.end();
+
+    copy(s.begin(), &detail::trampolineS<Format, detail::consumer, lambda_t>);
+    copy(
+        func_pos,
+        make_lambda<Tags>(detail::build_string_table<Tags>(
+            str_cur,
+            str_end,
+            buf_,
+            std::forward<Args>(args))...));
+
+    const auto next = detail::align<alignof(fptr_t)>(str_cur);
+    const auto total_size = ring_buffer::size_type(next - s.begin());
+
+    copy(size_pos, total_size);
+    buf_.reduce_writable(total_size);
+}
+
+template<typename T>
+void xtr::sink::copy(std::byte* pos, T&& value) noexcept(
+    XTR_NOTHROW_INGESTIBLE(T, value))
+{
+    assert(std::uintptr_t(pos) % alignof(T) == 0);
+#if defined(__cpp_lib_assume_aligned)
+    pos = static_cast<std::byte*>(std::assume_aligned<alignof(T)>(pos));
+#else
+    pos = static_cast<std::byte*>(__builtin_assume_aligned(pos, alignof(T)));
+#endif
+    new (pos) std::remove_reference_t<T>(std::forward<T>(value));
+}
+
+template<auto Format, typename Tags, typename Func>
+void xtr::sink::post(Func&& func) noexcept(XTR_NOTHROW_INGESTIBLE(Func, func))
+{
+    ring_buffer::span s = buf_.write_span_spec();
+
+    auto func_pos = s.begin() + sizeof(fptr_t);
+    if constexpr (alignof(Func) > alignof(fptr_t))
+        func_pos = detail::align<alignof(Func)>(func_pos);
+
+    const auto next = func_pos + detail::align(sizeof(Func), alignof(fptr_t));
+    const auto size = ring_buffer::size_type(next - s.begin());
+
+    while ((s.size() < size))
+        [[unlikely]]
+        {
+            if constexpr (!detail::is_non_blocking_v<Tags>)
+                detail::pause();
+            s = buf_.write_span<Tags>();
+            if (detail::is_non_blocking_v<Tags> && s.empty()) [[unlikely]]
+                return;
+        }
+
+    copy(s.begin(), &detail::trampolineN<Format, detail::consumer, Func>);
+    copy(func_pos, std::forward<Func>(func));
+
+    buf_.reduce_writable(size);
+}
+
+template<typename Tags, typename... Args>
+auto xtr::sink::make_lambda(Args&&... args) noexcept(
+    (XTR_NOTHROW_INGESTIBLE(Args, args) && ...))
+{
+    return [... args = std::forward<Args>(args)](
+               fmt::memory_buffer& mbuf,
+               const auto& out,
+               const auto& err,
+               std::string_view fmt,
+               [[maybe_unused]] const char* ts,
+               const std::string& name) mutable noexcept
+    {
+        if constexpr (detail::is_timestamp_v<Tags>)
+        {
+            xtr::detail::print_ts(mbuf, out, err, fmt, name, args...);
+        }
+        else
+        {
+            xtr::detail::print(mbuf, out, err, fmt, ts, name, args...);
+        }
     };
 }
 
@@ -1537,7 +1845,9 @@ namespace xtr::detail
 #include <functional>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include <poll.h>
@@ -1703,6 +2013,88 @@ private:
     int flags_;
 };
 
+#include <cstddef>
+#include <ctime>
+#include <functional>
+#include <memory>
+#include <string>
+
+#include <unistd.h>
+
+namespace xtr
+{
+    class sink;
+
+    namespace detail
+    {
+        class consumer;
+    }
+}
+
+class xtr::detail::consumer
+{
+private:
+    struct sink_handle
+    {
+        sink* operator->()
+        {
+            return p;
+        }
+
+        sink* p;
+        std::string name;
+        std::size_t dropped_count = 0;
+    };
+
+public:
+    void run(std::function<std::timespec()> clock) noexcept;
+    void set_command_path(std::string path) noexcept;
+
+    template<
+        typename OutputFunction,
+        typename ErrorFunction,
+        typename FlushFunction,
+        typename SyncFunction,
+        typename ReopenFunction,
+        typename CloseFunction>
+    consumer(
+        OutputFunction&& of,
+        ErrorFunction&& ef,
+        FlushFunction&& ff,
+        SyncFunction&& sf,
+        ReopenFunction&& rf,
+        CloseFunction&& cf,
+        sink* control) :
+        out(std::forward<OutputFunction>(of)),
+        err(std::forward<ErrorFunction>(ef)),
+        flush(std::forward<FlushFunction>(ff)),
+        sync(std::forward<SyncFunction>(sf)),
+        reopen(std::forward<ReopenFunction>(rf)),
+        close(std::forward<CloseFunction>(cf)),
+        sinks_({{control, "control", 0}})
+    {
+    }
+
+    void add_sink(sink& p, const std::string& name);
+
+    std::function<::ssize_t(const char* buf, std::size_t size)> out;
+    std::function<void(const char* buf, std::size_t size)> err;
+    std::function<void()> flush;
+    std::function<void()> sync;
+    std::function<bool()> reopen;
+    std::function<void()> close;
+    bool destroy = false;
+
+private:
+    void status_handler(int fd, detail::status&);
+    void set_level_handler(int fd, detail::set_level&);
+    void reopen_handler(int fd, detail::reopen&);
+
+    std::vector<sink_handle> sinks_;
+    std::unique_ptr<detail::command_dispatcher, detail::command_dispatcher_deleter>
+        cmds_;
+};
+
 #include <string>
 
 namespace xtr
@@ -1716,7 +2108,9 @@ namespace xtr
  * Basic log macro, logs the specified format string and arguments to
  * the given sink, blocking if the sink is full. The non-blocking variant
  * of this macro is @ref XTR_TRY_LOG which will discard the message if
- * the sink is full.
+ * the sink is full. Timestamps are read in the background thread---if this
+ * is undesirable use @ref XTR_LOG_RTC or @ref XTR_LOG_TSC which read
+ * timestamps at the point of logging.
  */
 #define XTR_LOG(SINK, ...) XTR_LOG_TAGS(void(), "I", SINK, __VA_ARGS__)
 
@@ -1724,35 +2118,40 @@ namespace xtr
     XTR_LOG_LEVEL_TAGS(void(), LEVELSTR, LEVEL, SINK, __VA_ARGS__)
 
 /**
- *  'Fatal' log level variant of @ref XTR_LOG. An equivalent macro @ref XTR_LOGF
- *  is provided as a short-hand alternative. When this macro is invoked, the
+ *  'Fatal' log level variant of @ref XTR_LOG. When this macro is invoked, the
  *  log message is written, @ref xtr::logger::sink::sync is invoked, then the
- *  program is terminated via abort(3).
+ *  program is terminated via abort(3). An equivalent macro @ref XTR_LOGF
+ *  is provided as a short-hand alternative. The non-blocking variants are
+ *  @ref XTR_TRY_LOG_FATAL and @ref XTR_TRY_LOGF.
  */
 #define XTR_LOG_FATAL(SINK, ...) XTR_LOG_LEVEL("F", fatal, SINK, __VA_ARGS__)
 
 /**
- *  'Error' log level variant of @ref XTR_LOG An equivalent macro @ref XTR_LOGE
- *  is provided as a short-hand alternative.
+ *  'Error' log level variant of @ref XTR_LOG. An equivalent macro @ref XTR_LOGE
+ *  is provided as a short-hand alternative. The non-blocking variants are
+ *  @ref XTR_TRY_LOG_ERROR and @ref XTR_TRY_LOGE.
  */
 #define XTR_LOG_ERROR(SINK, ...) XTR_LOG_LEVEL("E", error, SINK, __VA_ARGS__)
 
 /**
- *  'Warning' log level variant of @ref XTR_LOG An equivalent macro @ref XTR_LOGW
- *  is provided as a short-hand alternative.
+ *  'Warning' log level variant of @ref XTR_LOG. An equivalent macro @ref XTR_LOGW
+ *  is provided as a short-hand alternative. The non-blocking variants are
+ *  @ref XTR_TRY_LOG_WARN and @ref XTR_TRY_LOGW.
  */
 #define XTR_LOG_WARN(SINK, ...) XTR_LOG_LEVEL("W", warning, SINK, __VA_ARGS__)
 
 /**
- *  'Info' log level variant of @ref XTR_LOG An equivalent macro @ref XTR_LOGI
- *  is provided as a short-hand alternative.
+ *  'Info' log level variant of @ref XTR_LOG. An equivalent macro @ref XTR_LOGI
+ *  is provided as a short-hand alternative. The non-blocking variants are
+ *  @ref XTR_TRY_LOG_INFO and @ref XTR_TRY_LOGI.
  */
 #define XTR_LOG_INFO(SINK, ...) XTR_LOG_LEVEL("I", info, SINK, __VA_ARGS__)
 
 /**
- *  'Debug' log level variant of @ref XTR_LOG An equivalent macro @ref XTR_LOGD
+ *  'Debug' log level variant of @ref XTR_LOG. An equivalent macro @ref XTR_LOGD
  *  is provided as a short-hand alternative. This macro can be disabled at build
- *  time by defining @ref XTR_NDEBUG.
+ *  time by defining @ref XTR_NDEBUG. The non-blocking variants are
+ *  @ref XTR_TRY_LOG_DEBUG and @ref XTR_TRY_LOGD.
  */
 #if defined(XTR_NDEBUG)
 #define XTR_LOG_DEBUG(...)
@@ -1795,13 +2194,15 @@ namespace xtr
 #define XTR_TRY_LOGD(SINK, ...) XTR_TRY_LOG_DEBUG(SINK, __VA_ARGS__)
 
 /**
- * Timestamped log macro, logs the specified format string and arguments
- * to the given sink along with the specified timestamp, blocking if the
- * sink is full. The timestamp may be any type so long as it has a formatter
- * defined (see :ref:custom-formatters). xtr::timestamp is provided as a
- * convenience type which is compatible with std::timestamp and has a
+ * User-supplied timestamp log macro, logs the specified format string and
+ * arguments to the given sink along with the specified timestamp, blocking if
+ * the sink is full. The timestamp may be any type so long as it has a
+ * formatter defined (see :ref:custom-formatters). xtr::timestamp is provided
+ * as a convenience type which is compatible with std::timestamp and has a
  * formatter pre-defined. A formatter for std::timestamp isn't defined in
  * order to avoid conflict with user code that also defines such a formatter.
+ * The non-blocking variant of this macro is @ref XTR_TRY_LOG_TS which will
+ * discard the message if the sink is full.
  */
 #define XTR_LOG_TS(SINK, TS, ...) \
     (__extension__({ XTR_LOG_TS_IMPL(SINK, TS, __VA_ARGS__); }))
@@ -1823,18 +2224,45 @@ namespace xtr
         TS __VA_OPT__(, ) __VA_ARGS__)
 
 /**
- *  'Fatal' log level variant of @ref XTR_LOG_TS. An equivalent macro @ref XTR_LOG_TSF
- *  is provided as a short-hand alternative.
+ *  'Fatal' log level variant of @ref XTR_LOG_TS. When this macro is invoked,
+ *  the log message is written, @ref xtr::logger::sink::sync is invoked, then
+ *  the program is terminated via abort(3). An equivalent macro @ref XTR_LOG_TSF
+ *  is provided as a short-hand alternative. The non-blocking variants are
+ *  @ref XTR_TRY_LOG_TS_FATAL and @ref XTR_TRY_LOG_TSF.
  */
 #define XTR_LOG_TS_FATAL(SINK, ...) \
     XTR_LOG_TS_LEVEL("F", fatal, SINK, __VA_ARGS__)
+
+/**
+ *  'Error' log level variant of @ref XTR_LOG_TS. An equivalent macro @ref XTR_LOG_TSE
+ *  is provided as a short-hand alternative. The non-blocking variants are
+ *  @ref XTR_TRY_LOG_TS_ERROR and @ref XTR_TRY_LOG_TSE.
+ */
 #define XTR_LOG_TS_ERROR(SINK, ...) \
     XTR_LOG_TS_LEVEL("E", error, SINK, __VA_ARGS__)
+
+/**
+ *  'Warning' log level variant of @ref XTR_LOG_TS. An equivalent macro @ref XTR_LOG_TSW
+ *  is provided as a short-hand alternative. The non-blocking variants are
+ *  @ref XTR_TRY_LOG_TS_WARN and @ref XTR_TRY_LOG_TSW.
+ */
 #define XTR_LOG_TS_WARN(SINK, ...) \
     XTR_LOG_TS_LEVEL("W", warning, SINK, __VA_ARGS__)
+
+/**
+ *  'Info' log level variant of @ref XTR_LOG_TS. An equivalent macro @ref XTR_LOG_TSI
+ *  is provided as a short-hand alternative. The non-blocking variants are
+ *  @ref XTR_TRY_LOG_TS_INFO and @ref XTR_TRY_LOG_TSI.
+ */
 #define XTR_LOG_TS_INFO(SINK, ...) \
     XTR_LOG_TS_LEVEL("I", info, SINK, __VA_ARGS__)
 
+/**
+ *  'Debug' log level variant of @ref XTR_LOG_TS. An equivalent macro @ref
+ *  XTR_LOG_TSD is provided as a short-hand alternative. This macro can be
+ *  disabled at build time by defining @ref XTR_NDEBUG. The non-blocking
+ *  variants are @ref XTR_TRY_LOG_TS_DEBUG and @ref XTR_TRY_LOG_TSD.
+ */
 #if defined(XTR_NDEBUG)
 #define XTR_LOG_TS_DEBUG(...)
 #else
@@ -1848,9 +2276,6 @@ namespace xtr
 #define XTR_LOG_TSI(SINK, ...) XTR_LOG_TS_INFO(SINK, __VA_ARGS__)
 #define XTR_LOG_TSD(SINK, ...) XTR_LOG_TS_DEBUG(SINK, __VA_ARGS__)
 
-/**
- *
- */
 #define XTR_TRY_LOG_TS(SINK, TS, ...) \
     (__extension__({ XTR_TRY_LOG_TS_IMPL(SINK, TS, __VA_ARGS__); }))
 
@@ -1899,7 +2324,13 @@ namespace xtr
 #define XTR_TRY_LOG_TSD(SINK, ...) XTR_TRY_LOG_TS_DEBUG(SINK, __VA_ARGS__)
 
 /**
- *
+ * Timestamped log macro, logs the specified format string and arguments to
+ * the given sink along with a timestamp obtained by invoking
+ * <a href="https://www.man7.org/linux/man-pages/man3/clock_gettime.3.html">clock_gettime(3)</a>
+ * with clock source CLOCK_REALTIME_COARSE on Linux or CLOCK_REALTIME_FAST
+ * on FreeBSD. Depending on the host CPU this may be faster than @ref
+ * XTR_LOG_TSC. The non-blocking variant of this macro is @ref XTR_TRY_LOG_RTC
+ * which will discard the message if the sink is full.
  */
 #define XTR_LOG_RTC(SINK, ...)                            \
     XTR_LOG_TS(                                           \
@@ -1915,15 +2346,46 @@ namespace xtr
         xtr::detail::get_time<XTR_CLOCK_REALTIME_FAST>(), \
         __VA_ARGS__)
 
+/**
+ *  'Fatal' log level variant of @ref XTR_LOG_RTC. When this macro is invoked,
+ *  the log message is written, @ref xtr::logger::sink::sync is invoked, then
+ *  the program is terminated via abort(3). An equivalent macro @ref XTR_LOG_RTCF
+ *  is provided as a short-hand alternative. The non-blocking variants are
+ *  @ref XTR_TRY_LOG_RTC_FATAL and @ref XTR_TRY_LOG_RTCF.
+ */
 #define XTR_LOG_RTC_FATAL(SINK, ...) \
     XTR_LOG_RTC_LEVEL("F", fatal, SINK, __VA_ARGS__)
+
+/**
+ *  'Error' log level variant of @ref XTR_LOG_RTC. An equivalent macro @ref
+ *  XTR_LOG_RTCE is provided as a short-hand alternative. The non-blocking
+ *  variants are @ref XTR_TRY_LOG_RTC_ERROR and @ref XTR_TRY_LOG_RTCE.
+ */
 #define XTR_LOG_RTC_ERROR(SINK, ...) \
     XTR_LOG_RTC_LEVEL("E", error, SINK, __VA_ARGS__)
+
+/**
+ *  'Warning' log level variant of @ref XTR_LOG_RTC. An equivalent macro @ref
+ *  XTR_LOG_RTCW is provided as a short-hand alternative. The non-blocking
+ *  variants are @ref XTR_TRY_LOG_RTC_WARN and @ref XTR_TRY_LOG_RTCW.
+ */
 #define XTR_LOG_RTC_WARN(SINK, ...) \
     XTR_LOG_RTC_LEVEL("W", warning, SINK, __VA_ARGS__)
+
+/**
+ *  'Info' log level variant of @ref XTR_LOG_RTC. An equivalent macro @ref
+ *  XTR_LOG_RTCI is provided as a short-hand alternative. The non-blocking
+ *  variants are @ref XTR_TRY_LOG_RTC_INFO and @ref XTR_TRY_LOG_RTCI.
+ */
 #define XTR_LOG_RTC_INFO(SINK, ...) \
     XTR_LOG_RTC_LEVEL("I", info, SINK, __VA_ARGS__)
 
+/**
+ *  'Debug' log level variant of @ref XTR_LOG_RTC. An equivalent macro @ref
+ *  XTR_LOG_RTCD is provided as a short-hand alternative. This macro can be
+ *  disabled at build time by defining @ref XTR_NDEBUG. The non-blocking
+ *  variants are @ref XTR_TRY_LOG_RTC_DEBUG and @ref XTR_TRY_LOG_RTCD.
+ */
 #if defined(XTR_NDEBUG)
 #define XTR_LOG_RTC_DEBUG(...)
 #else
@@ -1937,9 +2399,6 @@ namespace xtr
 #define XTR_LOG_RTCI(SINK, ...) XTR_LOG_RTC_INFO(SINK, __VA_ARGS__)
 #define XTR_LOG_RTCD(SINK, ...) XTR_LOG_RTC_DEBUG(SINK, __VA_ARGS__)
 
-/**
- *
- */
 #define XTR_TRY_LOG_RTC(SINK, ...)                        \
     XTR_TRY_LOG_TS(                                       \
         SINK,                                             \
@@ -1977,7 +2436,10 @@ namespace xtr
 #define XTR_TRY_LOG_RTCD(SINK, ...) XTR_TRY_LOG_RTC_DEBUG(SINK, __VA_ARGS__)
 
 /**
- *
+ * Timestamped log macro, logs the specified format string and arguments to
+ * the given sink along with a timestamp obtained by reading the CPU timestamp
+ * counter via the RDTSC instruction. The non-blocking variant of this macro is
+ * @ref XTR_TRY_LOG_TSC which will discard the message if the sink is full.
  */
 #define XTR_LOG_TSC(SINK, ...) \
     XTR_LOG_TS(SINK, xtr::detail::tsc::now(), __VA_ARGS__)
@@ -1985,15 +2447,46 @@ namespace xtr
 #define XTR_LOG_TSC_LEVEL(LEVELSTR, LEVEL, SINK, ...) \
     XTR_LOG_TS_LEVEL(LEVELSTR, LEVEL, SINK, xtr::detail::tsc::now(), __VA_ARGS__)
 
+/**
+ *  'Fatal' log level variant of @ref XTR_LOG_TSC. When this macro is invoked,
+ *  the log message is written, @ref xtr::logger::sink::sync is invoked, then
+ *  the program is terminated via abort(3). An equivalent macro @ref XTR_LOG_TSCF
+ *  is provided as a short-hand alternative. The non-blocking variants are
+ *  @ref XTR_TRY_LOG_TSC_FATAL and @ref XTR_TRY_LOG_TSCF.
+ */
 #define XTR_LOG_TSC_FATAL(SINK, ...) \
     XTR_LOG_TSC_LEVEL("F", fatal, SINK, __VA_ARGS__)
+
+/**
+ *  'Error' log level variant of @ref XTR_LOG_TSC. An equivalent macro @ref
+ *  XTR_LOG_TSCE is provided as a short-hand alternative. The non-blocking
+ *  variants are @ref XTR_TRY_LOG_TSC_ERROR and @ref XTR_TRY_LOG_TSCE.
+ */
 #define XTR_LOG_TSC_ERROR(SINK, ...) \
     XTR_LOG_TSC_LEVEL("E", error, SINK, __VA_ARGS__)
+
+/**
+ *  'Warning' log level variant of @ref XTR_LOG_TSC. An equivalent macro @ref
+ *  XTR_LOG_TSCW is provided as a short-hand alternative. The non-blocking
+ *  variants are @ref XTR_TRY_LOG_TSC_WARN and @ref XTR_TRY_LOG_TSCW.
+ */
 #define XTR_LOG_TSC_WARN(SINK, ...) \
     XTR_LOG_TSC_LEVEL("W", warning, SINK, __VA_ARGS__)
+
+/**
+ *  'Info' log level variant of @ref XTR_LOG_TSC. An equivalent macro @ref
+ *  XTR_LOG_TSCI is provided as a short-hand alternative. The non-blocking
+ *  variants are @ref XTR_TRY_LOG_TSC_INFO and @ref XTR_TRY_LOG_TSCI.
+ */
 #define XTR_LOG_TSC_INFO(SINK, ...) \
     XTR_LOG_TSC_LEVEL("I", info, SINK, __VA_ARGS__)
 
+/**
+ *  'Debug' log level variant of @ref XTR_LOG_TSC. An equivalent macro @ref
+ *  XTR_LOG_TSCD is provided as a short-hand alternative. This macro can be
+ *  disabled at build time by defining @ref XTR_NDEBUG. The non-blocking
+ *  variants are @ref XTR_TRY_LOG_TSC_DEBUG and @ref XTR_TRY_LOG_TSCD.
+ */
 #if defined(XTR_NDEBUG)
 #define XTR_LOG_TSC_DEBUG(...)
 #else
@@ -2007,9 +2500,6 @@ namespace xtr
 #define XTR_LOG_TSCI(SINK, ...) XTR_LOG_TSC_INFO(SINK, __VA_ARGS__)
 #define XTR_LOG_TSCD(SINK, ...) XTR_LOG_TSC_DEBUG(SINK, __VA_ARGS__)
 
-/**
- *
- */
 #define XTR_TRY_LOG_TSC(SINK, ...) \
     XTR_TRY_LOG_TS(SINK, xtr::detail::tsc::now(), __VA_ARGS__)
 
@@ -2084,8 +2574,6 @@ namespace xtr
 #include <cstdint>
 #include <cstdio>
 #include <ctime>
-#include <functional>
-#include <memory>
 #include <mutex>
 #include <new>
 #include <stdexcept>
@@ -2098,10 +2586,6 @@ namespace xtr
 #include <version>
 
 #include <unistd.h>
-
-#define XTR_NOTHROW_INGESTIBLE(TYPE, VALUE)                     \
-    (noexcept(std::decay_t<TYPE>{std::forward<TYPE>(VALUE)}) || \
-     std::is_same_v<std::remove_cvref_t<TYPE>, std::string>)
 
 namespace xtr
 {
@@ -2180,211 +2664,6 @@ namespace xtr::detail
 class xtr::logger
 {
 private:
-    using ring_buffer = detail::synchronized_ring_buffer<64 * 1024>;
-
-    class consumer;
-
-    using fptr_t =
-        std::byte* (*)(
-            fmt::memory_buffer& mbuf,
-            std::byte* buf, // pointer to log record
-            consumer&,
-            const char* timestamp,
-            std::string& name) noexcept;
-
-public:
-    /**
-     * Log sink class. A sink is how log messages are written to a log.
-     * Each sink has its own queue which is used to send log messages
-     * to the logger. Sink operations are not thread safe, with the
-     * exception of @ref set_level and @ref level.
-     *
-     * It is expected that an application will have many sinks, such
-     * as a sink per thread or sink per component. A sink that is connected
-     * to a logger may be created by calling @ref get_sink. A sink
-     * that is not connected to a logger may be created simply by default
-     * construction, then the sink may be connected to a logger by calling
-     * @ref register_sink.
-     */
-    class sink
-    {
-    public:
-        sink() = default;
-
-        /**
-         * Sink copy constructor. When a sink is copied it is automatically
-         * registered with the same logger object as the source sink, using
-         * the same sink name. The sink name may be modified by calling @ref
-         * set_name.
-         */
-        sink(const sink& other);
-
-        /**
-         * Sink copy assignment operator. When a sink is copy assigned it
-         * closed in order to disconnect it from any existing logger object,
-         * and is then automatically registered with the same logger object as
-         * the source sink, using the same sink name. The sink name may be
-         * modified by calling @ref set_name.
-         */
-        sink& operator=(const sink& other);
-
-        /**
-         * Sink destructor. When a sink is destructed it is automatically
-         * closed.
-         */
-        ~sink();
-
-        /**
-         *  Closes the sink. After this function returns the sink is closed and
-         *  log() functions may not be called on the sink. The sink may be
-         *  re-opened by calling logger::register_sink.
-         */
-        void close();
-
-        /**
-         *  Synchronizes all log calls previously made by this sink to back-end
-         *  storage.
-         *
-         *  @post All entries in the sink's queue have been delivered to the
-         *        back-end, and the flush() and sync() functions associated
-         *        with the back-end have been called. For the default (disk)
-         *        back-end this means fflush(3) and fsync(2) (if available)
-         *        have been called.
-         */
-        void sync()
-        {
-            sync(/*destroy=*/false);
-        }
-
-        /**
-         *  Sets the sink's name to the specified value.
-         */
-        void set_name(std::string name);
-
-        /**
-         *  Logs the given format string and arguments. This function is not
-         *  intended to be used directly, instead one of the XTR_LOG macros
-         *  should be used. It is provided for use in situations where use of
-         *  a macro may be undesirable.
-         */
-        template<auto Format, typename Tags = void(), typename... Args>
-        void log(Args&&... args) noexcept(
-            (XTR_NOTHROW_INGESTIBLE(Args, args) && ...));
-
-        /**
-         *  Sets the log level of the sink to the specified level.
-         */
-        void set_level(log_level_t l)
-        {
-            level_.store(l, std::memory_order_relaxed);
-        }
-
-        /**
-         *  Returns the current log level.
-         */
-        log_level_t level() const
-        {
-            return level_.load(std::memory_order_relaxed);
-        }
-
-    private:
-        sink(logger& owner, std::string name);
-
-        template<auto Format, typename Tags = void()>
-        void log_impl() noexcept;
-
-        template<auto Format, typename Tags, typename... Args>
-        void log_impl(Args&&... args) noexcept(
-            (XTR_NOTHROW_INGESTIBLE(Args, args) && ...));
-
-        template<typename T>
-        void copy(std::byte* pos, T&& value) noexcept(
-            XTR_NOTHROW_INGESTIBLE(T, value));
-
-        template<auto Format = nullptr, typename Tags = void(), typename Func>
-        void post(Func&& func) noexcept(XTR_NOTHROW_INGESTIBLE(Func, func));
-
-        template<auto Format, typename Tags, typename... Args>
-        void post_with_str_table(Args&&... args) noexcept(
-            (XTR_NOTHROW_INGESTIBLE(Args, args) && ...));
-
-        template<typename Tags, typename... Args>
-        auto make_lambda(Args&&... args) noexcept(
-            (XTR_NOTHROW_INGESTIBLE(Args, args) && ...));
-
-        void sync(bool destruct);
-
-        ring_buffer buf_;
-        std::atomic<log_level_t> level_{log_level_t::info};
-        bool open_ = false;
-        friend logger;
-    };
-
-private:
-    class consumer
-    {
-    private:
-        struct sink_handle
-        {
-            sink* operator->()
-            {
-                return p;
-            }
-
-            sink* p;
-            std::string name;
-            std::size_t dropped_count = 0;
-        };
-
-    public:
-        void run(std::function<::timespec()> clock) noexcept;
-        void set_command_path(std::string path) noexcept;
-
-        template<
-            typename OutputFunction,
-            typename ErrorFunction,
-            typename FlushFunction,
-            typename SyncFunction,
-            typename ReopenFunction,
-            typename CloseFunction>
-        consumer(
-            OutputFunction&& of,
-            ErrorFunction&& ef,
-            FlushFunction&& ff,
-            SyncFunction&& sf,
-            ReopenFunction&& rf,
-            CloseFunction&& cf,
-            sink* control) :
-            out(std::forward<OutputFunction>(of)),
-            err(std::forward<ErrorFunction>(ef)),
-            flush(std::forward<FlushFunction>(ff)),
-            sync(std::forward<SyncFunction>(sf)),
-            reopen(std::forward<ReopenFunction>(rf)),
-            close(std::forward<CloseFunction>(cf)),
-            sinks_({{control, "control", 0}})
-        {
-        }
-
-        void add_sink(sink& p, const std::string& name);
-
-        std::function<::ssize_t(const char* buf, std::size_t size)> out;
-        std::function<void(const char* buf, std::size_t size)> err;
-        std::function<void()> flush;
-        std::function<void()> sync;
-        std::function<bool()> reopen;
-        std::function<void()> close;
-        bool destroy = false;
-
-    private:
-        void status_handler(int fd, detail::status&);
-        void set_level_handler(int fd, detail::set_level&);
-        void reopen_handler(int fd, detail::reopen&);
-
-        std::vector<sink_handle> sinks_;
-        std::unique_ptr<detail::command_dispatcher, detail::command_dispatcher_deleter>
-            cmds_;
-    };
-
 #if defined(__cpp_lib_jthread)
     using jthread = std::jthread;
 #else
@@ -2404,7 +2683,7 @@ private:
 
 public:
     /**
-     * TODO
+     * CTOR 1
      */
     template<typename Clock = std::chrono::system_clock>
     logger(
@@ -2421,7 +2700,7 @@ public:
     }
 
     /**
-     * TODO
+     * CTOR 2
      */
     template<typename Clock = std::chrono::system_clock>
     logger(
@@ -2443,7 +2722,7 @@ public:
     }
 
     /**
-     * TODO
+     * CTOR 3
      */
     template<typename Clock = std::chrono::system_clock>
     logger(
@@ -2509,8 +2788,8 @@ public:
             std::string command_path = default_command_path())
     {
         consumer_ = jthread(
-            &consumer::run,
-            consumer(
+            &detail::consumer::run,
+            detail::consumer(
                 std::forward<OutputFunction>(out),
                 std::forward<ErrorFunction>(err),
                 std::forward<FlushFunction>(flush),
@@ -2573,7 +2852,7 @@ public:
                 ::ssize_t>,
             "Output function type must be of type ssize_t(const char*, size_t) "
             "(returning the number of bytes written or -1 on error)");
-        post([f = std::forward<Func>(f)](consumer& c, auto&)
+        post([f = std::forward<Func>(f)](auto& c, auto&)
              { c.out = std::move(f); });
         control_.sync();
     }
@@ -2584,7 +2863,7 @@ public:
         static_assert(
             std::is_same_v<std::invoke_result_t<Func, const char*, std::size_t>, void>,
             "Error function must be of type void(const char*, size_t)");
-        post([f = std::forward<Func>(f)](consumer& c, auto&)
+        post([f = std::forward<Func>(f)](detail::consumer& c, auto&)
              { c.err = std::move(f); });
         control_.sync();
     }
@@ -2595,7 +2874,7 @@ public:
         static_assert(
             std::is_same_v<std::invoke_result_t<Func>, void>,
             "Flush function must be of type void()");
-        post([f = std::forward<Func>(f)](consumer& c, auto&)
+        post([f = std::forward<Func>(f)](detail::consumer& c, auto&)
              { c.flush = std::move(f); });
         control_.sync();
     }
@@ -2606,7 +2885,7 @@ public:
         static_assert(
             std::is_same_v<std::invoke_result_t<Func>, void>,
             "Sync function must be of type void()");
-        post([f = std::forward<Func>(f)](consumer& c, auto&)
+        post([f = std::forward<Func>(f)](detail::consumer& c, auto&)
              { c.sync = std::move(f); });
         control_.sync();
     }
@@ -2617,7 +2896,7 @@ public:
         static_assert(
             std::is_same_v<std::invoke_result_t<Func>, bool>,
             "Reopen function must be of type bool()");
-        post([f = std::forward<Func>(f)](consumer& c, auto&)
+        post([f = std::forward<Func>(f)](detail::consumer& c, auto&)
              { c.reopen = std::move(f); });
         control_.sync();
     }
@@ -2628,7 +2907,7 @@ public:
         static_assert(
             std::is_same_v<std::invoke_result_t<Func>, void>,
             "Close function must be of type void()");
-        post([f = std::forward<Func>(f)](consumer& c, auto&)
+        post([f = std::forward<Func>(f)](detail::consumer& c, auto&)
              { c.close = std::move(f); });
         control_.close();
     }
@@ -2662,166 +2941,19 @@ private:
     sink control_; // aligned to cache line so first to avoid extra padding
     jthread consumer_;
     std::mutex control_mutex_;
+
+    friend sink;
 };
 
-template<auto Format, typename Tags, typename... Args>
-void xtr::logger::sink::log(Args&&... args) noexcept(
-    (XTR_NOTHROW_INGESTIBLE(Args, args) && ...))
-{
-    log_impl<Format, Tags>(std::forward<Args>(args)...);
-}
-
-template<auto Format, typename Tags>
-void xtr::logger::sink::log_impl() noexcept
-{
-    const ring_buffer::span s = buf_.write_span_spec<Tags>(sizeof(fptr_t));
-    if (detail::is_non_blocking_v<Tags> && s.empty()) [[unlikely]]
-        return;
-    copy(s.begin(), &detail::trampoline0<Format, consumer>);
-    buf_.reduce_writable(sizeof(fptr_t));
-}
-
-template<auto Format, typename Tags, typename... Args>
-void xtr::logger::sink::log_impl(Args&&... args) noexcept(
-    (XTR_NOTHROW_INGESTIBLE(Args, args) && ...))
-{
-    static_assert(sizeof...(Args) > 0);
-    constexpr bool is_str = std::disjunction_v<
-        detail::is_c_string<decltype(std::forward<Args>(args))>...,
-        std::is_same<std::remove_cvref_t<Args>, std::string_view>...,
-        std::is_same<std::remove_cvref_t<Args>, std::string>...>;
-    if constexpr (is_str)
-        post_with_str_table<Format, Tags>(std::forward<Args>(args)...);
-    else
-        post<Format, Tags>(make_lambda<Tags>(std::forward<Args>(args)...));
-}
-
-template<auto Format, typename Tags, typename... Args>
-void xtr::logger::sink::post_with_str_table(Args&&... args) noexcept(
-    (XTR_NOTHROW_INGESTIBLE(Args, args) && ...))
-{
-    using lambda_t = decltype(make_lambda<Tags>(detail::build_string_table<Tags>(
-        std::declval<std::byte*&>(),
-        std::declval<std::byte*&>(),
-        buf_,
-        std::forward<Args>(args))...));
-
-    ring_buffer::span s = buf_.write_span_spec();
-
-    static_assert(alignof(std::size_t) <= alignof(fptr_t));
-    const auto size_pos = s.begin() + sizeof(fptr_t);
-
-    auto func_pos = size_pos + sizeof(size_t);
-    if constexpr (alignof(lambda_t) > alignof(size_t))
-        func_pos = align<alignof(lambda_t)>(func_pos);
-
-    static_assert(alignof(char) == 1);
-    const auto str_pos = func_pos + sizeof(lambda_t);
-    const auto size = ring_buffer::size_type(str_pos - s.begin());
-
-    while (s.size() < size)
-        [[unlikely]]
-        {
-            if constexpr (!detail::is_non_blocking_v<Tags>)
-                detail::pause();
-            s = buf_.write_span<Tags>();
-            if (detail::is_non_blocking_v<Tags> && s.empty()) [[unlikely]]
-                return;
-        }
-
-    auto str_cur = str_pos;
-    auto str_end = s.end();
-
-    copy(s.begin(), &detail::trampolineS<Format, consumer, lambda_t>);
-    copy(
-        func_pos,
-        make_lambda<Tags>(detail::build_string_table<Tags>(
-            str_cur,
-            str_end,
-            buf_,
-            std::forward<Args>(args))...));
-
-    const auto next = detail::align<alignof(fptr_t)>(str_cur);
-    const auto total_size = ring_buffer::size_type(next - s.begin());
-
-    copy(size_pos, total_size);
-    buf_.reduce_writable(total_size);
-}
-
-template<typename T>
-void xtr::logger::sink::copy(std::byte* pos, T&& value) noexcept(
-    XTR_NOTHROW_INGESTIBLE(T, value))
-{
-    assert(std::uintptr_t(pos) % alignof(T) == 0);
-#if defined(__cpp_lib_assume_aligned)
-    pos = static_cast<std::byte*>(std::assume_aligned<alignof(T)>(pos));
-#else
-    pos = static_cast<std::byte*>(__builtin_assume_aligned(pos, alignof(T)));
-#endif
-    new (pos) std::remove_reference_t<T>(std::forward<T>(value));
-}
-
-template<auto Format, typename Tags, typename Func>
-void xtr::logger::sink::post(Func&& func) noexcept(
-    XTR_NOTHROW_INGESTIBLE(Func, func))
-{
-    ring_buffer::span s = buf_.write_span_spec();
-
-    auto func_pos = s.begin() + sizeof(fptr_t);
-    if constexpr (alignof(Func) > alignof(fptr_t))
-        func_pos = detail::align<alignof(Func)>(func_pos);
-
-    const auto next = func_pos + detail::align(sizeof(Func), alignof(fptr_t));
-    const auto size = ring_buffer::size_type(next - s.begin());
-
-    while ((s.size() < size))
-        [[unlikely]]
-        {
-            if constexpr (!detail::is_non_blocking_v<Tags>)
-                detail::pause();
-            s = buf_.write_span<Tags>();
-            if (detail::is_non_blocking_v<Tags> && s.empty()) [[unlikely]]
-                return;
-        }
-
-    copy(s.begin(), &detail::trampolineN<Format, consumer, Func>);
-    copy(func_pos, std::forward<Func>(func));
-
-    buf_.reduce_writable(size);
-}
-
-template<typename Tags, typename... Args>
-auto xtr::logger::sink::make_lambda(Args&&... args) noexcept(
-    (XTR_NOTHROW_INGESTIBLE(Args, args) && ...))
-{
-    return [... args = std::forward<Args>(args)](
-               fmt::memory_buffer& mbuf,
-               const auto& out,
-               const auto& err,
-               std::string_view fmt,
-               [[maybe_unused]] const char* ts,
-               const std::string& name) mutable noexcept
-    {
-        if constexpr (detail::is_timestamp_v<Tags>)
-        {
-            xtr::detail::print_ts(mbuf, out, err, fmt, name, args...);
-        }
-        else
-        {
-            xtr::detail::print(mbuf, out, err, fmt, ts, name, args...);
-        }
-    };
-}
-
 #include <cassert>
+#include <cerrno>
 #include <cstring>
+#include <exception>
 #include <iostream>
-#include <stdexcept>
 #include <string_view>
 
 #include <sys/socket.h>
 #include <sys/un.h>
-#include <time.h>
 #include <unistd.h>
 
 namespace xtr::detail
@@ -3068,6 +3200,212 @@ inline std::string xtr::default_command_path()
     return path;
 }
 
+#include <fmt/chrono.h>
+
+#include <algorithm>
+#include <climits>
+#include <cstring>
+#include <version>
+
+inline void xtr::detail::consumer::run(std::function<::timespec()> clock) noexcept
+{
+    char ts[32] = {};
+    bool ts_stale = true;
+    std::size_t flush_count = 0;
+    fmt::memory_buffer mbuf;
+
+    for (std::size_t i = 0; !sinks_.empty(); ++i)
+    {
+        sink::ring_buffer::span span;
+        const std::size_t n = i % sinks_.size();
+
+        if (n == 0)
+        {
+            ts_stale |= true;
+            if (cmds_)
+                cmds_->process_commands(/* timeout= */ 0);
+        }
+
+        if ((span = sinks_[n]->buf_.read_span()).empty())
+        {
+            if (flush_count != 0 && flush_count-- == 1)
+                flush();
+            continue;
+        }
+
+        destroy = false;
+
+        if (ts_stale)
+        {
+            fmt::format_to(ts, "{}", xtr::timespec{clock()});
+            ts_stale = false;
+        }
+
+        std::byte* pos = span.begin();
+        std::byte* end = std::min(span.end(), sinks_[n]->buf_.end());
+        do
+        {
+            assert(std::uintptr_t(pos) % alignof(sink::fptr_t) == 0);
+            assert(!destroy);
+            const sink::fptr_t fptr =
+                *reinterpret_cast<const sink::fptr_t*>(pos);
+            pos = fptr(mbuf, pos, *this, ts, sinks_[n].name);
+        } while (pos < end);
+
+        if (destroy)
+        {
+            using std::swap;
+            swap(sinks_[n], sinks_.back()); // possible self-swap, ok
+            sinks_.pop_back();
+            continue;
+        }
+
+        sinks_[n]->buf_.reduce_readable(
+            sink::ring_buffer::size_type(pos - span.begin()));
+
+        std::size_t n_dropped;
+        if (sinks_[n]->buf_.read_span().empty() &&
+            (n_dropped = sinks_[n]->buf_.dropped_count()) > 0)
+        {
+            detail::print(
+                mbuf,
+                out,
+                err,
+                "W {} {}: {} messages dropped\n",
+                ts,
+                sinks_[n].name,
+                n_dropped);
+            sinks_[n].dropped_count += n_dropped;
+        }
+
+        flush_count = sinks_.size();
+    }
+
+    close();
+}
+
+inline void xtr::detail::consumer::add_sink(sink& s, const std::string& name)
+{
+    sinks_.push_back(sink_handle{&s, name});
+}
+
+inline void xtr::detail::consumer::set_command_path(std::string path) noexcept
+{
+    if (path == null_command_path)
+        return;
+
+    cmds_.reset(new detail::command_dispatcher(std::move(path)));
+
+    if (!cmds_->is_open())
+    {
+        cmds_.reset();
+        return;
+    }
+
+#if defined(__cpp_lib_bind_front)
+    cmds_->register_callback<detail::status>(
+        std::bind_front(&consumer::status_handler, this));
+
+    cmds_->register_callback<detail::set_level>(
+        std::bind_front(&consumer::set_level_handler, this));
+
+    cmds_->register_callback<detail::reopen>(
+        std::bind_front(&consumer::reopen_handler, this));
+#else
+    cmds_->register_callback<detail::status>(
+        [this](auto&&... args)
+        { status_handler(std::forward<decltype(args)>(args)...); });
+
+    cmds_->register_callback<detail::set_level>(
+        [this](auto&&... args)
+        { set_level_handler(std::forward<decltype(args)>(args)...); });
+
+    cmds_->register_callback<detail::reopen>(
+        [this](auto&&... args)
+        { reopen_handler(std::forward<decltype(args)>(args)...); });
+#endif
+}
+
+inline void xtr::detail::consumer::status_handler(int fd, detail::status& st)
+{
+    st.pattern.text[sizeof(st.pattern.text) - 1] = '\0';
+
+    const auto matcher = detail::make_matcher(
+        st.pattern.type,
+        st.pattern.text,
+        st.pattern.ignore_case);
+
+    if (!matcher->valid())
+    {
+        detail::frame<detail::error> ef;
+        matcher->error_reason(ef->reason, sizeof(ef->reason));
+        cmds_->send(fd, ef);
+        return;
+    }
+
+    for (std::size_t i = 1; i < sinks_.size(); ++i)
+    {
+        auto& s = sinks_[i];
+
+        if (!(*matcher)(s.name.c_str()))
+            continue;
+
+        detail::frame<detail::sink_info> sif;
+
+        sif->level = s->level();
+        sif->buf_capacity = s->buf_.capacity();
+        sif->buf_nbytes = s->buf_.read_span().size();
+        sif->dropped_count = s.dropped_count;
+        detail::strzcpy(sif->name, s.name);
+
+        cmds_->send(fd, sif);
+    }
+}
+
+inline void xtr::detail::consumer::set_level_handler(int fd, detail::set_level& sl)
+{
+    sl.pattern.text[sizeof(sl.pattern.text) - 1] = '\0';
+
+    if (sl.level > xtr::log_level_t::debug)
+    {
+        cmds_->send_error(fd, "Invalid level");
+        return;
+    }
+
+    const auto matcher = detail::make_matcher(
+        sl.pattern.type,
+        sl.pattern.text,
+        sl.pattern.ignore_case);
+
+    if (!matcher->valid())
+    {
+        detail::frame<detail::error> ef;
+        matcher->error_reason(ef->reason, sizeof(ef->reason));
+        cmds_->send(fd, ef);
+        return;
+    }
+
+    for (std::size_t i = 1; i < sinks_.size(); ++i)
+    {
+        auto& s = sinks_[i];
+
+        if (!(*matcher)(s.name.c_str()))
+            continue;
+
+        s->set_level(sl.level);
+    }
+
+    cmds_->send(fd, detail::frame<detail::success>());
+}
+
+inline void xtr::detail::consumer::reopen_handler(int fd, detail::reopen&)
+{
+    if (!reopen())
+        cmds_->send_error(fd, std::strerror(errno));
+    else
+        cmds_->send(fd, detail::frame<detail::success>());
+}
+
 #include <cerrno>
 
 #include <fcntl.h>
@@ -3107,26 +3445,18 @@ inline void xtr::detail::file_descriptor::reset(int fd) noexcept
 
 #include <fmt/chrono.h>
 
-#include <algorithm>
-#include <climits>
-#include <condition_variable>
-#include <cstring>
-#include <version>
+#include <string>
+#include <utility>
 
 inline xtr::logger::~logger()
 {
     control_.close();
 }
 
-inline xtr::logger::sink xtr::logger::get_sink(std::string name)
-{
-    return sink(*this, std::move(name));
-}
-
 inline void xtr::logger::register_sink(sink& s, std::string name) noexcept
 {
     assert(!s.open_);
-    post([&s, name = std::move(name)](consumer& c, auto&)
+    post([&s, name = std::move(name)](detail::consumer& c, auto&)
          { c.add_sink(s, name); });
     s.open_ = true;
 }
@@ -3143,274 +3473,9 @@ inline void xtr::logger::set_error_stream(FILE* stream) noexcept
 
 inline void xtr::logger::set_command_path(std::string path) noexcept
 {
-    post([s = std::move(path)](consumer& c, auto&)
+    post([s = std::move(path)](detail::consumer& c, auto&)
          { c.set_command_path(std::move(s)); });
     control_.sync();
-}
-
-inline void xtr::logger::consumer::run(std::function<::timespec()> clock) noexcept
-{
-    char ts[32] = {};
-    bool ts_stale = true;
-    std::size_t flush_count = 0;
-    fmt::memory_buffer mbuf;
-
-    for (std::size_t i = 0; !sinks_.empty(); ++i)
-    {
-        ring_buffer::span span;
-        const std::size_t n = i % sinks_.size();
-
-        if (n == 0)
-        {
-            ts_stale |= true;
-            if (cmds_)
-                cmds_->process_commands(/* timeout= */ 0);
-        }
-
-        if ((span = sinks_[n]->buf_.read_span()).empty())
-        {
-            if (flush_count != 0 && flush_count-- == 1)
-                flush();
-            continue;
-        }
-
-        destroy = false;
-
-        if (ts_stale)
-        {
-            fmt::format_to(ts, "{}", xtr::timespec{clock()});
-            ts_stale = false;
-        }
-
-        std::byte* pos = span.begin();
-        std::byte* end = std::min(span.end(), sinks_[n]->buf_.end());
-        do
-        {
-            assert(std::uintptr_t(pos) % alignof(fptr_t) == 0);
-            assert(!destroy);
-            fptr_t fptr = *reinterpret_cast<const fptr_t*>(pos);
-            pos = fptr(mbuf, pos, *this, ts, sinks_[n].name);
-        } while (pos < end);
-
-        if (destroy)
-        {
-            using std::swap;
-            swap(sinks_[n], sinks_.back()); // possible self-swap, ok
-            sinks_.pop_back();
-            continue;
-        }
-
-        sinks_[n]->buf_.reduce_readable(
-            ring_buffer::size_type(pos - span.begin()));
-
-        std::size_t n_dropped;
-        if (sinks_[n]->buf_.read_span().empty() &&
-            (n_dropped = sinks_[n]->buf_.dropped_count()) > 0)
-        {
-            detail::print(
-                mbuf,
-                out,
-                err,
-                "W {} {}: {} messages dropped\n",
-                ts,
-                sinks_[n].name,
-                n_dropped);
-            sinks_[n].dropped_count += n_dropped;
-        }
-
-        flush_count = sinks_.size();
-    }
-
-    close();
-}
-
-inline void xtr::logger::consumer::add_sink(sink& s, const std::string& name)
-{
-    sinks_.push_back(sink_handle{&s, name});
-}
-
-inline void xtr::logger::consumer::set_command_path(std::string path) noexcept
-{
-    if (path == null_command_path)
-        return;
-
-    cmds_.reset(new detail::command_dispatcher(std::move(path)));
-
-    if (!cmds_->is_open())
-    {
-        cmds_.reset();
-        return;
-    }
-
-#if defined(__cpp_lib_bind_front)
-    cmds_->register_callback<detail::status>(
-        std::bind_front(&consumer::status_handler, this));
-
-    cmds_->register_callback<detail::set_level>(
-        std::bind_front(&consumer::set_level_handler, this));
-
-    cmds_->register_callback<detail::reopen>(
-        std::bind_front(&consumer::reopen_handler, this));
-#else
-    cmds_->register_callback<detail::status>(
-        [this](auto&&... args)
-        { status_handler(std::forward<decltype(args)>(args)...); });
-
-    cmds_->register_callback<detail::set_level>(
-        [this](auto&&... args)
-        { set_level_handler(std::forward<decltype(args)>(args)...); });
-
-    cmds_->register_callback<detail::reopen>(
-        [this](auto&&... args)
-        { reopen_handler(std::forward<decltype(args)>(args)...); });
-#endif
-}
-
-inline void xtr::logger::consumer::status_handler(int fd, detail::status& st)
-{
-    st.pattern.text[sizeof(st.pattern.text) - 1] = '\0';
-
-    const auto matcher = detail::make_matcher(
-        st.pattern.type,
-        st.pattern.text,
-        st.pattern.ignore_case);
-
-    if (!matcher->valid())
-    {
-        detail::frame<detail::error> ef;
-        matcher->error_reason(ef->reason, sizeof(ef->reason));
-        cmds_->send(fd, ef);
-        return;
-    }
-
-    for (std::size_t i = 1; i < sinks_.size(); ++i)
-    {
-        auto& s = sinks_[i];
-
-        if (!(*matcher)(s.name.c_str()))
-            continue;
-
-        detail::frame<detail::sink_info> sif;
-
-        sif->level = s->level();
-        sif->buf_capacity = s->buf_.capacity();
-        sif->buf_nbytes = s->buf_.read_span().size();
-        sif->dropped_count = s.dropped_count;
-        detail::strzcpy(sif->name, s.name);
-
-        cmds_->send(fd, sif);
-    }
-}
-
-inline void xtr::logger::consumer::set_level_handler(int fd, detail::set_level& sl)
-{
-    sl.pattern.text[sizeof(sl.pattern.text) - 1] = '\0';
-
-    if (sl.level > xtr::log_level_t::debug)
-    {
-        cmds_->send_error(fd, "Invalid level");
-        return;
-    }
-
-    const auto matcher = detail::make_matcher(
-        sl.pattern.type,
-        sl.pattern.text,
-        sl.pattern.ignore_case);
-
-    if (!matcher->valid())
-    {
-        detail::frame<detail::error> ef;
-        matcher->error_reason(ef->reason, sizeof(ef->reason));
-        cmds_->send(fd, ef);
-        return;
-    }
-
-    for (std::size_t i = 1; i < sinks_.size(); ++i)
-    {
-        auto& s = sinks_[i];
-
-        if (!(*matcher)(s.name.c_str()))
-            continue;
-
-        s->set_level(sl.level);
-    }
-
-    cmds_->send(fd, detail::frame<detail::success>());
-}
-
-inline void xtr::logger::consumer::reopen_handler(int fd, detail::reopen&)
-{
-    if (!reopen())
-        cmds_->send_error(fd, std::strerror(errno));
-    else
-        cmds_->send(fd, detail::frame<detail::success>());
-}
-
-inline xtr::logger::sink::sink(const sink& other)
-{
-    *this = other;
-}
-
-inline xtr::logger::sink& xtr::logger::sink::operator=(const sink& other)
-{
-    level_ = other.level_.load(std::memory_order_relaxed);
-    if (!std::exchange(open_, other.open_)) // if previously closed, register
-    {
-        const_cast<sink&>(other).post([this](consumer& c, const auto& name)
-                                      { c.add_sink(*this, name); });
-    }
-    return *this;
-}
-
-inline xtr::logger::sink::sink(logger& owner, std::string name)
-{
-    owner.register_sink(*this, std::move(name));
-}
-
-inline void xtr::logger::sink::close()
-{
-    if (open_)
-    {
-        sync(/*destruct=*/true);
-        open_ = false;
-        buf_.clear();
-    }
-}
-
-inline void xtr::logger::sink::sync(bool destroy)
-{
-    std::condition_variable cv;
-    std::mutex m;
-    bool notified = false; // protected by m
-
-    post(
-        [&cv, &m, &notified, destroy](consumer& c, auto&)
-        {
-            c.destroy = destroy;
-
-            c.flush();
-            c.sync();
-
-            std::scoped_lock lock{m};
-            notified = true;
-            cv.notify_one();
-        });
-
-    std::unique_lock lock{m};
-    while (!notified)
-        cv.wait(lock);
-}
-
-inline void xtr::logger::sink::set_name(std::string name)
-{
-    post([name = std::move(name)](auto&, auto& oldname)
-         { oldname = std::move(name); });
-    sync();
-}
-
-inline xtr::logger::sink::~sink()
-{
-    close();
 }
 
 inline std::unique_ptr<xtr::detail::matcher> xtr::detail::make_matcher(
@@ -3674,6 +3739,82 @@ inline void xtr::detail::regex_matcher::error_reason(
 inline bool xtr::detail::regex_matcher::operator()(const char* str) const
 {
     return ::regexec(&regex_, str, 0, nullptr, 0) == 0;
+}
+
+#include <condition_variable>
+#include <mutex>
+
+inline xtr::sink xtr::logger::get_sink(std::string name)
+{
+    return sink(*this, std::move(name));
+}
+
+inline xtr::sink::sink(const sink& other)
+{
+    *this = other;
+}
+
+inline xtr::sink& xtr::sink::operator=(const sink& other)
+{
+    level_ = other.level_.load(std::memory_order_relaxed);
+    if (!std::exchange(open_, other.open_)) // if previously closed, register
+    {
+        const_cast<sink&>(other).post(
+            [this](detail::consumer& c, const auto& name)
+            { c.add_sink(*this, name); });
+    }
+    return *this;
+}
+
+inline xtr::sink::sink(logger& owner, std::string name)
+{
+    owner.register_sink(*this, std::move(name));
+}
+
+inline void xtr::sink::close()
+{
+    if (open_)
+    {
+        sync(/*destruct=*/true);
+        open_ = false;
+        buf_.clear();
+    }
+}
+
+inline void xtr::sink::sync(bool destroy)
+{
+    std::condition_variable cv;
+    std::mutex m;
+    bool notified = false; // protected by m
+
+    post(
+        [&cv, &m, &notified, destroy](detail::consumer& c, auto&)
+        {
+            c.destroy = destroy;
+
+            c.flush();
+            c.sync();
+
+            std::scoped_lock lock{m};
+            notified = true;
+            cv.notify_one();
+        });
+
+    std::unique_lock lock{m};
+    while (!notified)
+        cv.wait(lock);
+}
+
+inline void xtr::sink::set_name(std::string name)
+{
+    post([name = std::move(name)](auto&, auto& oldname)
+         { oldname = std::move(name); });
+    sync();
+}
+
+inline xtr::sink::~sink()
+{
+    close();
 }
 
 #include <cerrno>

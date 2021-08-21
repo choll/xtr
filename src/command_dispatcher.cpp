@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 #include "xtr/detail/commands/command_dispatcher.hpp"
+#include "xtr/detail/commands/command_dispatcher_fwd.hpp"
 #include "xtr/detail/commands/frame.hpp"
 #include "xtr/detail/commands/recv.hpp"
 #include "xtr/detail/commands/responses.hpp"
@@ -26,14 +27,14 @@
 #include "xtr/detail/strzcpy.hpp"
 
 #include <cassert>
+#include <cerrno>
 #include <cstring>
+#include <exception>
 #include <iostream>
-#include <stdexcept>
 #include <string_view>
 
 #include <sys/socket.h>
 #include <sys/un.h>
-#include <time.h>
 #include <unistd.h>
 
 namespace xtr::detail

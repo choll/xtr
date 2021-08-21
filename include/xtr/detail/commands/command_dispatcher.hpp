@@ -21,7 +21,6 @@
 #ifndef XTR_DETAIL_COMMANDS_COMMAND_DISPATCHER_HPP
 #define XTR_DETAIL_COMMANDS_COMMAND_DISPATCHER_HPP
 
-#include "command_dispatcher_fwd.hpp"
 #include "frame.hpp"
 #include "xtr/detail/file_descriptor.hpp"
 
@@ -29,7 +28,9 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include <poll.h>

@@ -21,6 +21,11 @@
 #ifndef XTR_LOG_MACROS_HPP
 #define XTR_LOG_MACROS_HPP
 
+#include "detail/get_time.hpp"
+#include "detail/string.hpp"
+#include "detail/tags.hpp"
+#include "detail/tsc.hpp"
+
 // __extension__ is to silence the gnu-zero-variadic-macro-arguments warning in
 // Clang, e.g. if user code does XTR_LOG(s, "fmt") then if XTR_LOG is declared
 // as XTR_LOG(SINK, FMT, ...) then Clang will warn that nothing is passed to the
@@ -32,7 +37,9 @@
  * Basic log macro, logs the specified format string and arguments to
  * the given sink, blocking if the sink is full. The non-blocking variant
  * of this macro is @ref XTR_TRY_LOG which will discard the message if
- * the sink is full.
+ * the sink is full. Timestamps are read in the background thread---if this
+ * is undesirable use @ref XTR_LOG_RTC or @ref XTR_LOG_TSC which read
+ * timestamps at the point of logging.
  */
 #define XTR_LOG(SINK, ...) XTR_LOG_TAGS(void(), "I", SINK, __VA_ARGS__)
 
@@ -40,35 +47,40 @@
     XTR_LOG_LEVEL_TAGS(void(), LEVELSTR, LEVEL, SINK, __VA_ARGS__)
 
 /**
- *  'Fatal' log level variant of @ref XTR_LOG. An equivalent macro @ref XTR_LOGF
- *  is provided as a short-hand alternative. When this macro is invoked, the
+ *  'Fatal' log level variant of @ref XTR_LOG. When this macro is invoked, the
  *  log message is written, @ref xtr::logger::sink::sync is invoked, then the
- *  program is terminated via abort(3).
+ *  program is terminated via abort(3). An equivalent macro @ref XTR_LOGF
+ *  is provided as a short-hand alternative. The non-blocking variants are
+ *  @ref XTR_TRY_LOG_FATAL and @ref XTR_TRY_LOGF.
  */
 #define XTR_LOG_FATAL(SINK, ...) XTR_LOG_LEVEL("F", fatal, SINK, __VA_ARGS__)
 
 /**
- *  'Error' log level variant of @ref XTR_LOG An equivalent macro @ref XTR_LOGE
- *  is provided as a short-hand alternative.
+ *  'Error' log level variant of @ref XTR_LOG. An equivalent macro @ref XTR_LOGE
+ *  is provided as a short-hand alternative. The non-blocking variants are
+ *  @ref XTR_TRY_LOG_ERROR and @ref XTR_TRY_LOGE.
  */
 #define XTR_LOG_ERROR(SINK, ...) XTR_LOG_LEVEL("E", error, SINK, __VA_ARGS__)
 
 /**
- *  'Warning' log level variant of @ref XTR_LOG An equivalent macro @ref XTR_LOGW
- *  is provided as a short-hand alternative.
+ *  'Warning' log level variant of @ref XTR_LOG. An equivalent macro @ref XTR_LOGW
+ *  is provided as a short-hand alternative. The non-blocking variants are
+ *  @ref XTR_TRY_LOG_WARN and @ref XTR_TRY_LOGW.
  */
 #define XTR_LOG_WARN(SINK, ...) XTR_LOG_LEVEL("W", warning, SINK, __VA_ARGS__)
 
 /**
- *  'Info' log level variant of @ref XTR_LOG An equivalent macro @ref XTR_LOGI
- *  is provided as a short-hand alternative.
+ *  'Info' log level variant of @ref XTR_LOG. An equivalent macro @ref XTR_LOGI
+ *  is provided as a short-hand alternative. The non-blocking variants are
+ *  @ref XTR_TRY_LOG_INFO and @ref XTR_TRY_LOGI.
  */
 #define XTR_LOG_INFO(SINK, ...) XTR_LOG_LEVEL("I", info, SINK, __VA_ARGS__)
 
 /**
- *  'Debug' log level variant of @ref XTR_LOG An equivalent macro @ref XTR_LOGD
+ *  'Debug' log level variant of @ref XTR_LOG. An equivalent macro @ref XTR_LOGD
  *  is provided as a short-hand alternative. This macro can be disabled at build
- *  time by defining @ref XTR_NDEBUG.
+ *  time by defining @ref XTR_NDEBUG. The non-blocking variants are
+ *  @ref XTR_TRY_LOG_DEBUG and @ref XTR_TRY_LOGD.
  */
 #if defined(XTR_NDEBUG)
 #define XTR_LOG_DEBUG(...)
@@ -109,13 +121,15 @@
 #define XTR_TRY_LOGD(SINK, ...) XTR_TRY_LOG_DEBUG(SINK, __VA_ARGS__)
 
 /**
- * Timestamped log macro, logs the specified format string and arguments
- * to the given sink along with the specified timestamp, blocking if the
- * sink is full. The timestamp may be any type so long as it has a formatter
- * defined (see :ref:custom-formatters). xtr::timestamp is provided as a
- * convenience type which is compatible with std::timestamp and has a
+ * User-supplied timestamp log macro, logs the specified format string and
+ * arguments to the given sink along with the specified timestamp, blocking if
+ * the sink is full. The timestamp may be any type so long as it has a
+ * formatter defined (see :ref:custom-formatters). xtr::timestamp is provided
+ * as a convenience type which is compatible with std::timestamp and has a
  * formatter pre-defined. A formatter for std::timestamp isn't defined in
  * order to avoid conflict with user code that also defines such a formatter.
+ * The non-blocking variant of this macro is @ref XTR_TRY_LOG_TS which will
+ * discard the message if the sink is full.
  */
 #define XTR_LOG_TS(SINK, TS, ...) \
     (__extension__({ XTR_LOG_TS_IMPL(SINK, TS, __VA_ARGS__); }))
@@ -137,14 +151,41 @@
         __VA_OPT__(,) __VA_ARGS__)
 
 /**
- *  'Fatal' log level variant of @ref XTR_LOG_TS. An equivalent macro @ref XTR_LOG_TSF
- *  is provided as a short-hand alternative.
+ *  'Fatal' log level variant of @ref XTR_LOG_TS. When this macro is invoked,
+ *  the log message is written, @ref xtr::logger::sink::sync is invoked, then
+ *  the program is terminated via abort(3). An equivalent macro @ref XTR_LOG_TSF
+ *  is provided as a short-hand alternative. The non-blocking variants are
+ *  @ref XTR_TRY_LOG_TS_FATAL and @ref XTR_TRY_LOG_TSF.
  */
 #define XTR_LOG_TS_FATAL(SINK, ...) XTR_LOG_TS_LEVEL("F", fatal, SINK, __VA_ARGS__)
+
+/**
+ *  'Error' log level variant of @ref XTR_LOG_TS. An equivalent macro @ref XTR_LOG_TSE
+ *  is provided as a short-hand alternative. The non-blocking variants are
+ *  @ref XTR_TRY_LOG_TS_ERROR and @ref XTR_TRY_LOG_TSE.
+ */
 #define XTR_LOG_TS_ERROR(SINK, ...) XTR_LOG_TS_LEVEL("E", error, SINK, __VA_ARGS__)
+
+/**
+ *  'Warning' log level variant of @ref XTR_LOG_TS. An equivalent macro @ref XTR_LOG_TSW
+ *  is provided as a short-hand alternative. The non-blocking variants are
+ *  @ref XTR_TRY_LOG_TS_WARN and @ref XTR_TRY_LOG_TSW.
+ */
 #define XTR_LOG_TS_WARN(SINK, ...) XTR_LOG_TS_LEVEL("W", warning, SINK, __VA_ARGS__)
+
+/**
+ *  'Info' log level variant of @ref XTR_LOG_TS. An equivalent macro @ref XTR_LOG_TSI
+ *  is provided as a short-hand alternative. The non-blocking variants are
+ *  @ref XTR_TRY_LOG_TS_INFO and @ref XTR_TRY_LOG_TSI.
+ */
 #define XTR_LOG_TS_INFO(SINK, ...) XTR_LOG_TS_LEVEL("I", info, SINK, __VA_ARGS__)
 
+/**
+ *  'Debug' log level variant of @ref XTR_LOG_TS. An equivalent macro @ref
+ *  XTR_LOG_TSD is provided as a short-hand alternative. This macro can be
+ *  disabled at build time by defining @ref XTR_NDEBUG. The non-blocking
+ *  variants are @ref XTR_TRY_LOG_TS_DEBUG and @ref XTR_TRY_LOG_TSD.
+ */
 #if defined(XTR_NDEBUG)
 #define XTR_LOG_TS_DEBUG(...)
 #else
@@ -157,9 +198,9 @@
 #define XTR_LOG_TSI(SINK, ...) XTR_LOG_TS_INFO(SINK, __VA_ARGS__)
 #define XTR_LOG_TSD(SINK, ...) XTR_LOG_TS_DEBUG(SINK, __VA_ARGS__)
 
-/**
- *
- */
+//
+// XTR_TRY_LOG_TS
+//
 #define XTR_TRY_LOG_TS(SINK, TS, ...) \
     (__extension__({  XTR_TRY_LOG_TS_IMPL(SINK, TS, __VA_ARGS__); }))
 
@@ -203,7 +244,13 @@
 #define XTR_TRY_LOG_TSD(SINK, ...) XTR_TRY_LOG_TS_DEBUG(SINK, __VA_ARGS__)
 
 /**
- *
+ * Timestamped log macro, logs the specified format string and arguments to
+ * the given sink along with a timestamp obtained by invoking
+ * <a href="https://www.man7.org/linux/man-pages/man3/clock_gettime.3.html">clock_gettime(3)</a>
+ * with clock source CLOCK_REALTIME_COARSE on Linux or CLOCK_REALTIME_FAST
+ * on FreeBSD. Depending on the host CPU this may be faster than @ref
+ * XTR_LOG_TSC. The non-blocking variant of this macro is @ref XTR_TRY_LOG_RTC
+ * which will discard the message if the sink is full.
  */
 #define XTR_LOG_RTC(SINK, ...) \
     XTR_LOG_TS(SINK, xtr::detail::get_time<XTR_CLOCK_REALTIME_FAST>(), __VA_ARGS__)
@@ -216,11 +263,42 @@
         xtr::detail::get_time<XTR_CLOCK_REALTIME_FAST>(),   \
         __VA_ARGS__)
 
+/**
+ *  'Fatal' log level variant of @ref XTR_LOG_RTC. When this macro is invoked,
+ *  the log message is written, @ref xtr::logger::sink::sync is invoked, then
+ *  the program is terminated via abort(3). An equivalent macro @ref XTR_LOG_RTCF
+ *  is provided as a short-hand alternative. The non-blocking variants are
+ *  @ref XTR_TRY_LOG_RTC_FATAL and @ref XTR_TRY_LOG_RTCF.
+ */
 #define XTR_LOG_RTC_FATAL(SINK, ...) XTR_LOG_RTC_LEVEL("F", fatal, SINK, __VA_ARGS__)
+
+/**
+ *  'Error' log level variant of @ref XTR_LOG_RTC. An equivalent macro @ref
+ *  XTR_LOG_RTCE is provided as a short-hand alternative. The non-blocking
+ *  variants are @ref XTR_TRY_LOG_RTC_ERROR and @ref XTR_TRY_LOG_RTCE.
+ */
 #define XTR_LOG_RTC_ERROR(SINK, ...) XTR_LOG_RTC_LEVEL("E", error, SINK, __VA_ARGS__)
+
+/**
+ *  'Warning' log level variant of @ref XTR_LOG_RTC. An equivalent macro @ref
+ *  XTR_LOG_RTCW is provided as a short-hand alternative. The non-blocking
+ *  variants are @ref XTR_TRY_LOG_RTC_WARN and @ref XTR_TRY_LOG_RTCW.
+ */
 #define XTR_LOG_RTC_WARN(SINK, ...) XTR_LOG_RTC_LEVEL("W", warning, SINK, __VA_ARGS__)
+
+/**
+ *  'Info' log level variant of @ref XTR_LOG_RTC. An equivalent macro @ref
+ *  XTR_LOG_RTCI is provided as a short-hand alternative. The non-blocking
+ *  variants are @ref XTR_TRY_LOG_RTC_INFO and @ref XTR_TRY_LOG_RTCI.
+ */
 #define XTR_LOG_RTC_INFO(SINK, ...) XTR_LOG_RTC_LEVEL("I", info, SINK, __VA_ARGS__)
 
+/**
+ *  'Debug' log level variant of @ref XTR_LOG_RTC. An equivalent macro @ref
+ *  XTR_LOG_RTCD is provided as a short-hand alternative. This macro can be
+ *  disabled at build time by defining @ref XTR_NDEBUG. The non-blocking
+ *  variants are @ref XTR_TRY_LOG_RTC_DEBUG and @ref XTR_TRY_LOG_RTCD.
+ */
 #if defined(XTR_NDEBUG)
 #define XTR_LOG_RTC_DEBUG(...)
 #else
@@ -233,9 +311,9 @@
 #define XTR_LOG_RTCI(SINK, ...) XTR_LOG_RTC_INFO(SINK, __VA_ARGS__)
 #define XTR_LOG_RTCD(SINK, ...) XTR_LOG_RTC_DEBUG(SINK, __VA_ARGS__)
 
-/**
- *
- */
+//
+// XTR_TRY_LOG_RTC
+//
 #define XTR_TRY_LOG_RTC(SINK, ...) \
     XTR_TRY_LOG_TS(SINK, xtr::detail::get_time<XTR_CLOCK_REALTIME_FAST>(), __VA_ARGS__)
 
@@ -265,7 +343,10 @@
 #define XTR_TRY_LOG_RTCD(SINK, ...) XTR_TRY_LOG_RTC_DEBUG(SINK, __VA_ARGS__)
 
 /**
- *
+ * Timestamped log macro, logs the specified format string and arguments to
+ * the given sink along with a timestamp obtained by reading the CPU timestamp
+ * counter via the RDTSC instruction. The non-blocking variant of this macro is
+ * @ref XTR_TRY_LOG_TSC which will discard the message if the sink is full.
  */
 #define XTR_LOG_TSC(SINK, ...) \
     XTR_LOG_TS(SINK, xtr::detail::tsc::now(), __VA_ARGS__)
@@ -278,11 +359,42 @@
         xtr::detail::tsc::now(),                        \
         __VA_ARGS__)
 
+/**
+ *  'Fatal' log level variant of @ref XTR_LOG_TSC. When this macro is invoked,
+ *  the log message is written, @ref xtr::logger::sink::sync is invoked, then
+ *  the program is terminated via abort(3). An equivalent macro @ref XTR_LOG_TSCF
+ *  is provided as a short-hand alternative. The non-blocking variants are
+ *  @ref XTR_TRY_LOG_TSC_FATAL and @ref XTR_TRY_LOG_TSCF.
+ */
 #define XTR_LOG_TSC_FATAL(SINK, ...) XTR_LOG_TSC_LEVEL("F", fatal, SINK, __VA_ARGS__)
+
+/**
+ *  'Error' log level variant of @ref XTR_LOG_TSC. An equivalent macro @ref
+ *  XTR_LOG_TSCE is provided as a short-hand alternative. The non-blocking
+ *  variants are @ref XTR_TRY_LOG_TSC_ERROR and @ref XTR_TRY_LOG_TSCE.
+ */
 #define XTR_LOG_TSC_ERROR(SINK, ...) XTR_LOG_TSC_LEVEL("E", error, SINK, __VA_ARGS__)
+
+/**
+ *  'Warning' log level variant of @ref XTR_LOG_TSC. An equivalent macro @ref
+ *  XTR_LOG_TSCW is provided as a short-hand alternative. The non-blocking
+ *  variants are @ref XTR_TRY_LOG_TSC_WARN and @ref XTR_TRY_LOG_TSCW.
+ */
 #define XTR_LOG_TSC_WARN(SINK, ...) XTR_LOG_TSC_LEVEL("W", warning, SINK, __VA_ARGS__)
+
+/**
+ *  'Info' log level variant of @ref XTR_LOG_TSC. An equivalent macro @ref
+ *  XTR_LOG_TSCI is provided as a short-hand alternative. The non-blocking
+ *  variants are @ref XTR_TRY_LOG_TSC_INFO and @ref XTR_TRY_LOG_TSCI.
+ */
 #define XTR_LOG_TSC_INFO(SINK, ...) XTR_LOG_TSC_LEVEL("I", info, SINK, __VA_ARGS__)
 
+/**
+ *  'Debug' log level variant of @ref XTR_LOG_TSC. An equivalent macro @ref
+ *  XTR_LOG_TSCD is provided as a short-hand alternative. This macro can be
+ *  disabled at build time by defining @ref XTR_NDEBUG. The non-blocking
+ *  variants are @ref XTR_TRY_LOG_TSC_DEBUG and @ref XTR_TRY_LOG_TSCD.
+ */
 #if defined(XTR_NDEBUG)
 #define XTR_LOG_TSC_DEBUG(...)
 #else
@@ -295,9 +407,9 @@
 #define XTR_LOG_TSCI(SINK, ...) XTR_LOG_TSC_INFO(SINK, __VA_ARGS__)
 #define XTR_LOG_TSCD(SINK, ...) XTR_LOG_TSC_DEBUG(SINK, __VA_ARGS__)
 
-/**
- *
- */
+//
+// XTR_TRY_LOG_TSC
+//
 #define XTR_TRY_LOG_TSC(SINK, ...) \
     XTR_TRY_LOG_TS(SINK, xtr::detail::tsc::now(), __VA_ARGS__)
 

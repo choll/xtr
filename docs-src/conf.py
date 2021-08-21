@@ -29,6 +29,7 @@ author = "Chris E. Holloway"
 extensions = ["breathe"]
 
 breathe_default_project = "xtr"
+breathe_projects = {"xtr": "../build/doxygen/xml"}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]

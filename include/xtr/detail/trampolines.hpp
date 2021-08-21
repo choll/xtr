@@ -32,6 +32,7 @@
 
 namespace xtr::detail
 {
+    // XXX rename?
     // trampoline_no_capture
     // trampoline_fixed_size_capture
     // trampoline_variable_size_capture
@@ -41,10 +42,10 @@ namespace xtr::detail
         fmt::memory_buffer& mbuf,
         std::byte* buf,
         State& state,
-        const char* ts,
+        const char* timestamp,
         std::string& name) noexcept
     {
-        print(mbuf, state.out, state.err, *Format, ts, name);
+        print(mbuf, state.out, state.err, *Format, timestamp, name);
         return buf + sizeof(void(*)());
     }
 
@@ -53,7 +54,7 @@ namespace xtr::detail
         fmt::memory_buffer& mbuf,
         std::byte* buf,
         State& state,
-        [[maybe_unused]] const char* ts,
+        [[maybe_unused]] const char* timestamp,
         std::string& name) noexcept
     {
         typedef void(*fptr_t)();
@@ -70,7 +71,7 @@ namespace xtr::detail
         if constexpr (std::is_same_v<decltype(Format), std::nullptr_t>)
             func(state, name);
         else
-            func(mbuf, state.out, state.err, *Format, ts, name);
+            func(mbuf, state.out, state.err, *Format, timestamp, name);
 
         static_assert(noexcept(func.~Func()));
         std::destroy_at(std::addressof(func));
@@ -83,7 +84,7 @@ namespace xtr::detail
         fmt::memory_buffer& mbuf,
         std::byte* buf,
         State& state,
-        const char* ts,
+        const char* timestamp,
         std::string& name) noexcept
     {
         typedef void(*fptr_t)();
@@ -97,7 +98,7 @@ namespace xtr::detail
         assert(std::uintptr_t(func_pos) % alignof(Func) == 0);
 
         auto& func = *reinterpret_cast<Func*>(func_pos);
-        func(mbuf, state.out, state.err, *Format, ts, name);
+        func(mbuf, state.out, state.err, *Format, timestamp, name);
 
         static_assert(noexcept(func.~Func()));
         std::destroy_at(std::addressof(func));
