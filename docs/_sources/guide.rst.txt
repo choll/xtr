@@ -31,6 +31,9 @@ An application is expected to use multiple sinks, for example a sink per thread,
 sink per component. To support this sinks have a name associated with them which
 is included in the output log message. Sink names do not need to be unique.
 
+Creating and Writing to Sinks
+-----------------------------
+
 Sinks are created by calling :cpp:func:`xtr::logger::get_sink` or via normal
 construction followed by a call to :cpp:func:`xtr::logger::register_sink`.
 Once a sink has been created or registered, it may be written to using one of several
@@ -45,11 +48,24 @@ Examples
 
     xtr::logger log;
 
-    auto s = log.get_sink("Main");
+    xtr::sink s = log.get_sink("Main");
 
     XTR_LOG(s, "Hello world");
 
-.. _copy_val_ref:
+View this example on `Compiler Explorer <https://godbolt.org/z/1GWbEPq8T>`__.
+
+.. code-block:: c++
+
+    #include <xtr/logger.hpp>
+
+    xtr::logger log;
+    xtr::sink s;
+
+    log.register_sink(s, "Main");
+
+    XTR_LOG(s, "Hello world");
+
+View this example on `Compiler Explorer <https://godbolt.org/z/cobj4n3Gx>`__.
 
 Format String Syntax
 --------------------
@@ -58,37 +74,52 @@ Format String Syntax
 
 XTR uses `{fmt} <https://fmt.dev>`__ for formatting, so format strings follow the
 same Python `str.format <https://docs.python.org/3/library/string.html#formatstrings>`__
-style formatting as found in {fmt}. The {fmt} format string documentation can be found at
-https://fmt.dev/latest/syntax.html.
+style formatting as found in {fmt}. The {fmt} format string documentation can be found
+`here <https://fmt.dev/latest/syntax.html>`__.
 
-Creating and Writing to Sinks
------------------------------
+Examples
+~~~~~~~~
 
-Log Levels
-----------
+.. code-block:: c++
 
-Modifying or Viewing Log Levels From the Command Line
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    xtr::logger log;
+
+    xtr::sink s = log.get_sink("Main");
+
+    XTR_LOG(s, "Hello {}", 123); // Hello 123
+    XTR_LOG(s, "Hello {}", 123.456); // Hello 123.456
+    XTR_LOG(s, "Hello {:.1f}", 123.456); // Hello 123.1
+
+View this example on `Compiler Explorer <https://godbolt.org/z/zxs7WThM6>`__.
+
+.. _copy_val_ref:
 
 Passing Arguments by Value or Reference
 ---------------------------------------
 
 The default behaviour of the logger is to copy format arguments into the
-specified sink by value. No allocations will be performed unless an argument type
-is passed to the sink which has a copy constructor that allocates, with the exception
-of `std::string` (see the :ref:`string arguments <string_args>` section for details).
-If copying is undesirable then arguments may be passed by reference by wrapping them
-in a call to :cpp:func:`xtr::nocopy`:
+specified sink by value. Note that no allocations are be performed by the
+logger when this is done. If copying is undesirable then arguments may be
+passed by reference by wrapping them in a call to :cpp:func:`xtr::nocopy`.
+
+Examples
+~~~~~~~~
 
 .. code-block:: c++
 
-    XTR_LOG(sink, "{}", nocopy(arg));
+    xtr::logger log;
 
-versus copying by value:
+    xtr::sink s = log.get_sink("Main");
 
-.. code-block:: c++
+    static std::string arg = "world";
 
-    XTR_LOG(sink, "{}", arg);
+    // Here 'arg' is passed by reference:
+    XTR_LOG(s, "Hello {}", nocopy(arg));
+
+    // Here 'arg' is passed by value:
+    XTR_LOG(s, "Hello {}", arg);
+
+View this example on `Compiler Explorer <https://godbolt.org/z/j5ebhWfdT>`__.
 
 .. _string_args:
 
@@ -101,14 +132,16 @@ following log statement:
 
 .. code-block:: c++
 
-    XTR_LOG(sink, "{}", str);
+    XTR_LOG(s, "{}", str);
 
 If `str` is a :cpp:expr:`std::string`, :cpp:expr:`std::string_view`,
 :cpp:expr:`char*` or :cpp:expr:`char[]` then the contents of `str` will be copied
-into `sink` without incurring any allocations. String data is copied in order
-to provide safe default behaviour regarding the lifetime of the string data. If
-copying the string data is undesirable then string arguments may be wrapped in
-a call to :cpp:func:`xtr::nocopy`:
+into `sink` without incurring any allocations. The entire statement is guaranteed
+to not allocate---i.e. even if :cpp:expr:`std::string` is passed, the
+:cpp:expr:`std::string` copy constructor is not invoked and no allocation occurs.
+String data is copied in order to provide safe default behaviour regarding the
+lifetime of the string data. If copying the string data is undesirable then
+string arguments may be wrapped in a call to :cpp:func:`xtr::nocopy`:
 
 .. code-block:: c++
 
@@ -120,14 +153,64 @@ valid long enough for the logger to process the log statement. Note that only
 the string data must remain valid---so for :cpp:expr:`std::string_view` the
 object itself does not need to remain valid, just the data it references.
 
+Log Levels
+----------
+
+The logger supports debug, info, warning, error and fatal log levels.
+Log statements with these levels may be produced using the
+:c:macro:`XTR_LOG_DEBUG`, :c:macro:`XTR_LOG_INFO`, :c:macro:`XTR_LOG_WARN`
+:c:macro:`XTR_LOG_ERROR` and :c:macro:`XTR_LOG_FATAL` macros, along with
+additional macros which are described in the :ref:`log macros <log-macros>`
+section of the API reference.
+
+Each sink has its own log level, which can be programmatically set or queried
+via :cpp:func:`xtr::sink::set_level` and :cpp:func:`xtr::sink::level`, and can
+be set or queried from the command line using the :ref:`xtrctl <xtrctl>` tool.
+
+Each log level has an order of importance. The listing of levels above is in
+the order of increasing importance---so the least important level is 'debug'
+and the most important level is 'fatal'. If a log statement is made with a
+level that is lower than the current level of the sink then the log statement
+is discarded. Note that this includes any calls made as arguments to the log,
+so in the following example the function :cpp:func:`foo` is not called:
+
+.. code-block:: c++
+
+    #include <xtr/logger.hpp>
+
+    xtr::logger log;
+
+    xtr::sink s = log.get_sink("Main");
+
+    s.set_level(xtr::log_level_t::error);
+
+    XTR_LOG_INFO(s, "Hello {}", foo());
+
+View this example on `Compiler Explorer <https://godbolt.org/z/G4P4zfP6r>`__.
+
+Debug Log Statements
+~~~~~~~~~~~~~~~~~~~~
+
+Debug log statements can be disabled by defining XTR_NDEBUG.
+
+Fatal Log Statements
+~~~~~~~~~~~~~~~~~~~~
+
+Fatal log statements will additionally call :cpp:func:`xtr::sink::sync` followed
+by `abort(3) <https://www.man7.org/linux/man-pages/man3/abort.3.html>`__.
+
+Setting the default log level
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+TODO
+
 Thread Safety
 -------------
 
  * All functions in :cpp:class:`xtr::logger` are thread-safe.
  * No functions in :cpp:class:`xtr::sink` are thread-safe other than
-   ::cpp:class:`xtr::logger::level` and ::cpp:class:`xtr::logger::set_level`.
-   This is because each thread is expected to have its own independent
-   sink (or set of sinks).
+   :cpp:func:`xtr::sink::level` and :cpp:func:`xtr::sink::set_level`.
+   This is because each thread is expected to have its own sink(s).
 
 .. _custom-formatters:
 
@@ -137,18 +220,89 @@ Custom Formatters
 Custom formatters are implemented the same as in `{fmt} <https://fmt.dev>`__,
 which is done either by:
 
-* Providing a :cpp:func:`std::stream& operator<<(std::stream&, T&)` overload.
+* Providing a :cpp:func:`std::stream& operator<<(std::stream&, T&)` overload. Note
+  that fmt/ostream.h must be included.
 * Specializing :cpp:expr:`fmt::formatter<T>` and implementing the `parse` and
   `format` methods as described by the `{fmt}` documentation
   `here <https://fmt.dev/latest/api.html#formatting-user-defined-types>`__.
 
+Examples
+~~~~~~~~
+
+Formatting a custom type via operator<<:
+
+.. code-block:: c++
+
+    #include <fmt/ostream.h>
+
+    #include <ostream>
+
+    namespace
+    {
+        struct custom {};
+
+        std::ostream& operator<<(std::ostream& os, const custom&)
+        {
+            return os << "custom";
+        }
+    }
+
+    int main()
+    {
+        xtr::logger log;
+
+        xtr::sink s = log.get_sink("Main");
+
+        XTR_LOG(s, "Hello {}", custom());
+
+        return 0;
+    }
+
+View this example on `Compiler Explorer <https://godbolt.org/z/cK14z5Kr6>`__.
+
+Formatting a custom type via fmt::formatter:
+
+.. code-block:: c++
+
+    namespace
+    {
+        struct custom {};
+    }
+
+    template<>
+    struct fmt::formatter<custom>
+    {
+        template<typename ParseContext>
+        constexpr auto parse(ParseContext &ctx)
+        {
+            return ctx.begin();
+        }
+
+        template<typename FormatContext>
+        auto format(const custom &, FormatContext &ctx)
+        {
+            return format_to(ctx.out(), "custom");
+        }
+    };
+
+    int main()
+    {
+        xtr::logger log;
+
+        xtr::sink s = log.get_sink("Main");
+
+        XTR_LOG(s, "Hello {}", custom());
+
+        return 0;
+    }
+
+View this example on `Compiler Explorer <https://godbolt.org/z/h5vsv354E>`__.
+
 Time Sources
 ------------
 
-As reading the current time of day can be done in various different ways, with different
-trade-offs, XTR supports 
-
-XTR supports multiple time-sources when logging messages.
+XTR supports multiple time-sources when logging messages, with varying levels of
+accuracy and performance.
 
 * Asynchronous-default: The default time-source is to read `std::chrono::system_clock`
   *in the logger background thread*. This is to avoid the expense of reading the clock
@@ -160,21 +314,31 @@ XTR supports multiple time-sources when logging messages.
 * Synchronous-Coarse
 * Synchronous-Custom
 
-Default
-~~~~~~~
+Basic with Default Clock
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+For :cpp:def
+
+
+See the :ref:`basic log macros <basic-macros>` section of the API reference for
+details.
+
+Basic with Custom Clock
+~~~~~~~~~~~~~~~~~~~~~~~
+
 
 TSC
 ~~~
 
 TSC Calibration
 
-Real-time Clock (clock_gettime)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Real-time Clock
+~~~~~~~~~~~~~~~
 
 XTR_LOG_RTC, XTR_TRY_LOG_RTC
 
-Arbitrary Sources
-~~~~~~~~~~~~~~~~~
+User-Supplied Timestamp
+~~~~~~~~~~~~~~~~~~~~~~~
 
 XTR_LOG_TS,  XTR_TRY_LOG_TS
 

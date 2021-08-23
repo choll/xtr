@@ -91,25 +91,37 @@
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quick-Start Guide</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">User Guide</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#creating-and-writing-to-sinks">Creating and Writing to Sinks</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#examples">Examples</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#format-string-syntax">Format String Syntax</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#creating-and-writing-to-sinks">Creating and Writing to Sinks</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#log-levels">Log Levels</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#modifying-or-viewing-log-levels-from-the-command-line">Modifying or Viewing Log Levels From the Command Line</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#format-string-syntax">Format String Syntax</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id2">Examples</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#passing-arguments-by-value-or-reference">Passing Arguments by Value or Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#passing-arguments-by-value-or-reference">Passing Arguments by Value or Reference</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id3">Examples</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#string-arguments">String Arguments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#log-levels">Log Levels</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#debug-log-statements">Debug Log Statements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fatal-log-statements">Fatal Log Statements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#setting-the-default-log-level">Setting the default log level</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#thread-safety">Thread Safety</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#custom-formatters">Custom Formatters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#custom-formatters">Custom Formatters</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id5">Examples</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#time-sources">Time Sources</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#default">Default</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#basic-with-default-clock">Basic with Default Clock</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#basic-with-custom-clock">Basic with Custom Clock</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#tsc">TSC</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#real-time-clock-clock-gettime">Real-time Clock (clock_gettime)</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#arbitrary-sources">Arbitrary Sources</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#real-time-clock">Real-time Clock</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#user-supplied-timestamp">User-Supplied Timestamp</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#customising-the-time-format">Customising the Time Format</a></li>
@@ -219,6 +231,9 @@ to disk or passes it to a custom back-end if one is in use.</p>
 <p>An application is expected to use multiple sinks, for example a sink per thread, or
 sink per component. To support this sinks have a name associated with them which
 is included in the output log message. Sink names do not need to be unique.</p>
+</div>
+<div class="section" id="creating-and-writing-to-sinks">
+<h2>Creating and Writing to Sinks<a class="headerlink" href="#creating-and-writing-to-sinks" title="Permalink to this headline">¶</a></h2>
 <p>Sinks are created by calling <a class="reference internal" href="api.html#_CPPv4N3xtr6logger8get_sinkENSt6stringE" title="xtr::logger::get_sink"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">xtr::logger::get_sink()</span></code></a> or via normal
 construction followed by a call to <a class="reference internal" href="api.html#_CPPv4N3xtr6logger13register_sinkER4sinkNSt6stringE" title="xtr::logger::register_sink"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">xtr::logger::register_sink()</span></code></a>.
 Once a sink has been created or registered, it may be written to using one of several
@@ -229,43 +244,67 @@ log macros which are described in the <a class="reference internal" href="api.ht
 
 <span class="n">xtr</span><span class="o">::</span><span class="n">logger</span> <span class="n">log</span><span class="p">;</span>
 
-<span class="k">auto</span> <span class="n">s</span> <span class="o">=</span> <span class="n">log</span><span class="p">.</span><span class="n">get_sink</span><span class="p">(</span><span class="s">&quot;Main&quot;</span><span class="p">);</span>
+<span class="n">xtr</span><span class="o">::</span><span class="n">sink</span> <span class="n">s</span> <span class="o">=</span> <span class="n">log</span><span class="p">.</span><span class="n">get_sink</span><span class="p">(</span><span class="s">&quot;Main&quot;</span><span class="p">);</span>
 
 <span class="n">XTR_LOG</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="s">&quot;Hello world&quot;</span><span class="p">);</span>
 </pre></div>
 </div>
+<p>View this example on <a class="reference external" href="https://godbolt.org/z/1GWbEPq8T">Compiler Explorer</a>.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;xtr/logger.hpp&gt;</span><span class="cp"></span>
+
+<span class="n">xtr</span><span class="o">::</span><span class="n">logger</span> <span class="n">log</span><span class="p">;</span>
+<span class="n">xtr</span><span class="o">::</span><span class="n">sink</span> <span class="n">s</span><span class="p">;</span>
+
+<span class="n">log</span><span class="p">.</span><span class="n">register_sink</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="s">&quot;Main&quot;</span><span class="p">);</span>
+
+<span class="n">XTR_LOG</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="s">&quot;Hello world&quot;</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>View this example on <a class="reference external" href="https://godbolt.org/z/cobj4n3Gx">Compiler Explorer</a>.</p>
 </div>
 </div>
 <div class="section" id="format-string-syntax">
-<span id="copy-val-ref"></span><h2>Format String Syntax<a class="headerlink" href="#format-string-syntax" title="Permalink to this headline">¶</a></h2>
+<h2>Format String Syntax<a class="headerlink" href="#format-string-syntax" title="Permalink to this headline">¶</a></h2>
 <p>XTR uses <a class="reference external" href="https://fmt.dev">{fmt}</a> for formatting, so format strings follow the
 same Python <a class="reference external" href="https://docs.python.org/3/library/string.html#formatstrings">str.format</a>
-style formatting as found in {fmt}. The {fmt} format string documentation can be found at
-<a class="reference external" href="https://fmt.dev/latest/syntax.html">https://fmt.dev/latest/syntax.html</a>.</p>
+style formatting as found in {fmt}. The {fmt} format string documentation can be found
+<a class="reference external" href="https://fmt.dev/latest/syntax.html">here</a>.</p>
+<div class="section" id="id2">
+<h3>Examples<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">xtr</span><span class="o">::</span><span class="n">logger</span> <span class="n">log</span><span class="p">;</span>
+
+<span class="n">xtr</span><span class="o">::</span><span class="n">sink</span> <span class="n">s</span> <span class="o">=</span> <span class="n">log</span><span class="p">.</span><span class="n">get_sink</span><span class="p">(</span><span class="s">&quot;Main&quot;</span><span class="p">);</span>
+
+<span class="n">XTR_LOG</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="s">&quot;Hello {}&quot;</span><span class="p">,</span> <span class="mi">123</span><span class="p">);</span> <span class="c1">// Hello 123</span>
+<span class="n">XTR_LOG</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="s">&quot;Hello {}&quot;</span><span class="p">,</span> <span class="mf">123.456</span><span class="p">);</span> <span class="c1">// Hello 123.456</span>
+<span class="n">XTR_LOG</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="s">&quot;Hello {:.1f}&quot;</span><span class="p">,</span> <span class="mf">123.456</span><span class="p">);</span> <span class="c1">// Hello 123.1</span>
+</pre></div>
 </div>
-<div class="section" id="creating-and-writing-to-sinks">
-<h2>Creating and Writing to Sinks<a class="headerlink" href="#creating-and-writing-to-sinks" title="Permalink to this headline">¶</a></h2>
-</div>
-<div class="section" id="log-levels">
-<h2>Log Levels<a class="headerlink" href="#log-levels" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="modifying-or-viewing-log-levels-from-the-command-line">
-<h3>Modifying or Viewing Log Levels From the Command Line<a class="headerlink" href="#modifying-or-viewing-log-levels-from-the-command-line" title="Permalink to this headline">¶</a></h3>
+<p>View this example on <a class="reference external" href="https://godbolt.org/z/zxs7WThM6">Compiler Explorer</a>.</p>
 </div>
 </div>
 <div class="section" id="passing-arguments-by-value-or-reference">
-<h2>Passing Arguments by Value or Reference<a class="headerlink" href="#passing-arguments-by-value-or-reference" title="Permalink to this headline">¶</a></h2>
+<span id="copy-val-ref"></span><h2>Passing Arguments by Value or Reference<a class="headerlink" href="#passing-arguments-by-value-or-reference" title="Permalink to this headline">¶</a></h2>
 <p>The default behaviour of the logger is to copy format arguments into the
-specified sink by value. No allocations will be performed unless an argument type
-is passed to the sink which has a copy constructor that allocates, with the exception
-of <cite>std::string</cite> (see the <a class="reference internal" href="#string-args"><span class="std std-ref">string arguments</span></a> section for details).
-If copying is undesirable then arguments may be passed by reference by wrapping them
-in a call to <a class="reference internal" href="api.html#_CPPv4I0EN3xtr6nocopyEDaRK1T" title="xtr::nocopy"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">xtr::nocopy()</span></code></a>:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">XTR_LOG</span><span class="p">(</span><span class="n">sink</span><span class="p">,</span> <span class="s">&quot;{}&quot;</span><span class="p">,</span> <span class="n">nocopy</span><span class="p">(</span><span class="n">arg</span><span class="p">));</span>
+specified sink by value. Note that no allocations are be performed by the
+logger when this is done. If copying is undesirable then arguments may be
+passed by reference by wrapping them in a call to <a class="reference internal" href="api.html#_CPPv4I0EN3xtr6nocopyEDaRK1T" title="xtr::nocopy"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">xtr::nocopy()</span></code></a>.</p>
+<div class="section" id="id3">
+<h3>Examples<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">xtr</span><span class="o">::</span><span class="n">logger</span> <span class="n">log</span><span class="p">;</span>
+
+<span class="n">xtr</span><span class="o">::</span><span class="n">sink</span> <span class="n">s</span> <span class="o">=</span> <span class="n">log</span><span class="p">.</span><span class="n">get_sink</span><span class="p">(</span><span class="s">&quot;Main&quot;</span><span class="p">);</span>
+
+<span class="k">static</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">arg</span> <span class="o">=</span> <span class="s">&quot;world&quot;</span><span class="p">;</span>
+
+<span class="c1">// Here &#39;arg&#39; is passed by reference:</span>
+<span class="n">XTR_LOG</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="s">&quot;Hello {}&quot;</span><span class="p">,</span> <span class="n">nocopy</span><span class="p">(</span><span class="n">arg</span><span class="p">));</span>
+
+<span class="c1">// Here &#39;arg&#39; is passed by value:</span>
+<span class="n">XTR_LOG</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="s">&quot;Hello {}&quot;</span><span class="p">,</span> <span class="n">arg</span><span class="p">);</span>
 </pre></div>
 </div>
-<p>versus copying by value:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">XTR_LOG</span><span class="p">(</span><span class="n">sink</span><span class="p">,</span> <span class="s">&quot;{}&quot;</span><span class="p">,</span> <span class="n">arg</span><span class="p">);</span>
-</pre></div>
+<p>View this example on <a class="reference external" href="https://godbolt.org/z/j5ebhWfdT">Compiler Explorer</a>.</p>
 </div>
 </div>
 <div class="section" id="string-arguments">
@@ -273,15 +312,17 @@ in a call to <a class="reference internal" href="api.html#_CPPv4I0EN3xtr6nocopyE
 <p>Passing strings to the logger is guaranteed to not allocate memory, and does
 not assume anything about the lifetime of the string data. i.e. for the
 following log statement:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">XTR_LOG</span><span class="p">(</span><span class="n">sink</span><span class="p">,</span> <span class="s">&quot;{}&quot;</span><span class="p">,</span> <span class="n">str</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">XTR_LOG</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="s">&quot;{}&quot;</span><span class="p">,</span> <span class="n">str</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>If <cite>str</cite> is a <span class="cpp-expr sig sig-inline cpp"><span class="n">std</span><span class="p">::</span><span class="n">string</span></span>, <span class="cpp-expr sig sig-inline cpp"><span class="n">std</span><span class="p">::</span><span class="n">string_view</span></span>,
 <span class="cpp-expr sig sig-inline cpp"><span class="kt">char</span><span class="p">*</span></span> or <span class="cpp-expr sig sig-inline cpp"><span class="kt">char</span><span class="p">[</span><span class="p">]</span></span> then the contents of <cite>str</cite> will be copied
-into <cite>sink</cite> without incurring any allocations. String data is copied in order
-to provide safe default behaviour regarding the lifetime of the string data. If
-copying the string data is undesirable then string arguments may be wrapped in
-a call to <a class="reference internal" href="api.html#_CPPv4I0EN3xtr6nocopyEDaRK1T" title="xtr::nocopy"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">xtr::nocopy()</span></code></a>:</p>
+into <cite>sink</cite> without incurring any allocations. The entire statement is guaranteed
+to not allocate—i.e. even if <span class="cpp-expr sig sig-inline cpp"><span class="n">std</span><span class="p">::</span><span class="n">string</span></span> is passed, the
+<span class="cpp-expr sig sig-inline cpp"><span class="n">std</span><span class="p">::</span><span class="n">string</span></span> copy constructor is not invoked and no allocation occurs.
+String data is copied in order to provide safe default behaviour regarding the
+lifetime of the string data. If copying the string data is undesirable then
+string arguments may be wrapped in a call to <a class="reference internal" href="api.html#_CPPv4I0EN3xtr6nocopyEDaRK1T" title="xtr::nocopy"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">xtr::nocopy()</span></code></a>:</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">XTR_LOG</span><span class="p">(</span><span class="n">sink</span><span class="p">,</span> <span class="s">&quot;{}&quot;</span><span class="p">,</span> <span class="n">nocopy</span><span class="p">(</span><span class="n">str</span><span class="p">));</span>
 </pre></div>
 </div>
@@ -291,34 +332,142 @@ valid long enough for the logger to process the log statement. Note that only
 the string data must remain valid—so for <span class="cpp-expr sig sig-inline cpp"><span class="n">std</span><span class="p">::</span><span class="n">string_view</span></span> the
 object itself does not need to remain valid, just the data it references.</p>
 </div>
+<div class="section" id="log-levels">
+<h2>Log Levels<a class="headerlink" href="#log-levels" title="Permalink to this headline">¶</a></h2>
+<p>The logger supports debug, info, warning, error and fatal log levels.
+Log statements with these levels may be produced using the
+<a class="reference internal" href="api.html#c.XTR_LOG_DEBUG" title="XTR_LOG_DEBUG"><code class="xref c c-macro docutils literal notranslate"><span class="pre">XTR_LOG_DEBUG</span></code></a>, <a class="reference internal" href="api.html#c.XTR_LOG_INFO" title="XTR_LOG_INFO"><code class="xref c c-macro docutils literal notranslate"><span class="pre">XTR_LOG_INFO</span></code></a>, <a class="reference internal" href="api.html#c.XTR_LOG_WARN" title="XTR_LOG_WARN"><code class="xref c c-macro docutils literal notranslate"><span class="pre">XTR_LOG_WARN</span></code></a>
+<a class="reference internal" href="api.html#c.XTR_LOG_ERROR" title="XTR_LOG_ERROR"><code class="xref c c-macro docutils literal notranslate"><span class="pre">XTR_LOG_ERROR</span></code></a> and <a class="reference internal" href="api.html#c.XTR_LOG_FATAL" title="XTR_LOG_FATAL"><code class="xref c c-macro docutils literal notranslate"><span class="pre">XTR_LOG_FATAL</span></code></a> macros, along with
+additional macros which are described in the <a class="reference internal" href="api.html#log-macros"><span class="std std-ref">log macros</span></a>
+section of the API reference.</p>
+<p>Each sink has its own log level, which can be programmatically set or queried
+via <a class="reference internal" href="api.html#_CPPv4N3xtr4sink9set_levelE11log_level_t" title="xtr::sink::set_level"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">xtr::sink::set_level()</span></code></a> and <a class="reference internal" href="api.html#_CPPv4NK3xtr4sink5levelEv" title="xtr::sink::level"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">xtr::sink::level()</span></code></a>, and can
+be set or queried from the command line using the <a class="reference internal" href="xtrctl.html#xtrctl"><span class="std std-ref">xtrctl</span></a> tool.</p>
+<p>Each log level has an order of importance. The listing of levels above is in
+the order of increasing importance—so the least important level is ‘debug’
+and the most important level is ‘fatal’. If a log statement is made with a
+level that is lower than the current level of the sink then the log statement
+is discarded. Note that this includes any calls made as arguments to the log,
+so in the following example the function <code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">foo()</span></code> is not called:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;xtr/logger.hpp&gt;</span><span class="cp"></span>
+
+<span class="n">xtr</span><span class="o">::</span><span class="n">logger</span> <span class="n">log</span><span class="p">;</span>
+
+<span class="n">xtr</span><span class="o">::</span><span class="n">sink</span> <span class="n">s</span> <span class="o">=</span> <span class="n">log</span><span class="p">.</span><span class="n">get_sink</span><span class="p">(</span><span class="s">&quot;Main&quot;</span><span class="p">);</span>
+
+<span class="n">s</span><span class="p">.</span><span class="n">set_level</span><span class="p">(</span><span class="n">xtr</span><span class="o">::</span><span class="n">log_level_t</span><span class="o">::</span><span class="n">error</span><span class="p">);</span>
+
+<span class="n">XTR_LOG_INFO</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="s">&quot;Hello {}&quot;</span><span class="p">,</span> <span class="n">foo</span><span class="p">());</span>
+</pre></div>
+</div>
+<p>View this example on <a class="reference external" href="https://godbolt.org/z/G4P4zfP6r">Compiler Explorer</a>.</p>
+<div class="section" id="debug-log-statements">
+<h3>Debug Log Statements<a class="headerlink" href="#debug-log-statements" title="Permalink to this headline">¶</a></h3>
+<p>Debug log statements can be disabled by defining XTR_NDEBUG.</p>
+</div>
+<div class="section" id="fatal-log-statements">
+<h3>Fatal Log Statements<a class="headerlink" href="#fatal-log-statements" title="Permalink to this headline">¶</a></h3>
+<p>Fatal log statements will additionally call <a class="reference internal" href="api.html#_CPPv4N3xtr4sink4syncEv" title="xtr::sink::sync"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">xtr::sink::sync()</span></code></a> followed
+by <a class="reference external" href="https://www.man7.org/linux/man-pages/man3/abort.3.html">abort(3)</a>.</p>
+</div>
+<div class="section" id="setting-the-default-log-level">
+<h3>Setting the default log level<a class="headerlink" href="#setting-the-default-log-level" title="Permalink to this headline">¶</a></h3>
+<p>TODO</p>
+</div>
+</div>
 <div class="section" id="thread-safety">
 <h2>Thread Safety<a class="headerlink" href="#thread-safety" title="Permalink to this headline">¶</a></h2>
 <blockquote>
 <div><ul class="simple">
 <li><p>All functions in <a class="reference internal" href="api.html#_CPPv4N3xtr6loggerE" title="xtr::logger"><code class="xref cpp cpp-class docutils literal notranslate"><span class="pre">xtr::logger</span></code></a> are thread-safe.</p></li>
 <li><p>No functions in <a class="reference internal" href="api.html#_CPPv4N3xtr4sinkE" title="xtr::sink"><code class="xref cpp cpp-class docutils literal notranslate"><span class="pre">xtr::sink</span></code></a> are thread-safe other than
-:<code class="xref cpp cpp-class docutils literal notranslate"><span class="pre">xtr::logger::level</span></code> and :<code class="xref cpp cpp-class docutils literal notranslate"><span class="pre">xtr::logger::set_level</span></code>.
-This is because each thread is expected to have its own independent
-sink (or set of sinks).</p></li>
+<a class="reference internal" href="api.html#_CPPv4NK3xtr4sink5levelEv" title="xtr::sink::level"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">xtr::sink::level()</span></code></a> and <a class="reference internal" href="api.html#_CPPv4N3xtr4sink9set_levelE11log_level_t" title="xtr::sink::set_level"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">xtr::sink::set_level()</span></code></a>.
+This is because each thread is expected to have its own sink(s).</p></li>
 </ul>
 </div></blockquote>
 </div>
 <div class="section" id="custom-formatters">
-<span id="id2"></span><h2>Custom Formatters<a class="headerlink" href="#custom-formatters" title="Permalink to this headline">¶</a></h2>
+<span id="id4"></span><h2>Custom Formatters<a class="headerlink" href="#custom-formatters" title="Permalink to this headline">¶</a></h2>
 <p>Custom formatters are implemented the same as in <a class="reference external" href="https://fmt.dev">{fmt}</a>,
 which is done either by:</p>
 <ul class="simple">
-<li><p>Providing a <code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">std::stream&amp;</span> <span class="pre">operator&lt;&lt;(std::stream&amp;,</span> <span class="pre">T&amp;)()</span></code> overload.</p></li>
+<li><p>Providing a <code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">std::stream&amp;</span> <span class="pre">operator&lt;&lt;(std::stream&amp;,</span> <span class="pre">T&amp;)()</span></code> overload. Note
+that fmt/ostream.h must be included.</p></li>
 <li><p>Specializing <span class="cpp-expr sig sig-inline cpp"><span class="n">fmt</span><span class="p">::</span><span class="n">formatter</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span></span> and implementing the <cite>parse</cite> and
 <cite>format</cite> methods as described by the <cite>{fmt}</cite> documentation
 <a class="reference external" href="https://fmt.dev/latest/api.html#formatting-user-defined-types">here</a>.</p></li>
 </ul>
+<div class="section" id="id5">
+<h3>Examples<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
+<p>Formatting a custom type via operator&lt;&lt;:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;fmt/ostream.h&gt;</span><span class="cp"></span>
+
+<span class="cp">#include</span> <span class="cpf">&lt;ostream&gt;</span><span class="cp"></span>
+
+<span class="k">namespace</span>
+<span class="p">{</span>
+    <span class="k">struct</span> <span class="n">custom</span> <span class="p">{};</span>
+
+    <span class="n">std</span><span class="o">::</span><span class="n">ostream</span><span class="o">&amp;</span> <span class="k">operator</span><span class="o">&lt;&lt;</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">ostream</span><span class="o">&amp;</span> <span class="n">os</span><span class="p">,</span> <span class="k">const</span> <span class="n">custom</span><span class="o">&amp;</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="n">os</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;custom&quot;</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="n">main</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="n">xtr</span><span class="o">::</span><span class="n">logger</span> <span class="n">log</span><span class="p">;</span>
+
+    <span class="n">xtr</span><span class="o">::</span><span class="n">sink</span> <span class="n">s</span> <span class="o">=</span> <span class="n">log</span><span class="p">.</span><span class="n">get_sink</span><span class="p">(</span><span class="s">&quot;Main&quot;</span><span class="p">);</span>
+
+    <span class="n">XTR_LOG</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="s">&quot;Hello {}&quot;</span><span class="p">,</span> <span class="n">custom</span><span class="p">());</span>
+
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>View this example on <a class="reference external" href="https://godbolt.org/z/cK14z5Kr6">Compiler Explorer</a>.</p>
+<p>Formatting a custom type via fmt::formatter:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">namespace</span>
+<span class="p">{</span>
+    <span class="k">struct</span> <span class="n">custom</span> <span class="p">{};</span>
+<span class="p">}</span>
+
+<span class="k">template</span><span class="o">&lt;&gt;</span>
+<span class="k">struct</span> <span class="n">fmt</span><span class="o">::</span><span class="n">formatter</span><span class="o">&lt;</span><span class="n">custom</span><span class="o">&gt;</span>
+<span class="p">{</span>
+    <span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">ParseContext</span><span class="o">&gt;</span>
+    <span class="k">constexpr</span> <span class="k">auto</span> <span class="n">parse</span><span class="p">(</span><span class="n">ParseContext</span> <span class="o">&amp;</span><span class="n">ctx</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="n">ctx</span><span class="p">.</span><span class="n">begin</span><span class="p">();</span>
+    <span class="p">}</span>
+
+    <span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">FormatContext</span><span class="o">&gt;</span>
+    <span class="k">auto</span> <span class="n">format</span><span class="p">(</span><span class="k">const</span> <span class="n">custom</span> <span class="o">&amp;</span><span class="p">,</span> <span class="n">FormatContext</span> <span class="o">&amp;</span><span class="n">ctx</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="n">format_to</span><span class="p">(</span><span class="n">ctx</span><span class="p">.</span><span class="n">out</span><span class="p">(),</span> <span class="s">&quot;custom&quot;</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">};</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="n">xtr</span><span class="o">::</span><span class="n">logger</span> <span class="n">log</span><span class="p">;</span>
+
+    <span class="n">xtr</span><span class="o">::</span><span class="n">sink</span> <span class="n">s</span> <span class="o">=</span> <span class="n">log</span><span class="p">.</span><span class="n">get_sink</span><span class="p">(</span><span class="s">&quot;Main&quot;</span><span class="p">);</span>
+
+    <span class="n">XTR_LOG</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="s">&quot;Hello {}&quot;</span><span class="p">,</span> <span class="n">custom</span><span class="p">());</span>
+
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>View this example on <a class="reference external" href="https://godbolt.org/z/h5vsv354E">Compiler Explorer</a>.</p>
+</div>
 </div>
 <div class="section" id="time-sources">
 <h2>Time Sources<a class="headerlink" href="#time-sources" title="Permalink to this headline">¶</a></h2>
-<p>As reading the current time of day can be done in various different ways, with different
-trade-offs, XTR supports</p>
-<p>XTR supports multiple time-sources when logging messages.</p>
+<p>XTR supports multiple time-sources when logging messages, with varying levels of
+accuracy and performance.</p>
 <ul class="simple">
 <li><p>Asynchronous-default: The default time-source is to read <cite>std::chrono::system_clock</cite>
 <em>in the logger background thread</em>. This is to avoid the expense of reading the clock
@@ -329,19 +478,25 @@ due to the time the log message spends on the queue.</p></li>
 <li><p>Synchronous-Coarse</p></li>
 <li><p>Synchronous-Custom</p></li>
 </ul>
-<div class="section" id="default">
-<h3>Default<a class="headerlink" href="#default" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="basic-with-default-clock">
+<h3>Basic with Default Clock<a class="headerlink" href="#basic-with-default-clock" title="Permalink to this headline">¶</a></h3>
+<p>For :cpp:def</p>
+<p>See the <a class="reference internal" href="api.html#basic-macros"><span class="std std-ref">basic log macros</span></a> section of the API reference for
+details.</p>
+</div>
+<div class="section" id="basic-with-custom-clock">
+<h3>Basic with Custom Clock<a class="headerlink" href="#basic-with-custom-clock" title="Permalink to this headline">¶</a></h3>
 </div>
 <div class="section" id="tsc">
 <h3>TSC<a class="headerlink" href="#tsc" title="Permalink to this headline">¶</a></h3>
 <p>TSC Calibration</p>
 </div>
-<div class="section" id="real-time-clock-clock-gettime">
-<h3>Real-time Clock (clock_gettime)<a class="headerlink" href="#real-time-clock-clock-gettime" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="real-time-clock">
+<h3>Real-time Clock<a class="headerlink" href="#real-time-clock" title="Permalink to this headline">¶</a></h3>
 <p>XTR_LOG_RTC, XTR_TRY_LOG_RTC</p>
 </div>
-<div class="section" id="arbitrary-sources">
-<h3>Arbitrary Sources<a class="headerlink" href="#arbitrary-sources" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="user-supplied-timestamp">
+<h3>User-Supplied Timestamp<a class="headerlink" href="#user-supplied-timestamp" title="Permalink to this headline">¶</a></h3>
 <p>XTR_LOG_TS,  XTR_TRY_LOG_TS</p>
 </div>
 </div>
