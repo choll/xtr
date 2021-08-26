@@ -341,9 +341,19 @@ public:
      */
     void register_sink(sink& s, std::string name) noexcept;
 
+    /**
+     * TODO
+     */
     void set_output_stream(FILE* stream) noexcept;
+
+    /**
+     * TODO
+     */
     void set_error_stream(FILE* stream) noexcept;
 
+    /**
+     * TODO
+     */
     template<typename Func>
     void set_output_function(Func&& f) noexcept
     {
@@ -357,6 +367,9 @@ public:
         control_.sync();
     }
 
+    /**
+     * TODO
+     */
     template<typename Func>
     void set_error_function(Func&& f) noexcept
     {
@@ -369,6 +382,9 @@ public:
         control_.sync();
     }
 
+    /**
+     * TODO
+     */
     template<typename Func>
     void set_flush_function(Func&& f) noexcept
     {
@@ -379,6 +395,9 @@ public:
         control_.sync();
     }
 
+    /**
+     * TODO
+     */
     template<typename Func>
     void set_sync_function(Func&& f) noexcept
     {
@@ -389,6 +408,9 @@ public:
         control_.sync();
     }
 
+    /**
+     * TODO
+     */
     template<typename Func>
     void set_reopen_function(Func&& f) noexcept
     {
@@ -399,6 +421,9 @@ public:
         control_.sync();
     }
 
+    /**
+     * TODO
+     */
     template<typename Func>
     void set_close_function(Func&& f) noexcept
     {
@@ -409,6 +434,9 @@ public:
         control_.close();
     }
 
+    /**
+     * TODO
+     */
     void set_command_path(std::string path) noexcept;
 
 private:

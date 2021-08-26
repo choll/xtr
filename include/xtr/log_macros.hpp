@@ -48,7 +48,7 @@
 
 /**
  *  'Fatal' log level variant of @ref XTR_LOG. When this macro is invoked, the
- *  log message is written, @ref xtr::logger::sink::sync is invoked, then the
+ *  log message is written, @ref xtr::sink::sync is invoked, then the
  *  program is terminated via abort(3). An equivalent macro @ref XTR_LOGF
  *  is provided as a short-hand alternative. The non-blocking variants are
  *  @ref XTR_TRY_LOG_FATAL and @ref XTR_TRY_LOGF.
@@ -123,10 +123,10 @@
 /**
  * User-supplied timestamp log macro, logs the specified format string and
  * arguments to the given sink along with the specified timestamp, blocking if
- * the sink is full. The timestamp may be any type so long as it has a
- * formatter defined (see :ref:custom-formatters). xtr::timestamp is provided
- * as a convenience type which is compatible with std::timestamp and has a
- * formatter pre-defined. A formatter for std::timestamp isn't defined in
+ * the sink is full. The timestamp may be any type as long as it has a
+ * formatter defined (see :ref:custom-formatters). xtr::timespec is provided
+ * as a convenience type which is compatible with std::timespec and has a
+ * formatter pre-defined. A formatter for std::timespec isn't defined in
  * order to avoid conflict with user code that also defines such a formatter.
  * The non-blocking variant of this macro is @ref XTR_TRY_LOG_TS which will
  * discard the message if the sink is full.
@@ -147,12 +147,12 @@
         LEVEL,                                                      \
         SINK,                                                       \
         FMT,                                                        \
-        TS                                                          \
+        (TS)                                                          \
         __VA_OPT__(,) __VA_ARGS__)
 
 /**
  *  'Fatal' log level variant of @ref XTR_LOG_TS. When this macro is invoked,
- *  the log message is written, @ref xtr::logger::sink::sync is invoked, then
+ *  the log message is written, @ref xtr::sink::sync is invoked, then
  *  the program is terminated via abort(3). An equivalent macro @ref XTR_LOG_TSF
  *  is provided as a short-hand alternative. The non-blocking variants are
  *  @ref XTR_TRY_LOG_TS_FATAL and @ref XTR_TRY_LOG_TSF.
@@ -247,7 +247,7 @@
  * Timestamped log macro, logs the specified format string and arguments to
  * the given sink along with a timestamp obtained by invoking
  * <a href="https://www.man7.org/linux/man-pages/man3/clock_gettime.3.html">clock_gettime(3)</a>
- * with clock source CLOCK_REALTIME_COARSE on Linux or CLOCK_REALTIME_FAST
+ * with a clock source of CLOCK_REALTIME_COARSE on Linux or CLOCK_REALTIME_FAST
  * on FreeBSD. Depending on the host CPU this may be faster than @ref
  * XTR_LOG_TSC. The non-blocking variant of this macro is @ref XTR_TRY_LOG_RTC
  * which will discard the message if the sink is full.
@@ -265,7 +265,7 @@
 
 /**
  *  'Fatal' log level variant of @ref XTR_LOG_RTC. When this macro is invoked,
- *  the log message is written, @ref xtr::logger::sink::sync is invoked, then
+ *  the log message is written, @ref xtr::sink::sync is invoked, then
  *  the program is terminated via abort(3). An equivalent macro @ref XTR_LOG_RTCF
  *  is provided as a short-hand alternative. The non-blocking variants are
  *  @ref XTR_TRY_LOG_RTC_FATAL and @ref XTR_TRY_LOG_RTCF.
@@ -361,7 +361,7 @@
 
 /**
  *  'Fatal' log level variant of @ref XTR_LOG_TSC. When this macro is invoked,
- *  the log message is written, @ref xtr::logger::sink::sync is invoked, then
+ *  the log message is written, @ref xtr::sink::sync is invoked, then
  *  the program is terminated via abort(3). An equivalent macro @ref XTR_LOG_TSCF
  *  is provided as a short-hand alternative. The non-blocking variants are
  *  @ref XTR_TRY_LOG_TSC_FATAL and @ref XTR_TRY_LOG_TSCF.

@@ -47,7 +47,7 @@ Real-time Clock
 .. doxygendefine:: XTR_LOG_RTC_ERROR
 .. doxygendefine:: XTR_LOG_RTC_FATAL
 
-.. _user-macros:
+.. _user-supplied-timestamp-macros:
 
 User-Supplied Timestamp
 ^^^^^^^^^^^^^^^^^^^^^^^

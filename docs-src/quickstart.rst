@@ -38,7 +38,7 @@ Creating a sink:
 
     xtr::logger log;
 
-    auto s = log.get_sink("Main");
+    xtr::sink s = log.get_sink("Main");
 
 Writing to the log, blocking if the sink is full, reading the timestamp
 in the background thread [#timestamps]_:
@@ -62,8 +62,8 @@ Write to the log, immediately reading the timestamp from the TSC:
 
 Write to the log, immediately reading the timestamp using
 `clock_gettime(3) <https://www.man7.org/linux/man-pages/man3/clock_gettime.3.html>`__
-with a clock of either CLOCK_REALTIME_COARSE, CLOCK_REALTIME_FAST or
-CLOCK_REALTIME, depending upon what is supported:
+with a clock source of either CLOCK_REALTIME_COARSE on Linux or CLOCK_REALTIME_FAST
+on FreeBSD:
 
 .. code-block:: c++
 
@@ -94,7 +94,8 @@ error and fatal---see :cpp:enum:`xtr::log_level_t`.
 
     XTR_LOG_INFO(s, "Hello world"); // Dropped
 
-Fatal errors will log and then terminate the program using abort(3):
+Fatal errors will log and then terminate the program using
+`abort(3) <https://www.man7.org/linux/man-pages/man3/abort.3.html>`__:
 
 .. code-block:: c++
 
@@ -131,7 +132,6 @@ Arguments may also be moved in to the logger:
                  the background thread reads the event from the sink. This is
                  less accurate, but faster than reading the time at the log
                  call-site. If reading the time at the call-site is preferred,
-                 use XTR_LOG_TSC or XTR_LOG_RTC.
-
-
-
+                 use XTR_LOG_TSC or XTR_LOG_RTC. See the
+                 :ref:`time sources <time-sources>` section of the user guide
+                 for further information.
