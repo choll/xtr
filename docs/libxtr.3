@@ -98,7 +98,7 @@ Timestamped log macro, logs the specified format string and arguments to the giv
 .INDENT 0.0
 .TP
 .B XTR_LOG_RTC(SINK, \&...) 
-Timestamped log macro, logs the specified format string and arguments to the given sink along with a timestamp obtained by invoking \fI\%clock_gettime(3)\fP with clock source CLOCK_REALTIME_COARSE on Linux or CLOCK_REALTIME_FAST on FreeBSD. Depending on the host CPU this may be faster than XTR_LOG_TSC. The non\-blocking variant of this macro is XTR_TRY_LOG_RTC which will discard the message if the sink is full. 
+Timestamped log macro, logs the specified format string and arguments to the given sink along with a timestamp obtained by invoking \fI\%clock_gettime(3)\fP <\fBhttps://www.man7.org/linux/man-pages/man3/clock_gettime.3.html\fP> with clock source CLOCK_REALTIME_COARSE on Linux or CLOCK_REALTIME_FAST on FreeBSD. Depending on the host CPU this may be faster than XTR_LOG_TSC. The non\-blocking variant of this macro is XTR_TRY_LOG_RTC which will discard the message if the sink is full. 
 .UNINDENT
 .INDENT 0.0
 .TP

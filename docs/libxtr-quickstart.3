@@ -33,9 +33,9 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .SH INSTALLING
 .sp
 The easiest way to install XTR is via Conan. If you are not using Conan, see the
-\fI\%INSTALL\fP guide, or for the
+\fI\%INSTALL\fP <\fBhttps://github.com/choll/xtr/blob/master/INSTALL.md\fP> guide, or for the
 truly impatient there is a single\-include file
-\fI\%here\fP\&.
+\fI\%here\fP <\fBhttps://github.com/choll/xtr/blob/master/single_include/xtr/logger.hpp\fP>\&.
 .SH OVERVIEW
 .sp
 The logger is split into two main components, the logger class
@@ -47,8 +47,8 @@ have their own set of separate sinks.
 .sp
 Log messages are written using various macros which accept
 a sink as their first argument, followed by a Python
-\fI\%str.format\fP
-style format string. The \fI\%{fmt}\fP library is used for
+\fI\%str.format\fP <\fBhttps://docs.python.org/3/library/string.html#formatstrings\fP>
+style format string. The \fI\%{fmt}\fP <\fBhttps://fmt.dev\fP> library is used for
 formatting.
 .SH EXAMPLES
 .sp
@@ -107,7 +107,7 @@ XTR_LOG_TSC(s, "Hello world");
 .UNINDENT
 .sp
 Write to the log, immediately reading the timestamp using
-\fI\%clock_gettime(3)\fP
+\fI\%clock_gettime(3)\fP <\fBhttps://www.man7.org/linux/man-pages/man3/clock_gettime.3.html\fP>
 with a clock of either CLOCK_REALTIME_COARSE, CLOCK_REALTIME_FAST or
 CLOCK_REALTIME, depending upon what is supported:
 .INDENT 0.0

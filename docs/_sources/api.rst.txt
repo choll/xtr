@@ -8,6 +8,8 @@ API Reference
 Log Macros
 ----------
 
+.. _basic-macros:
+
 Basic Macros
 ~~~~~~~~~~~~
 
@@ -21,6 +23,8 @@ Basic Macros
 Timestamped Macros
 ~~~~~~~~~~~~~~~~~~
 
+.. _tsc-macros:
+
 TSC
 ^^^
 
@@ -31,6 +35,8 @@ TSC
 .. doxygendefine:: XTR_LOG_TSC_ERROR
 .. doxygendefine:: XTR_LOG_TSC_FATAL
 
+.. _rtc-macros:
+
 Real-time Clock
 ^^^^^^^^^^^^^^^
 
@@ -40,6 +46,8 @@ Real-time Clock
 .. doxygendefine:: XTR_LOG_RTC_WARN
 .. doxygendefine:: XTR_LOG_RTC_ERROR
 .. doxygendefine:: XTR_LOG_RTC_FATAL
+
+.. _user-macros:
 
 User-Supplied Timestamp
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -71,6 +79,8 @@ Nocopy
 ------
 
 .. doxygenfunction:: xtr::nocopy
+
+.. _log-levels:
 
 Log Levels
 ----------

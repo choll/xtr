@@ -62,6 +62,7 @@ to disk or passes it to a custom back\-end if one is in use.
 An application is expected to use multiple sinks, for example a sink per thread, or
 sink per component. To support this sinks have a name associated with them which
 is included in the output log message. Sink names do not need to be unique.
+.SH CREATING AND WRITING TO SINKS
 .sp
 Sinks are created by calling \fBxtr::logger::get_sink()\fP or via normal
 construction followed by a call to \fBxtr::logger::register_sink()\fP\&.
@@ -77,52 +78,88 @@ log macros which are described in the log macros section.
 
 xtr::logger log;
 
-auto s = log.get_sink("Main");
+xtr::sink s = log.get_sink("Main");
 
 XTR_LOG(s, "Hello world");
 .ft P
 .fi
 .UNINDENT
 .UNINDENT
+.sp
+View this example on \fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/1GWbEPq8T\fP>\&.
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+#include <xtr/logger.hpp>
+
+xtr::logger log;
+xtr::sink s;
+
+log.register_sink(s, "Main");
+
+XTR_LOG(s, "Hello world");
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+View this example on \fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/cobj4n3Gx\fP>\&.
 .SH FORMAT STRING SYNTAX
 .sp
-XTR uses \fI\%{fmt}\fP for formatting, so format strings follow the
-same Python \fI\%str.format\fP
-style formatting as found in {fmt}. The {fmt} format string documentation can be found at
-\fI\%https://fmt.dev/latest/syntax.html\fP\&.
-.SH CREATING AND WRITING TO SINKS
-.SH LOG LEVELS
-.SS Modifying or Viewing Log Levels From the Command Line
+XTR uses \fI\%{fmt}\fP <\fBhttps://fmt.dev\fP> for formatting, so format strings follow the
+same Python \fI\%str.format\fP <\fBhttps://docs.python.org/3/library/string.html#formatstrings\fP>
+style formatting as found in {fmt}. The {fmt} format string documentation can be found
+\fI\%here\fP <\fBhttps://fmt.dev/latest/syntax.html\fP>\&.
+.SS Examples
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+xtr::logger log;
+
+xtr::sink s = log.get_sink("Main");
+
+XTR_LOG(s, "Hello {}", 123); // Hello 123
+XTR_LOG(s, "Hello {}", 123.456); // Hello 123.456
+XTR_LOG(s, "Hello {:.1f}", 123.456); // Hello 123.1
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+View this example on \fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/zxs7WThM6\fP>\&.
 .SH PASSING ARGUMENTS BY VALUE OR REFERENCE
 .sp
 The default behaviour of the logger is to copy format arguments into the
-specified sink by value. No allocations will be performed unless an argument type
-is passed to the sink which has a copy constructor that allocates, with the exception
-of \fIstd::string\fP (see the \fI\%string arguments\fP section for details).
-If copying is undesirable then arguments may be passed by reference by wrapping them
-in a call to \fBxtr::nocopy()\fP:
+specified sink by value. Note that no allocations are be performed by the
+logger when this is done. If copying is undesirable then arguments may be
+passed by reference by wrapping them in a call to \fBxtr::nocopy()\fP\&.
+.SS Examples
 .INDENT 0.0
 .INDENT 3.5
 .sp
 .nf
 .ft C
-XTR_LOG(sink, "{}", nocopy(arg));
+xtr::logger log;
+
+xtr::sink s = log.get_sink("Main");
+
+static std::string arg = "world";
+
+// Here \(aqarg\(aq is passed by reference:
+XTR_LOG(s, "Hello {}", nocopy(arg));
+
+// Here \(aqarg\(aq is passed by value:
+XTR_LOG(s, "Hello {}", arg);
 .ft P
 .fi
 .UNINDENT
 .UNINDENT
 .sp
-versus copying by value:
-.INDENT 0.0
-.INDENT 3.5
-.sp
-.nf
-.ft C
-XTR_LOG(sink, "{}", arg);
-.ft P
-.fi
-.UNINDENT
-.UNINDENT
+View this example on \fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/j5ebhWfdT\fP>\&.
 .SH STRING ARGUMENTS
 .sp
 Passing strings to the logger is guaranteed to not allocate memory, and does
@@ -133,7 +170,7 @@ following log statement:
 .sp
 .nf
 .ft C
-XTR_LOG(sink, "{}", str);
+XTR_LOG(s, "{}", str);
 .ft P
 .fi
 .UNINDENT
@@ -141,10 +178,12 @@ XTR_LOG(sink, "{}", str);
 .sp
 If \fIstr\fP is a std::string, std::string_view,
 char* or char[] then the contents of \fIstr\fP will be copied
-into \fIsink\fP without incurring any allocations. String data is copied in order
-to provide safe default behaviour regarding the lifetime of the string data. If
-copying the string data is undesirable then string arguments may be wrapped in
-a call to \fBxtr::nocopy()\fP:
+into \fIsink\fP without incurring any allocations. The entire statement is guaranteed
+to not allocate\-\-\-i.e. even if std::string is passed, the
+std::string copy constructor is not invoked and no allocation occurs.
+String data is copied in order to provide safe default behaviour regarding the
+lifetime of the string data. If copying the string data is undesirable then
+string arguments may be wrapped in a call to \fBxtr::nocopy()\fP:
 .INDENT 0.0
 .INDENT 3.5
 .sp
@@ -161,6 +200,55 @@ copied. The user is then responsible for ensuring that the string data remains
 valid long enough for the logger to process the log statement. Note that only
 the string data must remain valid\-\-\-so for std::string_view the
 object itself does not need to remain valid, just the data it references.
+.SH LOG LEVELS
+.sp
+The logger supports debug, info, warning, error and fatal log levels.
+Log statements with these levels may be produced using the
+\fBXTR_LOG_DEBUG\fP, \fBXTR_LOG_INFO\fP, \fBXTR_LOG_WARN\fP
+\fBXTR_LOG_ERROR\fP and \fBXTR_LOG_FATAL\fP macros, along with
+additional macros which are described in the log macros
+section of the API reference.
+.sp
+Each sink has its own log level, which can be programmatically set or queried
+via \fBxtr::sink::set_level()\fP and \fBxtr::sink::level()\fP, and can
+be set or queried from the command line using the xtrctl tool.
+.sp
+Each log level has an order of importance. The listing of levels above is in
+the order of increasing importance\-\-\-so the least important level is \(aqdebug\(aq
+and the most important level is \(aqfatal\(aq. If a log statement is made with a
+level that is lower than the current level of the sink then the log statement
+is discarded. Note that this includes any calls made as arguments to the log,
+so in the following example the function \fBfoo()\fP is not called:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+#include <xtr/logger.hpp>
+
+xtr::logger log;
+
+xtr::sink s = log.get_sink("Main");
+
+s.set_level(xtr::log_level_t::error);
+
+XTR_LOG_INFO(s, "Hello {}", foo());
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+View this example on \fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/G4P4zfP6r\fP>\&.
+.SS Debug Log Statements
+.sp
+Debug log statements can be disabled by defining XTR_NDEBUG.
+.SS Fatal Log Statements
+.sp
+Fatal log statements will additionally call \fBxtr::sink::sync()\fP followed
+by \fI\%abort(3)\fP <\fBhttps://www.man7.org/linux/man-pages/man3/abort.3.html\fP>\&.
+.SS Setting the default log level
+.sp
+TODO
 .SH THREAD SAFETY
 .INDENT 0.0
 .INDENT 3.5
@@ -169,30 +257,110 @@ object itself does not need to remain valid, just the data it references.
 All functions in \fBxtr::logger\fP are thread\-safe.
 .IP \(bu 2
 No functions in \fBxtr::sink\fP are thread\-safe other than
-:\fBxtr::logger::level\fP and :\fBxtr::logger::set_level\fP\&.
-This is because each thread is expected to have its own independent
-sink (or set of sinks).
+\fBxtr::sink::level()\fP and \fBxtr::sink::set_level()\fP\&.
+This is because each thread is expected to have its own sink(s).
 .UNINDENT
 .UNINDENT
 .UNINDENT
 .SH CUSTOM FORMATTERS
 .sp
-Custom formatters are implemented the same as in \fI\%{fmt}\fP,
+Custom formatters are implemented the same as in \fI\%{fmt}\fP <\fBhttps://fmt.dev\fP>,
 which is done either by:
 .INDENT 0.0
 .IP \(bu 2
-Providing a \fBstd::stream& operator<<(std::stream&, T&)()\fP overload.
+Providing a \fBstd::stream& operator<<(std::stream&, T&)()\fP overload. Note
+that fmt/ostream.h must be included.
 .IP \(bu 2
 Specializing fmt::formatter<T> and implementing the \fIparse\fP and
 \fIformat\fP methods as described by the \fI{fmt}\fP documentation
-\fI\%here\fP\&.
+\fI\%here\fP <\fBhttps://fmt.dev/latest/api.html#formatting-user-defined-types\fP>\&.
 .UNINDENT
+.SS Examples
+.sp
+Formatting a custom type via operator<<:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+#include <fmt/ostream.h>
+
+#include <ostream>
+
+namespace
+{
+    struct custom {};
+
+    std::ostream& operator<<(std::ostream& os, const custom&)
+    {
+        return os << "custom";
+    }
+}
+
+int main()
+{
+    xtr::logger log;
+
+    xtr::sink s = log.get_sink("Main");
+
+    XTR_LOG(s, "Hello {}", custom());
+
+    return 0;
+}
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+View this example on \fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/cK14z5Kr6\fP>\&.
+.sp
+Formatting a custom type via fmt::formatter:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+namespace
+{
+    struct custom {};
+}
+
+template<>
+struct fmt::formatter<custom>
+{
+    template<typename ParseContext>
+    constexpr auto parse(ParseContext &ctx)
+    {
+        return ctx.begin();
+    }
+
+    template<typename FormatContext>
+    auto format(const custom &, FormatContext &ctx)
+    {
+        return format_to(ctx.out(), "custom");
+    }
+};
+
+int main()
+{
+    xtr::logger log;
+
+    xtr::sink s = log.get_sink("Main");
+
+    XTR_LOG(s, "Hello {}", custom());
+
+    return 0;
+}
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+View this example on \fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/h5vsv354E\fP>\&.
 .SH TIME SOURCES
 .sp
-As reading the current time of day can be done in various different ways, with different
-trade\-offs, XTR supports
-.sp
-XTR supports multiple time\-sources when logging messages.
+XTR supports multiple time\-sources when logging messages, with varying levels of
+accuracy and performance.
 .INDENT 0.0
 .IP \(bu 2
 Asynchronous\-default: The default time\-source is to read \fIstd::chrono::system_clock\fP
@@ -208,14 +376,20 @@ Synchronous\-Coarse
 .IP \(bu 2
 Synchronous\-Custom
 .UNINDENT
-.SS Default
+.SS Basic with Default Clock
+.sp
+For :cpp:def
+.sp
+See the basic log macros section of the API reference for
+details.
+.SS Basic with Custom Clock
 .SS TSC
 .sp
 TSC Calibration
-.SS Real\-time Clock (clock_gettime)
+.SS Real\-time Clock
 .sp
 XTR_LOG_RTC, XTR_TRY_LOG_RTC
-.SS Arbitrary Sources
+.SS User\-Supplied Timestamp
 .sp
 XTR_LOG_TS,  XTR_TRY_LOG_TS
 .SH CUSTOMISING THE TIME FORMAT
@@ -243,7 +417,7 @@ To bind the background thread to a specific CPU
 the consumer thread\(aqs platform specific thread handle. The handle can then be
 used with whatever platform specific functionality is available for setting
 thread affinities\-\-\-for example
-\fI\%pthread_setaffinity_np(3)\fP
+\fI\%pthread_setaffinity_np(3)\fP <\fBhttps://www.man7.org/linux/man-pages/man3/pthread_setaffinity_np.3.html\fP>
 on Linux.
 .SH LOG MESSAGE SANITIZING
 .sp
