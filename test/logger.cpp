@@ -1100,6 +1100,8 @@ TEST_CASE_METHOD(fixture, "logger non-blocking drop test", "[logger]")
     const std::size_t msg_sz = 8;
     const std::size_t n = (64 * 1024 - blocker_sz) / msg_sz + n_dropped;
 
+    auto next_sink = log_.get_sink("next");
+
     blocker b;
 
     XTR_LOG(s_, "{}", b);
@@ -1109,6 +1111,14 @@ TEST_CASE_METHOD(fixture, "logger non-blocking drop test", "[logger]")
 
     b.release();
     sync();
+
+    // At this point it is not guaranteed that the dropped count has been
+    // printed, because the consumer thread could have read the sync request
+    // in the same 'batch' of messages as the log requests. Instead sync must
+    // be called on the next sink, which ensures that the consumer has
+    // processed the dropped count of s_, as it must do so before moving on to
+    // the next sink.
+    next_sink.sync();
 
     REQUIRE(last_line() == "W 2000-01-01 01:02:03.123456 Name: {} messages dropped"_format(n_dropped));
 }
