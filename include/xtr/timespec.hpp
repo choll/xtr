@@ -23,29 +23,26 @@ namespace xtr
     };
 }
 
-namespace fmt
+template<>
+struct fmt::formatter<xtr::timespec>
 {
-    template<>
-    struct formatter<xtr::timespec>
+    template<typename ParseContext>
+    constexpr auto parse(ParseContext &ctx)
     {
-        template<typename ParseContext>
-        constexpr auto parse(ParseContext &ctx)
-        {
-            return ctx.begin();
-        }
+        return ctx.begin();
+    }
 
-        template<typename FormatContext>
-        auto format(const xtr::timespec ts, FormatContext &ctx)
-        {
-            std::tm temp;
-            return
-                fmt::format_to(
-                    ctx.out(),
-                    "{:%Y-%m-%d %T}.{:06}",
-                    *::gmtime_r(&ts.tv_sec, &temp),
-                    ts.tv_nsec / 1000);
-        }
-    };
-}
+    template<typename FormatContext>
+    auto format(const xtr::timespec ts, FormatContext &ctx)
+    {
+        std::tm temp;
+        return
+            fmt::format_to(
+                ctx.out(),
+                "{:%Y-%m-%d %T}.{:06}",
+                *::gmtime_r(&ts.tv_sec, &temp),
+                ts.tv_nsec / 1000);
+    }
+};
 
 #endif
