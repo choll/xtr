@@ -35,7 +35,6 @@
 #include <cstring>
 #include <version>
 
-
 XTR_FUNC
 void xtr::detail::consumer::run(std::function<::timespec()> clock) noexcept
 {
