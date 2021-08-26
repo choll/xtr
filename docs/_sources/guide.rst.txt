@@ -34,13 +34,17 @@ is included in the output log message. Sink names do not need to be unique.
 Creating and Writing to Sinks
 -----------------------------
 
-Sinks are created by calling :cpp:func:`xtr::logger::get_sink` or via normal
-construction followed by a call to :cpp:func:`xtr::logger::register_sink`.
+Sinks are created either by calling :cpp:func:`xtr::logger::get_sink`, via normal
+construction followed by a call to :cpp:func:`xtr::logger::register_sink`, or by
+copying another sink. Copied sinks are registered to the same logger and have the
+same name as the source sink. Sinks may be renamed by calling :cpp:func:`xtr::sink::set_name`.
 Once a sink has been created or registered, it may be written to using one of several
 log macros which are described in the :ref:`log macros <log-macros>` section.
 
 Examples
 ~~~~~~~~
+
+Sink creation via :cpp:func:`xtr::logger::get_sink`:
 
 .. code-block:: c++
 
@@ -54,6 +58,8 @@ Examples
 
 View this example on `Compiler Explorer <https://godbolt.org/z/1GWbEPq8T>`__.
 
+Sink creation via :cpp:func:`xtr::logger::register_sink`:
+
 .. code-block:: c++
 
     #include <xtr/logger.hpp>
@@ -66,6 +72,24 @@ View this example on `Compiler Explorer <https://godbolt.org/z/1GWbEPq8T>`__.
     XTR_LOG(s, "Hello world");
 
 View this example on `Compiler Explorer <https://godbolt.org/z/cobj4n3Gx>`__.
+
+Sink creation via copying:
+
+.. code-block:: c++
+
+    #include <xtr/logger.hpp>
+
+    xtr::logger log;
+
+    xtr::sink s1 = log.get_sink("Main");
+    xtr::sink s2 = s1;
+
+    s2.set_name("Copy");
+
+    XTR_LOG(s1, "Hello world");
+    XTR_LOG(s2, "Hello world");
+
+View this example on `Compiler Explorer <https://godbolt.org/z/9bGTG38ez>`__.
 
 Format String Syntax
 --------------------
@@ -156,7 +180,8 @@ object itself does not need to remain valid, just the data it references.
 Log Levels
 ----------
 
-The logger supports debug, info, warning, error and fatal log levels.
+The logger supports debug, info, warning, error and fatal log levels, which
+are enumerated in the :cpp:enum:`xtr::log_level_t` enum.
 Log statements with these levels may be produced using the
 :c:macro:`XTR_LOG_DEBUG`, :c:macro:`XTR_LOG_INFO`, :c:macro:`XTR_LOG_WARN`
 :c:macro:`XTR_LOG_ERROR` and :c:macro:`XTR_LOG_FATAL` macros, along with
@@ -199,11 +224,6 @@ Fatal Log Statements
 Fatal log statements will additionally call :cpp:func:`xtr::sink::sync` followed
 by `abort(3) <https://www.man7.org/linux/man-pages/man3/abort.3.html>`__.
 
-Setting the default log level
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-TODO
-
 Thread Safety
 -------------
 
@@ -232,6 +252,8 @@ Examples
 Formatting a custom type via operator<<:
 
 .. code-block:: c++
+
+    #include <xtr/logger.hpp>
 
     #include <fmt/ostream.h>
 
@@ -264,6 +286,8 @@ Formatting a custom type via fmt::formatter:
 
 .. code-block:: c++
 
+    #include <xtr/logger.hpp>
+
     namespace
     {
         struct custom {};
@@ -279,7 +303,7 @@ Formatting a custom type via fmt::formatter:
         }
 
         template<typename FormatContext>
-        auto format(const custom &, FormatContext &ctx)
+        auto format(const custom&, FormatContext &ctx)
         {
             return format_to(ctx.out(), "custom");
         }
@@ -296,54 +320,109 @@ Formatting a custom type via fmt::formatter:
         return 0;
     }
 
-View this example on `Compiler Explorer <https://godbolt.org/z/h5vsv354E>`__.
+View this example on `Compiler Explorer <https://godbolt.org/z/Woov3fMsr>`__.
+
+.. _time-sources:
 
 Time Sources
 ------------
 
-XTR supports multiple time-sources when logging messages, with varying levels of
-accuracy and performance.
+The logger provides a choice of time-sources when logging messages, each with
+varying levels of accuracy and performance. The options are listed below.
 
-* Asynchronous-default: The default time-source is to read `std::chrono::system_clock`
-  *in the logger background thread*. This is to avoid the expense of reading the clock
-  at the logging call-site. The trade-off is that this comes with a loss of accuracy
-  due to the time the log message spends on the queue.
-* Asynchronous-custom
++-----------------+----------+-------------+
+| Source          | Accuracy | Performance |
++=================+==========+=============+
+| Thread          | Low      | High        |
++-----------------+----------+-------------+
+| Real-time Clock | Medium   | Medium      |
++-----------------+----------+-------------+
+| TSC             | High     | Low/Medium  |
++-----------------+----------+-------------+
+| User supplied   | -        | -           |
++-----------------+----------+-------------+
 
-* Synchronous-TSC
-* Synchronous-Coarse
-* Synchronous-Custom
+The performance of the TSC source is listed as either low or medium as it depends
+on the particular CPU.
 
-Basic with Default Clock
-~~~~~~~~~~~~~~~~~~~~~~~~
+Thread
+~~~~~~
 
-For :cpp:def
+The :c:macro:`XTR_LOG` macro and it's variants listed under the
+:ref:`basic macros <log-macros>` section of the API reference all use the thread
+time source. In these macros no timestamp is read when the log message is written
+to the sink's queue, instead the logger's background thread reads the timestamp when
+the log message is read from the queue. This is of course not accurate, but it is
+fast.
 
-
-See the :ref:`basic log macros <basic-macros>` section of the API reference for
-details.
-
-Basic with Custom Clock
-~~~~~~~~~~~~~~~~~~~~~~~
-
-
-TSC
-~~~
-
-TSC Calibration
+:cpp:func:`std::chrono::system_clock` is used to read the current time, this can
+be customised by passing an arbitrary function to the 'clock' parameter when
+constructing the logger (see :cpp:func:`xtr::logger::logger`). In these macros 
 
 Real-time Clock
 ~~~~~~~~~~~~~~~
 
-XTR_LOG_RTC, XTR_TRY_LOG_RTC
+The :c:macro:`XTR_LOG_RTC` macro and it's variants listed under the
+:ref:`real-time clock macros <rtc-macros>` section of the API reference all use the
+real-time clock source. In these macros the timestamp is read using
+`clock_gettime(3) <https://www.man7.org/linux/man-pages/man3/clock_gettime.3.html>`__
+with a clock source of either CLOCK_REALTIME_COARSE on Linux or CLOCK_REALTIME_FAST
+on FreeBSD.
+
+TSC
+~~~
+
+The :c:macro:`XTR_LOG_TSC` macro and it's variants listed under the
+:ref:`TSC macros <tsc-macros>` section of the API reference all use the TSC
+clock source. In these macros the timestamp is read from the CPU timestamp
+counter via the RDTSC instruction. The TSC time source is is listed in the
+table above as either low or medium performance as the cost of the RDTSC
+instruction varies depending upon the host CPU microarchitecture.
 
 User-Supplied Timestamp
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-XTR_LOG_TS,  XTR_TRY_LOG_TS
+The :c:macro:`XTR_LOG_TS` macro and it's variants listed under the
+:ref:`user-supplied timestamp macros <user-supplied-timestamp-macros>` section of the
+API reference all allow passing a user-supplied timestamp to the logger as the second
+argument. Any type may be passed as long as it has a formatter defined
+(see :ref:`custom formatters <custom-formatters>`).
 
-Customising the Time Format
----------------------------
+Examples
+^^^^^^^^
+
+.. code-block:: c++
+
+    #include <xtr/logger.hpp>
+
+	template<>
+	struct fmt::formatter<std::timespec>
+	{
+		template<typename ParseContext>
+		constexpr auto parse(ParseContext &ctx)
+		{
+			return ctx.begin();
+		}
+
+		template<typename FormatContext>
+		auto format(const std::timespec& ts, FormatContext &ctx)
+		{
+			return format_to(ctx.out(), "{}.{}", ts.tv_sec, ts.tv_nsec);
+		}
+	};
+
+	int main()
+	{
+		xtr::logger log;
+
+		xtr::sink s = log.get_sink("Main");
+
+		XTR_LOG_TS(s, (std::timespec{123, 456}), "Hello world");
+
+		return 0;
+	}
+
+View this example on `Compiler Explorer <https://godbolt.org/z/GcffPWjvz>`__.
 
 Background Consumer Thread Details
 ----------------------------------
@@ -377,17 +456,63 @@ thread affinities---for example
 `pthread_setaffinity_np(3) <https://www.man7.org/linux/man-pages/man3/pthread_setaffinity_np.3.html>`__
 on Linux.
 
+Examples
+^^^^^^^^
 
+.. code-block:: c++
+
+    #include <xtr/logger.hpp>
+
+    #include <cerrno>
+
+    #include <pthread.h>
+    #include <sched.h>
+
+    int main()
+    {
+        xtr::logger log;
+
+        cpu_set_t cpus;
+        CPU_ZERO(&cpus);
+        CPU_SET(0, &cpus);
+
+        const auto handle = log.consumer_thread_native_handle();
+
+        if (const int errnum = ::pthread_setaffinity_np(handle, sizeof(cpus), &cpus))
+        {
+            errno = errnum;
+            perror("pthread_setaffinity_np");
+        }
+
+        xtr::sink s = log.get_sink("Main");
+
+        XTR_LOG(s, "Hello world");
+
+        return 0;
+    }
+
+View this example on `Compiler Explorer <https://godbolt.org/z/1vh5exK4K>`__.
 
 Log Message Sanitizing
 ----------------------
 
-STRINGS ARE SANITIZED, PROVIDE CUSTOM FORMATTER TO WRITE BINARY DATA
-
-Strings containing unprintable characters are sanitized 
+Terminal escape sequences and unprintable characters in string arguments are escaped
+for security. This is done because string arguments may contain user-supplied strings,
+which a malicious user could take advantage of to place terminal escape sequences into
+the log file. If these escape sequences are not removed by the logger then they could
+be interpreted by the terminal emulator of a user viewing the log. Most terminal
+emulators are sensible about the escape sequences they interpret, however it is still
+good practice for a logger to err on the side of caution and remove them from string
+arguments.
+Please refer to
+`this document <https://seclists.org/fulldisclosure/2003/Feb/att-341/Termulation.txt>`__
+posted to the full-disclosure mailing list for a more thorough explanation of terminal
+escape sequence attacks.
 
 Custom Back-ends
 ----------------
+
+Custom back-ends can be used by
 
 .. rubric:: Footnotes
 
