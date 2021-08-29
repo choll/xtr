@@ -218,7 +218,7 @@
 <dl class="cpp macro">
 <dt class="sig sig-object cpp" id="c.XTR_LOG_FATAL">
 <span class="target" id="log__macros_8hpp_1a32628fd6b8e428421f88bf3a5e998739"></span><span class="sig-name descname"><span class="n"><span class="pre">XTR_LOG_FATAL</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">SINK</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XTR_LOG_FATAL" title="Permalink to this definition">¶</a><br /></dt>
-<dd><p>‘Fatal’ log level variant of XTR_LOG. When this macro is invoked, the log message is written, xtr::logger::sink::sync is invoked, then the program is terminated via abort(3). An equivalent macro XTR_LOGF is provided as a short-hand alternative. The non-blocking variants are XTR_TRY_LOG_FATAL and XTR_TRY_LOGF. </p>
+<dd><p>‘Fatal’ log level variant of XTR_LOG. When this macro is invoked, the log message is written, <a class="reference internal" href="#classxtr_1_1sink_1aa3b28b9b9d8f4c5b90ca398eacfafed3"><span class="std std-ref">xtr::sink::sync</span></a> is invoked, then the program is terminated via abort(3). An equivalent macro XTR_LOGF is provided as a short-hand alternative. The non-blocking variants are XTR_TRY_LOG_FATAL and XTR_TRY_LOGF. </p>
 </dd></dl>
 
 </div>
@@ -259,7 +259,7 @@
 <dl class="cpp macro">
 <dt class="sig sig-object cpp" id="c.XTR_LOG_TSC_FATAL">
 <span class="target" id="log__macros_8hpp_1a8e890844a6aaa07b35b5f6ba8446791d"></span><span class="sig-name descname"><span class="n"><span class="pre">XTR_LOG_TSC_FATAL</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">SINK</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XTR_LOG_TSC_FATAL" title="Permalink to this definition">¶</a><br /></dt>
-<dd><p>‘Fatal’ log level variant of XTR_LOG_TSC. When this macro is invoked, the log message is written, xtr::logger::sink::sync is invoked, then the program is terminated via abort(3). An equivalent macro XTR_LOG_TSCF is provided as a short-hand alternative. The non-blocking variants are XTR_TRY_LOG_TSC_FATAL and XTR_TRY_LOG_TSCF. </p>
+<dd><p>‘Fatal’ log level variant of XTR_LOG_TSC. When this macro is invoked, the log message is written, <a class="reference internal" href="#classxtr_1_1sink_1aa3b28b9b9d8f4c5b90ca398eacfafed3"><span class="std std-ref">xtr::sink::sync</span></a> is invoked, then the program is terminated via abort(3). An equivalent macro XTR_LOG_TSCF is provided as a short-hand alternative. The non-blocking variants are XTR_TRY_LOG_TSC_FATAL and XTR_TRY_LOG_TSCF. </p>
 </dd></dl>
 
 </div>
@@ -268,7 +268,7 @@
 <dl class="cpp macro">
 <dt class="sig sig-object cpp" id="c.XTR_LOG_RTC">
 <span class="target" id="log__macros_8hpp_1a87d6001cf0ec22748893a3275cb4310a"></span><span class="sig-name descname"><span class="n"><span class="pre">XTR_LOG_RTC</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">SINK</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XTR_LOG_RTC" title="Permalink to this definition">¶</a><br /></dt>
-<dd><p>Timestamped log macro, logs the specified format string and arguments to the given sink along with a timestamp obtained by invoking <a class="reference external" href="https://www.man7.org/linux/man-pages/man3/clock_gettime.3.html">clock_gettime(3)</a> with clock source CLOCK_REALTIME_COARSE on Linux or CLOCK_REALTIME_FAST on FreeBSD. Depending on the host CPU this may be faster than XTR_LOG_TSC. The non-blocking variant of this macro is XTR_TRY_LOG_RTC which will discard the message if the sink is full. </p>
+<dd><p>Timestamped log macro, logs the specified format string and arguments to the given sink along with a timestamp obtained by invoking <a class="reference external" href="https://www.man7.org/linux/man-pages/man3/clock_gettime.3.html">clock_gettime(3)</a> with a clock source of CLOCK_REALTIME_COARSE on Linux or CLOCK_REALTIME_FAST on FreeBSD. Depending on the host CPU this may be faster than XTR_LOG_TSC. The non-blocking variant of this macro is XTR_TRY_LOG_RTC which will discard the message if the sink is full. </p>
 </dd></dl>
 
 <dl class="cpp macro">
@@ -298,16 +298,16 @@
 <dl class="cpp macro">
 <dt class="sig sig-object cpp" id="c.XTR_LOG_RTC_FATAL">
 <span class="target" id="log__macros_8hpp_1a82c010f1e35a4fabf19e5500e2046e92"></span><span class="sig-name descname"><span class="n"><span class="pre">XTR_LOG_RTC_FATAL</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">SINK</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XTR_LOG_RTC_FATAL" title="Permalink to this definition">¶</a><br /></dt>
-<dd><p>‘Fatal’ log level variant of XTR_LOG_RTC. When this macro is invoked, the log message is written, xtr::logger::sink::sync is invoked, then the program is terminated via abort(3). An equivalent macro XTR_LOG_RTCF is provided as a short-hand alternative. The non-blocking variants are XTR_TRY_LOG_RTC_FATAL and XTR_TRY_LOG_RTCF. </p>
+<dd><p>‘Fatal’ log level variant of XTR_LOG_RTC. When this macro is invoked, the log message is written, <a class="reference internal" href="#classxtr_1_1sink_1aa3b28b9b9d8f4c5b90ca398eacfafed3"><span class="std std-ref">xtr::sink::sync</span></a> is invoked, then the program is terminated via abort(3). An equivalent macro XTR_LOG_RTCF is provided as a short-hand alternative. The non-blocking variants are XTR_TRY_LOG_RTC_FATAL and XTR_TRY_LOG_RTCF. </p>
 </dd></dl>
 
 </div>
 <div class="section" id="user-supplied-timestamp">
-<span id="user-macros"></span><h4>User-Supplied Timestamp<a class="headerlink" href="#user-supplied-timestamp" title="Permalink to this headline">¶</a></h4>
+<span id="user-supplied-timestamp-macros"></span><h4>User-Supplied Timestamp<a class="headerlink" href="#user-supplied-timestamp" title="Permalink to this headline">¶</a></h4>
 <dl class="cpp macro">
 <dt class="sig sig-object cpp" id="c.XTR_LOG_TS">
 <span class="target" id="log__macros_8hpp_1a3b6d7cd3d6c5e7106330a354c3edc1e8"></span><span class="sig-name descname"><span class="n"><span class="pre">XTR_LOG_TS</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">SINK</span></span>, <span class="n"><span class="pre">TS</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XTR_LOG_TS" title="Permalink to this definition">¶</a><br /></dt>
-<dd><p>User-supplied timestamp log macro, logs the specified format string and arguments to the given sink along with the specified timestamp, blocking if the sink is full. The timestamp may be any type so long as it has a formatter defined (see :ref:custom-formatters). xtr::timestamp is provided as a convenience type which is compatible with std::timestamp and has a formatter pre-defined. A formatter for std::timestamp isn’t defined in order to avoid conflict with user code that also defines such a formatter. The non-blocking variant of this macro is XTR_TRY_LOG_TS which will discard the message if the sink is full. </p>
+<dd><p>User-supplied timestamp log macro, logs the specified format string and arguments to the given sink along with the specified timestamp, blocking if the sink is full. The timestamp may be any type as long as it has a formatter defined (see :ref:custom-formatters). xtr::timespec is provided as a convenience type which is compatible with std::timespec and has a formatter pre-defined. A formatter for std::timespec isn’t defined in order to avoid conflict with user code that also defines such a formatter. The non-blocking variant of this macro is XTR_TRY_LOG_TS which will discard the message if the sink is full. </p>
 </dd></dl>
 
 <dl class="cpp macro">
@@ -337,7 +337,7 @@
 <dl class="cpp macro">
 <dt class="sig sig-object cpp" id="c.XTR_LOG_TS_FATAL">
 <span class="target" id="log__macros_8hpp_1a0d16d80e9655d199d696edf1b41c2af5"></span><span class="sig-name descname"><span class="n"><span class="pre">XTR_LOG_TS_FATAL</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">SINK</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XTR_LOG_TS_FATAL" title="Permalink to this definition">¶</a><br /></dt>
-<dd><p>‘Fatal’ log level variant of XTR_LOG_TS. When this macro is invoked, the log message is written, xtr::logger::sink::sync is invoked, then the program is terminated via abort(3). An equivalent macro XTR_LOG_TSF is provided as a short-hand alternative. The non-blocking variants are XTR_TRY_LOG_TS_FATAL and XTR_TRY_LOG_TSF. </p>
+<dd><p>‘Fatal’ log level variant of XTR_LOG_TS. When this macro is invoked, the log message is written, <a class="reference internal" href="#classxtr_1_1sink_1aa3b28b9b9d8f4c5b90ca398eacfafed3"><span class="std std-ref">xtr::sink::sync</span></a> is invoked, then the program is terminated via abort(3). An equivalent macro XTR_LOG_TSF is provided as a short-hand alternative. The non-blocking variants are XTR_TRY_LOG_TS_FATAL and XTR_TRY_LOG_TSF. </p>
 </dd></dl>
 
 </div>
@@ -407,6 +407,60 @@
 <dd class="field-even"><p>The sink must be closed. </p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xtr6logger17set_output_streamEP4FILE">
+<span id="_CPPv3N3xtr6logger17set_output_streamEP4FILE"></span><span id="_CPPv2N3xtr6logger17set_output_streamEP4FILE"></span><span id="xtr::logger::set_output_stream__FILEP"></span><span class="target" id="classxtr_1_1logger_1a142d07230318a445ce7ba6eca3770402"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">set_output_stream</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">FILE</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n sig-param"><span class="pre">stream</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">noexcept</span></span><a class="headerlink" href="#_CPPv4N3xtr6logger17set_output_streamEP4FILE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>TODO </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xtr6logger16set_error_streamEP4FILE">
+<span id="_CPPv3N3xtr6logger16set_error_streamEP4FILE"></span><span id="_CPPv2N3xtr6logger16set_error_streamEP4FILE"></span><span id="xtr::logger::set_error_stream__FILEP"></span><span class="target" id="classxtr_1_1logger_1a5d2ac8c50da382b8b0299d44e89aa219"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">set_error_stream</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">FILE</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n sig-param"><span class="pre">stream</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">noexcept</span></span><a class="headerlink" href="#_CPPv4N3xtr6logger16set_error_streamEP4FILE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>TODO </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4I0EN3xtr6logger19set_output_functionEvRR4Func">
+<span id="_CPPv3I0EN3xtr6logger19set_output_functionERR4Func"></span><span id="_CPPv2I0EN3xtr6logger19set_output_functionERR4Func"></span><span class="k"><span class="pre">template</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">typename</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Func</span></span></span><span class="p"><span class="pre">&gt;</span></span><br /><span class="target" id="classxtr_1_1logger_1af686a37f81a4f1e59e3b4b3764502c6c"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">set_output_function</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4I0EN3xtr6logger19set_output_functionEvRR4Func" title="xtr::logger::set_output_function::Func"><span class="n"><span class="pre">Func</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">f</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">noexcept</span></span><a class="headerlink" href="#_CPPv4I0EN3xtr6logger19set_output_functionEvRR4Func" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>TODO </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4I0EN3xtr6logger18set_error_functionEvRR4Func">
+<span id="_CPPv3I0EN3xtr6logger18set_error_functionERR4Func"></span><span id="_CPPv2I0EN3xtr6logger18set_error_functionERR4Func"></span><span class="k"><span class="pre">template</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">typename</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Func</span></span></span><span class="p"><span class="pre">&gt;</span></span><br /><span class="target" id="classxtr_1_1logger_1a3b1aa7c9f44a43c2ea96c7a9d0dfb846"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">set_error_function</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4I0EN3xtr6logger18set_error_functionEvRR4Func" title="xtr::logger::set_error_function::Func"><span class="n"><span class="pre">Func</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">f</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">noexcept</span></span><a class="headerlink" href="#_CPPv4I0EN3xtr6logger18set_error_functionEvRR4Func" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>TODO </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4I0EN3xtr6logger18set_flush_functionEvRR4Func">
+<span id="_CPPv3I0EN3xtr6logger18set_flush_functionERR4Func"></span><span id="_CPPv2I0EN3xtr6logger18set_flush_functionERR4Func"></span><span class="k"><span class="pre">template</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">typename</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Func</span></span></span><span class="p"><span class="pre">&gt;</span></span><br /><span class="target" id="classxtr_1_1logger_1a7655c4bd05eb5befd4403b8c121e7f2e"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">set_flush_function</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4I0EN3xtr6logger18set_flush_functionEvRR4Func" title="xtr::logger::set_flush_function::Func"><span class="n"><span class="pre">Func</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">f</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">noexcept</span></span><a class="headerlink" href="#_CPPv4I0EN3xtr6logger18set_flush_functionEvRR4Func" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>TODO </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4I0EN3xtr6logger17set_sync_functionEvRR4Func">
+<span id="_CPPv3I0EN3xtr6logger17set_sync_functionERR4Func"></span><span id="_CPPv2I0EN3xtr6logger17set_sync_functionERR4Func"></span><span class="k"><span class="pre">template</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">typename</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Func</span></span></span><span class="p"><span class="pre">&gt;</span></span><br /><span class="target" id="classxtr_1_1logger_1a9283d8c977162aa5ae42516ec25c6f3b"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">set_sync_function</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4I0EN3xtr6logger17set_sync_functionEvRR4Func" title="xtr::logger::set_sync_function::Func"><span class="n"><span class="pre">Func</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">f</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">noexcept</span></span><a class="headerlink" href="#_CPPv4I0EN3xtr6logger17set_sync_functionEvRR4Func" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>TODO </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4I0EN3xtr6logger19set_reopen_functionEvRR4Func">
+<span id="_CPPv3I0EN3xtr6logger19set_reopen_functionERR4Func"></span><span id="_CPPv2I0EN3xtr6logger19set_reopen_functionERR4Func"></span><span class="k"><span class="pre">template</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">typename</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Func</span></span></span><span class="p"><span class="pre">&gt;</span></span><br /><span class="target" id="classxtr_1_1logger_1a4d40245a0595c075aea528feb9380f3f"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">set_reopen_function</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4I0EN3xtr6logger19set_reopen_functionEvRR4Func" title="xtr::logger::set_reopen_function::Func"><span class="n"><span class="pre">Func</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">f</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">noexcept</span></span><a class="headerlink" href="#_CPPv4I0EN3xtr6logger19set_reopen_functionEvRR4Func" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>TODO </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4I0EN3xtr6logger18set_close_functionEvRR4Func">
+<span id="_CPPv3I0EN3xtr6logger18set_close_functionERR4Func"></span><span id="_CPPv2I0EN3xtr6logger18set_close_functionERR4Func"></span><span class="k"><span class="pre">template</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">typename</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Func</span></span></span><span class="p"><span class="pre">&gt;</span></span><br /><span class="target" id="classxtr_1_1logger_1a3e0e2e3cb2e493cc8cd820838c6b91f8"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">set_close_function</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4I0EN3xtr6logger18set_close_functionEvRR4Func" title="xtr::logger::set_close_function::Func"><span class="n"><span class="pre">Func</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">f</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">noexcept</span></span><a class="headerlink" href="#_CPPv4I0EN3xtr6logger18set_close_functionEvRR4Func" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>TODO </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xtr6logger16set_command_pathENSt6stringE">
+<span id="_CPPv3N3xtr6logger16set_command_pathENSt6stringE"></span><span id="_CPPv2N3xtr6logger16set_command_pathENSt6stringE"></span><span id="xtr::logger::set_command_path__ss"></span><span class="target" id="classxtr_1_1logger_1ab0f0ab136ca6458f43406ce1167cdfc5"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">set_command_path</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">path</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">noexcept</span></span><a class="headerlink" href="#_CPPv4N3xtr6logger16set_command_pathENSt6stringE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>TODO </p>
 </dd></dl>
 
 </div>

@@ -60,7 +60,7 @@ Basic log macro, logs the specified format string and arguments to the given sin
 .INDENT 0.0
 .TP
 .B XTR_LOG_FATAL(SINK, \&...) 
-\(aqFatal\(aq log level variant of XTR_LOG. When this macro is invoked, the log message is written, xtr::logger::sink::sync is invoked, then the program is terminated via abort(3). An equivalent macro XTR_LOGF is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_FATAL and XTR_TRY_LOGF. 
+\(aqFatal\(aq log level variant of XTR_LOG. When this macro is invoked, the log message is written, \fI\%xtr::sink::sync\fP is invoked, then the program is terminated via abort(3). An equivalent macro XTR_LOGF is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_FATAL and XTR_TRY_LOGF. 
 .UNINDENT
 .SS Timestamped Macros
 .SS TSC
@@ -92,13 +92,13 @@ Timestamped log macro, logs the specified format string and arguments to the giv
 .INDENT 0.0
 .TP
 .B XTR_LOG_TSC_FATAL(SINK, \&...) 
-\(aqFatal\(aq log level variant of XTR_LOG_TSC. When this macro is invoked, the log message is written, xtr::logger::sink::sync is invoked, then the program is terminated via abort(3). An equivalent macro XTR_LOG_TSCF is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_TSC_FATAL and XTR_TRY_LOG_TSCF. 
+\(aqFatal\(aq log level variant of XTR_LOG_TSC. When this macro is invoked, the log message is written, \fI\%xtr::sink::sync\fP is invoked, then the program is terminated via abort(3). An equivalent macro XTR_LOG_TSCF is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_TSC_FATAL and XTR_TRY_LOG_TSCF. 
 .UNINDENT
 .SS Real\-time Clock
 .INDENT 0.0
 .TP
 .B XTR_LOG_RTC(SINK, \&...) 
-Timestamped log macro, logs the specified format string and arguments to the given sink along with a timestamp obtained by invoking \fI\%clock_gettime(3)\fP <\fBhttps://www.man7.org/linux/man-pages/man3/clock_gettime.3.html\fP> with clock source CLOCK_REALTIME_COARSE on Linux or CLOCK_REALTIME_FAST on FreeBSD. Depending on the host CPU this may be faster than XTR_LOG_TSC. The non\-blocking variant of this macro is XTR_TRY_LOG_RTC which will discard the message if the sink is full. 
+Timestamped log macro, logs the specified format string and arguments to the given sink along with a timestamp obtained by invoking \fI\%clock_gettime(3)\fP <\fBhttps://www.man7.org/linux/man-pages/man3/clock_gettime.3.html\fP> with a clock source of CLOCK_REALTIME_COARSE on Linux or CLOCK_REALTIME_FAST on FreeBSD. Depending on the host CPU this may be faster than XTR_LOG_TSC. The non\-blocking variant of this macro is XTR_TRY_LOG_RTC which will discard the message if the sink is full. 
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -123,13 +123,13 @@ Timestamped log macro, logs the specified format string and arguments to the giv
 .INDENT 0.0
 .TP
 .B XTR_LOG_RTC_FATAL(SINK, \&...) 
-\(aqFatal\(aq log level variant of XTR_LOG_RTC. When this macro is invoked, the log message is written, xtr::logger::sink::sync is invoked, then the program is terminated via abort(3). An equivalent macro XTR_LOG_RTCF is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_RTC_FATAL and XTR_TRY_LOG_RTCF. 
+\(aqFatal\(aq log level variant of XTR_LOG_RTC. When this macro is invoked, the log message is written, \fI\%xtr::sink::sync\fP is invoked, then the program is terminated via abort(3). An equivalent macro XTR_LOG_RTCF is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_RTC_FATAL and XTR_TRY_LOG_RTCF. 
 .UNINDENT
 .SS User\-Supplied Timestamp
 .INDENT 0.0
 .TP
 .B XTR_LOG_TS(SINK, TS, \&...) 
-User\-supplied timestamp log macro, logs the specified format string and arguments to the given sink along with the specified timestamp, blocking if the sink is full. The timestamp may be any type so long as it has a formatter defined (see :ref:custom\-formatters). xtr::timestamp is provided as a convenience type which is compatible with std::timestamp and has a formatter pre\-defined. A formatter for std::timestamp isn\(aqt defined in order to avoid conflict with user code that also defines such a formatter. The non\-blocking variant of this macro is XTR_TRY_LOG_TS which will discard the message if the sink is full. 
+User\-supplied timestamp log macro, logs the specified format string and arguments to the given sink along with the specified timestamp, blocking if the sink is full. The timestamp may be any type as long as it has a formatter defined (see :ref:custom\-formatters). xtr::timespec is provided as a convenience type which is compatible with std::timespec and has a formatter pre\-defined. A formatter for std::timespec isn\(aqt defined in order to avoid conflict with user code that also defines such a formatter. The non\-blocking variant of this macro is XTR_TRY_LOG_TS which will discard the message if the sink is full. 
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -154,7 +154,7 @@ User\-supplied timestamp log macro, logs the specified format string and argumen
 .INDENT 0.0
 .TP
 .B XTR_LOG_TS_FATAL(SINK, \&...) 
-\(aqFatal\(aq log level variant of XTR_LOG_TS. When this macro is invoked, the log message is written, xtr::logger::sink::sync is invoked, then the program is terminated via abort(3). An equivalent macro XTR_LOG_TSF is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_TS_FATAL and XTR_TRY_LOG_TSF. 
+\(aqFatal\(aq log level variant of XTR_LOG_TS. When this macro is invoked, the log message is written, \fI\%xtr::sink::sync\fP is invoked, then the program is terminated via abort(3). An equivalent macro XTR_LOG_TSF is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_TS_FATAL and XTR_TRY_LOG_TSF. 
 .UNINDENT
 .SH LOGGER
 .INDENT 0.0
@@ -215,6 +215,51 @@ Registers the sink with the logger. Note that the sink name does not need to be 
 .B Pre
 The sink must be closed. 
 .UNINDENT
+.UNINDENT
+.INDENT 7.0
+.TP
+.B void  set_output_stream(FILE  *stream)  noexcept 
+TODO 
+.UNINDENT
+.INDENT 7.0
+.TP
+.B void  set_error_stream(FILE  *stream)  noexcept 
+TODO 
+.UNINDENT
+.INDENT 7.0
+.TP
+.B template<typename  Func> inline  void  set_output_function(\fI\%Func\fP  &&f)  noexcept 
+TODO 
+.UNINDENT
+.INDENT 7.0
+.TP
+.B template<typename  Func> inline  void  set_error_function(\fI\%Func\fP  &&f)  noexcept 
+TODO 
+.UNINDENT
+.INDENT 7.0
+.TP
+.B template<typename  Func> inline  void  set_flush_function(\fI\%Func\fP  &&f)  noexcept 
+TODO 
+.UNINDENT
+.INDENT 7.0
+.TP
+.B template<typename  Func> inline  void  set_sync_function(\fI\%Func\fP  &&f)  noexcept 
+TODO 
+.UNINDENT
+.INDENT 7.0
+.TP
+.B template<typename  Func> inline  void  set_reopen_function(\fI\%Func\fP  &&f)  noexcept 
+TODO 
+.UNINDENT
+.INDENT 7.0
+.TP
+.B template<typename  Func> inline  void  set_close_function(\fI\%Func\fP  &&f)  noexcept 
+TODO 
+.UNINDENT
+.INDENT 7.0
+.TP
+.B void  set_command_path(std::string  path)  noexcept 
+TODO 
 .UNINDENT
 .UNINDENT
 .SH SINK

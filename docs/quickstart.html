@@ -197,7 +197,7 @@ formatting.</p>
 
 <span class="n">xtr</span><span class="o">::</span><span class="n">logger</span> <span class="n">log</span><span class="p">;</span>
 
-<span class="k">auto</span> <span class="n">s</span> <span class="o">=</span> <span class="n">log</span><span class="p">.</span><span class="n">get_sink</span><span class="p">(</span><span class="s">&quot;Main&quot;</span><span class="p">);</span>
+<span class="n">xtr</span><span class="o">::</span><span class="n">sink</span> <span class="n">s</span> <span class="o">=</span> <span class="n">log</span><span class="p">.</span><span class="n">get_sink</span><span class="p">(</span><span class="s">&quot;Main&quot;</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>Writing to the log, blocking if the sink is full, reading the timestamp
@@ -216,8 +216,8 @@ timestamp in the background thread:</p>
 </div>
 <p>Write to the log, immediately reading the timestamp using
 <a class="reference external" href="https://www.man7.org/linux/man-pages/man3/clock_gettime.3.html">clock_gettime(3)</a>
-with a clock of either CLOCK_REALTIME_COARSE, CLOCK_REALTIME_FAST or
-CLOCK_REALTIME, depending upon what is supported:</p>
+with a clock source of either CLOCK_REALTIME_COARSE on Linux or CLOCK_REALTIME_FAST
+on FreeBSD:</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">XTR_LOG_RTC</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="s">&quot;Hello world&quot;</span><span class="p">);</span>
 </pre></div>
 </div>
@@ -240,7 +240,8 @@ error and fatal—see <a class="reference internal" href="api.html#_CPPv4N3xtr11
 <span class="n">XTR_LOG_INFO</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="s">&quot;Hello world&quot;</span><span class="p">);</span> <span class="c1">// Dropped</span>
 </pre></div>
 </div>
-<p>Fatal errors will log and then terminate the program using abort(3):</p>
+<p>Fatal errors will log and then terminate the program using
+<a class="reference external" href="https://www.man7.org/linux/man-pages/man3/abort.3.html">abort(3)</a>:</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">XTR_LOG_FATAL</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="s">&quot;Goodbye cruel world&quot;</span><span class="p">);</span>
 <span class="c1">// NOTREACHED</span>
 </pre></div>
@@ -270,7 +271,9 @@ arguments:</p>
 the background thread reads the event from the sink. This is
 less accurate, but faster than reading the time at the log
 call-site. If reading the time at the call-site is preferred,
-use XTR_LOG_TSC or XTR_LOG_RTC.</p>
+use XTR_LOG_TSC or XTR_LOG_RTC. See the
+<a class="reference internal" href="guide.html#time-sources"><span class="std std-ref">time sources</span></a> section of the user guide
+for further information.</p>
 </dd>
 </dl>
 </div>

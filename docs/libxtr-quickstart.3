@@ -62,7 +62,7 @@ Creating a sink:
 
 xtr::logger log;
 
-auto s = log.get_sink("Main");
+xtr::sink s = log.get_sink("Main");
 .ft P
 .fi
 .UNINDENT
@@ -108,8 +108,8 @@ XTR_LOG_TSC(s, "Hello world");
 .sp
 Write to the log, immediately reading the timestamp using
 \fI\%clock_gettime(3)\fP <\fBhttps://www.man7.org/linux/man-pages/man3/clock_gettime.3.html\fP>
-with a clock of either CLOCK_REALTIME_COARSE, CLOCK_REALTIME_FAST or
-CLOCK_REALTIME, depending upon what is supported:
+with a clock source of either CLOCK_REALTIME_COARSE on Linux or CLOCK_REALTIME_FAST
+on FreeBSD:
 .INDENT 0.0
 .INDENT 3.5
 .sp
@@ -164,7 +164,8 @@ XTR_LOG_INFO(s, "Hello world"); // Dropped
 .UNINDENT
 .UNINDENT
 .sp
-Fatal errors will log and then terminate the program using abort(3):
+Fatal errors will log and then terminate the program using
+\fI\%abort(3)\fP <\fBhttps://www.man7.org/linux/man-pages/man3/abort.3.html\fP>:
 .INDENT 0.0
 .INDENT 3.5
 .sp
@@ -224,7 +225,9 @@ The behaviour for XTR_LOG is that timestamps are read when
 the background thread reads the event from the sink. This is
 less accurate, but faster than reading the time at the log
 call\-site. If reading the time at the call\-site is preferred,
-use XTR_LOG_TSC or XTR_LOG_RTC.
+use XTR_LOG_TSC or XTR_LOG_RTC. See the
+time sources section of the user guide
+for further information.
 .SH AUTHOR
 Chris E. Holloway
 .SH COPYRIGHT
