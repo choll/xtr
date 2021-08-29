@@ -116,7 +116,7 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#time-sources">Time Sources</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#thread">Thread</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#basic">Basic</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#real-time-clock">Real-time Clock</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#tsc">TSC</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#user-supplied-timestamp">User-Supplied Timestamp</a><ul>
@@ -134,7 +134,10 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#log-message-sanitizing">Log Message Sanitizing</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#custom-back-ends">Custom Back-ends</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#custom-back-ends">Custom Back-ends</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id9">Examples</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
@@ -504,7 +507,7 @@ varying levels of accuracy and performance. The options are listed below.</p>
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p>Thread</p></td>
+<tr class="row-even"><td><p>Basic</p></td>
 <td><p>Low</p></td>
 <td><p>High</p></td>
 </tr>
@@ -530,10 +533,10 @@ varying levels of accuracy and performance. The options are listed below.</p>
 </table>
 <p>The performance of the TSC source is listed as either low or medium as it depends
 on the particular CPU.</p>
-<div class="section" id="thread">
-<h3>Thread<a class="headerlink" href="#thread" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="basic">
+<span id="basic-time-source"></span><h3>Basic<a class="headerlink" href="#basic" title="Permalink to this headline">¶</a></h3>
 <p>The <a class="reference internal" href="api.html#c.XTR_LOG" title="XTR_LOG"><code class="xref c c-macro docutils literal notranslate"><span class="pre">XTR_LOG</span></code></a> macro and it’s variants listed under the
-<a class="reference internal" href="api.html#log-macros"><span class="std std-ref">basic macros</span></a> section of the API reference all use the thread
+<a class="reference internal" href="api.html#log-macros"><span class="std std-ref">basic macros</span></a> section of the API reference all use the basic
 time source. In these macros no timestamp is read when the log message is written
 to the sink’s queue, instead the logger’s background thread reads the timestamp when
 the log message is read from the queue. This is of course not accurate, but it is
@@ -683,13 +686,76 @@ escape sequence attacks.</p>
 </div>
 <div class="section" id="custom-back-ends">
 <h2>Custom Back-ends<a class="headerlink" href="#custom-back-ends" title="Permalink to this headline">¶</a></h2>
-<p>Custom back-ends can be used by</p>
+<p>The logger allows custom back-ends to be used. This is done by constructing the logger
+with functions that implement the back-end functionality, which are listed below:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 24%" />
+<col style="width: 76%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Function</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Output</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>Error</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>Flush</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>Sync</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>Reopen</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>Close</p></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="id9">
+<h3>Examples<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="api.html#_CPPv4I000EN3xtr6logger6loggerERR14OutputFunctionRR13ErrorFunctionRR5ClockNSt6stringE">basic custom back-end constructor</a></p>
+<p><a class="reference external" href="api.html#_CPPv4I0000000EN3xtr6logger6loggerERR14OutputFunctionRR13ErrorFunctionRR13FlushFunctionRR12SyncFunctionRR14ReopenFunctionRR13CloseFunctionRR5ClockNSt6stringE">custom back-end constructor</a></p>
+<p>Custom back-end using the simplified back-end constructor:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span> <span class="n">lines</span><span class="p">;</span>
+<span class="n">std</span><span class="o">::</span><span class="n">mutex</span> <span class="n">lines_mutex</span><span class="p">;</span>
+
+<span class="n">xtr</span><span class="o">::</span><span class="n">logger</span> <span class="n">log</span><span class="p">(</span>
+    <span class="p">[</span><span class="o">&amp;</span><span class="p">](</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">buf</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">size</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">unique_lock</span> <span class="n">lock</span><span class="p">{</span><span class="n">lines_mutex</span><span class="p">};</span>
+        <span class="n">lines</span><span class="p">.</span><span class="n">emplace_back</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="n">size</span><span class="p">);</span>
+        <span class="k">return</span> <span class="n">size</span><span class="p">;</span>
+    <span class="p">},</span>
+    <span class="p">[](</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">buf</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">size</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">string_view</span><span class="p">{</span><span class="n">buf</span><span class="p">,</span> <span class="n">size</span><span class="p">}</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">);</span>
+
+<span class="n">xtr</span><span class="o">::</span><span class="n">sink</span> <span class="n">s</span> <span class="o">=</span> <span class="n">log</span><span class="p">.</span><span class="n">get_sink</span><span class="p">(</span><span class="s">&quot;Main&quot;</span><span class="p">);</span>
+
+<span class="n">XTR_LOG</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="s">&quot;Hello world&quot;</span><span class="p">);</span>
+
+<span class="n">s</span><span class="p">.</span><span class="n">sync</span><span class="p">();</span> <span class="c1">// Ensure all log statements are delivered to the back-end</span>
+
+<span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">lines</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">;</span>
+</pre></div>
+</div>
 <p class="rubric">Footnotes</p>
 <dl class="footnote brackets">
 <dt class="label" id="queue"><span class="brackets"><a class="fn-backref" href="#id1">1</a></span></dt>
 <dd><p>Specifically the queue is a single-producer/single-consumer ring buffer.</p>
 </dd>
 </dl>
+</div>
 </div>
 </div>
 

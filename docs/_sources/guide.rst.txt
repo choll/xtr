@@ -333,7 +333,7 @@ varying levels of accuracy and performance. The options are listed below.
 +-----------------+----------+-------------+
 | Source          | Accuracy | Performance |
 +=================+==========+=============+
-| Thread          | Low      | High        |
+| Basic           | Low      | High        |
 +-----------------+----------+-------------+
 | Real-time Clock | Medium   | Medium      |
 +-----------------+----------+-------------+
@@ -345,11 +345,13 @@ varying levels of accuracy and performance. The options are listed below.
 The performance of the TSC source is listed as either low or medium as it depends
 on the particular CPU.
 
-Thread
-~~~~~~
+.. _basic-time-source:
+
+Basic
+~~~~~
 
 The :c:macro:`XTR_LOG` macro and it's variants listed under the
-:ref:`basic macros <log-macros>` section of the API reference all use the thread
+:ref:`basic macros <log-macros>` section of the API reference all use the basic
 time source. In these macros no timestamp is read when the log message is written
 to the sink's queue, instead the logger's background thread reads the timestamp when
 the log message is read from the queue. This is of course not accurate, but it is
@@ -512,7 +514,60 @@ escape sequence attacks.
 Custom Back-ends
 ----------------
 
-Custom back-ends can be used by
+The logger allows custom back-ends to be used. This is done by constructing the logger
+with functions that implement the back-end functionality, which are listed below:
+
++----------+-------------------------------+
+| Function | Description                   |
++==========+===============================+
+| Output   |                               |
++----------+-------------------------------+
+| Error    |                               |
++----------+-------------------------------+
+| Flush    |                               |
++----------+-------------------------------+
+| Sync     |                               |
++----------+-------------------------------+
+| Reopen   |                               |
++----------+-------------------------------+
+| Close    |                               |
++----------+-------------------------------+
+
+Examples
+~~~~~~~~
+
+
+`basic custom back-end constructor <api.html#_CPPv4I000EN3xtr6logger6loggerERR14OutputFunctionRR13ErrorFunctionRR5ClockNSt6stringE>`__
+
+`custom back-end constructor <api.html#_CPPv4I0000000EN3xtr6logger6loggerERR14OutputFunctionRR13ErrorFunctionRR13FlushFunctionRR12SyncFunctionRR14ReopenFunctionRR13CloseFunctionRR5ClockNSt6stringE>`__
+
+Custom back-end using the simplified back-end constructor:
+
+.. code-block:: c++
+
+    std::vector<std::string> lines;
+    std::mutex lines_mutex;
+
+    xtr::logger log(
+        [&](const char* buf, std::size_t size)
+        {
+            std::unique_lock lock{lines_mutex};
+            lines.emplace_back(buf, size);
+            return size;
+        },
+        [](const char* buf, std::size_t size)
+        {
+            std::cout << std::string_view{buf, size} << "\n";
+        }
+    );
+
+    xtr::sink s = log.get_sink("Main");
+
+    XTR_LOG(s, "Hello world");
+
+    s.sync(); // Ensure all log statements are delivered to the back-end
+
+    std::cout << lines[0] << "\n";
 
 .. rubric:: Footnotes
 

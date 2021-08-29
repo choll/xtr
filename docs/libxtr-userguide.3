@@ -406,7 +406,7 @@ Performance
 T}
 _
 T{
-Thread
+Basic
 T}	T{
 Low
 T}	T{
@@ -445,10 +445,10 @@ _
 .sp
 The performance of the TSC source is listed as either low or medium as it depends
 on the particular CPU.
-.SS Thread
+.SS Basic
 .sp
 The \fBXTR_LOG\fP macro and it\(aqs variants listed under the
-basic macros section of the API reference all use the thread
+basic macros section of the API reference all use the basic
 time source. In these macros no timestamp is read when the log message is written
 to the sink\(aqs queue, instead the logger\(aqs background thread reads the timestamp when
 the log message is read from the queue. This is of course not accurate, but it is
@@ -603,7 +603,88 @@ posted to the full\-disclosure mailing list for a more thorough explanation of t
 escape sequence attacks.
 .SH CUSTOM BACK-ENDS
 .sp
-Custom back\-ends can be used by
+The logger allows custom back\-ends to be used. This is done by constructing the logger
+with functions that implement the back\-end functionality, which are listed below:
+.TS
+center;
+|l|l|.
+_
+T{
+Function
+T}	T{
+Description
+T}
+_
+T{
+Output
+T}	T{
+T}
+_
+T{
+Error
+T}	T{
+T}
+_
+T{
+Flush
+T}	T{
+T}
+_
+T{
+Sync
+T}	T{
+T}
+_
+T{
+Reopen
+T}	T{
+T}
+_
+T{
+Close
+T}	T{
+T}
+_
+.TE
+.SS Examples
+.sp
+\fI\%basic custom back\-end constructor\fP
+.sp
+\fI\%custom back\-end constructor\fP
+.sp
+Custom back\-end using the simplified back\-end constructor:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+std::vector<std::string> lines;
+std::mutex lines_mutex;
+
+xtr::logger log(
+    [&](const char* buf, std::size_t size)
+    {
+        std::unique_lock lock{lines_mutex};
+        lines.emplace_back(buf, size);
+        return size;
+    },
+    [](const char* buf, std::size_t size)
+    {
+        std::cout << std::string_view{buf, size} << "\en";
+    }
+);
+
+xtr::sink s = log.get_sink("Main");
+
+XTR_LOG(s, "Hello world");
+
+s.sync(); // Ensure all log statements are delivered to the back\-end
+
+std::cout << lines[0] << "\en";
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
 .SH FOOTNOTES
 .IP [1] 5
 Specifically the queue is a single\-producer/single\-consumer ring buffer.
