@@ -37,7 +37,7 @@
  * Basic log macro, logs the specified format string and arguments to
  * the given sink, blocking if the sink is full. The non-blocking variant
  * of this macro is @ref XTR_TRY_LOG which will discard the message if
- * the sink is full. Timestamps are read in the background thread---if this
+ * the sink is full. Timestamps are read in the background thread\---if this
  * is undesirable use @ref XTR_LOG_RTC or @ref XTR_LOG_TSC which read
  * timestamps at the point of logging.
  */
@@ -124,8 +124,9 @@
  * User-supplied timestamp log macro, logs the specified format string and
  * arguments to the given sink along with the specified timestamp, blocking if
  * the sink is full. The timestamp may be any type as long as it has a
- * formatter defined (see :ref:custom-formatters). xtr::timespec is provided
- * as a convenience type which is compatible with std::timespec and has a
+ * formatter defined\---please see the <a href="guide.html#custom-formatters">
+ * custom formatters</a> section of the user guide for details.
+ * xtr::timespec is provided as a convenience type which is compatible with std::timespec and has a
  * formatter pre-defined. A formatter for std::timespec isn't defined in
  * order to avoid conflict with user code that also defines such a formatter.
  * The non-blocking variant of this macro is @ref XTR_TRY_LOG_TS which will
