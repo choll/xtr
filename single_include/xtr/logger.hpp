@@ -2105,7 +2105,7 @@ namespace xtr
  * Basic log macro, logs the specified format string and arguments to
  * the given sink, blocking if the sink is full. The non-blocking variant
  * of this macro is @ref XTR_TRY_LOG which will discard the message if
- * the sink is full. Timestamps are read in the background thread---if this
+ * the sink is full. Timestamps are read in the background thread\---if this
  * is undesirable use @ref XTR_LOG_RTC or @ref XTR_LOG_TSC which read
  * timestamps at the point of logging.
  */
@@ -2194,8 +2194,9 @@ namespace xtr
  * User-supplied timestamp log macro, logs the specified format string and
  * arguments to the given sink along with the specified timestamp, blocking if
  * the sink is full. The timestamp may be any type as long as it has a
- * formatter defined (see :ref:custom-formatters). xtr::timespec is provided
- * as a convenience type which is compatible with std::timespec and has a
+ * formatter defined\---please see the <a href="guide.html#custom-formatters">
+ * custom formatters</a> section of the user guide for details.
+ * xtr::timespec is provided as a convenience type which is compatible with std::timespec and has a
  * formatter pre-defined. A formatter for std::timespec isn't defined in
  * order to avoid conflict with user code that also defines such a formatter.
  * The non-blocking variant of this macro is @ref XTR_TRY_LOG_TS which will
@@ -2680,7 +2681,28 @@ private:
 
 public:
     /**
-     * CTOR 1
+     * Path only constructor, the first argument is the path to a file which
+     * should be opened and logged to. The file will be opened in append mode,
+     * and will be created if it does not exist. Errors will be written to
+     * stdout.
+     *
+     * @arg path: The path of a file to write log statements to.
+     * @arg clock: @anchor clock_arg
+     *             A function returning the current time of day as a
+     *             std::timespec. This function will be invoked when creating
+     *             timestamps for log statements produced by the basic log
+     *             macros\--- please see the
+     *             <a href="guide.html#basic-time-source">basic time source</a>
+     *             section of the user guide for details. The default clock is
+     *             std::chrono::system_clock.
+     * @arg command_path: @anchor command_path_arg
+     *                    The path where the local domain socket used to
+     *                    communicate with <a href="xtrctl.html">xtrctl</a>
+     *                    should be created. The default path is
+     *                    /run/user/<uid>/xtrctl.<pid>.<N>, where N begins at 0
+     *                    and increases for each logger object created by the
+     *                    process. If the file cannot be created in
+     *                    /run/user/<uid> then /tmp is used instead.
      */
     template<typename Clock = std::chrono::system_clock>
     logger(
@@ -2697,7 +2719,13 @@ public:
     }
 
     /**
-     * CTOR 2
+     * Path and stream constructor.
+     *
+     * @arg path: The path of a file to write log statements to.
+     * @arg clock: Please refer to the @ref clock_arg "description"
+     *             above.
+     * @arg command_path: Please refer to the @ref command_path_arg
+     *                    "description" above.
      */
     template<typename Clock = std::chrono::system_clock>
     logger(
@@ -2719,7 +2747,12 @@ public:
     }
 
     /**
-     * CTOR 3
+     * Stream only constructor.
+     *
+     * @arg clock: Please refer to the @ref clock_arg "description"
+     *             above.
+     * @arg command_path: Please refer to the @ref command_path_arg
+     *                    "description" above.
      */
     template<typename Clock = std::chrono::system_clock>
     logger(
@@ -2739,12 +2772,24 @@ public:
     {
     }
 
+    /**
+     * Simplified custom back-end constructor.
+     *
+     * @arg out:
+     * @arg err:
+     * @arg clock: Please refer to the @ref clock_arg "description"
+     *             above.
+     * @arg command_path: Please refer to the @ref command_path_arg
+     *                    "description" above.
+     */
     template<
         typename OutputFunction,
         typename ErrorFunction,
         typename Clock = std::chrono::system_clock>
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
     requires detail::invocable<OutputFunction, const char*, std::size_t> &&
         detail::invocable<ErrorFunction, const char*, std::size_t>
+#endif
         logger(
             OutputFunction&& out,
             ErrorFunction&& err,
@@ -2762,6 +2807,20 @@ public:
     {
     }
 
+    /**
+     * Custom back-end constructor.
+     *
+     * @arg out:
+     * @arg err:
+     * @arg flush:
+     * @arg sync:
+     * @arg reopen:
+     * @arg close:
+     * @arg clock: Please refer to the @ref clock_arg "description"
+     *             above.
+     * @arg command_path: Please refer to the @ref command_path_arg
+     *                    "description" above.
+     */
     template<
         typename OutputFunction,
         typename ErrorFunction,
@@ -2770,10 +2829,12 @@ public:
         typename ReopenFunction,
         typename CloseFunction,
         typename Clock = std::chrono::system_clock>
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
     requires detail::invocable<OutputFunction, const char*, std::size_t> &&
         detail::invocable<ErrorFunction, const char*, std::size_t> &&
         detail::invocable<FlushFunction> && detail::invocable<SyncFunction> &&
         detail::invocable<ReopenFunction> && detail::invocable<CloseFunction>
+#endif
         logger(
             OutputFunction&& out,
             ErrorFunction&& err,
