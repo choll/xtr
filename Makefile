@@ -222,10 +222,7 @@ $(HTML_DOC_PAGES): $(DOCS_SRCS) build/doxygen/xml/index.xml
 $(MAN_PAGES): $(DOCS_SRCS) build/doxygen/xml/index.xml
 	sphinx-build -W -b man docs-src docs
 
-docs/.nojekyll:
-	touch docs/.nojekyll
-
-docs: $(HTML_DOC_PAGES) $(MAN_PAGES) docs/.nojekyll
+docs: $(HTML_DOC_PAGES) $(MAN_PAGES)
 
 clean-docs:
 	$(RM) build/doxygen/xml/index.xml $(HTML_DOC_PAGES) $(MAN_PAGES)

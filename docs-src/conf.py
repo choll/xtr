@@ -26,7 +26,7 @@ author = "Chris E. Holloway"
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named "sphinx.ext.*") or your custom
 # ones.
-extensions = ["breathe"]
+extensions = ["breathe", "sphinx.ext.githubpages"]
 
 breathe_default_project = "xtr"
 breathe_projects = {"xtr": "../build/doxygen/xml"}
