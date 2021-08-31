@@ -61,6 +61,17 @@ namespace xtr
 
     // This can be replaced with a template alias once clang supports it:
     // template<typename T> using nocopy = detail::string_ref<T>;
+    /**
+     * nocopy is used to specify that a log argument should be passed by
+     * reference instead of by value, so that `arg` becomes `nocopy(arg)`.
+     * Note that by default, all strings including C strings and
+     * std::string_view are copied. In order to pass strings by reference
+     * they must be wrapped in a call to nocopy.
+     * Please see the <a href="guide.html#passing-arguments-by-value-or-reference">
+     * passing arguments by value or reference</a> and
+     * <a href="guide.html#string-arguments">string arguments</a> sections of
+     * the user guide for further details.
+     */
     template<typename T>
     inline auto nocopy(const T& arg)
     {
