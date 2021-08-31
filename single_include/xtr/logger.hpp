@@ -2656,8 +2656,10 @@ namespace xtr::detail
 /**
  * The main logger class. When constructed a background thread will be created
  * which is used for formatting log messages and performing I/O. To write to the
- * logger call @ref logger::sink then pass the sink to a macro such as @ref
- * XTR_LOG.
+ * logger call @ref xtr::logger::get_sink to create a sink, then pass the sink
+ * to a macro such as @ref XTR_LOG
+ * (see the <a href="guide.html#creating-and-writing-to-sinks">creating and
+ * writing to sinks</a> section of the user guide for details).
  */
 class xtr::logger
 {
@@ -2681,7 +2683,7 @@ private:
 
 public:
     /**
-     * Path only constructor, the first argument is the path to a file which
+     * Path constructor. The first argument is the path to a file which
      * should be opened and logged to. The file will be opened in append mode,
      * and will be created if it does not exist. Errors will be written to
      * stdout.
@@ -2719,36 +2721,23 @@ public:
     }
 
     /**
-     * Path and stream constructor.
+     * Stream constructor.
      *
-     * @arg path: The path of a file to write log statements to.
-     * @arg clock: Please refer to the @ref clock_arg "description"
-     *             above.
-     * @arg command_path: Please refer to the @ref command_path_arg
-     *                    "description" above.
-     */
-    template<typename Clock = std::chrono::system_clock>
-    logger(
-        const char* path,
-        FILE* stream,
-        FILE* err_stream = stderr,
-        Clock&& clock = Clock(),
-        std::string command_path = default_command_path()) :
-        logger(
-            detail::make_output_func(stream),
-            detail::make_error_func(err_stream),
-            detail::make_flush_func(stream, err_stream),
-            detail::make_sync_func(stream, err_stream),
-            detail::make_reopen_func(path, stream),
-            [stream]() { std::fclose(stream); }, // close
-            std::forward<Clock>(clock),
-            std::move(command_path))
-    {
-    }
-
-    /**
-     * Stream only constructor.
+     * It is expected that this constructor will be used with streams such as
+     * stdout or stderr. If a stream that has been opened by the user is to
+     * be passed to the logger then the
+     * @ref stream-with-reopen "stream constructor with reopen path"
+     * constructor is recommended instead.
      *
+     * @note The logger will not take ownership of the stream\---i.e. it will
+     * not be closed when the logger destructs.
+     *
+     * @note Reopening the log file via the
+     * <a href="xtrctl.html#rotating-log-files">xtrctl</a> tool is *not* supported.
+     *
+     *
+     * @arg stream: The stream to write log statements to.
+     * @arg err_stream: A stream to write error messages to.
      * @arg clock: Please refer to the @ref clock_arg "description"
      *             above.
      * @arg command_path: Please refer to the @ref command_path_arg
@@ -2773,10 +2762,66 @@ public:
     }
 
     /**
-     * Simplified custom back-end constructor.
+     * @anchor stream-with-reopen
      *
-     * @arg out:
-     * @arg err:
+     * Stream constructor with reopen path.
+     *
+     * @note The logger will take ownership of
+     * the stream, closing it when the logger destructs.
+     *
+     * @note Reopening the log file via the
+     * <a href="xtrctl.html#rotating-log-files">xtrctl</a> tool is supported,
+     * with the reopen_path argument specifying the path to reopen.
+     *
+     * @arg reopen_path: The path of the file associated with the stream argument.
+     *                   This path will be used to reopen the stream if requested via
+     *                   the <a href="xtrctl.html#rotating-log-files">xtrctl</a> tool.
+     * @arg stream: The stream to write log statements to.
+     * @arg err_stream: A stream to write error messages to.
+     * @arg clock: Please refer to the @ref clock_arg "description"
+     *             above.
+     * @arg command_path: Please refer to the @ref command_path_arg
+     *                    "description" above.
+     */
+    template<typename Clock = std::chrono::system_clock>
+    logger(
+        const char* reopen_path,
+        FILE* stream,
+        FILE* err_stream = stderr,
+        Clock&& clock = Clock(),
+        std::string command_path = default_command_path()) :
+        logger(
+            detail::make_output_func(stream),
+            detail::make_error_func(err_stream),
+            detail::make_flush_func(stream, err_stream),
+            detail::make_sync_func(stream, err_stream),
+            detail::make_reopen_func(reopen_path, stream),
+            [stream]() { std::fclose(stream); }, // close
+            std::forward<Clock>(clock),
+            std::move(command_path))
+    {
+    }
+
+    /**
+     * Basic custom back-end constructor.
+     *
+     * @arg out: @anchor out_arg
+     *           A function accepting a const char* buffer of formatted log
+     *           data and a std::size_t argument specifying the length of the
+     *           buffer in bytes. The logger will invoke this function from the
+     *           background thread in order to output log data. The return type
+     *           should be ssize_t and return value should be -1 if an error
+     *           occurred, otherwise the number of bytes successfully written
+     *           should be returned. Note that returning anything less than the
+     *           number of bytes given by the length argument is considered an
+     *           error, resulting in the 'err' function being invoked with a
+     *           "Short write" error string.
+     * @arg err: @anchor err_arg
+     *           A function accepting a const char* buffer of formatted log
+     *           data and a std::size_t argument specifying the length of the
+     *           buffer in bytes. The logger will invoke this function from the
+     *           background thread if an error occurs. The return type should
+     *           be void.
      * @arg clock: Please refer to the @ref clock_arg "description"
      *             above.
      * @arg command_path: Please refer to the @ref command_path_arg
@@ -2810,12 +2855,27 @@ public:
     /**
      * Custom back-end constructor.
      *
-     * @arg out:
-     * @arg err:
-     * @arg flush:
-     * @arg sync:
-     * @arg reopen:
-     * @arg close:
+     * @arg out: Please refer to the @ref out_arg "description" above.
+     * @arg err: Please refer to the @ref err_arg "description" above.
+     * @arg flush: @anchor flush_arg
+     *             A function that the logger will invoke from
+     *             the background thread to indicate that the back-end
+     *             should write any buffered data to its associated
+     *             backing store.
+     * @arg sync: @anchor sync_arg
+     *            A function that the logger will invoke from
+     *            the background thread to indicate that the back-end
+     *            should ensure that all data written to the associated
+     *            backing store has reached permanent storage.
+     * @arg reopen: @anchor reopen_arg
+     *              A function that the logger will invoke from
+     *              the background thread to indicate that if the back-end
+     *              has a file opened for writing log data then the
+     *              file should be reopened (in order to rotate it).
+     * @arg close: @anchor close_arg
+     *             A function that the logger will invoke from
+     *             the background thread to indicate that the back-end
+     *             should close any associated backing store.
      * @arg clock: Please refer to the @ref clock_arg "description"
      *             above.
      * @arg command_path: Please refer to the @ref command_path_arg
@@ -2899,17 +2959,20 @@ public:
     void register_sink(sink& s, std::string name) noexcept;
 
     /**
-     * TODO
+     * Sets the logger output to the specified stream. The existing output
+     * will be flushed and closed.
      */
     void set_output_stream(FILE* stream) noexcept;
 
     /**
-     * TODO
+     * Sets the logger error output to the specified stream.
      */
     void set_error_stream(FILE* stream) noexcept;
 
     /**
-     * TODO
+     * Sets the logger output to the specified function. The existing output
+     * will be flushed and closed. Please refer to the 'out' argument @ref
+     * out_arg "description" above for details.
      */
     template<typename Func>
     void set_output_function(Func&& f) noexcept
@@ -2920,13 +2983,19 @@ public:
                 ::ssize_t>,
             "Output function type must be of type ssize_t(const char*, size_t) "
             "(returning the number of bytes written or -1 on error)");
-        post([f = std::forward<Func>(f)](auto& c, auto&)
-             { c.out = std::move(f); });
+        post(
+            [f = std::forward<Func>(f)](auto& c, auto&)
+            {
+                c.flush();
+                c.close();
+                c.out = std::move(f);
+            });
         control_.sync();
     }
 
     /**
-     * TODO
+     * Sets the logger error output to the specified function. Please refer to
+     * the 'err' argument @ref err_arg "description" above for details.
      */
     template<typename Func>
     void set_error_function(Func&& f) noexcept
@@ -2940,7 +3009,8 @@ public:
     }
 
     /**
-     * TODO
+     * Sets the logger flush function\---please refer to the 'flush' argument
+     * @ref flush_arg "description" above for details.
      */
     template<typename Func>
     void set_flush_function(Func&& f) noexcept
@@ -2954,7 +3024,8 @@ public:
     }
 
     /**
-     * TODO
+     * Sets the logger sync function\---please refer to the 'sync' argument
+     * @ref sync_arg "description" above for details.
      */
     template<typename Func>
     void set_sync_function(Func&& f) noexcept
@@ -2968,7 +3039,8 @@ public:
     }
 
     /**
-     * TODO
+     * Sets the logger reopen function\---please refer to the 'reopen' argument
+     * @ref reopen_arg "description" above for details.
      */
     template<typename Func>
     void set_reopen_function(Func&& f) noexcept
@@ -2982,7 +3054,8 @@ public:
     }
 
     /**
-     * TODO
+     * Sets the logger close function\---please refer to the 'close' argument
+     * @ref close_arg "description" above for details.
      */
     template<typename Func>
     void set_close_function(Func&& f) noexcept
@@ -2996,7 +3069,8 @@ public:
     }
 
     /**
-     * TODO
+     * Sets the logger command path\---please refer to the 'command_path' argument
+     * @ref command_path_arg "description" above for details.
      */
     void set_command_path(std::string path) noexcept;
 
