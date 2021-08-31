@@ -387,7 +387,7 @@ Sink copy constructor. When a sink is copied it is automatically registered with
 .INDENT 7.0
 .TP
 .B \fI\%sink\fP  &operator=(const  \fI\%sink\fP  &other) 
-Sink copy assignment operator. When a sink is copy assigned it closed in order to disconnect it from any existing logger object, and is then automatically registered with the same logger object as the source sink, using the same sink name. The sink name may be modified by calling \fI\%set_name\fP\&. 
+Sink copy assignment operator. When a sink is copy assigned it is closed in order to disconnect it from any existing logger object and is then automatically registered with the same logger object as the source sink, using the same sink name. The sink name may be modified by calling \fI\%set_name\fP\&. 
 .UNINDENT
 .INDENT 7.0
 .TP
@@ -434,6 +434,7 @@ Returns the current log level.
 .INDENT 0.0
 .TP
 .B template<typename  T> inline  auto  xtr::nocopy(const  \fI\%T\fP  &arg) 
+nocopy is used to specify that a log argument should be passed by reference instead of by value, so that \fBarg\fP becomes \fBnocopy(arg)\fP\&. Note that by default, all strings including C strings and std::string_view are copied. In order to pass strings by reference they must be wrapped in a call to nocopy. Please see the \fI\%passing arguments by value or reference\fP and \fI\%string arguments\fP sections of the user guide for further details. 
 .UNINDENT
 .SH LOG LEVELS
 .INDENT 0.0
