@@ -160,13 +160,13 @@ User\-supplied timestamp log macro, logs the specified format string and argumen
 .INDENT 0.0
 .TP
 .B class  xtr::logger 
-The main logger class. When constructed a background thread will be created which is used for formatting log messages and performing I/O. To write to the logger call logger::sink then pass the sink to a macro such as XTR_LOG. 
+The main logger class. When constructed a background thread will be created which is used for formatting log messages and performing I/O. To write to the logger call \fI\%xtr::logger::get_sink\fP to create a sink, then pass the sink to a macro such as XTR_LOG (see the \fI\%creating and writing to sinks\fP section of the user guide for details). 
 .sp
 Public Functions
 .INDENT 7.0
 .TP
 .B template<typename  Clock  =  std::chrono::system_clock> inline  logger(const  char  *path, \fI\%Clock\fP  &&clock  =  \fI\%Clock\fP(), std::string  command_path  =  \fI\%default_command_path\fP()) 
-Path only constructor, the first argument is the path to a file which should be opened and logged to. The file will be opened in append mode, and will be created if it does not exist. Errors will be written to stdout.
+Path constructor. The first argument is the path to a file which should be opened and logged to. The file will be opened in append mode, and will be created if it does not exist. Errors will be written to stdout.
 .sp
 .INDENT 7.0
 .IP \(bu 2
@@ -180,42 +180,80 @@ command_path: The path where the local domain socket used to communicate with \f
 .UNINDENT
 .INDENT 7.0
 .TP
-.B template<typename  Clock  =  std::chrono::system_clock> inline  logger(const  char  *path, FILE  *stream, FILE  *err_stream  =  stderr, \fI\%Clock\fP  &&clock  =  \fI\%Clock\fP(), std::string  command_path  =  \fI\%default_command_path\fP()) 
-Path and stream constructor.
+.B template<typename  Clock  =  std::chrono::system_clock> inline  logger(FILE  *stream  =  stderr, FILE  *err_stream  =  stderr, \fI\%Clock\fP  &&clock  =  \fI\%Clock\fP(), std::string  command_path  =  \fI\%default_command_path\fP()) 
+Stream constructor.
+.sp
+It is expected that this constructor will be used with streams such as stdout or stderr. If a stream that has been opened by the user is to be passed to the logger then the \fI\%stream constructor with reopen path\fP constructor is recommended instead.
 .sp
 .INDENT 7.0
 .IP \(bu 2
-path: The path of a file to write log statements to. 
+stream: The stream to write log statements to. 
+.IP \(bu 2
+err_stream: A stream to write error messages to. 
 .IP \(bu 2
 clock: Please refer to the \fI\%description\fP above. 
 .IP \(bu 2
 command_path: Please refer to the \fI\%description\fP above. 
 .UNINDENT
 
+.sp
+\fBNOTE:\fP
+.INDENT 7.0
+.INDENT 3.5
+The logger will not take ownership of the stream\-\-\-i.e. it will not be closed when the logger destructs.
+.UNINDENT
+.UNINDENT
+.sp
+\fBNOTE:\fP
+.INDENT 7.0
+.INDENT 3.5
+Reopening the log file via the \fI\%xtrctl\fP tool is \fInot\fP supported.
+.UNINDENT
+.UNINDENT
 .UNINDENT
 .INDENT 7.0
 .TP
-.B template<typename  Clock  =  std::chrono::system_clock> inline  logger(FILE  *stream  =  stderr, FILE  *err_stream  =  stderr, \fI\%Clock\fP  &&clock  =  \fI\%Clock\fP(), std::string  command_path  =  \fI\%default_command_path\fP()) 
-Stream only constructor.
+.B template<typename  Clock  =  std::chrono::system_clock> inline  logger(const  char  *reopen_path, FILE  *stream, FILE  *err_stream  =  stderr, \fI\%Clock\fP  &&clock  =  \fI\%Clock\fP(), std::string  command_path  =  \fI\%default_command_path\fP()) 
+ Stream constructor with reopen path.
 .sp
 .INDENT 7.0
+.IP \(bu 2
+reopen_path: The path of the file associated with the stream argument. This path will be used to reopen the stream if requested via the \fI\%xtrctl\fP tool. 
+.IP \(bu 2
+stream: The stream to write log statements to. 
+.IP \(bu 2
+err_stream: A stream to write error messages to. 
 .IP \(bu 2
 clock: Please refer to the \fI\%description\fP above. 
 .IP \(bu 2
 command_path: Please refer to the \fI\%description\fP above. 
 .UNINDENT
 
+.sp
+\fBNOTE:\fP
+.INDENT 7.0
+.INDENT 3.5
+The logger will take ownership of the stream, closing it when the logger destructs.
+.UNINDENT
+.UNINDENT
+.sp
+\fBNOTE:\fP
+.INDENT 7.0
+.INDENT 3.5
+Reopening the log file via the \fI\%xtrctl\fP tool is supported, with the reopen_path argument specifying the path to reopen.
+.UNINDENT
+.UNINDENT
 .UNINDENT
 .INDENT 7.0
 .TP
 .B template<typename  OutputFunction,  typename  ErrorFunction,  typename  Clock  =  std::chrono::system_clock> inline  logger(\fI\%OutputFunction\fP  &&out, \fI\%ErrorFunction\fP  &&err, \fI\%Clock\fP  &&clock  =  \fI\%Clock\fP(), std::string  command_path  =  \fI\%default_command_path\fP()) 
-Simplified custom back\-end constructor.
+Basic custom back\-end constructor.
 .sp
 .INDENT 7.0
 .IP \(bu 2
-out: 
+out: A function accepting a const char* buffer of formatted log data and a std::size_t argument specifying the length of the buffer in bytes. The logger will invoke this function from the background thread in order to output log data. The return type should be ssize_t and return value should be \-1 if an error occurred, otherwise the number of bytes successfully written should be returned. Note that returning anything less than the number of bytes given by the length argument is considered an error, resulting in the \(aqerr\(aq function being invoked with a "Short write" error string. 
 .IP \(bu 2
-err: 
+err: A function accepting a const char* buffer of formatted log data and a std::size_t argument specifying the length of the buffer in bytes. The logger will invoke this function from the background thread if an error occurs. The return type should be void. 
 .IP \(bu 2
 clock: Please refer to the \fI\%description\fP above. 
 .IP \(bu 2
@@ -230,17 +268,17 @@ Custom back\-end constructor.
 .sp
 .INDENT 7.0
 .IP \(bu 2
-out: 
+out: Please refer to the \fI\%description\fP above. 
 .IP \(bu 2
-err: 
+err: Please refer to the \fI\%description\fP above. 
 .IP \(bu 2
-flush: 
+flush: A function that the logger will invoke from the background thread to indicate that the back\-end should write any buffered data to its associated backing store. 
 .IP \(bu 2
-sync: 
+sync: A function that the logger will invoke from the background thread to indicate that the back\-end should ensure that all data written to the associated backing store has reached permanent storage. 
 .IP \(bu 2
-reopen: 
+reopen: A function that the logger will invoke from the background thread to indicate that if the back\-end has a file opened for writing log data then the file should be reopened (in order to rotate it). 
 .IP \(bu 2
-close: 
+close: A function that the logger will invoke from the background thread to indicate that the back\-end should close any associated backing store. 
 .IP \(bu 2
 clock: Please refer to the \fI\%description\fP above. 
 .IP \(bu 2
@@ -289,47 +327,47 @@ The sink must be closed.
 .INDENT 7.0
 .TP
 .B void  set_output_stream(FILE  *stream)  noexcept 
-TODO 
+Sets the logger output to the specified stream. The existing output will be flushed and closed. 
 .UNINDENT
 .INDENT 7.0
 .TP
 .B void  set_error_stream(FILE  *stream)  noexcept 
-TODO 
+Sets the logger error output to the specified stream. 
 .UNINDENT
 .INDENT 7.0
 .TP
 .B template<typename  Func> inline  void  set_output_function(\fI\%Func\fP  &&f)  noexcept 
-TODO 
+Sets the logger output to the specified function. The existing output will be flushed and closed. Please refer to the \(aqout\(aq argument \fI\%description\fP above for details. 
 .UNINDENT
 .INDENT 7.0
 .TP
 .B template<typename  Func> inline  void  set_error_function(\fI\%Func\fP  &&f)  noexcept 
-TODO 
+Sets the logger error output to the specified function. Please refer to the \(aqerr\(aq argument \fI\%description\fP above for details. 
 .UNINDENT
 .INDENT 7.0
 .TP
 .B template<typename  Func> inline  void  set_flush_function(\fI\%Func\fP  &&f)  noexcept 
-TODO 
+Sets the logger flush function\-\-\-please refer to the \(aqflush\(aq argument \fI\%description\fP above for details. 
 .UNINDENT
 .INDENT 7.0
 .TP
 .B template<typename  Func> inline  void  set_sync_function(\fI\%Func\fP  &&f)  noexcept 
-TODO 
+Sets the logger sync function\-\-\-please refer to the \(aqsync\(aq argument \fI\%description\fP above for details. 
 .UNINDENT
 .INDENT 7.0
 .TP
 .B template<typename  Func> inline  void  set_reopen_function(\fI\%Func\fP  &&f)  noexcept 
-TODO 
+Sets the logger reopen function\-\-\-please refer to the \(aqreopen\(aq argument \fI\%description\fP above for details. 
 .UNINDENT
 .INDENT 7.0
 .TP
 .B template<typename  Func> inline  void  set_close_function(\fI\%Func\fP  &&f)  noexcept 
-TODO 
+Sets the logger close function\-\-\-please refer to the \(aqclose\(aq argument \fI\%description\fP above for details. 
 .UNINDENT
 .INDENT 7.0
 .TP
 .B void  set_command_path(std::string  path)  noexcept 
-TODO 
+Sets the logger command path\-\-\-please refer to the \(aqcommand_path\(aq argument \fI\%description\fP above for details. 
 .UNINDENT
 .UNINDENT
 .SH SINK
