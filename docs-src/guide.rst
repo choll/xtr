@@ -443,9 +443,10 @@ when the logger and all associated sinks have been destructed, and is
 joined by the logger destructor. This means that when the logger
 destructs, it will block until all associated sinks have also destructed.
 
-This is done to make using the logger easier---sinks will never lose data
-and will never be disconnected from the associated logger unless they are
-explicitly disconnected by closing the sink.
+This is done to prevent creating 'orphan' sinks which are open but not being
+read from by a logger. This should make using the logger easier as sinks will
+never lose data and will never be disconnected from the associated logger
+unless they are explicitly disconnected by closing the sink.
 
 CPU Affinity
 ~~~~~~~~~~~~
@@ -541,7 +542,7 @@ Examples
 
 `custom back-end constructor <api.html#_CPPv4I0000000EN3xtr6logger6loggerERR14OutputFunctionRR13ErrorFunctionRR13FlushFunctionRR12SyncFunctionRR14ReopenFunctionRR13CloseFunctionRR5ClockNSt6stringE>`__
 
-Custom back-end using the simplified back-end constructor:
+Custom back-end using the basic back-end constructor:
 
 .. code-block:: c++
 
