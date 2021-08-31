@@ -1355,7 +1355,7 @@ public:
 
     /**
      * Sink copy assignment operator. When a sink is copy assigned it
-     * closed in order to disconnect it from any existing logger object,
+     * is closed in order to disconnect it from any existing logger object
      * and is then automatically registered with the same logger object as
      * the source sink, using the same sink name. The sink name may be
      * modified by calling @ref set_name.
@@ -2589,6 +2589,17 @@ namespace xtr
 {
     class logger;
 
+    /**
+     * nocopy is used to specify that a log argument should be passed by
+     * reference instead of by value, so that `arg` becomes `nocopy(arg)`.
+     * Note that by default, all strings including C strings and
+     * std::string_view are copied. In order to pass strings by reference
+     * they must be wrapped in a call to nocopy.
+     * Please see the <a href="guide.html#passing-arguments-by-value-or-reference">
+     * passing arguments by value or reference</a> and
+     * <a href="guide.html#string-arguments">string arguments</a> sections of
+     * the user guide for further details.
+     */
     template<typename T>
     inline auto nocopy(const T& arg)
     {
