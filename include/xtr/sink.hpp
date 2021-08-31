@@ -93,7 +93,7 @@ public:
 
     /**
      * Sink copy assignment operator. When a sink is copy assigned it
-     * closed in order to disconnect it from any existing logger object,
+     * is closed in order to disconnect it from any existing logger object
      * and is then automatically registered with the same logger object as
      * the source sink, using the same sink name. The sink name may be
      * modified by calling @ref set_name.
