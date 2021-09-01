@@ -25,8 +25,25 @@
 
 namespace xtr
 {
+    /**
+     * @anchor null_command_path
+     *
+     * When passed to the @ref command_path_arg "command_path" argument of
+     * @ref logger::logger (or other logger constructors) indicates that no
+     * command socket should be created.
+     */
     inline constexpr auto null_command_path = "";
 
+    /**
+     * @anchor default_command_path
+     *
+     * Returns the default command path used for the @ref command_path_arg
+     * "command_path" argument of @ref logger::logger (and other logger
+     * constructors). A string with the format /run/user/<uid>/xtrctl.<pid>.<N>
+     * is returned, where N begins at 0 and increases for each call to the
+     * function. If the /run/user/<uid> directory does not exist or is
+     * inaccessible then the /tmp directory is used instead.
+     */
     std::string default_command_path();
 }
 

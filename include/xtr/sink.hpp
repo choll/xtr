@@ -64,10 +64,10 @@ namespace xtr
  *
  * It is expected that an application will have many sinks, such
  * as a sink per thread or sink per component. A sink that is connected
- * to a logger may be created by calling @ref get_sink. A sink
+ * to a logger may be created by calling @ref logger::get_sink. A sink
  * that is not connected to a logger may be created simply by default
  * construction, then the sink may be connected to a logger by calling
- * @ref register_sink.
+ * @ref logger::register_sink.
  */
 class xtr::sink
 {
@@ -109,7 +109,7 @@ public:
     /**
      *  Closes the sink. After this function returns the sink is closed and
      *  log() functions may not be called on the sink. The sink may be
-     *  re-opened by calling logger::register_sink.
+     *  re-opened by calling @ref logger::register_sink.
      */
     void close();
 

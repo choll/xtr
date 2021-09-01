@@ -156,7 +156,7 @@ namespace xtr::detail
 /**
  * The main logger class. When constructed a background thread will be created
  * which is used for formatting log messages and performing I/O. To write to the
- * logger call @ref xtr::logger::get_sink to create a sink, then pass the sink
+ * logger call @ref logger::get_sink to create a sink, then pass the sink
  * to a macro such as @ref XTR_LOG
  * (see the <a href="guide.html#creating-and-writing-to-sinks">creating and
  * writing to sinks</a> section of the user guide for details).
@@ -201,11 +201,12 @@ public:
      * @arg command_path: @anchor command_path_arg
      *                    The path where the local domain socket used to
      *                    communicate with <a href="xtrctl.html">xtrctl</a>
-     *                    should be created. The default path is
-     *                    /run/user/<uid>/xtrctl.<pid>.<N>, where N begins at 0
-     *                    and increases for each logger object created by the
-     *                    process. If the file cannot be created in
-     *                    /run/user/<uid> then /tmp is used instead.
+     *                    should be created. The default behaviour is to create
+     *                    sockets in /run/user/<uid>. If that directory does not
+     *                    exist or is inaccessible then /tmp will be used
+     *                    instead. See @ref default_command_path for further
+     *                    details. To prevent a socket from being created, pass
+     *                    @ref null_command_path.
      */
     template<typename Clock = std::chrono::system_clock>
     logger(
