@@ -91,3 +91,8 @@ Default command path
 --------------------
 
 .. doxygenfunction:: default_command_path
+
+Null command path
+-----------------
+
+.. doxygenvariable:: null_command_path

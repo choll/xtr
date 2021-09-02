@@ -35,32 +35,32 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .INDENT 0.0
 .TP
 .B XTR_LOG(SINK, \&...) 
-Basic log macro, logs the specified format string and arguments to the given sink, blocking if the sink is full. The non\-blocking variant of this macro is XTR_TRY_LOG which will discard the message if the sink is full. Timestamps are read in the background thread\-\-\-if this is undesirable use XTR_LOG_RTC or XTR_LOG_TSC which read timestamps at the point of logging. 
+Basic log macro, logs the specified format string and arguments to the given sink, blocking if the sink is full. The non\-blocking variant of this macro is XTR_TRY_LOG which will discard the message if the sink is full. Timestamps are read in the background thread\-\-\-if this is undesirable use \fI\%XTR_LOG_RTC\fP or \fI\%XTR_LOG_TSC\fP which read timestamps at the point of logging. 
 .UNINDENT
 .INDENT 0.0
 .TP
 .B XTR_LOG_DEBUG(SINK, \&...) 
-\(aqDebug\(aq log level variant of XTR_LOG. An equivalent macro XTR_LOGD is provided as a short\-hand alternative. This macro can be disabled at build time by defining XTR_NDEBUG. The non\-blocking variants are XTR_TRY_LOG_DEBUG and XTR_TRY_LOGD. 
+\(aqDebug\(aq log level variant of \fI\%XTR_LOG\fP\&. An equivalent macro XTR_LOGD is provided as a short\-hand alternative. This macro can be disabled at build time by defining XTR_NDEBUG. The non\-blocking variants are XTR_TRY_LOG_DEBUG and XTR_TRY_LOGD\&. 
 .UNINDENT
 .INDENT 0.0
 .TP
 .B XTR_LOG_INFO(SINK, \&...) 
-\(aqInfo\(aq log level variant of XTR_LOG. An equivalent macro XTR_LOGI is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_INFO and XTR_TRY_LOGI. 
+\(aqInfo\(aq log level variant of \fI\%XTR_LOG\fP\&. An equivalent macro XTR_LOGI is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_INFO and XTR_TRY_LOGI\&. 
 .UNINDENT
 .INDENT 0.0
 .TP
 .B XTR_LOG_WARN(SINK, \&...) 
-\(aqWarning\(aq log level variant of XTR_LOG. An equivalent macro XTR_LOGW is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_WARN and XTR_TRY_LOGW. 
+\(aqWarning\(aq log level variant of \fI\%XTR_LOG\fP\&. An equivalent macro XTR_LOGW is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_WARN and XTR_TRY_LOGW\&. 
 .UNINDENT
 .INDENT 0.0
 .TP
 .B XTR_LOG_ERROR(SINK, \&...) 
-\(aqError\(aq log level variant of XTR_LOG. An equivalent macro XTR_LOGE is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_ERROR and XTR_TRY_LOGE. 
+\(aqError\(aq log level variant of \fI\%XTR_LOG\fP\&. An equivalent macro XTR_LOGE is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_ERROR and XTR_TRY_LOGE\&. 
 .UNINDENT
 .INDENT 0.0
 .TP
 .B XTR_LOG_FATAL(SINK, \&...) 
-\(aqFatal\(aq log level variant of XTR_LOG. When this macro is invoked, the log message is written, \fI\%xtr::sink::sync\fP is invoked, then the program is terminated via abort(3). An equivalent macro XTR_LOGF is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_FATAL and XTR_TRY_LOGF. 
+\(aqFatal\(aq log level variant of \fI\%XTR_LOG\fP\&. When this macro is invoked, the log message is written, \fI\%xtr::sink::sync\fP is invoked, then the program is terminated via abort(3). An equivalent macro XTR_LOGF is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_FATAL and XTR_TRY_LOGF\&. 
 .UNINDENT
 .SS Timestamped Macros
 .SS TSC
@@ -72,58 +72,58 @@ Timestamped log macro, logs the specified format string and arguments to the giv
 .INDENT 0.0
 .TP
 .B XTR_LOG_TSC_DEBUG(SINK, \&...) 
-\(aqDebug\(aq log level variant of XTR_LOG_TSC. An equivalent macro XTR_LOG_TSCD is provided as a short\-hand alternative. This macro can be disabled at build time by defining XTR_NDEBUG. The non\-blocking variants are XTR_TRY_LOG_TSC_DEBUG and XTR_TRY_LOG_TSCD. 
+\(aqDebug\(aq log level variant of \fI\%XTR_LOG_TSC\fP\&. An equivalent macro XTR_LOG_TSCD is provided as a short\-hand alternative. This macro can be disabled at build time by defining XTR_NDEBUG. The non\-blocking variants are XTR_TRY_LOG_TSC_DEBUG and XTR_TRY_LOG_TSCD\&. 
 .UNINDENT
 .INDENT 0.0
 .TP
 .B XTR_LOG_TSC_INFO(SINK, \&...) 
-\(aqInfo\(aq log level variant of XTR_LOG_TSC. An equivalent macro XTR_LOG_TSCI is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_TSC_INFO and XTR_TRY_LOG_TSCI. 
+\(aqInfo\(aq log level variant of \fI\%XTR_LOG_TSC\fP\&. An equivalent macro XTR_LOG_TSCI is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_TSC_INFO and XTR_TRY_LOG_TSCI\&. 
 .UNINDENT
 .INDENT 0.0
 .TP
 .B XTR_LOG_TSC_WARN(SINK, \&...) 
-\(aqWarning\(aq log level variant of XTR_LOG_TSC. An equivalent macro XTR_LOG_TSCW is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_TSC_WARN and XTR_TRY_LOG_TSCW. 
+\(aqWarning\(aq log level variant of \fI\%XTR_LOG_TSC\fP\&. An equivalent macro XTR_LOG_TSCW is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_TSC_WARN and XTR_TRY_LOG_TSCW\&. 
 .UNINDENT
 .INDENT 0.0
 .TP
 .B XTR_LOG_TSC_ERROR(SINK, \&...) 
-\(aqError\(aq log level variant of XTR_LOG_TSC. An equivalent macro XTR_LOG_TSCE is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_TSC_ERROR and XTR_TRY_LOG_TSCE. 
+\(aqError\(aq log level variant of \fI\%XTR_LOG_TSC\fP\&. An equivalent macro XTR_LOG_TSCE is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_TSC_ERROR and XTR_TRY_LOG_TSCE\&. 
 .UNINDENT
 .INDENT 0.0
 .TP
 .B XTR_LOG_TSC_FATAL(SINK, \&...) 
-\(aqFatal\(aq log level variant of XTR_LOG_TSC. When this macro is invoked, the log message is written, \fI\%xtr::sink::sync\fP is invoked, then the program is terminated via abort(3). An equivalent macro XTR_LOG_TSCF is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_TSC_FATAL and XTR_TRY_LOG_TSCF. 
+\(aqFatal\(aq log level variant of \fI\%XTR_LOG_TSC\fP\&. When this macro is invoked, the log message is written, \fI\%xtr::sink::sync\fP is invoked, then the program is terminated via abort(3). An equivalent macro XTR_LOG_TSCF is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_TSC_FATAL and XTR_TRY_LOG_TSCF\&. 
 .UNINDENT
 .SS Real\-time Clock
 .INDENT 0.0
 .TP
 .B XTR_LOG_RTC(SINK, \&...) 
-Timestamped log macro, logs the specified format string and arguments to the given sink along with a timestamp obtained by invoking \fI\%clock_gettime(3)\fP <\fBhttps://www.man7.org/linux/man-pages/man3/clock_gettime.3.html\fP> with a clock source of CLOCK_REALTIME_COARSE on Linux or CLOCK_REALTIME_FAST on FreeBSD. Depending on the host CPU this may be faster than XTR_LOG_TSC. The non\-blocking variant of this macro is XTR_TRY_LOG_RTC which will discard the message if the sink is full. 
+Timestamped log macro, logs the specified format string and arguments to the given sink along with a timestamp obtained by invoking \fI\%clock_gettime(3)\fP <\fBhttps://www.man7.org/linux/man-pages/man3/clock_gettime.3.html\fP> with a clock source of CLOCK_REALTIME_COARSE on Linux or CLOCK_REALTIME_FAST on FreeBSD. Depending on the host CPU this may be faster than \fI\%XTR_LOG_TSC\fP\&. The non\-blocking variant of this macro is XTR_TRY_LOG_RTC which will discard the message if the sink is full. 
 .UNINDENT
 .INDENT 0.0
 .TP
 .B XTR_LOG_RTC_DEBUG(SINK, \&...) 
-\(aqDebug\(aq log level variant of XTR_LOG_RTC. An equivalent macro XTR_LOG_RTCD is provided as a short\-hand alternative. This macro can be disabled at build time by defining XTR_NDEBUG. The non\-blocking variants are XTR_TRY_LOG_RTC_DEBUG and XTR_TRY_LOG_RTCD. 
+\(aqDebug\(aq log level variant of \fI\%XTR_LOG_RTC\fP\&. An equivalent macro XTR_LOG_RTCD is provided as a short\-hand alternative. This macro can be disabled at build time by defining XTR_NDEBUG. The non\-blocking variants are XTR_TRY_LOG_RTC_DEBUG and XTR_TRY_LOG_RTCD\&. 
 .UNINDENT
 .INDENT 0.0
 .TP
 .B XTR_LOG_RTC_INFO(SINK, \&...) 
-\(aqInfo\(aq log level variant of XTR_LOG_RTC. An equivalent macro XTR_LOG_RTCI is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_RTC_INFO and XTR_TRY_LOG_RTCI. 
+\(aqInfo\(aq log level variant of \fI\%XTR_LOG_RTC\fP\&. An equivalent macro XTR_LOG_RTCI is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_RTC_INFO and XTR_TRY_LOG_RTCI\&. 
 .UNINDENT
 .INDENT 0.0
 .TP
 .B XTR_LOG_RTC_WARN(SINK, \&...) 
-\(aqWarning\(aq log level variant of XTR_LOG_RTC. An equivalent macro XTR_LOG_RTCW is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_RTC_WARN and XTR_TRY_LOG_RTCW. 
+\(aqWarning\(aq log level variant of \fI\%XTR_LOG_RTC\fP\&. An equivalent macro XTR_LOG_RTCW is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_RTC_WARN and XTR_TRY_LOG_RTCW\&. 
 .UNINDENT
 .INDENT 0.0
 .TP
 .B XTR_LOG_RTC_ERROR(SINK, \&...) 
-\(aqError\(aq log level variant of XTR_LOG_RTC. An equivalent macro XTR_LOG_RTCE is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_RTC_ERROR and XTR_TRY_LOG_RTCE. 
+\(aqError\(aq log level variant of \fI\%XTR_LOG_RTC\fP\&. An equivalent macro XTR_LOG_RTCE is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_RTC_ERROR and XTR_TRY_LOG_RTCE\&. 
 .UNINDENT
 .INDENT 0.0
 .TP
 .B XTR_LOG_RTC_FATAL(SINK, \&...) 
-\(aqFatal\(aq log level variant of XTR_LOG_RTC. When this macro is invoked, the log message is written, \fI\%xtr::sink::sync\fP is invoked, then the program is terminated via abort(3). An equivalent macro XTR_LOG_RTCF is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_RTC_FATAL and XTR_TRY_LOG_RTCF. 
+\(aqFatal\(aq log level variant of \fI\%XTR_LOG_RTC\fP\&. When this macro is invoked, the log message is written, \fI\%xtr::sink::sync\fP is invoked, then the program is terminated via abort(3). An equivalent macro XTR_LOG_RTCF is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_RTC_FATAL and XTR_TRY_LOG_RTCF\&. 
 .UNINDENT
 .SS User\-Supplied Timestamp
 .INDENT 0.0
@@ -134,33 +134,33 @@ User\-supplied timestamp log macro, logs the specified format string and argumen
 .INDENT 0.0
 .TP
 .B XTR_LOG_TS_DEBUG(SINK, \&...) 
-\(aqDebug\(aq log level variant of XTR_LOG_TS. An equivalent macro XTR_LOG_TSD is provided as a short\-hand alternative. This macro can be disabled at build time by defining XTR_NDEBUG. The non\-blocking variants are XTR_TRY_LOG_TS_DEBUG and XTR_TRY_LOG_TSD. 
+\(aqDebug\(aq log level variant of \fI\%XTR_LOG_TS\fP\&. An equivalent macro XTR_LOG_TSD is provided as a short\-hand alternative. This macro can be disabled at build time by defining XTR_NDEBUG. The non\-blocking variants are XTR_TRY_LOG_TS_DEBUG and XTR_TRY_LOG_TSD\&. 
 .UNINDENT
 .INDENT 0.0
 .TP
 .B XTR_LOG_TS_INFO(SINK, \&...) 
-\(aqInfo\(aq log level variant of XTR_LOG_TS. An equivalent macro XTR_LOG_TSI is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_TS_INFO and XTR_TRY_LOG_TSI. 
+\(aqInfo\(aq log level variant of \fI\%XTR_LOG_TS\fP\&. An equivalent macro XTR_LOG_TSI is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_TS_INFO and XTR_TRY_LOG_TSI\&. 
 .UNINDENT
 .INDENT 0.0
 .TP
 .B XTR_LOG_TS_WARN(SINK, \&...) 
-\(aqWarning\(aq log level variant of XTR_LOG_TS. An equivalent macro XTR_LOG_TSW is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_TS_WARN and XTR_TRY_LOG_TSW. 
+\(aqWarning\(aq log level variant of \fI\%XTR_LOG_TS\fP\&. An equivalent macro XTR_LOG_TSW is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_TS_WARN and XTR_TRY_LOG_TSW\&. 
 .UNINDENT
 .INDENT 0.0
 .TP
 .B XTR_LOG_TS_ERROR(SINK, \&...) 
-\(aqError\(aq log level variant of XTR_LOG_TS. An equivalent macro XTR_LOG_TSE is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_TS_ERROR and XTR_TRY_LOG_TSE. 
+\(aqError\(aq log level variant of \fI\%XTR_LOG_TS\fP\&. An equivalent macro XTR_LOG_TSE is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_TS_ERROR and XTR_TRY_LOG_TSE\&. 
 .UNINDENT
 .INDENT 0.0
 .TP
 .B XTR_LOG_TS_FATAL(SINK, \&...) 
-\(aqFatal\(aq log level variant of XTR_LOG_TS. When this macro is invoked, the log message is written, \fI\%xtr::sink::sync\fP is invoked, then the program is terminated via abort(3). An equivalent macro XTR_LOG_TSF is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_TS_FATAL and XTR_TRY_LOG_TSF. 
+\(aqFatal\(aq log level variant of \fI\%XTR_LOG_TS\fP\&. When this macro is invoked, the log message is written, \fI\%xtr::sink::sync\fP is invoked, then the program is terminated via abort(3). An equivalent macro XTR_LOG_TSF is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_TS_FATAL and XTR_TRY_LOG_TSF\&. 
 .UNINDENT
 .SH LOGGER
 .INDENT 0.0
 .TP
 .B class  xtr::logger 
-The main logger class. When constructed a background thread will be created which is used for formatting log messages and performing I/O. To write to the logger call \fI\%logger::get_sink\fP to create a sink, then pass the sink to a macro such as XTR_LOG (see the \fI\%creating and writing to sinks\fP section of the user guide for details). 
+The main logger class. When constructed a background thread will be created which is used for formatting log messages and performing I/O. To write to the logger call \fI\%logger::get_sink\fP to create a sink, then pass the sink to a macro such as \fI\%XTR_LOG\fP (see the \fI\%creating and writing to sinks\fP section of the user guide for details). 
 .sp
 Public Functions
 .INDENT 7.0
@@ -174,7 +174,7 @@ path: The path of a file to write log statements to.
 .IP \(bu 2
 clock: A function returning the current time of day as a std::timespec. This function will be invoked when creating timestamps for log statements produced by the basic log macros\-\-\- please see the \fI\%basic time source\fP section of the user guide for details. The default clock is std::chrono::system_clock. 
 .IP \(bu 2
-command_path: The path where the local domain socket used to communicate with \fI\%xtrctl\fP should be created. The default behaviour is to create sockets in /run/user/<uid>. If that directory does not exist or is inaccessible then /tmp will be used instead. See \fI\%default_command_path\fP for further details. To prevent a socket from being created, pass null_command_path\&. 
+command_path: The path where the local domain socket used to communicate with \fI\%xtrctl\fP should be created. The default behaviour is to create sockets in /run/user/<uid>. If that directory does not exist or is inaccessible then /tmp will be used instead. See \fI\%default_command_path\fP for further details. To prevent a socket from being created, pass \fI\%null_command_path\fP\&. 
 .UNINDENT
 
 .UNINDENT
@@ -470,7 +470,13 @@ nocopy is used to specify that a log argument should be passed by reference inst
 .INDENT 0.0
 .TP
 .B std::string  xtr::default_command_path() 
- Returns the default command path used for the \fI\%command_path\fP argument of \fI\%logger::logger\fP (and other logger constructors). A string with the format /run/user/<uid>/xtrctl.<pid>.<N> is returned, where N begins at 0 and increases for each call to the function. If the /run/user/<uid> directory does not exist or is inaccessible then the /tmp directory is used instead. 
+Returns the default command path used for the \fI\%command_path\fP argument of \fI\%logger::logger\fP (and other logger constructors). A string with the format /run/user/<uid>/xtrctl.<pid>.<N> is returned, where N begins at 0 and increases for each call to the function. If the /run/user/<uid> directory does not exist or is inaccessible then the /tmp directory is used instead. 
+.UNINDENT
+.SH NULL COMMAND PATH
+.INDENT 0.0
+.TP
+.B constexpr  auto  xtr::null_command_path  =  "" 
+When passed to the \fI\%command_path\fP argument of \fI\%logger::logger\fP (or other logger constructors) indicates that no command socket should be created. 
 .UNINDENT
 .SH AUTHOR
 Chris E. Holloway
