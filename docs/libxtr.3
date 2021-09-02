@@ -1,6 +1,6 @@
 .\" Man page generated from reStructuredText.
 .
-.TH "LIBXTR" "3" "August 2021" "" "xtr"
+.TH "LIBXTR" "3" "September 2021" "" "xtr"
 .SH NAME
 libxtr \- C++ logging library API reference
 .
@@ -160,7 +160,7 @@ User\-supplied timestamp log macro, logs the specified format string and argumen
 .INDENT 0.0
 .TP
 .B class  xtr::logger 
-The main logger class. When constructed a background thread will be created which is used for formatting log messages and performing I/O. To write to the logger call \fI\%xtr::logger::get_sink\fP to create a sink, then pass the sink to a macro such as XTR_LOG (see the \fI\%creating and writing to sinks\fP section of the user guide for details). 
+The main logger class. When constructed a background thread will be created which is used for formatting log messages and performing I/O. To write to the logger call \fI\%logger::get_sink\fP to create a sink, then pass the sink to a macro such as XTR_LOG (see the \fI\%creating and writing to sinks\fP section of the user guide for details). 
 .sp
 Public Functions
 .INDENT 7.0
@@ -174,7 +174,7 @@ path: The path of a file to write log statements to.
 .IP \(bu 2
 clock: A function returning the current time of day as a std::timespec. This function will be invoked when creating timestamps for log statements produced by the basic log macros\-\-\- please see the \fI\%basic time source\fP section of the user guide for details. The default clock is std::chrono::system_clock. 
 .IP \(bu 2
-command_path: The path where the local domain socket used to communicate with \fI\%xtrctl\fP should be created. The default path is /run/user/<uid>/xtrctl.<pid>.<N>, where N begins at 0 and increases for each logger object created by the process. If the file cannot be created in /run/user/<uid> then /tmp is used instead. 
+command_path: The path where the local domain socket used to communicate with \fI\%xtrctl\fP should be created. The default behaviour is to create sockets in /run/user/<uid>. If that directory does not exist or is inaccessible then /tmp will be used instead. See \fI\%default_command_path\fP for further details. To prevent a socket from being created, pass null_command_path\&. 
 .UNINDENT
 
 .UNINDENT
@@ -376,7 +376,7 @@ Sets the logger command path\-\-\-please refer to the \(aqcommand_path\(aq argum
 .B class  xtr::sink 
 Log sink class. A sink is how log messages are written to a log. Each sink has its own queue which is used to send log messages to the logger. Sink operations are not thread safe, with the exception of \fI\%set_level\fP and \fI\%level\fP\&.
 .sp
-It is expected that an application will have many sinks, such as a sink per thread or sink per component. A sink that is connected to a logger may be created by calling get_sink. A sink that is not connected to a logger may be created simply by default construction, then the sink may be connected to a logger by calling register_sink. 
+It is expected that an application will have many sinks, such as a sink per thread or sink per component. A sink that is connected to a logger may be created by calling \fI\%logger::get_sink\fP\&. A sink that is not connected to a logger may be created simply by default construction, then the sink may be connected to a logger by calling \fI\%logger::register_sink\fP\&. 
 .sp
 Public Functions
 .INDENT 7.0
@@ -470,6 +470,7 @@ nocopy is used to specify that a log argument should be passed by reference inst
 .INDENT 0.0
 .TP
 .B std::string  xtr::default_command_path() 
+ Returns the default command path used for the \fI\%command_path\fP argument of \fI\%logger::logger\fP (and other logger constructors). A string with the format /run/user/<uid>/xtrctl.<pid>.<N> is returned, where N begins at 0 and increases for each call to the function. If the /run/user/<uid> directory does not exist or is inaccessible then the /tmp directory is used instead. 
 .UNINDENT
 .SH AUTHOR
 Chris E. Holloway

@@ -1326,10 +1326,10 @@ namespace xtr
  *
  * It is expected that an application will have many sinks, such
  * as a sink per thread or sink per component. A sink that is connected
- * to a logger may be created by calling @ref get_sink. A sink
+ * to a logger may be created by calling @ref logger::get_sink. A sink
  * that is not connected to a logger may be created simply by default
  * construction, then the sink may be connected to a logger by calling
- * @ref register_sink.
+ * @ref logger::register_sink.
  */
 class xtr::sink
 {
@@ -1371,7 +1371,7 @@ public:
     /**
      *  Closes the sink. After this function returns the sink is closed and
      *  log() functions may not be called on the sink. The sink may be
-     *  re-opened by calling logger::register_sink.
+     *  re-opened by calling @ref logger::register_sink.
      */
     void close();
 
@@ -2096,8 +2096,25 @@ private:
 
 namespace xtr
 {
+    /**
+     * @anchor null_command_path
+     *
+     * When passed to the @ref command_path_arg "command_path" argument of
+     * @ref logger::logger (or other logger constructors) indicates that no
+     * command socket should be created.
+     */
     inline constexpr auto null_command_path = "";
 
+    /**
+     * @anchor default_command_path
+     *
+     * Returns the default command path used for the @ref command_path_arg
+     * "command_path" argument of @ref logger::logger (and other logger
+     * constructors). A string with the format /run/user/<uid>/xtrctl.<pid>.<N>
+     * is returned, where N begins at 0 and increases for each call to the
+     * function. If the /run/user/<uid> directory does not exist or is
+     * inaccessible then the /tmp directory is used instead.
+     */
     std::string default_command_path();
 }
 
@@ -2667,7 +2684,7 @@ namespace xtr::detail
 /**
  * The main logger class. When constructed a background thread will be created
  * which is used for formatting log messages and performing I/O. To write to the
- * logger call @ref xtr::logger::get_sink to create a sink, then pass the sink
+ * logger call @ref logger::get_sink to create a sink, then pass the sink
  * to a macro such as @ref XTR_LOG
  * (see the <a href="guide.html#creating-and-writing-to-sinks">creating and
  * writing to sinks</a> section of the user guide for details).
@@ -2711,11 +2728,12 @@ public:
      * @arg command_path: @anchor command_path_arg
      *                    The path where the local domain socket used to
      *                    communicate with <a href="xtrctl.html">xtrctl</a>
-     *                    should be created. The default path is
-     *                    /run/user/<uid>/xtrctl.<pid>.<N>, where N begins at 0
-     *                    and increases for each logger object created by the
-     *                    process. If the file cannot be created in
-     *                    /run/user/<uid> then /tmp is used instead.
+     *                    should be created. The default behaviour is to create
+     *                    sockets in /run/user/<uid>. If that directory does not
+     *                    exist or is inaccessible then /tmp will be used
+     *                    instead. See @ref default_command_path for further
+     *                    details. To prevent a socket from being created, pass
+     *                    @ref null_command_path.
      */
     template<typename Clock = std::chrono::system_clock>
     logger(
