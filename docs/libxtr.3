@@ -174,7 +174,7 @@ path: The path of a file to write log statements to.
 .IP \(bu 2
 clock: A function returning the current time of day as a std::timespec. This function will be invoked when creating timestamps for log statements produced by the basic log macros\-\-\- please see the \fI\%basic time source\fP section of the user guide for details. The default clock is std::chrono::system_clock. 
 .IP \(bu 2
-command_path: The path where the local domain socket used to communicate with \fI\%xtrctl\fP should be created. The default behaviour is to create sockets in /run/user/<uid>. If that directory does not exist or is inaccessible then /tmp will be used instead. See \fI\%default_command_path\fP for further details. To prevent a socket from being created, pass \fI\%null_command_path\fP\&. 
+command_path: The path where the local domain socket used to communicate with \fI\%xtrctl\fP should be created. The default behaviour is to create sockets in $XDG_RUNTIME_DIR (if set, otherwise "/run/user/<uid>"). If that directory does not exist or is inaccessible then $TMPDIR (if set, otherwise "/tmp") will be used instead. See \fI\%default_command_path\fP for further details. To prevent a socket from being created, pass \fI\%null_command_path\fP\&. 
 .UNINDENT
 
 .UNINDENT
@@ -417,7 +417,7 @@ Sets the sink\(aqs name to the specified value.
 .INDENT 7.0
 .TP
 .B template<auto  Format,  typename  Tags  =  void(),  typename  \&...Args> void  log(\fI\%Args\fP&&\&...  args)  noexcept((XTR_NOTHROW_INGESTIBLE(\fI\%Args\fP,  \fI\%args\fP)  &&  \&...)) 
-Logs the given format string and arguments. This function is not intended to be used directly, instead one of the XTR_LOG macros should be used. It is provided for use in situations where use of a macro may be undesirable. 
+Logs the given format string and arguments. This function is not intended to be used directly, instead one of the XTR_LOG macros should be used. It is provided for use in situations where use of a macro may be undesirable. The Tags template argument may be 
 .UNINDENT
 .INDENT 7.0
 .TP
@@ -470,7 +470,7 @@ nocopy is used to specify that a log argument should be passed by reference inst
 .INDENT 0.0
 .TP
 .B std::string  xtr::default_command_path() 
-Returns the default command path used for the \fI\%command_path\fP argument of \fI\%logger::logger\fP (and other logger constructors). A string with the format /run/user/<uid>/xtrctl.<pid>.<N> is returned, where N begins at 0 and increases for each call to the function. If the /run/user/<uid> directory does not exist or is inaccessible then the /tmp directory is used instead. 
+Returns the default command path used for the \fI\%command_path\fP argument of \fI\%logger::logger\fP (and other logger constructors). A string with the format "$XDG_RUNTIME_DIR/xtrctl.<pid>.<N>" is returned, where N begins at 0 and increases for each call to the function. If the directory specified by $XDG_RUNTIME_DIR does not exist or is inaccessible then $TMPDIR is used instead. If $XDG_RUNTIME_DIR or $TMPDIR are not set then "/run/user/<uid>" and "/tmp" are used instead, respectively. 
 .UNINDENT
 .SH NULL COMMAND PATH
 .INDENT 0.0
