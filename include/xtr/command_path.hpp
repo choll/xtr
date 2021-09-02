@@ -26,8 +26,6 @@
 namespace xtr
 {
     /**
-     * @anchor null_command_path
-     *
      * When passed to the @ref command_path_arg "command_path" argument of
      * @ref logger::logger (or other logger constructors) indicates that no
      * command socket should be created.
@@ -35,8 +33,6 @@ namespace xtr
     inline constexpr auto null_command_path = "";
 
     /**
-     * @anchor default_command_path
-     *
      * Returns the default command path used for the @ref command_path_arg
      * "command_path" argument of @ref logger::logger (and other logger
      * constructors). A string with the format /run/user/<uid>/xtrctl.<pid>.<N>
