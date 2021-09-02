@@ -57,6 +57,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/un.h>
+#include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -2281,6 +2282,30 @@ TEST_CASE_METHOD(fixture, "logger macro test", "[logger]")
     XTR_TRY_LOG_TSCW(s_, "Test");
     XTR_TRY_LOG_TSCI(s_, "Test");
     XTR_TRY_LOG_TSCD(s_, "Test");
+}
+
+TEST_CASE("default_command_path fallback test", "[logger]")
+{
+    std::string rundir;
+    if (const char* tmp = ::getenv("XDG_RUNTIME_DIR"))
+        rundir = tmp;
+
+    std::string tmpdir;
+    if (const char* tmp = ::getenv("TMPDIR"))
+        tmpdir = tmp;
+
+    REQUIRE(::setenv("XDG_RUNTIME_DIR", "/no/such/directory", 1) == 0);
+    REQUIRE(::setenv("TMPDIR", "/tmp", 1) == 0);
+    std::string path = xtr::default_command_path();
+    REQUIRE(path.starts_with("/tmp"));
+
+    ::unsetenv("XDG_RUNTIME_DIR");
+    ::unsetenv("TMPDIR");
+
+    if (!rundir.empty())
+        ::setenv("XDG_RUNTIME_DIR", rundir.c_str(), 1);
+    if (!tmpdir.empty())
+        ::setenv("TMPDIR", tmpdir.c_str(), 1);
 }
 
 #if __cpp_exceptions

@@ -202,10 +202,11 @@ public:
      *                    The path where the local domain socket used to
      *                    communicate with <a href="xtrctl.html">xtrctl</a>
      *                    should be created. The default behaviour is to create
-     *                    sockets in /run/user/<uid>. If that directory does not
-     *                    exist or is inaccessible then /tmp will be used
-     *                    instead. See @ref default_command_path for further
-     *                    details. To prevent a socket from being created, pass
+     *                    sockets in $XDG_RUNTIME_DIR (if set, otherwise
+     *                    "/run/user/<uid>"). If that directory does not exist
+     *                    or is inaccessible then $TMPDIR (if set, otherwise
+     *                    "/tmp") will be used instead. See @ref default_command_path for
+     *                    further details. To prevent a socket from being created, pass
      *                    @ref null_command_path.
      */
     template<typename Clock = std::chrono::system_clock>

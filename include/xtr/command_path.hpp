@@ -35,10 +35,12 @@ namespace xtr
     /**
      * Returns the default command path used for the @ref command_path_arg
      * "command_path" argument of @ref logger::logger (and other logger
-     * constructors). A string with the format /run/user/<uid>/xtrctl.<pid>.<N>
+     * constructors). A string with the format "$XDG_RUNTIME_DIR/xtrctl.<pid>.<N>"
      * is returned, where N begins at 0 and increases for each call to the
-     * function. If the /run/user/<uid> directory does not exist or is
-     * inaccessible then the /tmp directory is used instead.
+     * function. If the directory specified by $XDG_RUNTIME_DIR does not exist
+     * or is inaccessible then $TMPDIR is used instead. If $XDG_RUNTIME_DIR or
+     * $TMPDIR are not set then "/run/user/<uid>" and "/tmp" are used instead,
+     * respectively.
      */
     std::string default_command_path();
 }

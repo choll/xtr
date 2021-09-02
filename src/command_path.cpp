@@ -25,24 +25,43 @@
 
 #include <limits.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <sys/types.h>
+
+namespace detail
+{
+    XTR_FUNC std::string get_rundir()
+    {
+        if (const char* rundir = ::getenv("XDG_RUNTIME_DIR"))
+            return rundir;
+        const unsigned long uid = ::geteuid();
+        char rundir[32];
+        std::snprintf(rundir, sizeof(rundir), "/run/user/%lu", uid);
+        return rundir;
+    }
+
+    XTR_FUNC std::string get_tmpdir()
+    {
+        if (const char* tmpdir = ::getenv("TMPDIR"))
+            return tmpdir;
+        return "/tmp";
+    }
+}
 
 XTR_FUNC
 std::string xtr::default_command_path()
 {
     static std::atomic<unsigned> ctl_count{0};
     const long pid = ::getpid();
-    const unsigned long uid = ::geteuid();
     const unsigned n = ctl_count++;
-    char dpath[32];
     char path[PATH_MAX];
 
-    std::snprintf(dpath, sizeof(dpath), "/run/user/%lu", uid);
+    std::string dir = detail::get_rundir();
 
-    if (::access(dpath, W_OK) != 0)
-        std::snprintf(dpath, sizeof(dpath), "/tmp");
+    if (::access(dir.c_str(), W_OK) != 0)
+        dir = detail::get_tmpdir();
 
-    std::snprintf(path, sizeof(path), "%s/xtrctl.%ld.%u", dpath, pid, n);
+    std::snprintf(path, sizeof(path), "%s/xtrctl.%ld.%u", dir.c_str(), pid, n);
 
     return path;
 }
