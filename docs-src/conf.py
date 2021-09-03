@@ -57,9 +57,10 @@ html_theme = "sphinx_rtd_theme"
 html_title = "XTR Documentation"
 
 man_pages = [
-    ("api", "libxtr", "C++ logging library API reference", "Chris E. Holloway", 3),
-    ("quickstart", "libxtr-quickstart", "C++ logging library quick-start guide", "Chris E. Holloway", 3),
-    ("guide", "libxtr-userguide", "C++ logging library user guide", "Chris E. Holloway", 3),
-    ("xtrctl", "xtrctl", "Control tool for libxtr", "Chris E. Holloway", 1)]
+    ("api", "libxtr", "C++ logging library API reference", author, 3),
+    ("quickstart", "libxtr-quickstart",
+        "C++ logging library quick-start guide", author, 3),
+    ("guide", "libxtr-userguide", "C++ logging library user guide", author, 3),
+    ("xtrctl", "xtrctl", "Control tool for libxtr", author, 1)]
 
 man_show_urls = True
