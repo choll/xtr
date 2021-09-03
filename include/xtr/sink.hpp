@@ -137,7 +137,7 @@ public:
      *  Logs the given format string and arguments. This function is not
      *  intended to be used directly, instead one of the XTR_LOG macros
      *  should be used. It is provided for use in situations where use of
-     *  a macro may be undesirable. The Tags template argument may be 
+     *  a macro may be undesirable.
      */
     template<auto Format, typename Tags = void(), typename... Args>
     void log(Args&&... args) noexcept((XTR_NOTHROW_INGESTIBLE(Args, args) && ...));
