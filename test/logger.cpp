@@ -2301,6 +2301,11 @@ TEST_CASE("default_command_path fallback test", "[logger]")
     ::unsetenv("TMPDIR");
     CHECK(xtr::default_command_path().starts_with("/tmp"));
 
+    ::unsetenv("XDG_RUNTIME_DIR");
+    CHECK((
+        xtr::default_command_path().starts_with("/tmp") ||
+        xtr::default_command_path().starts_with("/run/user")));
+
     if (!rundir.empty())
         ::setenv("XDG_RUNTIME_DIR", rundir.c_str(), 1);
     if (!tmpdir.empty())
