@@ -28,12 +28,12 @@ DEBUG_CPPFLAGS = -DXTR_ENABLE_TEST_STATIC_ASSERTIONS
 OPT_CXXFLAGS = -O3 -march=native
 OPT_CPPFLAGS = -DNDEBUG
 
-override CXXFLAGS = \
+CXXFLAGS = \
 	-std=c++20 -Wall -Wextra -Wconversion -Wshadow -Wcast-qual -Wformat=2 \
 	-pedantic -pipe -pthread $(USER_CXXFLAGS)
-override CPPFLAGS = -MMD -MP -I include $(FMT_CPPFLAGS) -DXTR_FUNC= $(USER_CPPFLAGS)
-override LDFLAGS = -fuse-ld=gold $(USER_LDFLAGS)
-override LDLIBS = -lxtr $(USER_LDLIBS)
+CPPFLAGS = -MMD -MP -I include $(FMT_CPPFLAGS) -DXTR_FUNC= $(USER_CPPFLAGS)
+LDFLAGS = -fuse-ld=gold $(USER_LDFLAGS)
+LDLIBS = -lxtr $(USER_LDLIBS)
 
 TEST_CPPFLAGS = $(CATCH2_CPPFLAGS) 
 TEST_LDFLAGS = -L $(BUILD_DIR) $(FMT_LDFLAGS)
