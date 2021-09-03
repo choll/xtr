@@ -961,6 +961,7 @@ namespace xtr::detail
 #include <fmt/format.h>
 
 #include <cstddef>
+#include <iterator>
 #include <string>
 #include <string_view>
 
@@ -976,7 +977,16 @@ namespace xtr::detail
     {
         using namespace std::literals::string_view_literals;
         mbuf.clear();
+#if FMT_VERSION >= 80000
+        fmt::format_to(
+            std::back_inserter(mbuf),
+            "E {} {}: Error: {}\n"sv,
+            ts,
+            name,
+            reason);
+#else
         fmt::format_to(mbuf, "E {} {}: Error: {}\n"sv, ts, name, reason);
+#endif
         err(mbuf.data(), mbuf.size());
     }
 
@@ -999,7 +1009,16 @@ namespace xtr::detail
         {
 #endif
             mbuf.clear();
-            fmt::format_to(mbuf, fmt, ts, name, args...);
+#if FMT_VERSION >= 80000
+            fmt::format_to(
+                std::back_inserter(mbuf),
+                fmt::runtime(fmt),
+                ts,
+                name,
+                args...);
+#else
+        fmt::format_to(mbuf, fmt, ts, name, args...);
+#endif
             const auto result = out(mbuf.data(), mbuf.size());
             if (result == -1)
                 return report_error(mbuf, err, ts, name, "Write error");
