@@ -26,12 +26,6 @@
 #include <mutex>
 
 XTR_FUNC
-xtr::sink xtr::logger::get_sink(std::string name)
-{
-    return sink(*this, std::move(name));
-}
-
-XTR_FUNC
 xtr::sink::sink(const sink& other)
 {
     *this = other;

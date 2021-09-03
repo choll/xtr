@@ -32,6 +32,12 @@ xtr::logger::~logger()
 }
 
 XTR_FUNC
+xtr::sink xtr::logger::get_sink(std::string name)
+{
+    return sink(*this, std::move(name));
+}
+
+XTR_FUNC
 void xtr::logger::register_sink(sink& s, std::string name) noexcept
 {
     assert(!s.open_);
