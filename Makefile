@@ -16,21 +16,24 @@ FMT_LDFLAGS = $(addprefix -L, $(CONAN_LIB_DIRS_FMT) $(FMT_LIB_DIR))
 
 BUILD_DIR := build/$(notdir $(CXX))
 
-# CXXFLAGS may be set by Conan or other tools, so only set debug/optimization
-# flags if CXXFLAGS is not set.
-ifeq ($(CXXFLAGS),)
-	DEBUG_CXXFLAGS = -O0 -ggdb
-	DEBUG_CPPFLAGS = -DXTR_ENABLE_TEST_STATIC_ASSERTIONS
-	OPT_CXXFLAGS = -O3 -march=native
-	OPT_CPPFLAGS = -DNDEBUG
-endif
+# Save user flags so that they can be added to the end in order to override
+USER_CXXFLAGS := $(CXXFLAGS)
+USER_CPPFLAGS := $(CPPFLAGS)
+USER_LDFLAGS := $(LDFLAGS)
+USER_LDLIBS := $(LDLIBS)
 
-CXXFLAGS += \
+DEBUG_CXXFLAGS = -O0 -ggdb
+DEBUG_CPPFLAGS = -DXTR_ENABLE_TEST_STATIC_ASSERTIONS
+
+OPT_CXXFLAGS = -O3 -march=native
+OPT_CPPFLAGS = -DNDEBUG
+
+override CXXFLAGS = \
 	-std=c++20 -Wall -Wextra -Wconversion -Wshadow -Wcast-qual -Wformat=2 \
-	-pedantic -pipe -pthread $(EXTRA_CXXFLAGS)
-CPPFLAGS += -MMD -MP -I include $(FMT_CPPFLAGS) -DXTR_FUNC=
-LDFLAGS += -fuse-ld=gold
-LDLIBS += -lxtr
+	-pedantic -pipe -pthread $(USER_CXXFLAGS)
+override CPPFLAGS = -MMD -MP -I include $(FMT_CPPFLAGS) -DXTR_FUNC= $(USER_CPPFLAGS)
+override LDFLAGS = -fuse-ld=gold $(USER_LDFLAGS)
+override LDLIBS = -lxtr $(USER_LDLIBS)
 
 TEST_CPPFLAGS = $(CATCH2_CPPFLAGS) 
 TEST_LDFLAGS = -L $(BUILD_DIR) $(FMT_LDFLAGS)
