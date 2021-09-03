@@ -3660,6 +3660,11 @@ inline xtr::logger::~logger()
     control_.close();
 }
 
+inline xtr::sink xtr::logger::get_sink(std::string name)
+{
+    return sink(*this, std::move(name));
+}
+
 inline void xtr::logger::register_sink(sink& s, std::string name) noexcept
 {
     assert(!s.open_);
@@ -3950,11 +3955,6 @@ inline bool xtr::detail::regex_matcher::operator()(const char* str) const
 
 #include <condition_variable>
 #include <mutex>
-
-inline xtr::sink xtr::logger::get_sink(std::string name)
-{
-    return sink(*this, std::move(name));
-}
 
 inline xtr::sink::sink(const sink& other)
 {
