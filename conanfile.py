@@ -5,7 +5,7 @@ import os
 
 
 class XtrConan(ConanFile):
-    requires = "fmt/7.0.1"
+    requires = "fmt/[>=6.0.0]"
     build_requires = "benchmark/1.5.0", "catch2/2.13.0"
     name = "xtr"
     version = "0.1"
