@@ -2106,10 +2106,12 @@ namespace xtr
     /**
      * Returns the default command path used for the @ref command_path_arg
      * "command_path" argument of @ref logger::logger (and other logger
-     * constructors). A string with the format /run/user/<uid>/xtrctl.<pid>.<N>
+     * constructors). A string with the format "$XDG_RUNTIME_DIR/xtrctl.<pid>.<N>"
      * is returned, where N begins at 0 and increases for each call to the
-     * function. If the /run/user/<uid> directory does not exist or is
-     * inaccessible then the /tmp directory is used instead.
+     * function. If the directory specified by $XDG_RUNTIME_DIR does not exist
+     * or is inaccessible then $TMPDIR is used instead. If $XDG_RUNTIME_DIR or
+     * $TMPDIR are not set then "/run/user/<uid>" and "/tmp" are used instead,
+     * respectively.
      */
     std::string default_command_path();
 }
@@ -2725,10 +2727,11 @@ public:
      *                    The path where the local domain socket used to
      *                    communicate with <a href="xtrctl.html">xtrctl</a>
      *                    should be created. The default behaviour is to create
-     *                    sockets in /run/user/<uid>. If that directory does not
-     *                    exist or is inaccessible then /tmp will be used
-     *                    instead. See @ref default_command_path for further
-     *                    details. To prevent a socket from being created, pass
+     *                    sockets in $XDG_RUNTIME_DIR (if set, otherwise
+     *                    "/run/user/<uid>"). If that directory does not exist
+     *                    or is inaccessible then $TMPDIR (if set, otherwise
+     *                    "/tmp") will be used instead. See @ref default_command_path for
+     *                    further details. To prevent a socket from being created, pass
      *                    @ref null_command_path.
      */
     template<typename Clock = std::chrono::system_clock>
@@ -3363,24 +3366,43 @@ inline void xtr::detail::command_dispatcher_deleter::operator()(
 #include <cstdio>
 
 #include <limits.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <unistd.h>
+
+namespace xtr::detail
+{
+    inline std::string get_rundir()
+    {
+        if (const char* rundir = ::getenv("XDG_RUNTIME_DIR"))
+            return rundir;
+        const unsigned long uid = ::geteuid();
+        char rundir[32];
+        std::snprintf(rundir, sizeof(rundir), "/run/user/%lu", uid);
+        return rundir;
+    }
+
+    inline std::string get_tmpdir()
+    {
+        if (const char* tmpdir = ::getenv("TMPDIR"))
+            return tmpdir;
+        return "/tmp";
+    }
+}
 
 inline std::string xtr::default_command_path()
 {
     static std::atomic<unsigned> ctl_count{0};
     const long pid = ::getpid();
-    const unsigned long uid = ::geteuid();
     const unsigned n = ctl_count++;
-    char dpath[32];
     char path[PATH_MAX];
 
-    std::snprintf(dpath, sizeof(dpath), "/run/user/%lu", uid);
+    std::string dir = detail::get_rundir();
 
-    if (::access(dpath, W_OK) != 0)
-        std::snprintf(dpath, sizeof(dpath), "/tmp");
+    if (::access(dir.c_str(), W_OK) != 0)
+        dir = detail::get_tmpdir();
 
-    std::snprintf(path, sizeof(path), "%s/xtrctl.%ld.%u", dpath, pid, n);
+    std::snprintf(path, sizeof(path), "%s/xtrctl.%ld.%u", dir.c_str(), pid, n);
 
     return path;
 }

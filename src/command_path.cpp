@@ -28,7 +28,7 @@
 #include <stdlib.h>
 #include <sys/types.h>
 
-namespace detail
+namespace xtr::detail
 {
     XTR_FUNC std::string get_rundir()
     {
