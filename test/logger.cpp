@@ -2294,13 +2294,12 @@ TEST_CASE("default_command_path fallback test", "[logger]")
     if (const char* tmp = ::getenv("TMPDIR"))
         tmpdir = tmp;
 
-    REQUIRE(::setenv("XDG_RUNTIME_DIR", "/no/such/directory", 1) == 0);
-    REQUIRE(::setenv("TMPDIR", "/tmp", 1) == 0);
-    std::string path = xtr::default_command_path();
-    REQUIRE(path.starts_with("/tmp"));
+    CHECK(::setenv("XDG_RUNTIME_DIR", "/no/such/directory", 1) == 0);
+    CHECK(::setenv("TMPDIR", "/foo", 1) == 0);
+    CHECK(xtr::default_command_path().starts_with("/foo"));
 
-    ::unsetenv("XDG_RUNTIME_DIR");
     ::unsetenv("TMPDIR");
+    CHECK(xtr::default_command_path().starts_with("/tmp"));
 
     if (!rundir.empty())
         ::setenv("XDG_RUNTIME_DIR", rundir.c_str(), 1);
