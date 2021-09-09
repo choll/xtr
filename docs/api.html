@@ -595,13 +595,13 @@
 <dl class="cpp function">
 <dt class="sig sig-object cpp" id="_CPPv4N3xtr4sink9set_levelE11log_level_t">
 <span id="_CPPv3N3xtr4sink9set_levelE11log_level_t"></span><span id="_CPPv2N3xtr4sink9set_levelE11log_level_t"></span><span id="xtr::sink::set_level__log_level_t"></span><span class="target" id="classxtr_1_1sink_1a6a05b7116187aeb352d03d9f3bcd61bc"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">set_level</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4N3xtr11log_level_tE" title="xtr::log_level_t"><span class="n"><span class="pre">log_level_t</span></span></a><span class="w"> </span><span class="n sig-param"><span class="pre">l</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xtr4sink9set_levelE11log_level_t" title="Permalink to this definition">¶</a><br /></dt>
-<dd><p>Sets the log level of the sink to the specified level. </p>
+<dd><p>Sets the log level of the sink to the specified level (see <a class="reference internal" href="#namespacextr_1afb0918f4447c35720ed0eb78fbd054b5"><span class="std std-ref">log_level_t</span></a>). </p>
 </dd></dl>
 
 <dl class="cpp function">
 <dt class="sig sig-object cpp" id="_CPPv4NK3xtr4sink5levelEv">
 <span id="_CPPv3NK3xtr4sink5levelEv"></span><span id="_CPPv2NK3xtr4sink5levelEv"></span><span id="xtr::sink::levelC"></span><span class="target" id="classxtr_1_1sink_1ac80f77f730a79fad819707eabd6fb897"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N3xtr11log_level_tE" title="xtr::log_level_t"><span class="n"><span class="pre">log_level_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">level</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK3xtr4sink5levelEv" title="Permalink to this definition">¶</a><br /></dt>
-<dd><p>Returns the current log level. </p>
+<dd><p>Returns the current log level (see <a class="reference internal" href="#namespacextr_1afb0918f4447c35720ed0eb78fbd054b5"><span class="std std-ref">log_level_t</span></a>). </p>
 </dd></dl>
 
 </div>
@@ -655,6 +655,9 @@
 
 </dd></dl>
 
+<p>If the <em>none</em> level is applied to a sink then all log statements will be
+disabled. Fatal log statements will still call
+<a class="reference external" href="https://www.man7.org/linux/man-pages/man3/abort.3.html">abort(3)</a>, however.</p>
 </div>
 <div class="section" id="default-command-path">
 <h2>Default command path<a class="headerlink" href="#default-command-path" title="Permalink to this headline">¶</a></h2>

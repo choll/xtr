@@ -422,12 +422,12 @@ Logs the given format string and arguments. This function is not intended to be 
 .INDENT 7.0
 .TP
 .B inline  void  set_level(\fI\%log_level_t\fP  l) 
-Sets the log level of the sink to the specified level. 
+Sets the log level of the sink to the specified level (see \fI\%log_level_t\fP). 
 .UNINDENT
 .INDENT 7.0
 .TP
 .B inline  \fI\%log_level_t\fP  level()  const 
-Returns the current log level. 
+Returns the current log level (see \fI\%log_level_t\fP). 
 .UNINDENT
 .UNINDENT
 .SH NOCOPY
@@ -466,6 +466,10 @@ nocopy is used to specify that a log argument should be passed by reference inst
 .B enumerator  debug 
 .UNINDENT
 .UNINDENT
+.sp
+If the \fInone\fP level is applied to a sink then all log statements will be
+disabled. Fatal log statements will still call
+\fI\%abort(3)\fP <\fBhttps://www.man7.org/linux/man-pages/man3/abort.3.html\fP>, however.
 .SH DEFAULT COMMAND PATH
 .INDENT 0.0
 .TP
