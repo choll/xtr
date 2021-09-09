@@ -143,7 +143,7 @@ public:
     void log(Args&&... args) noexcept((XTR_NOTHROW_INGESTIBLE(Args, args) && ...));
 
     /**
-     *  Sets the log level of the sink to the specified level.
+     *  Sets the log level of the sink to the specified level (see @ref log_level_t).
      */
     void set_level(log_level_t l)
     {
@@ -151,7 +151,7 @@ public:
     }
 
     /**
-     *  Returns the current log level.
+     *  Returns the current log level (see @ref log_level_t).
      */
     log_level_t level() const
     {

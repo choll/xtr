@@ -61,6 +61,6 @@ man_pages = [
     ("quickstart", "libxtr-quickstart",
         "C++ logging library quick-start guide", author, 3),
     ("guide", "libxtr-userguide", "C++ logging library user guide", author, 3),
-    ("xtrctl", "xtrctl", "Control tool for libxtr", author, 1)]
+    ("xtrctl", "xtrctl", "Control tool for the xtr logger", author, 1)]
 
 man_show_urls = True

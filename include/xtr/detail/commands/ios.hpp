@@ -52,7 +52,7 @@ namespace xtr::detail
             << si.name
             << " (" << si.level << ") "
             << si.buf_capacity / 1024 << "K capacity, "
-            << si.buf_nbytes / 1024 << "K size, "
+            << si.buf_nbytes / 1024 << "K used, "
             << si.dropped_count << " dropped";
     }
 }

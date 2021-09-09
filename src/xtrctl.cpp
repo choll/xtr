@@ -147,6 +147,10 @@ int main(int argc, char* argv[])
         log_level = levels_map[argv[2]];
         ++optind;
     }
+    else if (argv[1] == "--help"sv)
+    {
+        usage(argv[0], EXIT_SUCCESS);
+    }
     else
     {
         usage(argv[0], EXIT_FAILURE, "Invalid command");
