@@ -92,10 +92,19 @@
 <li class="toctree-l1"><a class="reference internal" href="guide.html">User Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">xtrctl</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#accessing-via-conan">Accessing via Conan</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#displaying-the-status-of-sinks">Displaying the Status of Sinks</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#setting-log-levels">Setting Log Levels</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#rotating-log-files">Rotating Log Files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#synopsis">Synopsis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#description">Description</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#commands">Commands</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#querying-sink-status">Querying Sink Status</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#setting-log-levels">Setting Log Levels</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#reopening-log-files">Reopening Log Files</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#patterns">Patterns</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#socket-paths">Socket Paths</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#examples">Examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#accessing-xtrctl-via-conan">Accessing xtrctl via Conan</a></li>
 </ul>
 </li>
 </ul>
@@ -169,17 +178,127 @@
             
   <div class="section" id="xtrctl">
 <span id="id1"></span><h1>xtrctl<a class="headerlink" href="#xtrctl" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="accessing-via-conan">
-<h2>Accessing via Conan<a class="headerlink" href="#accessing-via-conan" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="synopsis">
+<h2>Synopsis<a class="headerlink" href="#synopsis" title="Permalink to this headline">¶</a></h2>
+<p>xtrctl [–help] &lt;command&gt; [&lt;args&gt;] &lt;socket path&gt;</p>
 </div>
-<div class="section" id="displaying-the-status-of-sinks">
-<h2>Displaying the Status of Sinks<a class="headerlink" href="#displaying-the-status-of-sinks" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="description">
+<h2>Description<a class="headerlink" href="#description" title="Permalink to this headline">¶</a></h2>
+<p>xtrctl is a command line tool that can be used to query the status of log
+sinks, modify log levels and reopen log files (for rotation) for the xtr
+logger.</p>
+</div>
+<div class="section" id="commands">
+<h2>Commands<a class="headerlink" href="#commands" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="querying-sink-status">
+<h3>Querying Sink Status<a class="headerlink" href="#querying-sink-status" title="Permalink to this headline">¶</a></h3>
+<p>xtrctl status [options] [pattern] &lt;socket path&gt;</p>
+<p>The status command displays status information for sinks matching the given
+pattern, or for all sinks if no pattern is specified. The sink name, current
+log level, buffer capacity, current used buffer space and number of dropped
+log messages are displayed. For example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ExampleName</span> <span class="p">(</span><span class="n">info</span><span class="p">)</span> <span class="mi">64</span><span class="n">K</span> <span class="n">capacity</span><span class="p">,</span> <span class="mi">0</span><span class="n">K</span> <span class="n">used</span><span class="p">,</span> <span class="mi">0</span> <span class="n">dropped</span>
+</pre></div>
+</div>
+<p>For an explanation of <em>pattern</em> and <em>options</em> please refer to the
+see <a class="reference internal" href="#patterns"><span class="std std-ref">PATTERNS</span></a> and see <a class="reference internal" href="#options"><span class="std std-ref">OPTIONS</span></a> sections.</p>
 </div>
 <div class="section" id="setting-log-levels">
-<h2>Setting Log Levels<a class="headerlink" href="#setting-log-levels" title="Permalink to this headline">¶</a></h2>
+<h3>Setting Log Levels<a class="headerlink" href="#setting-log-levels" title="Permalink to this headline">¶</a></h3>
+<p>xtrctl level &lt;level&gt; [options] [pattern] &lt;socket path&gt;</p>
+<p>The level command sets the log level to <em>level</em> for sinks matching the given
+pattern, or for all sinks if no pattern is specified. Valid values for <em>level</em>
+are ‘none’, ‘fatal’, ‘error’, ‘warning’, ‘info’ or ‘debug’ (please refer to the
+<a class="reference internal" href="api.html#log-levels"><span class="std std-ref">log levels</span></a> section of the API reference or <strong>libxtr</strong>(3)).</p>
 </div>
-<div class="section" id="rotating-log-files">
-<h2>Rotating Log Files<a class="headerlink" href="#rotating-log-files" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="reopening-log-files">
+<span id="id2"></span><h3>Reopening Log Files<a class="headerlink" href="#reopening-log-files" title="Permalink to this headline">¶</a></h3>
+<p>xtrctl reopen &lt;socket path&gt;</p>
+<p>The reopen command simply reopens the log file (if a file is being logged to).
+This command exists to support log file rotation by integrating with existing
+tools such as <strong>logrotate</strong>(8), for example by sending a reopen command from
+the <em>postrotate</em> script defined in logrotate’s configuration file:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">your</span><span class="o">/</span><span class="n">log</span> <span class="p">{</span>
+    <span class="n">rotate</span> <span class="mi">5</span>
+    <span class="n">weekly</span>
+    <span class="n">postrotate</span>
+        <span class="n">xtrctl</span> <span class="n">reopen</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">xtrctl</span><span class="o">/</span><span class="n">socket</span>
+    <span class="n">endscript</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="patterns">
+<span id="id3"></span><h2>Patterns<a class="headerlink" href="#patterns" title="Permalink to this headline">¶</a></h2>
+<p>In the status and level commands <em>pattern</em> is a regular expression or wildcard
+that may be used to selectively apply the command to sinks with names matching
+the given pattern. If no pattern is specified then the command applies to all
+sinks. By default the pattern is interpreted as a basic regular expression,
+to use an extended regular expression or wildcard please refer to the
+<a class="reference internal" href="#options"><span class="std std-ref">OPTIONS</span></a> section.</p>
+</div>
+<div class="section" id="options">
+<span id="id4"></span><h2>Options<a class="headerlink" href="#options" title="Permalink to this headline">¶</a></h2>
+<p>The <em>status</em> and <em>level</em> commands support the following options:</p>
+<dl class="simple">
+<dt><strong>-E, –extended-regexp</strong></dt><dd><p>Interpret <em>pattern</em> as extended regular expressions (see <strong>regex</strong>(7)).</p>
+</dd>
+<dt><strong>-G, –basic-regex</strong></dt><dd><p>Interpret <em>pattern</em> options as basic regular expressions (see <strong>regex</strong>(7)).</p>
+</dd>
+<dt><strong>-W, –wildcard</strong></dt><dd><p>Interpret <em>pattern</em> options as shell wildcard patterns (see <strong>glob</strong>(7)).</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="socket-paths">
+<span id="id5"></span><h2>Socket Paths<a class="headerlink" href="#socket-paths" title="Permalink to this headline">¶</a></h2>
+<p>Please refer to the documentation for <a class="reference internal" href="api.html#_CPPv4N3xtr20default_command_pathEv" title="xtr::default_command_path"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">xtr::default_command_path()</span></code></a> in
+the API reference or <strong>libxtr</strong>(3) for an explanation of how the default
+socket path is constructed. Custom command paths may be specified either by
+passing an argument to <a class="reference internal" href="api.html#_CPPv4I0EN3xtr6logger6loggerEPKcRR5ClockNSt6stringE" title="xtr::logger::logger"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">xtr::logger::logger()</span></code></a> or by calling
+<a class="reference internal" href="api.html#_CPPv4N3xtr6logger16set_command_pathENSt6stringE" title="xtr::logger::set_command_path"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">xtr::logger::set_command_path()</span></code></a>, the documentation for both may also
+be found in the API reference or <strong>libxtr</strong>(3).</p>
+</div>
+<div class="section" id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h2>
+<p>Querying the status of all sinks:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">xtrctl</span> <span class="n">status</span> <span class="o">/</span><span class="n">run</span><span class="o">/</span><span class="n">user</span><span class="o">/</span><span class="mi">1000</span><span class="o">/</span><span class="n">xtrctl</span><span class="o">.</span><span class="mf">7852.0</span>
+<span class="n">Test0</span> <span class="p">(</span><span class="n">info</span><span class="p">)</span> <span class="mi">64</span><span class="n">K</span> <span class="n">capacity</span><span class="p">,</span> <span class="mi">0</span><span class="n">K</span> <span class="n">size</span><span class="p">,</span> <span class="mi">0</span> <span class="n">dropped</span>
+<span class="n">Test1</span> <span class="p">(</span><span class="n">info</span><span class="p">)</span> <span class="mi">64</span><span class="n">K</span> <span class="n">capacity</span><span class="p">,</span> <span class="mi">0</span><span class="n">K</span> <span class="n">size</span><span class="p">,</span> <span class="mi">0</span> <span class="n">dropped</span>
+<span class="n">Test2</span> <span class="p">(</span><span class="n">info</span><span class="p">)</span> <span class="mi">64</span><span class="n">K</span> <span class="n">capacity</span><span class="p">,</span> <span class="mi">0</span><span class="n">K</span> <span class="n">size</span><span class="p">,</span> <span class="mi">0</span> <span class="n">dropped</span>
+<span class="n">Test3</span> <span class="p">(</span><span class="n">info</span><span class="p">)</span> <span class="mi">64</span><span class="n">K</span> <span class="n">capacity</span><span class="p">,</span> <span class="mi">0</span><span class="n">K</span> <span class="n">size</span><span class="p">,</span> <span class="mi">0</span> <span class="n">dropped</span>
+<span class="n">Test4</span> <span class="p">(</span><span class="n">info</span><span class="p">)</span> <span class="mi">64</span><span class="n">K</span> <span class="n">capacity</span><span class="p">,</span> <span class="mi">0</span><span class="n">K</span> <span class="n">size</span><span class="p">,</span> <span class="mi">0</span> <span class="n">dropped</span>
+</pre></div>
+</div>
+<p>Setting the level of all sinks to ‘error’:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">xtrctl</span> <span class="n">level</span> <span class="n">error</span> <span class="o">/</span><span class="n">run</span><span class="o">/</span><span class="n">user</span><span class="o">/</span><span class="mi">1000</span><span class="o">/</span><span class="n">xtrctl</span><span class="o">.</span><span class="mf">7852.0</span>
+<span class="n">Success</span>
+</pre></div>
+</div>
+<p>Setting the level of sinks matching a pattern to ‘warning’:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">xtrctl</span> <span class="n">level</span> <span class="n">warning</span> <span class="s1">&#39;Test[0-2]&#39;</span> <span class="o">/</span><span class="n">run</span><span class="o">/</span><span class="n">user</span><span class="o">/</span><span class="mi">1000</span><span class="o">/</span><span class="n">xtrctl</span><span class="o">.</span><span class="mf">7852.0</span>
+<span class="n">Success</span>
+</pre></div>
+</div>
+<p>Querying the status of sinks matching a pattern:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">xtrctl</span> <span class="n">status</span> <span class="s1">&#39;Test[0-2]&#39;</span> <span class="o">/</span><span class="n">run</span><span class="o">/</span><span class="n">user</span><span class="o">/</span><span class="mi">1000</span><span class="o">/</span><span class="n">xtrctl</span><span class="o">.</span><span class="mf">7852.0</span>
+<span class="n">Test0</span> <span class="p">(</span><span class="n">warning</span><span class="p">)</span> <span class="mi">64</span><span class="n">K</span> <span class="n">capacity</span><span class="p">,</span> <span class="mi">0</span><span class="n">K</span> <span class="n">size</span><span class="p">,</span> <span class="mi">0</span> <span class="n">dropped</span>
+<span class="n">Test1</span> <span class="p">(</span><span class="n">warning</span><span class="p">)</span> <span class="mi">64</span><span class="n">K</span> <span class="n">capacity</span><span class="p">,</span> <span class="mi">0</span><span class="n">K</span> <span class="n">size</span><span class="p">,</span> <span class="mi">0</span> <span class="n">dropped</span>
+<span class="n">Test2</span> <span class="p">(</span><span class="n">warning</span><span class="p">)</span> <span class="mi">64</span><span class="n">K</span> <span class="n">capacity</span><span class="p">,</span> <span class="mi">0</span><span class="n">K</span> <span class="n">size</span><span class="p">,</span> <span class="mi">0</span> <span class="n">dropped</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="accessing-xtrctl-via-conan">
+<h2>Accessing xtrctl via Conan<a class="headerlink" href="#accessing-xtrctl-via-conan" title="Permalink to this headline">¶</a></h2>
+<p>Add a <cite>virtualenv</cite> generator, for example if using conanfile.txt:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">generators</span><span class="p">]</span>
+<span class="n">virtualenv</span>
+<span class="p">...</span><span class="n">etc</span><span class="p">..</span>
+</pre></div>
+</div>
+<p>After running <code class="code docutils literal notranslate"><span class="pre">conan</span> <span class="pre">install</span></code> run <code class="code docutils literal notranslate"><span class="pre">source</span> <span class="pre">activate.sh</span></code> and xtrctl
+should be in your $PATH. A man page for xtrctl (this file) will also be added
+to your $MANPATH.</p>
 </div>
 </div>
 

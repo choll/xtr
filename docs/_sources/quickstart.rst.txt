@@ -77,7 +77,7 @@ message will be logged:
 
     XTR_LOG_INFO(s, "Hello world");
 
-@ref XTR_LOGI is short-hand for @ref XTR_LOG_INFO``, as is @ref XTR_LOGE for
+@ref XTR_LOGI is short-hand for @ref XTR_LOG_INFO, as is @ref XTR_LOGE for
 @ref XTR_LOG_ERROR etc:
 
 .. code-block:: c++
