@@ -54,6 +54,8 @@ endif
 ifneq ($(SUBMODULES_FLAG),)
 	FMT_CPPFLAGS += -DFMT_HEADER_ONLY
 	CPPFLAGS += -isystem third_party/include
+else ifneq ($(CONAN_LIBS_FMT),)
+	LDLIBS += -l$(CONAN_LIBS_FMT)
 else
 	LDLIBS += -lfmt
 endif
