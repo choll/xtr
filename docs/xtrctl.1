@@ -131,11 +131,11 @@ Querying the status of all sinks:
 .nf
 .ft C
 > xtrctl status /run/user/1000/xtrctl.7852.0
-Test0 (info) 64K capacity, 0K size, 0 dropped
-Test1 (info) 64K capacity, 0K size, 0 dropped
-Test2 (info) 64K capacity, 0K size, 0 dropped
-Test3 (info) 64K capacity, 0K size, 0 dropped
-Test4 (info) 64K capacity, 0K size, 0 dropped
+Test0 (info) 64K capacity, 0K used, 0 dropped
+Test1 (info) 64K capacity, 0K used, 0 dropped
+Test2 (info) 64K capacity, 0K used, 0 dropped
+Test3 (info) 64K capacity, 0K used, 0 dropped
+Test4 (info) 64K capacity, 0K used, 0 dropped
 .ft P
 .fi
 .UNINDENT
@@ -174,9 +174,9 @@ Querying the status of sinks matching a pattern:
 .nf
 .ft C
 > xtrctl status \(aqTest[0\-2]\(aq /run/user/1000/xtrctl.7852.0
-Test0 (warning) 64K capacity, 0K size, 0 dropped
-Test1 (warning) 64K capacity, 0K size, 0 dropped
-Test2 (warning) 64K capacity, 0K size, 0 dropped
+Test0 (warning) 64K capacity, 0K used, 0 dropped
+Test1 (warning) 64K capacity, 0K used, 0 dropped
+Test2 (warning) 64K capacity, 0K used, 0 dropped
 .ft P
 .fi
 .UNINDENT
