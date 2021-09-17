@@ -1,8 +1,5 @@
 .\" Man page generated from reStructuredText.
 .
-.TH "LIBXTR-USERGUIDE" "3" "September 2021" "" "xtr"
-.SH NAME
-libxtr-userguide \- C++ logging library user guide
 .
 .nr rst2man-indent-level 0
 .
@@ -30,6 +27,9 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .in \\n[rst2man-indent\\n[rst2man-indent-level]]u
 ..
+.TH "LIBXTR-USERGUIDE" "3" "September 2021" "" "xtr"
+.SH NAME
+libxtr-userguide \- C++ logging library user guide
 .SH OVERVIEW
 .sp
 The XTR API contains two classes; \fBxtr::logger\fP and
@@ -233,12 +233,11 @@ object itself does not need to remain valid, just the data it references.
 .SH LOG LEVELS
 .sp
 The logger supports debug, info, warning, error and fatal log levels, which
-are enumerated in the \fBxtr::log_level_t\fP enum.
-Log statements with these levels may be produced using the
-\fBXTR_LOG_DEBUG\fP, \fBXTR_LOG_INFO\fP, \fBXTR_LOG_WARN\fP
-\fBXTR_LOG_ERROR\fP and \fBXTR_LOG_FATAL\fP macros, along with
-additional macros which are described in the log macros
-section of the API reference.
+are enumerated in the \fBxtr::log_level_t\fP enum. Log statements with
+these levels may be produced using the \fBXTR_LOGL\fP macro, along with
+additional macros that are described in the log macros
+section of the API reference, all of which follow the convention of containing
+"LOGL" in the macro name.
 .sp
 Each sink has its own log level, which can be programmatically set or queried
 via \fBxtr::sink::set_level()\fP and \fBxtr::sink::level()\fP, and can
@@ -263,13 +262,13 @@ xtr::sink s = log.get_sink("Main");
 
 s.set_level(xtr::log_level_t::error);
 
-XTR_LOG_INFO(s, "Hello {}", foo());
+XTR_LOG(info, s, "Hello {}", foo());
 .ft P
 .fi
 .UNINDENT
 .UNINDENT
 .sp
-View this example on \fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/G4P4zfP6r\fP>\&.
+View this example on \fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/ss36qzo1c\fP>\&.
 .SS Debug Log Statements
 .sp
 Debug log statements can be disabled by defining XTR_NDEBUG.
@@ -602,16 +601,22 @@ Please refer to
 \fI\%this document\fP <\fBhttps://seclists.org/fulldisclosure/2003/Feb/att-341/Termulation.txt\fP>
 posted to the full\-disclosure mailing list for a more thorough explanation of terminal
 escape sequence attacks.
+.SH LOG ROTATION
+.sp
+Please refer to the reopening log files section of
+the xtrctl guide.
 .SH CUSTOM BACK-ENDS
 .sp
 The logger allows custom back\-ends to be used. This is done by constructing the logger
 with functions that implement the back\-end functionality, which are listed below:
 .TS
 center;
-|l|l|.
+|l|l|l|.
 _
 T{
 Function
+T}	T{
+Signature
 T}	T{
 Description
 T}
@@ -619,41 +624,58 @@ _
 T{
 Output
 T}	T{
+\fB::ssize_t out(const char* buf, std::size_t size)()\fP
+T}	T{
+replacement text
 T}
 _
 T{
 Error
 T}	T{
+\fBvoid err(const char* buf, std::size_t size)()\fP
+T}	T{
+replacement text
 T}
 _
 T{
 Flush
 T}	T{
+\fBvoid flush()\fP
+T}	T{
+replacement text
 T}
 _
 T{
 Sync
 T}	T{
+\fBvoid sync()\fP
+T}	T{
+replacement text
 T}
 _
 T{
 Reopen
 T}	T{
+\fBvoid reopen()\fP
+T}	T{
+replacement text
 T}
 _
 T{
 Close
 T}	T{
+\fBvoid close()\fP
+T}	T{
+replacement text
 T}
 _
 .TE
+.sp
+NEED TO MAKE IT CLEAR THAT OUT IS CALLED ONCE PER LOG LINE
 .SS Examples
 .sp
-\fI\%basic custom back\-end constructor\fP
-.sp
-\fI\%custom back\-end constructor\fP
-.sp
-Custom back\-end using the basic back\-end constructor:
+Custom back\-end using the
+\fI\%basic custom back\-end constructor\fP:
 .INDENT 0.0
 .INDENT 3.5
 .sp
@@ -682,6 +704,67 @@ XTR_LOG(s, "Hello world");
 s.sync(); // Ensure all log statements are delivered to the back\-end
 
 std::cout << lines[0] << "\en";
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Custom back\-end using the
+\fI\%custom back\-end constructor\fP:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+TODO
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SH CUSTOM LOG LEVEL STYLES
+.sp
+The text at the beginning of each log statement representing the log level of
+the statement can be customised via \fBxtr::logger::set_log_level_style()\fP,
+which accepts a function pointer of type
+\fBxtr::log_level_style_t\fP\&. The passed function should accept
+a single argument of type \fBxtr::log_level_t\fP and should return
+a const  char* string literal.
+.SS Examples
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+#include <xtr/logger.hpp>
+
+xtr::logger log;
+
+xtr::sink s = log.get_sink("Main");
+
+log.set_log_level_style(
+    [](auto level)
+    {
+        return
+            level == xtr::log_level_t::info ?
+                "info: " :
+                "not\-info: ";
+    });
+
+XTR_LOGL(info, s, "Hello world");
+XTR_LOGL(error, s, "Hello world");
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Will output:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+info: 2021\-09\-17 23:36:39.043028 Main <source>:18: Hello world
+not\-info: 2021\-09\-17 23:36:39.043028 Main <source>:19: Hello world
 .ft P
 .fi
 .UNINDENT

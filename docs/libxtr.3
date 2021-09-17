@@ -1,8 +1,5 @@
 .\" Man page generated from reStructuredText.
 .
-.TH "LIBXTR" "3" "September 2021" "" "xtr"
-.SH NAME
-libxtr \- C++ logging library API reference
 .
 .nr rst2man-indent-level 0
 .
@@ -30,131 +27,208 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .in \\n[rst2man-indent\\n[rst2man-indent-level]]u
 ..
+.TH "LIBXTR" "3" "September 2021" "" "xtr"
+.SH NAME
+libxtr \- C++ logging library API reference
 .SH LOG MACROS
 .SS Basic Macros
 .INDENT 0.0
 .TP
 .B XTR_LOG(SINK, \&...) 
-Basic log macro, logs the specified format string and arguments to the given sink, blocking if the sink is full. The non\-blocking variant of this macro is XTR_TRY_LOG which will discard the message if the sink is full. Timestamps are read in the background thread\-\-\-if this is undesirable use \fI\%XTR_LOG_RTC\fP or \fI\%XTR_LOG_TSC\fP which read timestamps at the point of logging. 
+Basic log macro, logs the specified format string and arguments to the given sink, blocking if the sink is full. Timestamps are read in the background thread\-\-\-if this is undesirable use \fI\%XTR_LOG_RTC\fP or \fI\%XTR_LOG_TSC\fP which read timestamps at the point of logging. This macro will log regardless of the sink\(aqs log level. 
 .UNINDENT
 .INDENT 0.0
 .TP
-.B XTR_LOG_DEBUG(SINK, \&...) 
-\(aqDebug\(aq log level variant of \fI\%XTR_LOG\fP\&. An equivalent macro XTR_LOGD is provided as a short\-hand alternative. This macro can be disabled at build time by defining XTR_NDEBUG. The non\-blocking variants are XTR_TRY_LOG_DEBUG and XTR_TRY_LOGD\&. 
+.B XTR_LOGL(LEVEL, SINK, \&...) 
+Log level variant of \fI\%XTR_LOG\fP\&. If the specified log level has lower importance than the log level of the sink, then the message is dropped (please see the \fI\%log levels\fP section of the user guide for details).
+.sp
+.INDENT 7.0
+.IP \(bu 2
+LEVEL: The unqualified log level name, for example simply "info" or "error".
+.UNINDENT
+
+.sp
+\fBNOTE:\fP
+.INDENT 7.0
+.INDENT 3.5
+If the \(aqfatal\(aq level is passed then the log message is written, \fI\%xtr::sink::sync\fP is invoked, then the program is terminated via abort(3).
+.UNINDENT
+.UNINDENT
+.sp
+\fBNOTE:\fP
+.INDENT 7.0
+.INDENT 3.5
+Log statements with the \(aqdebug\(aq level can be disabled at build time by defining XTR_NDEBUG\&. 
+.UNINDENT
+.UNINDENT
 .UNINDENT
 .INDENT 0.0
 .TP
-.B XTR_LOG_INFO(SINK, \&...) 
-\(aqInfo\(aq log level variant of \fI\%XTR_LOG\fP\&. An equivalent macro XTR_LOGI is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_INFO and XTR_TRY_LOGI\&. 
+.B XTR_TRY_LOG(SINK, \&...) 
+Non\-blocking variant of \fI\%XTR_LOG\fP\&. The message will be discarded if the sink is full. If a message is dropped a warning will appear in the log. 
 .UNINDENT
 .INDENT 0.0
 .TP
-.B XTR_LOG_WARN(SINK, \&...) 
-\(aqWarning\(aq log level variant of \fI\%XTR_LOG\fP\&. An equivalent macro XTR_LOGW is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_WARN and XTR_TRY_LOGW\&. 
+.B XTR_TRY_LOGL(LEVEL, SINK, \&...) 
+Non\-blocking variant of \fI\%XTR_LOGL\fP\&. The message will be discarded if the sink is full. If a message is dropped a warning will appear in the log.
+.sp
+.INDENT 7.0
+.IP \(bu 2
+LEVEL: The unqualified log level name, for example simply "info" or "error". 
 .UNINDENT
-.INDENT 0.0
-.TP
-.B XTR_LOG_ERROR(SINK, \&...) 
-\(aqError\(aq log level variant of \fI\%XTR_LOG\fP\&. An equivalent macro XTR_LOGE is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_ERROR and XTR_TRY_LOGE\&. 
-.UNINDENT
-.INDENT 0.0
-.TP
-.B XTR_LOG_FATAL(SINK, \&...) 
-\(aqFatal\(aq log level variant of \fI\%XTR_LOG\fP\&. When this macro is invoked, the log message is written, \fI\%xtr::sink::sync\fP is invoked, then the program is terminated via abort(3). An equivalent macro XTR_LOGF is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_FATAL and XTR_TRY_LOGF\&. 
+
 .UNINDENT
 .SS Timestamped Macros
 .SS TSC
 .INDENT 0.0
 .TP
 .B XTR_LOG_TSC(SINK, \&...) 
-Timestamped log macro, logs the specified format string and arguments to the given sink along with a timestamp obtained by reading the CPU timestamp counter via the RDTSC instruction. The non\-blocking variant of this macro is XTR_TRY_LOG_TSC which will discard the message if the sink is full. 
+Timestamped log macro, logs the specified format string and arguments to the given sink along with a timestamp obtained by reading the CPU timestamp counter via the RDTSC instruction. The non\-blocking variant of this macro is \fI\%XTR_TRY_LOG_TSC\fP which will discard the message if the sink is full. This macro will log regardless of the sink\(aqs log level. 
 .UNINDENT
 .INDENT 0.0
 .TP
-.B XTR_LOG_TSC_DEBUG(SINK, \&...) 
-\(aqDebug\(aq log level variant of \fI\%XTR_LOG_TSC\fP\&. An equivalent macro XTR_LOG_TSCD is provided as a short\-hand alternative. This macro can be disabled at build time by defining XTR_NDEBUG. The non\-blocking variants are XTR_TRY_LOG_TSC_DEBUG and XTR_TRY_LOG_TSCD\&. 
+.B XTR_LOGL_TSC(LEVEL, SINK, \&...) 
+Log level variant of \fI\%XTR_LOG_TSC\fP\&. If the specified log level has lower importance than the log level of the sink, then the message is dropped (please see the \fI\%log levels\fP section of the user guide for details).
+.sp
+.INDENT 7.0
+.IP \(bu 2
+LEVEL: The unqualified log level name, for example simply "info" or "error".
+.UNINDENT
+
+.sp
+\fBNOTE:\fP
+.INDENT 7.0
+.INDENT 3.5
+If the \(aqfatal\(aq level is passed then the log message is written, \fI\%xtr::sink::sync\fP is invoked, then the program is terminated via abort(3).
+.UNINDENT
+.UNINDENT
+.sp
+\fBNOTE:\fP
+.INDENT 7.0
+.INDENT 3.5
+Log statements with the \(aqdebug\(aq level can be disabled at build time by defining XTR_NDEBUG\&. 
+.UNINDENT
+.UNINDENT
 .UNINDENT
 .INDENT 0.0
 .TP
-.B XTR_LOG_TSC_INFO(SINK, \&...) 
-\(aqInfo\(aq log level variant of \fI\%XTR_LOG_TSC\fP\&. An equivalent macro XTR_LOG_TSCI is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_TSC_INFO and XTR_TRY_LOG_TSCI\&. 
+.B XTR_TRY_LOG_TSC(SINK, \&...) 
+Non\-blocking variant of \fI\%XTR_LOG_TSC\fP\&. The message will be discarded if the sink is full. If a message is dropped a warning will appear in the log. 
 .UNINDENT
 .INDENT 0.0
 .TP
-.B XTR_LOG_TSC_WARN(SINK, \&...) 
-\(aqWarning\(aq log level variant of \fI\%XTR_LOG_TSC\fP\&. An equivalent macro XTR_LOG_TSCW is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_TSC_WARN and XTR_TRY_LOG_TSCW\&. 
+.B XTR_TRY_LOGL_TSC(LEVEL, SINK, \&...) 
+Non\-blocking variant of \fI\%XTR_TRY_LOGL_TSC\fP\&. The message will be discarded if the sink is full. If a message is dropped a warning will appear in the log.
+.sp
+.INDENT 7.0
+.IP \(bu 2
+LEVEL: The unqualified log level name, for example simply "info" or "error". 
 .UNINDENT
-.INDENT 0.0
-.TP
-.B XTR_LOG_TSC_ERROR(SINK, \&...) 
-\(aqError\(aq log level variant of \fI\%XTR_LOG_TSC\fP\&. An equivalent macro XTR_LOG_TSCE is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_TSC_ERROR and XTR_TRY_LOG_TSCE\&. 
-.UNINDENT
-.INDENT 0.0
-.TP
-.B XTR_LOG_TSC_FATAL(SINK, \&...) 
-\(aqFatal\(aq log level variant of \fI\%XTR_LOG_TSC\fP\&. When this macro is invoked, the log message is written, \fI\%xtr::sink::sync\fP is invoked, then the program is terminated via abort(3). An equivalent macro XTR_LOG_TSCF is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_TSC_FATAL and XTR_TRY_LOG_TSCF\&. 
+
 .UNINDENT
 .SS Real\-time Clock
 .INDENT 0.0
 .TP
 .B XTR_LOG_RTC(SINK, \&...) 
-Timestamped log macro, logs the specified format string and arguments to the given sink along with a timestamp obtained by invoking \fI\%clock_gettime(3)\fP <\fBhttps://www.man7.org/linux/man-pages/man3/clock_gettime.3.html\fP> with a clock source of CLOCK_REALTIME_COARSE on Linux or CLOCK_REALTIME_FAST on FreeBSD. Depending on the host CPU this may be faster than \fI\%XTR_LOG_TSC\fP\&. The non\-blocking variant of this macro is XTR_TRY_LOG_RTC which will discard the message if the sink is full. 
+Timestamped log macro, logs the specified format string and arguments to the given sink along with a timestamp obtained by invoking \fI\%clock_gettime(3)\fP <\fBhttps://www.man7.org/linux/man-pages/man3/clock_gettime.3.html\fP> with a clock source of CLOCK_REALTIME_COARSE on Linux or CLOCK_REALTIME_FAST on FreeBSD. Depending on the host CPU this may be faster than \fI\%XTR_LOG_TSC\fP\&. The non\-blocking variant of this macro is \fI\%XTR_TRY_LOG_RTC\fP which will discard the message if the sink is full. This macro will log regardless of the sink\(aqs log level. 
 .UNINDENT
 .INDENT 0.0
 .TP
-.B XTR_LOG_RTC_DEBUG(SINK, \&...) 
-\(aqDebug\(aq log level variant of \fI\%XTR_LOG_RTC\fP\&. An equivalent macro XTR_LOG_RTCD is provided as a short\-hand alternative. This macro can be disabled at build time by defining XTR_NDEBUG. The non\-blocking variants are XTR_TRY_LOG_RTC_DEBUG and XTR_TRY_LOG_RTCD\&. 
+.B XTR_LOGL_RTC(LEVEL, SINK, \&...) 
+Log level variant of \fI\%XTR_LOG_RTC\fP\&. If the specified log level has lower importance than the log level of the sink, then the message is dropped (please see the \fI\%log levels\fP section of the user guide for details).
+.sp
+.INDENT 7.0
+.IP \(bu 2
+LEVEL: The unqualified log level name, for example simply "info" or "error".
+.UNINDENT
+
+.sp
+\fBNOTE:\fP
+.INDENT 7.0
+.INDENT 3.5
+If the \(aqfatal\(aq level is passed then the log message is written, \fI\%xtr::sink::sync\fP is invoked, then the program is terminated via abort(3).
+.UNINDENT
+.UNINDENT
+.sp
+\fBNOTE:\fP
+.INDENT 7.0
+.INDENT 3.5
+Log statements with the \(aqdebug\(aq level can be disabled at build time by defining XTR_NDEBUG\&. 
+.UNINDENT
+.UNINDENT
 .UNINDENT
 .INDENT 0.0
 .TP
-.B XTR_LOG_RTC_INFO(SINK, \&...) 
-\(aqInfo\(aq log level variant of \fI\%XTR_LOG_RTC\fP\&. An equivalent macro XTR_LOG_RTCI is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_RTC_INFO and XTR_TRY_LOG_RTCI\&. 
+.B XTR_TRY_LOG_RTC(SINK, \&...) 
+Non\-blocking variant of \fI\%XTR_LOG_RTC\fP\&. The message will be discarded if the sink is full. If a message is dropped a warning will appear in the log. 
 .UNINDENT
 .INDENT 0.0
 .TP
-.B XTR_LOG_RTC_WARN(SINK, \&...) 
-\(aqWarning\(aq log level variant of \fI\%XTR_LOG_RTC\fP\&. An equivalent macro XTR_LOG_RTCW is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_RTC_WARN and XTR_TRY_LOG_RTCW\&. 
+.B XTR_TRY_LOGL_RTC(LEVEL, SINK, \&...) 
+Non\-blocking variant of \fI\%XTR_TRY_LOGL_RTC\fP\&. The message will be discarded if the sink is full. If a message is dropped a warning will appear in the log.
+.sp
+.INDENT 7.0
+.IP \(bu 2
+LEVEL: The unqualified log level name, for example simply "info" or "error". 
 .UNINDENT
-.INDENT 0.0
-.TP
-.B XTR_LOG_RTC_ERROR(SINK, \&...) 
-\(aqError\(aq log level variant of \fI\%XTR_LOG_RTC\fP\&. An equivalent macro XTR_LOG_RTCE is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_RTC_ERROR and XTR_TRY_LOG_RTCE\&. 
-.UNINDENT
-.INDENT 0.0
-.TP
-.B XTR_LOG_RTC_FATAL(SINK, \&...) 
-\(aqFatal\(aq log level variant of \fI\%XTR_LOG_RTC\fP\&. When this macro is invoked, the log message is written, \fI\%xtr::sink::sync\fP is invoked, then the program is terminated via abort(3). An equivalent macro XTR_LOG_RTCF is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_RTC_FATAL and XTR_TRY_LOG_RTCF\&. 
+
 .UNINDENT
 .SS User\-Supplied Timestamp
 .INDENT 0.0
 .TP
 .B XTR_LOG_TS(SINK, TS, \&...) 
-User\-supplied timestamp log macro, logs the specified format string and arguments to the given sink along with the specified timestamp, blocking if the sink is full. The timestamp may be any type as long as it has a formatter defined\-\-\-please see the \fI\%custom formatters\fP section of the user guide for details. xtr::timespec is provided as a convenience type which is compatible with std::timespec and has a formatter pre\-defined. A formatter for std::timespec isn\(aqt defined in order to avoid conflict with user code that also defines such a formatter. The non\-blocking variant of this macro is XTR_TRY_LOG_TS which will discard the message if the sink is full. 
+User\-supplied timestamp log macro, logs the specified format string and arguments to the given sink along with the specified timestamp, blocking if the sink is full. The timestamp may be any type as long as it has a formatter defined\-\-\-please see the \fI\%custom formatters\fP section of the user guide for details. xtr::timespec is provided as a convenience type which is compatible with std::timespec and has a formatter pre\-defined. A formatter for std::timespec isn\(aqt defined in order to avoid conflict with user code that also defines such a formatter. This macro will log regardless of the sink\(aqs log level.
+.sp
+.INDENT 7.0
+.IP \(bu 2
+TS: The timestamp to apply to the log statement. 
+.UNINDENT
+
 .UNINDENT
 .INDENT 0.0
 .TP
-.B XTR_LOG_TS_DEBUG(SINK, \&...) 
-\(aqDebug\(aq log level variant of \fI\%XTR_LOG_TS\fP\&. An equivalent macro XTR_LOG_TSD is provided as a short\-hand alternative. This macro can be disabled at build time by defining XTR_NDEBUG. The non\-blocking variants are XTR_TRY_LOG_TS_DEBUG and XTR_TRY_LOG_TSD\&. 
+.B XTR_LOGL_TS(LEVEL, SINK, TS, \&...) 
+Log level variant of \fI\%XTR_LOG_TS\fP\&. If the specified log level has lower importance than the log level of the sink, then the message is dropped (please see the \fI\%log levels\fP section of the user guide for details).
+.sp
+.INDENT 7.0
+.IP \(bu 2
+LEVEL: The unqualified log level name, for example simply "info" or "error". 
+.IP \(bu 2
+TS: The timestamp to apply to the log statement.
+.UNINDENT
+
+.sp
+\fBNOTE:\fP
+.INDENT 7.0
+.INDENT 3.5
+If the \(aqfatal\(aq level is passed then the log message is written, \fI\%xtr::sink::sync\fP is invoked, then the program is terminated via abort(3).
+.UNINDENT
+.UNINDENT
+.sp
+\fBNOTE:\fP
+.INDENT 7.0
+.INDENT 3.5
+Log statements with the \(aqdebug\(aq level can be disabled at build time by defining XTR_NDEBUG\&. 
+.UNINDENT
+.UNINDENT
 .UNINDENT
 .INDENT 0.0
 .TP
-.B XTR_LOG_TS_INFO(SINK, \&...) 
-\(aqInfo\(aq log level variant of \fI\%XTR_LOG_TS\fP\&. An equivalent macro XTR_LOG_TSI is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_TS_INFO and XTR_TRY_LOG_TSI\&. 
+.B XTR_TRY_LOG_TS(SINK, TS, \&...) 
+Non\-blocking variant of \fI\%XTR_LOG_TS\fP\&. The message will be discarded if the sink is full. If a message is dropped a warning will appear in the log. 
 .UNINDENT
 .INDENT 0.0
 .TP
-.B XTR_LOG_TS_WARN(SINK, \&...) 
-\(aqWarning\(aq log level variant of \fI\%XTR_LOG_TS\fP\&. An equivalent macro XTR_LOG_TSW is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_TS_WARN and XTR_TRY_LOG_TSW\&. 
+.B XTR_TRY_LOGL_TS(LEVEL, SINK, TS, \&...) 
+Non\-blocking variant of \fI\%XTR_TRY_LOGL_TS\fP\&. The message will be discarded if the sink is full. If a message is dropped a warning will appear in the log.
+.sp
+.INDENT 7.0
+.IP \(bu 2
+LEVEL: The unqualified log level name, for example simply "info" or "error". 
+.IP \(bu 2
+TS: The timestamp to apply to the log statement. 
 .UNINDENT
-.INDENT 0.0
-.TP
-.B XTR_LOG_TS_ERROR(SINK, \&...) 
-\(aqError\(aq log level variant of \fI\%XTR_LOG_TS\fP\&. An equivalent macro XTR_LOG_TSE is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_TS_ERROR and XTR_TRY_LOG_TSE\&. 
-.UNINDENT
-.INDENT 0.0
-.TP
-.B XTR_LOG_TS_FATAL(SINK, \&...) 
-\(aqFatal\(aq log level variant of \fI\%XTR_LOG_TS\fP\&. When this macro is invoked, the log message is written, \fI\%xtr::sink::sync\fP is invoked, then the program is terminated via abort(3). An equivalent macro XTR_LOG_TSF is provided as a short\-hand alternative. The non\-blocking variants are XTR_TRY_LOG_TS_FATAL and XTR_TRY_LOG_TSF\&. 
+
 .UNINDENT
 .SH LOGGER
 .INDENT 0.0
@@ -165,7 +239,7 @@ The main logger class. When constructed a background thread will be created whic
 Public Functions
 .INDENT 7.0
 .TP
-.B template<typename  Clock  =  std::chrono::system_clock> inline  logger(const  char  *path, \fI\%Clock\fP  &&clock  =  \fI\%Clock\fP(), std::string  command_path  =  \fI\%default_command_path\fP()) 
+.B template<typename  Clock  =  std::chrono::system_clock> inline  logger(const  char  *path, \fI\%Clock\fP  &&clock  =  \fI\%Clock\fP(), std::string  command_path  =  \fI\%default_command_path\fP(), \fI\%log_level_style_t\fP  level_style  =  \fI\%default_log_level_style\fP) 
 Path constructor. The first argument is the path to a file which should be opened and logged to. The file will be opened in append mode, and will be created if it does not exist. Errors will be written to stdout.
 .sp
 .INDENT 7.0
@@ -175,12 +249,14 @@ path: The path of a file to write log statements to.
 clock: A function returning the current time of day as a std::timespec. This function will be invoked when creating timestamps for log statements produced by the basic log macros\-\-\- please see the \fI\%basic time source\fP section of the user guide for details. The default clock is std::chrono::system_clock. 
 .IP \(bu 2
 command_path: The path where the local domain socket used to communicate with \fI\%xtrctl\fP should be created. The default behaviour is to create sockets in $XDG_RUNTIME_DIR (if set, otherwise "/run/user/<uid>"). If that directory does not exist or is inaccessible then $TMPDIR (if set, otherwise "/tmp") will be used instead. See \fI\%default_command_path\fP for further details. To prevent a socket from being created, pass \fI\%null_command_path\fP\&. 
+.IP \(bu 2
+level_style: The log level style that will be used to prefix each log statement\-\-\-please refer to the \fI\%log_level_style_t\fP documentation for details. 
 .UNINDENT
 
 .UNINDENT
 .INDENT 7.0
 .TP
-.B template<typename  Clock  =  std::chrono::system_clock> inline  logger(FILE  *stream  =  stderr, FILE  *err_stream  =  stderr, \fI\%Clock\fP  &&clock  =  \fI\%Clock\fP(), std::string  command_path  =  \fI\%default_command_path\fP()) 
+.B template<typename  Clock  =  std::chrono::system_clock> inline  logger(FILE  *stream  =  stderr, FILE  *err_stream  =  stderr, \fI\%Clock\fP  &&clock  =  \fI\%Clock\fP(), std::string  command_path  =  \fI\%default_command_path\fP(), \fI\%log_level_style_t\fP  level_style  =  \fI\%default_log_level_style\fP) 
 Stream constructor.
 .sp
 It is expected that this constructor will be used with streams such as stdout or stderr. If a stream that has been opened by the user is to be passed to the logger then the \fI\%stream constructor with reopen path\fP constructor is recommended instead.
@@ -194,6 +270,8 @@ err_stream: A stream to write error messages to.
 clock: Please refer to the \fI\%description\fP above. 
 .IP \(bu 2
 command_path: Please refer to the \fI\%description\fP above. 
+.IP \(bu 2
+level_style: The log level style that will be used to prefix each log statement\-\-\-please refer to the \fI\%log_level_style_t\fP documentation for details. 
 .UNINDENT
 
 .sp
@@ -207,13 +285,13 @@ The logger will not take ownership of the stream\-\-\-i.e. it will not be closed
 \fBNOTE:\fP
 .INDENT 7.0
 .INDENT 3.5
-Reopening the log file via the \fI\%xtrctl\fP tool is \fInot\fP supported.
+Reopening the log file via the \fI\%xtrctl\fP tool is \fInot\fP supported if this constructor is used.
 .UNINDENT
 .UNINDENT
 .UNINDENT
 .INDENT 7.0
 .TP
-.B template<typename  Clock  =  std::chrono::system_clock> inline  logger(const  char  *reopen_path, FILE  *stream, FILE  *err_stream  =  stderr, \fI\%Clock\fP  &&clock  =  \fI\%Clock\fP(), std::string  command_path  =  \fI\%default_command_path\fP()) 
+.B template<typename  Clock  =  std::chrono::system_clock> inline  logger(const  char  *reopen_path, FILE  *stream, FILE  *err_stream  =  stderr, \fI\%Clock\fP  &&clock  =  \fI\%Clock\fP(), std::string  command_path  =  \fI\%default_command_path\fP(), \fI\%log_level_style_t\fP  level_style  =  \fI\%default_log_level_style\fP) 
  Stream constructor with reopen path.
 .sp
 .INDENT 7.0
@@ -227,6 +305,8 @@ err_stream: A stream to write error messages to.
 clock: Please refer to the \fI\%description\fP above. 
 .IP \(bu 2
 command_path: Please refer to the \fI\%description\fP above. 
+.IP \(bu 2
+level_style: The log level style that will be used to prefix each log statement\-\-\-please refer to the \fI\%log_level_style_t\fP documentation for details. 
 .UNINDENT
 
 .sp
@@ -246,7 +326,7 @@ Reopening the log file via the \fI\%xtrctl\fP tool is supported, with the reopen
 .UNINDENT
 .INDENT 7.0
 .TP
-.B template<typename  OutputFunction,  typename  ErrorFunction,  typename  Clock  =  std::chrono::system_clock> inline  logger(\fI\%OutputFunction\fP  &&out, \fI\%ErrorFunction\fP  &&err, \fI\%Clock\fP  &&clock  =  \fI\%Clock\fP(), std::string  command_path  =  \fI\%default_command_path\fP()) 
+.B template<typename  OutputFunction,  typename  ErrorFunction,  typename  Clock  =  std::chrono::system_clock> inline  logger(\fI\%OutputFunction\fP  &&out, \fI\%ErrorFunction\fP  &&err, \fI\%Clock\fP  &&clock  =  \fI\%Clock\fP(), std::string  command_path  =  \fI\%default_command_path\fP(), \fI\%log_level_style_t\fP  level_style  =  \fI\%default_log_level_style\fP) 
 Basic custom back\-end constructor.
 .sp
 .INDENT 7.0
@@ -258,12 +338,14 @@ err: A function accepting a const char* buffer of formatted log data and a std::
 clock: Please refer to the \fI\%description\fP above. 
 .IP \(bu 2
 command_path: Please refer to the \fI\%description\fP above. 
+.IP \(bu 2
+level_style: The log level style that will be used to prefix each log statement\-\-\-please refer to the \fI\%log_level_style_t\fP documentation for details. 
 .UNINDENT
 
 .UNINDENT
 .INDENT 7.0
 .TP
-.B template<typename  OutputFunction,  typename  ErrorFunction,  typename  FlushFunction,  typename  SyncFunction,  typename  ReopenFunction,  typename  CloseFunction,  typename  Clock  =  std::chrono::system_clock> inline  logger(\fI\%OutputFunction\fP  &&out, \fI\%ErrorFunction\fP  &&err, \fI\%FlushFunction\fP  &&flush, \fI\%SyncFunction\fP  &&sync, \fI\%ReopenFunction\fP  &&reopen, \fI\%CloseFunction\fP  &&close, \fI\%Clock\fP  &&clock  =  \fI\%Clock\fP(), std::string  command_path  =  \fI\%default_command_path\fP()) 
+.B template<typename  OutputFunction,  typename  ErrorFunction,  typename  FlushFunction,  typename  SyncFunction,  typename  ReopenFunction,  typename  CloseFunction,  typename  Clock  =  std::chrono::system_clock> inline  logger(\fI\%OutputFunction\fP  &&out, \fI\%ErrorFunction\fP  &&err, \fI\%FlushFunction\fP  &&flush, \fI\%SyncFunction\fP  &&sync, \fI\%ReopenFunction\fP  &&reopen, \fI\%CloseFunction\fP  &&close, \fI\%Clock\fP  &&clock  =  \fI\%Clock\fP(), std::string  command_path  =  \fI\%default_command_path\fP(), \fI\%log_level_style_t\fP  level_style  =  \fI\%default_log_level_style\fP) 
 Custom back\-end constructor.
 .sp
 .INDENT 7.0
@@ -283,6 +365,8 @@ close: A function that the logger will invoke from the background thread to indi
 clock: Please refer to the \fI\%description\fP above. 
 .IP \(bu 2
 command_path: Please refer to the \fI\%description\fP above. 
+.IP \(bu 2
+level_style: The log level style that will be used to prefix each log statement\-\-\-please refer to the \fI\%log_level_style_t\fP documentation for details. 
 .UNINDENT
 
 .UNINDENT
@@ -369,6 +453,11 @@ Sets the logger close function\-\-\-please refer to the \(aqclose\(aq argument \
 .B void  set_command_path(std::string  path)  noexcept 
 Sets the logger command path\-\-\-please refer to the \(aqcommand_path\(aq argument \fI\%description\fP above for details. 
 .UNINDENT
+.INDENT 7.0
+.TP
+.B void  set_log_level_style(\fI\%log_level_style_t\fP  level_style)  noexcept 
+Sets the logger log level style\-\-\-please refer to the \fI\%log_level_style_t\fP documentation for details. 
+.UNINDENT
 .UNINDENT
 .SH SINK
 .INDENT 0.0
@@ -416,13 +505,13 @@ Sets the sink\(aqs name to the specified value.
 .UNINDENT
 .INDENT 7.0
 .TP
-.B template<auto  Format,  typename  Tags  =  void(),  typename  \&...Args> void  log(\fI\%Args\fP&&\&...  args)  noexcept((XTR_NOTHROW_INGESTIBLE(\fI\%Args\fP,  \fI\%args\fP)  &&  \&...)) 
+.B template<auto  Format,  auto  Level,  typename  Tags  =  void(),  typename  \&...Args> void  log(\fI\%Args\fP&&\&...  args)  noexcept((XTR_NOTHROW_INGESTIBLE(\fI\%Args\fP,  \fI\%args\fP)  &&  \&...)) 
 Logs the given format string and arguments. This function is not intended to be used directly, instead one of the XTR_LOG macros should be used. It is provided for use in situations where use of a macro may be undesirable. 
 .UNINDENT
 .INDENT 7.0
 .TP
 .B inline  void  set_level(\fI\%log_level_t\fP  l) 
-Sets the log level of the sink to the specified level (see \fI\%log_level_t\fP). 
+Sets the log level of the sink to the specified level (see \fI\%log_level_t\fP). Any log statement made with a log level with lower importance than the current level will be dropped\-\-\-please see the \fI\%log levels\fP section of the user guide for details. 
 .UNINDENT
 .INDENT 7.0
 .TP
@@ -470,6 +559,22 @@ nocopy is used to specify that a log argument should be passed by reference inst
 If the \fInone\fP level is applied to a sink then all log statements will be
 disabled. Fatal log statements will still call
 \fI\%abort(3)\fP <\fBhttps://www.man7.org/linux/man-pages/man3/abort.3.html\fP>, however.
+.SH LOG LEVEL STYLES
+.INDENT 0.0
+.TP
+.B using  xtr::log_level_style_t  =  const  char  *(*)(\fI\%log_level_t\fP) 
+Log level styles are used to customise the formatting used when prefixing log statements with their associated log level (see \fI\%log_level_t\fP). Styles are simply function pointers\-\-\-to provide a custom style, define a function returning a string literal and accepting a single argument of type \fI\%log_level_t\fP and pass the function to \fI\%logger::logger\fP or \fI\%logger::set_log_level_style\fP\&. The values returned by the function will be prefixed to log statements produced by the logger. Two formatters are provided, the default formatter \fI\%default_log_level_style\fP and a System D compatible style \fI\%systemd_log_level_style\fP\&. 
+.UNINDENT
+.INDENT 0.0
+.TP
+.B const  char  *xtr::default_log_level_style(\fI\%log_level_t\fP  level) 
+The default log level style (see \fI\%log_level_style_t\fP). Yields a single upper\-case character representing the log level followed by a space, e.g. "E ", "W ", "I " for \fI\%log_level_t::error\fP, \fI\%log_level_t::warning\fP, \fI\%log_level_t::info\fP and so on. 
+.UNINDENT
+.INDENT 0.0
+.TP
+.B const  char  *xtr::systemd_log_level_style(\fI\%log_level_t\fP  level) 
+System D log level style (see \fI\%log_level_style_t\fP). Yields strings as described in \fI\%sd\-daemon(3)\fP <\fBhttps://man7.org/linux/man-pages/man3/sd-daemon.3.html\fP>, e.g. "<0>", "<1>", "<2>" etc. 
+.UNINDENT
 .SH DEFAULT COMMAND PATH
 .INDENT 0.0
 .TP
