@@ -181,12 +181,11 @@ Log Levels
 ----------
 
 The logger supports debug, info, warning, error and fatal log levels, which
-are enumerated in the :cpp:enum:`xtr::log_level_t` enum.
-Log statements with these levels may be produced using the
-:c:macro:`XTR_LOG_DEBUG`, :c:macro:`XTR_LOG_INFO`, :c:macro:`XTR_LOG_WARN`
-:c:macro:`XTR_LOG_ERROR` and :c:macro:`XTR_LOG_FATAL` macros, along with
-additional macros which are described in the :ref:`log macros <log-macros>`
-section of the API reference.
+are enumerated in the :cpp:enum:`xtr::log_level_t` enum. Log statements with
+these levels may be produced using the :c:macro:`XTR_LOGL` macro, along with
+additional macros that are described in the :ref:`log macros <log-macros>`
+section of the API reference, all of which follow the convention of containing
+"LOGL" in the macro name.
 
 Each sink has its own log level, which can be programmatically set or queried
 via :cpp:func:`xtr::sink::set_level` and :cpp:func:`xtr::sink::level`, and can
@@ -209,9 +208,9 @@ so in the following example the function :cpp:func:`foo` is not called:
 
     s.set_level(xtr::log_level_t::error);
 
-    XTR_LOG_INFO(s, "Hello {}", foo());
+    XTR_LOG(info, s, "Hello {}", foo());
 
-View this example on `Compiler Explorer <https://godbolt.org/z/G4P4zfP6r>`__.
+View this example on `Compiler Explorer <https://godbolt.org/z/ss36qzo1c>`__.
 
 Debug Log Statements
 ~~~~~~~~~~~~~~~~~~~~
@@ -512,37 +511,53 @@ Please refer to
 posted to the full-disclosure mailing list for a more thorough explanation of terminal
 escape sequence attacks.
 
+Log Rotation
+------------
+
+Please refer to the :ref:`reopening log files <reopening-log-files>` section of
+the :ref:`xtrctl <xtrctl>` guide.
+
 Custom Back-ends
 ----------------
 
 The logger allows custom back-ends to be used. This is done by constructing the logger
 with functions that implement the back-end functionality, which are listed below:
 
-+----------+-------------------------------+
-| Function | Description                   |
-+==========+===============================+
-| Output   |                               |
-+----------+-------------------------------+
-| Error    |                               |
-+----------+-------------------------------+
-| Flush    |                               |
-+----------+-------------------------------+
-| Sync     |                               |
-+----------+-------------------------------+
-| Reopen   |                               |
-+----------+-------------------------------+
-| Close    |                               |
-+----------+-------------------------------+
++----------+-------------------------------------------------------------+-------------+
+| Function | Signature                                                   | Description |
++==========+=============================================================+=============+
+| Output   | :cpp:func:`::ssize_t out(const char* buf, std::size_t size)`| |output|    |
++----------+-------------------------------------------------------------+-------------+
+| Error    | :cpp:func:`void err(const char* buf, std::size_t size)`     | |error|     |
++----------+-------------------------------------------------------------+-------------+
+| Flush    | :cpp:func:`void flush()`                                    | |flush|     |
++----------+-------------------------------------------------------------+-------------+
+| Sync     | :cpp:func:`void sync()`                                     | |sync|      |
++----------+-------------------------------------------------------------+-------------+
+| Reopen   | :cpp:func:`void reopen()`                                   | |reopen|    |
++----------+-------------------------------------------------------------+-------------+
+| Close    | :cpp:func:`void close()`                                    | |close|     |
++----------+-------------------------------------------------------------+-------------+
+
+.. |output| replace:: replacement text
+
+.. |error| replace:: replacement text
+
+.. |flush| replace:: replacement text
+
+.. |sync| replace:: replacement text
+
+.. |reopen| replace:: replacement text
+
+.. |close| replace:: replacement text
+
+NEED TO MAKE IT CLEAR THAT OUT IS CALLED ONCE PER LOG LINE
 
 Examples
 ~~~~~~~~
 
-
-`basic custom back-end constructor <api.html#_CPPv4I000EN3xtr6logger6loggerERR14OutputFunctionRR13ErrorFunctionRR5ClockNSt6stringE>`__
-
-`custom back-end constructor <api.html#_CPPv4I0000000EN3xtr6logger6loggerERR14OutputFunctionRR13ErrorFunctionRR13FlushFunctionRR12SyncFunctionRR14ReopenFunctionRR13CloseFunctionRR5ClockNSt6stringE>`__
-
-Custom back-end using the basic back-end constructor:
+Custom back-end using the
+`basic custom back-end constructor <api.html#_CPPv4I000EN3xtr6logger6loggerERR14OutputFunctionRR13ErrorFunctionRR5ClockNSt6stringE>`__:
 
 .. code-block:: c++
 
@@ -569,6 +584,51 @@ Custom back-end using the basic back-end constructor:
     s.sync(); // Ensure all log statements are delivered to the back-end
 
     std::cout << lines[0] << "\n";
+
+Custom back-end using the
+`custom back-end constructor <api.html#_CPPv4I0000000EN3xtr6logger6loggerERR14OutputFunctionRR13ErrorFunctionRR13FlushFunctionRR12SyncFunctionRR14ReopenFunctionRR13CloseFunctionRR5ClockNSt6stringE>`__:
+
+.. code-block:: c++
+
+    TODO
+
+Custom Log Level Styles
+-----------------------
+
+The text at the beginning of each log statement representing the log level of
+the statement can be customised via :cpp:func:`xtr::logger::set_log_level_style`,
+which accepts a function pointer of type
+:cpp:type:`xtr::log_level_style_t`. The passed function should accept
+a single argument of type :cpp:enum:`xtr::log_level_t` and should return
+a :cpp:expr:`const char*` string literal.
+
+Examples
+~~~~~~~~
+
+.. code-block:: c++
+
+    #include <xtr/logger.hpp>
+
+    xtr::logger log;
+
+    xtr::sink s = log.get_sink("Main");
+
+    log.set_log_level_style(
+        [](auto level)
+        {
+            return
+                level == xtr::log_level_t::info ?
+                    "info: " :
+                    "not-info: ";
+        });
+
+    XTR_LOGL(info, s, "Hello world");
+    XTR_LOGL(error, s, "Hello world");
+
+Will output::
+
+    info: 2021-09-17 23:36:39.043028 Main <source>:18: Hello world
+    not-info: 2021-09-17 23:36:39.043028 Main <source>:19: Hello world
 
 .. rubric:: Footnotes
 

@@ -41,8 +41,9 @@ are made when a log statement is made.
 * Ability to modify log levels via an external command.
 * Non-printable characters are sanitized for safety (to prevent terminal escape sequence injection attacks).
 * Formatting done via fmtlib.
-* Support for custom I/O back-ends (e.g. to log to the network).
+* Support for custom I/O back-ends (e.g. to log to the network or syslogd).
 * Support for logrotate integration.
+* Support for systemd journal integration.
 
 ## Supported platforms
 

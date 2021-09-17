@@ -75,14 +75,7 @@ message will be logged:
 
 .. code-block:: c++
 
-    XTR_LOG_INFO(s, "Hello world");
-
-@ref XTR_LOGI is short-hand for @ref XTR_LOG_INFO, as is @ref XTR_LOGE for
-@ref XTR_LOG_ERROR etc:
-
-.. code-block:: c++
-
-    XTR_LOGI(s, "Hello world");
+    XTR_LOG(info, s, "Hello world");
 
 Set the log level of the sink 's' to 'error', causing messages with importance
 lower than 'error' to be dropped. Available log levels are debug, info, warning,
@@ -92,14 +85,14 @@ error and fatal---see :cpp:enum:`xtr::log_level_t`.
 
     s.set_level(xtr::log_level_t::error);
 
-    XTR_LOG_INFO(s, "Hello world"); // Dropped
+    XTR_LOG(info, s, "Hello world"); // Dropped
 
 Fatal errors will log and then terminate the program using
 `abort(3) <https://www.man7.org/linux/man-pages/man3/abort.3.html>`__:
 
 .. code-block:: c++
 
-    XTR_LOG_FATAL(s, "Goodbye cruel world");
+    XTR_LOG(fatal, s, "Goodbye cruel world");
     // NOTREACHED
 
 By default, objects and strings are copied into the sink. This is so that the
