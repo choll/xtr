@@ -28,12 +28,12 @@ for file in \
     include/xtr/detail/tsc.hpp \
     include/xtr/detail/clock_ids.hpp \
     include/xtr/detail/get_time.hpp \
+    include/xtr/log_level.hpp \
     include/xtr/detail/print.hpp \
     include/xtr/detail/string.hpp \
     include/xtr/detail/string_table.hpp \
     include/xtr/detail/trampolines.hpp \
     include/xtr/detail/strzcpy.hpp \
-    include/xtr/log_level.hpp \
     include/xtr/sink.hpp \
     include/xtr/detail/commands/frame.hpp \
     include/xtr/detail/commands/pattern.hpp \
@@ -62,6 +62,7 @@ grep -hEv '^ *//|^#include "' \
     src/consumer.cpp \
     src/file_descriptor.cpp \
     src/logger.cpp \
+    src/log_level.cpp \
     src/matcher.cpp \
     src/memory_mapping.cpp \
     src/mirrored_memory_mapping.cpp \

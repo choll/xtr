@@ -21,7 +21,7 @@
 #ifndef XTR_DETAIL_PRINT_HPP
 #define XTR_DETAIL_PRINT_HPP
 
-#include "../log_level.hpp"
+#include "xtr/log_level.hpp"
 
 #include <fmt/format.h>
 

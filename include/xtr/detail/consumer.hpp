@@ -21,7 +21,7 @@
 #ifndef XTR_DETAIL_CONSUMER_HPP
 #define XTR_DETAIL_CONSUMER_HPP
 
-#include "../log_level.hpp"
+#include "xtr/log_level.hpp"
 #include "commands/command_dispatcher_fwd.hpp"
 #include "commands/requests_fwd.hpp"
 

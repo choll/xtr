@@ -958,6 +958,48 @@ namespace xtr::detail
     }
 }
 
+namespace xtr
+{
+    enum class log_level_t
+    {
+        none,
+        fatal,
+        error,
+        warning,
+        info,
+        debug
+    };
+
+    /**
+     * Log level styles are used to customise the formatting used when prefixing
+     * log statements with their associated log level (see @ref log_level_t).
+     * Styles are simply function pointers\---to provide a custom style, define
+     * a function returning a string literal and accepting a single argument of
+     * type @ref log_level_t and pass the function to logger::logger or
+     * logger::set_log_level_style. The values returned by the function will be
+     * prefixed to log statements produced by the logger. Two formatters are
+     * provided, the default formatter @ref default_log_level_style and a
+     * System D compatible style @ref systemd_log_level_style.
+     */
+    using log_level_style_t = const char* (*)(log_level_t);
+
+    /**
+     * The default log level style (see @ref log_level_style_t). Yields a
+     * single upper-case character representing the log level followed by a
+     * space, e.g. "E ", "W ", "I " for log_level_t::error,
+     * log_level_t::warning, log_level_t::info and so on.
+     */
+    const char* default_log_level_style(log_level_t level);
+
+    /**
+     * System D log level style (see @ref log_level_style_t). Yields strings as
+     * described in
+     * <a href="https://man7.org/linux/man-pages/man3/sd-daemon.3.html">sd-daemon(3)</a>,
+     * e.g. "<0>", "<1>", "<2>" etc.
+     */
+    const char* systemd_log_level_style(log_level_t level);
+}
+
 #include <fmt/format.h>
 
 #include <cstddef>
@@ -971,6 +1013,7 @@ namespace xtr::detail
     [[gnu::cold, gnu::noinline]] void report_error(
         fmt::memory_buffer& mbuf,
         const ErrorFunction& err,
+        log_level_style_t lstyle,
         Timestamp ts,
         const std::string& name,
         const char* reason)
@@ -980,12 +1023,19 @@ namespace xtr::detail
 #if FMT_VERSION >= 80000
         fmt::format_to(
             std::back_inserter(mbuf),
-            "E {} {}: Error: {}\n"sv,
+            "{}{} {}: Error: {}\n"sv,
+            lstyle(log_level_t::error),
             ts,
             name,
             reason);
 #else
-        fmt::format_to(mbuf, "E {} {}: Error: {}\n"sv, ts, name, reason);
+        fmt::format_to(
+            mbuf,
+            "{}{} {}: Error: {}\n"sv,
+            lstyle(log_level_t::error),
+            ts,
+            name,
+            reason);
 #endif
         err(mbuf.data(), mbuf.size());
     }
@@ -999,7 +1049,9 @@ namespace xtr::detail
         fmt::memory_buffer& mbuf,
         const OutputFunction& out,
         [[maybe_unused]] const ErrorFunction& err,
+        log_level_style_t lstyle,
         std::string_view fmt,
+        log_level_t level,
         Timestamp ts,
         const std::string& name,
         const Args&... args)
@@ -1013,22 +1065,23 @@ namespace xtr::detail
             fmt::format_to(
                 std::back_inserter(mbuf),
                 fmt::runtime(fmt),
+                lstyle(level),
                 ts,
                 name,
                 args...);
 #else
-        fmt::format_to(mbuf, fmt, ts, name, args...);
+        fmt::format_to(mbuf, fmt, lstyle(level), ts, name, args...);
 #endif
-            const auto result = out(mbuf.data(), mbuf.size());
+            const auto result = out(level, mbuf.data(), mbuf.size());
             if (result == -1)
-                return report_error(mbuf, err, ts, name, "Write error");
+                return report_error(mbuf, err, lstyle, ts, name, "Write error");
             if (std::size_t(result) != mbuf.size())
-                return report_error(mbuf, err, ts, name, "Short write");
+                return report_error(mbuf, err, lstyle, ts, name, "Short write");
 #if __cpp_exceptions
         }
         catch (const std::exception& e)
         {
-            report_error(mbuf, err, ts, name, e.what());
+            report_error(mbuf, err, lstyle, ts, name, e.what());
         }
 #endif
     }
@@ -1042,12 +1095,14 @@ namespace xtr::detail
         fmt::memory_buffer& mbuf,
         const OutputFunction& out,
         const ErrorFunction& err,
+        log_level_style_t lstyle,
         std::string_view fmt,
+        log_level_t level,
         const std::string& name,
         Timestamp ts,
         const Args&... args)
     {
-        print(mbuf, out, err, fmt, ts, name, args...);
+        print(mbuf, out, err, lstyle, fmt, level, ts, name, args...);
     }
 }
 
@@ -1220,23 +1275,23 @@ namespace xtr::detail
 
 namespace xtr::detail
 {
-    template<auto Format, typename State>
+    template<auto Format, auto Level, typename State>
     std::byte* trampoline0(
         fmt::memory_buffer& mbuf,
         std::byte* buf,
-        State& state,
+        State& st,
         const char* timestamp,
         std::string& name) noexcept
     {
-        print(mbuf, state.out, state.err, *Format, timestamp, name);
+        print(mbuf, st.out, st.err, st.lstyle, *Format, Level, timestamp, name);
         return buf + sizeof(void (*)());
     }
 
-    template<auto Format, typename State, typename Func>
+    template<auto Format, auto Level, typename State, typename Func>
     std::byte* trampolineN(
         fmt::memory_buffer& mbuf,
         std::byte* buf,
-        State& state,
+        State& st,
         [[maybe_unused]] const char* timestamp,
         std::string& name) noexcept
     {
@@ -1250,9 +1305,9 @@ namespace xtr::detail
 
         auto& func = *reinterpret_cast<Func*>(func_pos);
         if constexpr (std::is_same_v<decltype(Format), std::nullptr_t>)
-            func(state, name);
+            func(st, name);
         else
-            func(mbuf, state.out, state.err, *Format, timestamp, name);
+            func(mbuf, st.out, st.err, st.lstyle, *Format, Level, timestamp, name);
 
         static_assert(noexcept(func.~Func()));
         std::destroy_at(std::addressof(func));
@@ -1260,11 +1315,11 @@ namespace xtr::detail
         return func_pos + align(sizeof(Func), alignof(fptr_t));
     }
 
-    template<auto Format, typename State, typename Func>
+    template<auto Format, auto Level, typename State, typename Func>
     std::byte* trampolineS(
         fmt::memory_buffer& mbuf,
         std::byte* buf,
-        State& state,
+        State& st,
         const char* timestamp,
         std::string& name) noexcept
     {
@@ -1279,7 +1334,7 @@ namespace xtr::detail
         assert(std::uintptr_t(func_pos) % alignof(Func) == 0);
 
         auto& func = *reinterpret_cast<Func*>(func_pos);
-        func(mbuf, state.out, state.err, *Format, timestamp, name);
+        func(mbuf, st.out, st.err, st.lstyle, *Format, Level, timestamp, name);
 
         static_assert(noexcept(func.~Func()));
         std::destroy_at(std::addressof(func));
@@ -1301,19 +1356,6 @@ namespace xtr::detail
         std::memcpy(dst, &src[0], n);
         dst[n] = '\0';
     }
-}
-
-namespace xtr
-{
-    enum class log_level_t
-    {
-        none,
-        fatal,
-        error,
-        warning,
-        info,
-        debug
-    };
 }
 
 #include <atomic>
@@ -1420,11 +1462,14 @@ public:
      *  should be used. It is provided for use in situations where use of
      *  a macro may be undesirable.
      */
-    template<auto Format, typename Tags = void(), typename... Args>
+    template<auto Format, auto Level, typename Tags = void(), typename... Args>
     void log(Args&&... args) noexcept((XTR_NOTHROW_INGESTIBLE(Args, args) && ...));
 
     /**
      *  Sets the log level of the sink to the specified level (see @ref log_level_t).
+     *  Any log statement made with a log level with lower importance than the
+     *  current level will be dropped\---please see the <a href="guide.html#log-levels">
+     *  log levels</a> section of the user guide for details.
      */
     void set_level(log_level_t l)
     {
@@ -1442,10 +1487,10 @@ public:
 private:
     sink(logger& owner, std::string name);
 
-    template<auto Format, typename Tags = void()>
+    template<auto Format, auto Level, typename Tags = void()>
     void log_impl() noexcept;
 
-    template<auto Format, typename Tags, typename... Args>
+    template<auto Format, auto Level, typename Tags, typename... Args>
     void log_impl(Args&&... args) noexcept(
         (XTR_NOTHROW_INGESTIBLE(Args, args) && ...));
 
@@ -1453,10 +1498,10 @@ private:
     void copy(std::byte* pos, T&& value) noexcept(
         XTR_NOTHROW_INGESTIBLE(T, value));
 
-    template<auto Format = nullptr, typename Tags = void(), typename Func>
+    template<auto Format = nullptr, auto Level = 0, typename Tags = void(), typename Func>
     void post(Func&& func) noexcept(XTR_NOTHROW_INGESTIBLE(Func, func));
 
-    template<auto Format, typename Tags, typename... Args>
+    template<auto Format, auto Level, typename Tags, typename... Args>
     void post_with_str_table(Args&&... args) noexcept(
         (XTR_NOTHROW_INGESTIBLE(Args, args) && ...));
 
@@ -1476,24 +1521,24 @@ private:
     friend logger;
 };
 
-template<auto Format, typename Tags, typename... Args>
+template<auto Format, auto Level, typename Tags, typename... Args>
 void xtr::sink::log(Args&&... args) noexcept(
     (XTR_NOTHROW_INGESTIBLE(Args, args) && ...))
 {
-    log_impl<Format, Tags>(std::forward<Args>(args)...);
+    log_impl<Format, Level, Tags>(std::forward<Args>(args)...);
 }
 
-template<auto Format, typename Tags>
+template<auto Format, auto Level, typename Tags>
 void xtr::sink::log_impl() noexcept
 {
     const ring_buffer::span s = buf_.write_span_spec<Tags>(sizeof(fptr_t));
     if (detail::is_non_blocking_v<Tags> && s.empty()) [[unlikely]]
         return;
-    copy(s.begin(), &detail::trampoline0<Format, detail::consumer>);
+    copy(s.begin(), &detail::trampoline0<Format, Level, detail::consumer>);
     buf_.reduce_writable(sizeof(fptr_t));
 }
 
-template<auto Format, typename Tags, typename... Args>
+template<auto Format, auto Level, typename Tags, typename... Args>
 void xtr::sink::log_impl(Args&&... args) noexcept(
     (XTR_NOTHROW_INGESTIBLE(Args, args) && ...))
 {
@@ -1503,12 +1548,13 @@ void xtr::sink::log_impl(Args&&... args) noexcept(
         std::is_same<std::remove_cvref_t<Args>, std::string_view>...,
         std::is_same<std::remove_cvref_t<Args>, std::string>...>;
     if constexpr (is_str)
-        post_with_str_table<Format, Tags>(std::forward<Args>(args)...);
+        post_with_str_table<Format, Level, Tags>(std::forward<Args>(args)...);
     else
-        post<Format, Tags>(make_lambda<Tags>(std::forward<Args>(args)...));
+        post<Format, Level, Tags>(
+            make_lambda<Tags>(std::forward<Args>(args)...));
 }
 
-template<auto Format, typename Tags, typename... Args>
+template<auto Format, auto Level, typename Tags, typename... Args>
 void xtr::sink::post_with_str_table(Args&&... args) noexcept(
     (XTR_NOTHROW_INGESTIBLE(Args, args) && ...))
 {
@@ -1544,7 +1590,9 @@ void xtr::sink::post_with_str_table(Args&&... args) noexcept(
     auto str_cur = str_pos;
     auto str_end = s.end();
 
-    copy(s.begin(), &detail::trampolineS<Format, detail::consumer, lambda_t>);
+    copy(
+        s.begin(),
+        &detail::trampolineS<Format, Level, detail::consumer, lambda_t>);
     copy(
         func_pos,
         make_lambda<Tags>(detail::build_string_table<Tags>(
@@ -1573,7 +1621,7 @@ void xtr::sink::copy(std::byte* pos, T&& value) noexcept(
     new (pos) std::remove_reference_t<T>(std::forward<T>(value));
 }
 
-template<auto Format, typename Tags, typename Func>
+template<auto Format, auto Level, typename Tags, typename Func>
 void xtr::sink::post(Func&& func) noexcept(XTR_NOTHROW_INGESTIBLE(Func, func))
 {
     ring_buffer::span s = buf_.write_span_spec();
@@ -1595,7 +1643,7 @@ void xtr::sink::post(Func&& func) noexcept(XTR_NOTHROW_INGESTIBLE(Func, func))
                 return;
         }
 
-    copy(s.begin(), &detail::trampolineN<Format, detail::consumer, Func>);
+    copy(s.begin(), &detail::trampolineN<Format, Level, detail::consumer, Func>);
     copy(func_pos, std::forward<Func>(func));
 
     buf_.reduce_writable(size);
@@ -1609,17 +1657,19 @@ auto xtr::sink::make_lambda(Args&&... args) noexcept(
                fmt::memory_buffer& mbuf,
                const auto& out,
                const auto& err,
+               log_level_style_t lstyle,
                std::string_view fmt,
+               log_level_t level,
                [[maybe_unused]] const char* ts,
                const std::string& name) mutable noexcept
     {
         if constexpr (detail::is_timestamp_v<Tags>)
         {
-            xtr::detail::print_ts(mbuf, out, err, fmt, name, args...);
+            xtr::detail::print_ts(mbuf, out, err, lstyle, fmt, level, name, args...);
         }
         else
         {
-            xtr::detail::print(mbuf, out, err, fmt, ts, name, args...);
+            xtr::detail::print(mbuf, out, err, lstyle, fmt, level, ts, name, args...);
         }
     };
 }
@@ -2080,6 +2130,7 @@ public:
         SyncFunction&& sf,
         ReopenFunction&& rf,
         CloseFunction&& cf,
+        log_level_style_t ls,
         sink* control) :
         out(std::forward<OutputFunction>(of)),
         err(std::forward<ErrorFunction>(ef)),
@@ -2087,18 +2138,21 @@ public:
         sync(std::forward<SyncFunction>(sf)),
         reopen(std::forward<ReopenFunction>(rf)),
         close(std::forward<CloseFunction>(cf)),
+        lstyle(ls),
         sinks_({{control, "control", 0}})
     {
     }
 
     void add_sink(sink& p, const std::string& name);
 
-    std::function<::ssize_t(const char* buf, std::size_t size)> out;
+    std::function<::ssize_t(log_level_t level, const char* buf, std::size_t size)>
+        out;
     std::function<void(const char* buf, std::size_t size)> err;
     std::function<void()> flush;
     std::function<void()> sync;
     std::function<bool()> reopen;
     std::function<void()> close;
+    log_level_style_t lstyle;
     bool destroy = false;
 
 private:
@@ -2135,94 +2189,55 @@ namespace xtr
     std::string default_command_path();
 }
 
-/**
- * Basic log macro, logs the specified format string and arguments to
- * the given sink, blocking if the sink is full. The non-blocking variant
- * of this macro is @ref XTR_TRY_LOG which will discard the message if
- * the sink is full. Timestamps are read in the background thread\---if this
- * is undesirable use @ref XTR_LOG_RTC or @ref XTR_LOG_TSC which read
- * timestamps at the point of logging.
- */
-#define XTR_LOG(SINK, ...) XTR_LOG_TAGS(void(), "I", SINK, __VA_ARGS__)
-
-#define XTR_LOG_LEVEL(LEVELSTR, LEVEL, SINK, ...) \
-    XTR_LOG_LEVEL_TAGS(void(), LEVELSTR, LEVEL, SINK, __VA_ARGS__)
-
-/**
- *  'Fatal' log level variant of @ref XTR_LOG. When this macro is invoked, the
- *  log message is written, @ref xtr::sink::sync is invoked, then the
- *  program is terminated via abort(3). An equivalent macro @ref XTR_LOGF
- *  is provided as a short-hand alternative. The non-blocking variants are
- *  @ref XTR_TRY_LOG_FATAL and @ref XTR_TRY_LOGF.
- */
-#define XTR_LOG_FATAL(SINK, ...) XTR_LOG_LEVEL("F", fatal, SINK, __VA_ARGS__)
-
-/**
- *  'Error' log level variant of @ref XTR_LOG. An equivalent macro @ref XTR_LOGE
- *  is provided as a short-hand alternative. The non-blocking variants are
- *  @ref XTR_TRY_LOG_ERROR and @ref XTR_TRY_LOGE.
- */
-#define XTR_LOG_ERROR(SINK, ...) XTR_LOG_LEVEL("E", error, SINK, __VA_ARGS__)
-
-/**
- *  'Warning' log level variant of @ref XTR_LOG. An equivalent macro @ref XTR_LOGW
- *  is provided as a short-hand alternative. The non-blocking variants are
- *  @ref XTR_TRY_LOG_WARN and @ref XTR_TRY_LOGW.
- */
-#define XTR_LOG_WARN(SINK, ...) XTR_LOG_LEVEL("W", warning, SINK, __VA_ARGS__)
-
-/**
- *  'Info' log level variant of @ref XTR_LOG. An equivalent macro @ref XTR_LOGI
- *  is provided as a short-hand alternative. The non-blocking variants are
- *  @ref XTR_TRY_LOG_INFO and @ref XTR_TRY_LOGI.
- */
-#define XTR_LOG_INFO(SINK, ...) XTR_LOG_LEVEL("I", info, SINK, __VA_ARGS__)
-
-/**
- *  'Debug' log level variant of @ref XTR_LOG. An equivalent macro @ref XTR_LOGD
- *  is provided as a short-hand alternative. This macro can be disabled at build
- *  time by defining @ref XTR_NDEBUG. The non-blocking variants are
- *  @ref XTR_TRY_LOG_DEBUG and @ref XTR_TRY_LOGD.
- */
 #if defined(XTR_NDEBUG)
-#define XTR_LOG_DEBUG(...)
+#undef XTR_NDEBUG
+#define XTR_NDEBUG 1
 #else
-#define XTR_LOG_DEBUG(SINK, ...) XTR_LOG_LEVEL("D", debug, SINK, __VA_ARGS__)
+#define XTR_NDEBUG 0
 #endif
 
-#define XTR_LOGF(SINK, ...) XTR_LOG_FATAL(SINK, __VA_ARGS__)
-#define XTR_LOGE(SINK, ...) XTR_LOG_ERROR(SINK, __VA_ARGS__)
-#define XTR_LOGW(SINK, ...) XTR_LOG_WARN(SINK, __VA_ARGS__)
-#define XTR_LOGI(SINK, ...) XTR_LOG_INFO(SINK, __VA_ARGS__)
-#define XTR_LOGD(SINK, ...) XTR_LOG_DEBUG(SINK, __VA_ARGS__)
+/**
+ * Basic log macro, logs the specified format string and arguments to the given
+ * sink, blocking if the sink is full. Timestamps are read in the background
+ * thread\---if this is undesirable use @ref XTR_LOG_RTC or @ref XTR_LOG_TSC
+ * which read timestamps at the point of logging. This macro will log
+ * regardless of the sink's log level.
+ */
+#define XTR_LOG(SINK, ...) XTR_LOG_TAGS(void(), info, SINK, __VA_ARGS__)
 
+/**
+ * Log level variant of @ref XTR_LOG. If the specified log level has lower
+ * importance than the log level of the sink, then the message is dropped
+ * (please see the <a href="guide.html#log-levels">log levels</a> section of
+ * the user guide for details).
+ *
+ * @arg LEVEL: The unqualified log level name, for example simply "info" or "error".
+ *
+ * @note If the 'fatal' level is passed then the log message is written,
+ *       @ref xtr::sink::sync is invoked, then the program is terminated via
+ *       abort(3).
+ *
+ * @note Log statements with the 'debug' level can be disabled at build time by
+ *       defining @ref XTR_NDEBUG.
+ */
+#define XTR_LOGL(LEVEL, SINK, ...) \
+    XTR_LOGL_TAGS(void(), LEVEL, SINK, __VA_ARGS__)
+
+/**
+ * Non-blocking variant of @ref XTR_LOG. The message will be discarded if the
+ * sink is full. If a message is dropped a warning will appear in the log.
+ */
 #define XTR_TRY_LOG(SINK, ...) \
-    XTR_LOG_TAGS(xtr::non_blocking_tag, "I", SINK, __VA_ARGS__)
+    XTR_LOG_TAGS(xtr::non_blocking_tag, info, SINK, __VA_ARGS__)
 
-#define XTR_TRY_LOG_LEVEL(LEVELSTR, LEVEL, SINK, ...) \
-    XTR_LOG_LEVEL_TAGS(xtr::non_blocking_tag, LEVELSTR, LEVEL, SINK, __VA_ARGS__)
-
-#define XTR_TRY_LOG_FATAL(SINK, ...) \
-    XTR_TRY_LOG_LEVEL("F", fatal, SINK, __VA_ARGS__)
-#define XTR_TRY_LOG_ERROR(SINK, ...) \
-    XTR_TRY_LOG_LEVEL("E", error, SINK, __VA_ARGS__)
-#define XTR_TRY_LOG_WARN(SINK, ...) \
-    XTR_TRY_LOG_LEVEL("W", warning, SINK, __VA_ARGS__)
-#define XTR_TRY_LOG_INFO(SINK, ...) \
-    XTR_TRY_LOG_LEVEL("I", info, SINK, __VA_ARGS__)
-
-#if defined(XTR_NDEBUG)
-#define XTR_TRY_LOG_DEBUG(...)
-#else
-#define XTR_TRY_LOG_DEBUG(SINK, ...) \
-    XTR_TRY_LOG_LEVEL("D", debug, SINK, __VA_ARGS__)
-#endif
-
-#define XTR_TRY_LOGF(SINK, ...) XTR_TRY_LOG_FATAL(SINK, __VA_ARGS__)
-#define XTR_TRY_LOGE(SINK, ...) XTR_TRY_LOG_ERROR(SINK, __VA_ARGS__)
-#define XTR_TRY_LOGW(SINK, ...) XTR_TRY_LOG_WARN(SINK, __VA_ARGS__)
-#define XTR_TRY_LOGI(SINK, ...) XTR_TRY_LOG_INFO(SINK, __VA_ARGS__)
-#define XTR_TRY_LOGD(SINK, ...) XTR_TRY_LOG_DEBUG(SINK, __VA_ARGS__)
+/**
+ * Non-blocking variant of @ref XTR_LOGL. The message will be discarded if the
+ * sink is full. If a message is dropped a warning will appear in the log.
+ *
+ * @arg LEVEL: The unqualified log level name, for example simply "info" or "error".
+ */
+#define XTR_TRY_LOGL(LEVEL, SINK, ...) \
+    XTR_LOGL_TAGS(xtr::non_blocking_tag, LEVEL, SINK, __VA_ARGS__)
 
 /**
  * User-supplied timestamp log macro, logs the specified format string and
@@ -2233,127 +2248,80 @@ namespace xtr
  * xtr::timespec is provided as a convenience type which is compatible with std::timespec and has a
  * formatter pre-defined. A formatter for std::timespec isn't defined in
  * order to avoid conflict with user code that also defines such a formatter.
- * The non-blocking variant of this macro is @ref XTR_TRY_LOG_TS which will
- * discard the message if the sink is full.
+ * This macro will log regardless of the sink's log level.
+ *
+ * @arg TS: The timestamp to apply to the log statement.
  */
 #define XTR_LOG_TS(SINK, TS, ...) \
     (__extension__({ XTR_LOG_TS_IMPL(SINK, TS, __VA_ARGS__); }))
 
 #define XTR_LOG_TS_IMPL(SINK, TS, FMT, ...) \
-    XTR_LOG_TAGS(xtr::timestamp_tag, "I", SINK, FMT, TS __VA_OPT__(, ) __VA_ARGS__)
+    XTR_LOG_TAGS(                           \
+        xtr::timestamp_tag,                 \
+        info,                               \
+        SINK,                               \
+        FMT,                                \
+        TS __VA_OPT__(, ) __VA_ARGS__)
 
-#define XTR_LOG_TS_LEVEL(LEVELSTR, LEVEL, SINK, TS, ...) \
-    (__extension__(                                      \
-        { XTR_LOG_TS_LEVEL_IMPL(LEVELSTR, LEVEL, SINK, TS, __VA_ARGS__); }))
+/**
+ * Log level variant of @ref XTR_LOG_TS. If the specified log level has lower
+ * importance than the log level of the sink, then the message is dropped
+ * (please see the <a href="guide.html#log-levels">log levels</a> section of
+ * the user guide for details).
+ *
+ * @arg LEVEL: The unqualified log level name, for example simply "info" or "error".
+ * @arg TS: The timestamp to apply to the log statement.
+ *
+ * @note If the 'fatal' level is passed then the log message is written,
+ *       @ref xtr::sink::sync is invoked, then the program is terminated via
+ *       abort(3).
+ *
+ * @note Log statements with the 'debug' level can be disabled at build time by
+ *       defining @ref XTR_NDEBUG.
+ */
+#define XTR_LOGL_TS(LEVEL, SINK, TS, ...) \
+    (__extension__({ XTR_LOGL_TS_IMPL(LEVEL, SINK, TS, __VA_ARGS__); }))
 
-#define XTR_LOG_TS_LEVEL_IMPL(LEVELSTR, LEVEL, SINK, TS, FMT, ...) \
-    XTR_LOG_LEVEL_TAGS(                                            \
-        xtr::timestamp_tag,                                        \
-        LEVELSTR,                                                  \
-        LEVEL,                                                     \
-        SINK,                                                      \
-        FMT,                                                       \
+#define XTR_LOGL_TS_IMPL(LEVEL, SINK, TS, FMT, ...) \
+    XTR_LOGL_TAGS(                                  \
+        xtr::timestamp_tag,                         \
+        LEVEL,                                      \
+        SINK,                                       \
+        FMT,                                        \
         (TS)__VA_OPT__(, ) __VA_ARGS__)
 
 /**
- *  'Fatal' log level variant of @ref XTR_LOG_TS. When this macro is invoked,
- *  the log message is written, @ref xtr::sink::sync is invoked, then
- *  the program is terminated via abort(3). An equivalent macro @ref XTR_LOG_TSF
- *  is provided as a short-hand alternative. The non-blocking variants are
- *  @ref XTR_TRY_LOG_TS_FATAL and @ref XTR_TRY_LOG_TSF.
+ * Non-blocking variant of @ref XTR_LOG_TS. The message will be discarded if the
+ * sink is full. If a message is dropped a warning will appear in the log.
  */
-#define XTR_LOG_TS_FATAL(SINK, ...) \
-    XTR_LOG_TS_LEVEL("F", fatal, SINK, __VA_ARGS__)
-
-/**
- *  'Error' log level variant of @ref XTR_LOG_TS. An equivalent macro @ref XTR_LOG_TSE
- *  is provided as a short-hand alternative. The non-blocking variants are
- *  @ref XTR_TRY_LOG_TS_ERROR and @ref XTR_TRY_LOG_TSE.
- */
-#define XTR_LOG_TS_ERROR(SINK, ...) \
-    XTR_LOG_TS_LEVEL("E", error, SINK, __VA_ARGS__)
-
-/**
- *  'Warning' log level variant of @ref XTR_LOG_TS. An equivalent macro @ref XTR_LOG_TSW
- *  is provided as a short-hand alternative. The non-blocking variants are
- *  @ref XTR_TRY_LOG_TS_WARN and @ref XTR_TRY_LOG_TSW.
- */
-#define XTR_LOG_TS_WARN(SINK, ...) \
-    XTR_LOG_TS_LEVEL("W", warning, SINK, __VA_ARGS__)
-
-/**
- *  'Info' log level variant of @ref XTR_LOG_TS. An equivalent macro @ref XTR_LOG_TSI
- *  is provided as a short-hand alternative. The non-blocking variants are
- *  @ref XTR_TRY_LOG_TS_INFO and @ref XTR_TRY_LOG_TSI.
- */
-#define XTR_LOG_TS_INFO(SINK, ...) \
-    XTR_LOG_TS_LEVEL("I", info, SINK, __VA_ARGS__)
-
-/**
- *  'Debug' log level variant of @ref XTR_LOG_TS. An equivalent macro @ref
- *  XTR_LOG_TSD is provided as a short-hand alternative. This macro can be
- *  disabled at build time by defining @ref XTR_NDEBUG. The non-blocking
- *  variants are @ref XTR_TRY_LOG_TS_DEBUG and @ref XTR_TRY_LOG_TSD.
- */
-#if defined(XTR_NDEBUG)
-#define XTR_LOG_TS_DEBUG(...)
-#else
-#define XTR_LOG_TS_DEBUG(SINK, ...) \
-    XTR_LOG_TS_LEVEL("D", debug, SINK, __VA_ARGS__)
-#endif
-
-#define XTR_LOG_TSF(SINK, ...) XTR_LOG_TS_FATAL(SINK, __VA_ARGS__)
-#define XTR_LOG_TSE(SINK, ...) XTR_LOG_TS_ERROR(SINK, __VA_ARGS__)
-#define XTR_LOG_TSW(SINK, ...) XTR_LOG_TS_WARN(SINK, __VA_ARGS__)
-#define XTR_LOG_TSI(SINK, ...) XTR_LOG_TS_INFO(SINK, __VA_ARGS__)
-#define XTR_LOG_TSD(SINK, ...) XTR_LOG_TS_DEBUG(SINK, __VA_ARGS__)
-
 #define XTR_TRY_LOG_TS(SINK, TS, ...) \
     (__extension__({ XTR_TRY_LOG_TS_IMPL(SINK, TS, __VA_ARGS__); }))
 
 #define XTR_TRY_LOG_TS_IMPL(SINK, TS, FMT, ...)      \
     XTR_LOG_TAGS(                                    \
         (xtr::non_blocking_tag, xtr::timestamp_tag), \
-        "I",                                         \
+        info,                                        \
         SINK,                                        \
         FMT,                                         \
         TS __VA_OPT__(, ) __VA_ARGS__)
 
-#define XTR_TRY_LOG_TS_LEVEL(LEVELSTR, LEVEL, SINK, TS, ...)               \
-    (__extension__({                                                       \
-        XTR_TRY_LOG_TS_LEVEL_IMPL(LEVELSTR, LEVEL, SINK, TS, __VA_ARGS__); \
-    }))
+/**
+ * Non-blocking variant of @ref XTR_TRY_LOGL_TS. The message will be discarded if the
+ * sink is full. If a message is dropped a warning will appear in the log.
+ *
+ * @arg LEVEL: The unqualified log level name, for example simply "info" or "error".
+ * @arg TS: The timestamp to apply to the log statement.
+ */
+#define XTR_TRY_LOGL_TS(LEVEL, SINK, TS, ...) \
+    (__extension__({ XTR_TRY_LOGL_TS_IMPL(LEVEL, SINK, TS, __VA_ARGS__); }))
 
-#define XTR_TRY_LOG_TS_LEVEL_IMPL(LEVELSTR, LEVEL, SINK, TS, FMT, ...) \
-    XTR_LOG_LEVEL_TAGS(                                                \
-        (xtr::non_blocking_tag, xtr::timestamp_tag),                   \
-        LEVELSTR,                                                      \
-        LEVEL,                                                         \
-        SINK,                                                          \
-        FMT,                                                           \
+#define XTR_TRY_LOGL_TS_IMPL(LEVEL, SINK, TS, FMT, ...) \
+    XTR_LOGL_TAGS(                                      \
+        (xtr::non_blocking_tag, xtr::timestamp_tag),    \
+        LEVEL,                                          \
+        SINK,                                           \
+        FMT,                                            \
         TS __VA_OPT__(, ) __VA_ARGS__)
-
-#define XTR_TRY_LOG_TS_FATAL(SINK, ...) \
-    XTR_TRY_LOG_TS_LEVEL("F", fatal, SINK, __VA_ARGS__)
-#define XTR_TRY_LOG_TS_ERROR(SINK, ...) \
-    XTR_TRY_LOG_TS_LEVEL("E", error, SINK, __VA_ARGS__)
-#define XTR_TRY_LOG_TS_WARN(SINK, ...) \
-    XTR_TRY_LOG_TS_LEVEL("W", warning, SINK, __VA_ARGS__)
-#define XTR_TRY_LOG_TS_INFO(SINK, ...) \
-    XTR_TRY_LOG_TS_LEVEL("I", info, SINK, __VA_ARGS__)
-
-#if defined(XTR_NDEBUG)
-#define XTR_TRY_LOG_TS_DEBUG(...)
-#else
-#define XTR_TRY_LOG_TS_DEBUG(SINK, ...) \
-    XTR_TRY_LOG_TS_LEVEL("D", debug, SINK, __VA_ARGS__)
-#endif
-
-#define XTR_TRY_LOG_TSF(SINK, ...) XTR_TRY_LOG_TS_FATAL(SINK, __VA_ARGS__)
-#define XTR_TRY_LOG_TSE(SINK, ...) XTR_TRY_LOG_TS_ERROR(SINK, __VA_ARGS__)
-#define XTR_TRY_LOG_TSW(SINK, ...) XTR_TRY_LOG_TS_WARN(SINK, __VA_ARGS__)
-#define XTR_TRY_LOG_TSI(SINK, ...) XTR_TRY_LOG_TS_INFO(SINK, __VA_ARGS__)
-#define XTR_TRY_LOG_TSD(SINK, ...) XTR_TRY_LOG_TS_DEBUG(SINK, __VA_ARGS__)
 
 /**
  * Timestamped log macro, logs the specified format string and arguments to
@@ -2362,7 +2330,8 @@ namespace xtr
  * with a clock source of CLOCK_REALTIME_COARSE on Linux or CLOCK_REALTIME_FAST
  * on FreeBSD. Depending on the host CPU this may be faster than @ref
  * XTR_LOG_TSC. The non-blocking variant of this macro is @ref XTR_TRY_LOG_RTC
- * which will discard the message if the sink is full.
+ * which will discard the message if the sink is full. This macro will log
+ * regardless of the sink's log level.
  */
 #define XTR_LOG_RTC(SINK, ...)                            \
     XTR_LOG_TS(                                           \
@@ -2370,230 +2339,128 @@ namespace xtr
         xtr::detail::get_time<XTR_CLOCK_REALTIME_FAST>(), \
         __VA_ARGS__)
 
-#define XTR_LOG_RTC_LEVEL(LEVELSTR, LEVEL, SINK, ...)     \
-    XTR_LOG_TS_LEVEL(                                     \
-        LEVELSTR,                                         \
+/**
+ * Log level variant of @ref XTR_LOG_RTC. If the specified log level has lower
+ * importance than the log level of the sink, then the message is dropped
+ * (please see the <a href="guide.html#log-levels">log levels</a> section of
+ * the user guide for details).
+ *
+ * @arg LEVEL: The unqualified log level name, for example simply "info" or "error".
+ *
+ * @note If the 'fatal' level is passed then the log message is written,
+ *       @ref xtr::sink::sync is invoked, then the program is terminated via
+ *       abort(3).
+ *
+ * @note Log statements with the 'debug' level can be disabled at build time by
+ *       defining @ref XTR_NDEBUG.
+ */
+#define XTR_LOGL_RTC(LEVEL, SINK, ...)                    \
+    XTR_LOGL_TS(                                          \
         LEVEL,                                            \
         SINK,                                             \
         xtr::detail::get_time<XTR_CLOCK_REALTIME_FAST>(), \
         __VA_ARGS__)
 
 /**
- *  'Fatal' log level variant of @ref XTR_LOG_RTC. When this macro is invoked,
- *  the log message is written, @ref xtr::sink::sync is invoked, then
- *  the program is terminated via abort(3). An equivalent macro @ref XTR_LOG_RTCF
- *  is provided as a short-hand alternative. The non-blocking variants are
- *  @ref XTR_TRY_LOG_RTC_FATAL and @ref XTR_TRY_LOG_RTCF.
+ * Non-blocking variant of @ref XTR_LOG_RTC. The message will be discarded if the
+ * sink is full. If a message is dropped a warning will appear in the log.
  */
-#define XTR_LOG_RTC_FATAL(SINK, ...) \
-    XTR_LOG_RTC_LEVEL("F", fatal, SINK, __VA_ARGS__)
-
-/**
- *  'Error' log level variant of @ref XTR_LOG_RTC. An equivalent macro @ref
- *  XTR_LOG_RTCE is provided as a short-hand alternative. The non-blocking
- *  variants are @ref XTR_TRY_LOG_RTC_ERROR and @ref XTR_TRY_LOG_RTCE.
- */
-#define XTR_LOG_RTC_ERROR(SINK, ...) \
-    XTR_LOG_RTC_LEVEL("E", error, SINK, __VA_ARGS__)
-
-/**
- *  'Warning' log level variant of @ref XTR_LOG_RTC. An equivalent macro @ref
- *  XTR_LOG_RTCW is provided as a short-hand alternative. The non-blocking
- *  variants are @ref XTR_TRY_LOG_RTC_WARN and @ref XTR_TRY_LOG_RTCW.
- */
-#define XTR_LOG_RTC_WARN(SINK, ...) \
-    XTR_LOG_RTC_LEVEL("W", warning, SINK, __VA_ARGS__)
-
-/**
- *  'Info' log level variant of @ref XTR_LOG_RTC. An equivalent macro @ref
- *  XTR_LOG_RTCI is provided as a short-hand alternative. The non-blocking
- *  variants are @ref XTR_TRY_LOG_RTC_INFO and @ref XTR_TRY_LOG_RTCI.
- */
-#define XTR_LOG_RTC_INFO(SINK, ...) \
-    XTR_LOG_RTC_LEVEL("I", info, SINK, __VA_ARGS__)
-
-/**
- *  'Debug' log level variant of @ref XTR_LOG_RTC. An equivalent macro @ref
- *  XTR_LOG_RTCD is provided as a short-hand alternative. This macro can be
- *  disabled at build time by defining @ref XTR_NDEBUG. The non-blocking
- *  variants are @ref XTR_TRY_LOG_RTC_DEBUG and @ref XTR_TRY_LOG_RTCD.
- */
-#if defined(XTR_NDEBUG)
-#define XTR_LOG_RTC_DEBUG(...)
-#else
-#define XTR_LOG_RTC_DEBUG(SINK, ...) \
-    XTR_LOG_RTC_LEVEL("D", debug, SINK, __VA_ARGS__)
-#endif
-
-#define XTR_LOG_RTCF(SINK, ...) XTR_LOG_RTC_FATAL(SINK, __VA_ARGS__)
-#define XTR_LOG_RTCE(SINK, ...) XTR_LOG_RTC_ERROR(SINK, __VA_ARGS__)
-#define XTR_LOG_RTCW(SINK, ...) XTR_LOG_RTC_WARN(SINK, __VA_ARGS__)
-#define XTR_LOG_RTCI(SINK, ...) XTR_LOG_RTC_INFO(SINK, __VA_ARGS__)
-#define XTR_LOG_RTCD(SINK, ...) XTR_LOG_RTC_DEBUG(SINK, __VA_ARGS__)
-
 #define XTR_TRY_LOG_RTC(SINK, ...)                        \
     XTR_TRY_LOG_TS(                                       \
         SINK,                                             \
         xtr::detail::get_time<XTR_CLOCK_REALTIME_FAST>(), \
         __VA_ARGS__)
 
-#define XTR_TRY_LOG_RTC_LEVEL(LEVELSTR, LEVEL, SINK, ...) \
-    XTR_TRY_LOG_TS_LEVEL(                                 \
-        LEVELSTR,                                         \
+/**
+ * Non-blocking variant of @ref XTR_TRY_LOGL_RTC. The message will be discarded if the
+ * sink is full. If a message is dropped a warning will appear in the log.
+ *
+ * @arg LEVEL: The unqualified log level name, for example simply "info" or "error".
+ */
+#define XTR_TRY_LOGL_RTC(LEVEL, SINK, ...)                \
+    XTR_TRY_LOGL_TS(                                      \
         LEVEL,                                            \
         SINK,                                             \
         xtr::detail::get_time<XTR_CLOCK_REALTIME_FAST>(), \
         __VA_ARGS__)
 
-#define XTR_TRY_LOG_RTC_FATAL(SINK, ...) \
-    XTR_TRY_LOG_RTC_LEVEL("F", fatal, SINK, __VA_ARGS__)
-#define XTR_TRY_LOG_RTC_ERROR(SINK, ...) \
-    XTR_TRY_LOG_RTC_LEVEL("E", error, SINK, __VA_ARGS__)
-#define XTR_TRY_LOG_RTC_WARN(SINK, ...) \
-    XTR_TRY_LOG_RTC_LEVEL("W", warning, SINK, __VA_ARGS__)
-#define XTR_TRY_LOG_RTC_INFO(SINK, ...) \
-    XTR_TRY_LOG_RTC_LEVEL("I", info, SINK, __VA_ARGS__)
-
-#if defined(XTR_NDEBUG)
-#define XTR_TRY_LOG_RTC_DEBUG(...)
-#else
-#define XTR_TRY_LOG_RTC_DEBUG(SINK, ...) \
-    XTR_TRY_LOG_RTC_LEVEL("D", debug, SINK, __VA_ARGS__)
-#endif
-
-#define XTR_TRY_LOG_RTCF(SINK, ...) XTR_TRY_LOG_RTC_FATAL(SINK, __VA_ARGS__)
-#define XTR_TRY_LOG_RTCE(SINK, ...) XTR_TRY_LOG_RTC_ERROR(SINK, __VA_ARGS__)
-#define XTR_TRY_LOG_RTCW(SINK, ...) XTR_TRY_LOG_RTC_WARN(SINK, __VA_ARGS__)
-#define XTR_TRY_LOG_RTCI(SINK, ...) XTR_TRY_LOG_RTC_INFO(SINK, __VA_ARGS__)
-#define XTR_TRY_LOG_RTCD(SINK, ...) XTR_TRY_LOG_RTC_DEBUG(SINK, __VA_ARGS__)
-
 /**
  * Timestamped log macro, logs the specified format string and arguments to
  * the given sink along with a timestamp obtained by reading the CPU timestamp
  * counter via the RDTSC instruction. The non-blocking variant of this macro is
- * @ref XTR_TRY_LOG_TSC which will discard the message if the sink is full.
+ * @ref XTR_TRY_LOG_TSC which will discard the message if the sink is full. This
+ * macro will log regardless of the sink's log level.
  */
 #define XTR_LOG_TSC(SINK, ...) \
     XTR_LOG_TS(SINK, xtr::detail::tsc::now(), __VA_ARGS__)
 
-#define XTR_LOG_TSC_LEVEL(LEVELSTR, LEVEL, SINK, ...) \
-    XTR_LOG_TS_LEVEL(LEVELSTR, LEVEL, SINK, xtr::detail::tsc::now(), __VA_ARGS__)
+/**
+ * Log level variant of @ref XTR_LOG_TSC. If the specified log level has lower
+ * importance than the log level of the sink, then the message is dropped
+ * (please see the <a href="guide.html#log-levels">log levels</a> section of
+ * the user guide for details).
+ *
+ * @arg LEVEL: The unqualified log level name, for example simply "info" or "error".
+ *
+ * @note If the 'fatal' level is passed then the log message is written,
+ *       @ref xtr::sink::sync is invoked, then the program is terminated via
+ *       abort(3).
+ *
+ * @note Log statements with the 'debug' level can be disabled at build time by
+ *       defining @ref XTR_NDEBUG.
+ */
+#define XTR_LOGL_TSC(LEVEL, SINK, ...) \
+    XTR_LOGL_TS(LEVEL, SINK, xtr::detail::tsc::now(), __VA_ARGS__)
 
 /**
- *  'Fatal' log level variant of @ref XTR_LOG_TSC. When this macro is invoked,
- *  the log message is written, @ref xtr::sink::sync is invoked, then
- *  the program is terminated via abort(3). An equivalent macro @ref XTR_LOG_TSCF
- *  is provided as a short-hand alternative. The non-blocking variants are
- *  @ref XTR_TRY_LOG_TSC_FATAL and @ref XTR_TRY_LOG_TSCF.
+ * Non-blocking variant of @ref XTR_LOG_TSC. The message will be discarded if the
+ * sink is full. If a message is dropped a warning will appear in the log.
  */
-#define XTR_LOG_TSC_FATAL(SINK, ...) \
-    XTR_LOG_TSC_LEVEL("F", fatal, SINK, __VA_ARGS__)
-
-/**
- *  'Error' log level variant of @ref XTR_LOG_TSC. An equivalent macro @ref
- *  XTR_LOG_TSCE is provided as a short-hand alternative. The non-blocking
- *  variants are @ref XTR_TRY_LOG_TSC_ERROR and @ref XTR_TRY_LOG_TSCE.
- */
-#define XTR_LOG_TSC_ERROR(SINK, ...) \
-    XTR_LOG_TSC_LEVEL("E", error, SINK, __VA_ARGS__)
-
-/**
- *  'Warning' log level variant of @ref XTR_LOG_TSC. An equivalent macro @ref
- *  XTR_LOG_TSCW is provided as a short-hand alternative. The non-blocking
- *  variants are @ref XTR_TRY_LOG_TSC_WARN and @ref XTR_TRY_LOG_TSCW.
- */
-#define XTR_LOG_TSC_WARN(SINK, ...) \
-    XTR_LOG_TSC_LEVEL("W", warning, SINK, __VA_ARGS__)
-
-/**
- *  'Info' log level variant of @ref XTR_LOG_TSC. An equivalent macro @ref
- *  XTR_LOG_TSCI is provided as a short-hand alternative. The non-blocking
- *  variants are @ref XTR_TRY_LOG_TSC_INFO and @ref XTR_TRY_LOG_TSCI.
- */
-#define XTR_LOG_TSC_INFO(SINK, ...) \
-    XTR_LOG_TSC_LEVEL("I", info, SINK, __VA_ARGS__)
-
-/**
- *  'Debug' log level variant of @ref XTR_LOG_TSC. An equivalent macro @ref
- *  XTR_LOG_TSCD is provided as a short-hand alternative. This macro can be
- *  disabled at build time by defining @ref XTR_NDEBUG. The non-blocking
- *  variants are @ref XTR_TRY_LOG_TSC_DEBUG and @ref XTR_TRY_LOG_TSCD.
- */
-#if defined(XTR_NDEBUG)
-#define XTR_LOG_TSC_DEBUG(...)
-#else
-#define XTR_LOG_TSC_DEBUG(SINK, ...) \
-    XTR_LOG_TSC_LEVEL("D", debug, SINK, __VA_ARGS__)
-#endif
-
-#define XTR_LOG_TSCF(SINK, ...) XTR_LOG_TSC_FATAL(SINK, __VA_ARGS__)
-#define XTR_LOG_TSCE(SINK, ...) XTR_LOG_TSC_ERROR(SINK, __VA_ARGS__)
-#define XTR_LOG_TSCW(SINK, ...) XTR_LOG_TSC_WARN(SINK, __VA_ARGS__)
-#define XTR_LOG_TSCI(SINK, ...) XTR_LOG_TSC_INFO(SINK, __VA_ARGS__)
-#define XTR_LOG_TSCD(SINK, ...) XTR_LOG_TSC_DEBUG(SINK, __VA_ARGS__)
-
 #define XTR_TRY_LOG_TSC(SINK, ...) \
     XTR_TRY_LOG_TS(SINK, xtr::detail::tsc::now(), __VA_ARGS__)
 
-#define XTR_TRY_LOG_TSC_LEVEL(LEVELSTR, LEVEL, SINK, ...) \
-    XTR_TRY_LOG_TS_LEVEL(                                 \
-        LEVELSTR,                                         \
-        LEVEL,                                            \
-        SINK,                                             \
-        xtr::detail::tsc::now(),                          \
-        __VA_ARGS__)
-
-#define XTR_TRY_LOG_TSC_FATAL(SINK, ...) \
-    XTR_TRY_LOG_TSC_LEVEL("F", fatal, SINK, __VA_ARGS__)
-#define XTR_TRY_LOG_TSC_ERROR(SINK, ...) \
-    XTR_TRY_LOG_TSC_LEVEL("E", error, SINK, __VA_ARGS__)
-#define XTR_TRY_LOG_TSC_WARN(SINK, ...) \
-    XTR_TRY_LOG_TSC_LEVEL("W", warning, SINK, __VA_ARGS__)
-#define XTR_TRY_LOG_TSC_INFO(SINK, ...) \
-    XTR_TRY_LOG_TSC_LEVEL("I", info, SINK, __VA_ARGS__)
-
-#if defined(XTR_NDEBUG)
-#define XTR_TRY_LOG_TSC_DEBUG(...)
-#else
-#define XTR_TRY_LOG_TSC_DEBUG(SINK, ...) \
-    XTR_TRY_LOG_TSC_LEVEL("D", debug, SINK, __VA_ARGS__)
-#endif
-
-#define XTR_TRY_LOG_TSCF(SINK, ...) XTR_TRY_LOG_TSC_FATAL(SINK, __VA_ARGS__)
-#define XTR_TRY_LOG_TSCE(SINK, ...) XTR_TRY_LOG_TSC_ERROR(SINK, __VA_ARGS__)
-#define XTR_TRY_LOG_TSCW(SINK, ...) XTR_TRY_LOG_TSC_WARN(SINK, __VA_ARGS__)
-#define XTR_TRY_LOG_TSCI(SINK, ...) XTR_TRY_LOG_TSC_INFO(SINK, __VA_ARGS__)
-#define XTR_TRY_LOG_TSCD(SINK, ...) XTR_TRY_LOG_TSC_DEBUG(SINK, __VA_ARGS__)
+/**
+ * Non-blocking variant of @ref XTR_TRY_LOGL_TSC. The message will be discarded if the
+ * sink is full. If a message is dropped a warning will appear in the log.
+ *
+ * @arg LEVEL: The unqualified log level name, for example simply "info" or "error".
+ */
+#define XTR_TRY_LOGL_TSC(LEVEL, SINK, ...) \
+    XTR_TRY_LOGL_TS(LEVEL, SINK, xtr::detail::tsc::now(), __VA_ARGS__)
 
 #define XTR_XSTR(s) XTR_STR(s)
 #define XTR_STR(s)  #s
 
-#define XTR_LOG_LEVEL_TAGS(TAGS, LEVELSTR, LEVEL, SINK, ...)                  \
-    (__extension__(                                                           \
-        {                                                                     \
-            if ((SINK).level() >= xtr::log_level_t::LEVEL)                    \
-                XTR_LOG_TAGS(TAGS, LEVELSTR, SINK, __VA_ARGS__);              \
-            if constexpr (xtr::log_level_t::LEVEL == xtr::log_level_t::fatal) \
-            {                                                                 \
-                (SINK).sync();                                                \
-                std::abort();                                                 \
-            }                                                                 \
+#define XTR_LOGL_TAGS(TAGS, LEVEL, SINK, ...)                                                \
+    (__extension__(                                                                          \
+        {                                                                                    \
+            if constexpr (xtr::log_level_t::LEVEL != xtr::log_level_t::debug || !XTR_NDEBUG) \
+            {                                                                                \
+                if ((SINK).level() >= xtr::log_level_t::LEVEL)                               \
+                    XTR_LOG_TAGS(TAGS, LEVEL, SINK, __VA_ARGS__);                            \
+                if constexpr (xtr::log_level_t::LEVEL == xtr::log_level_t::fatal)            \
+                {                                                                            \
+                    (SINK).sync();                                                           \
+                    std::abort();                                                            \
+                }                                                                            \
+            }                                                                                \
         }))
 
-#define XTR_LOG_TAGS(TAGS, LEVELSTR, SINK, ...) \
-    (__extension__({ XTR_LOG_TAGS_IMPL(TAGS, LEVELSTR, SINK, __VA_ARGS__); }))
+#define XTR_LOG_TAGS(TAGS, LEVEL, SINK, ...) \
+    (__extension__({ XTR_LOG_TAGS_IMPL(TAGS, LEVEL, SINK, __VA_ARGS__); }))
 
-#define XTR_LOG_TAGS_IMPL(TAGS, LEVELSTR, SINK, FORMAT, ...)               \
+#define XTR_LOG_TAGS_IMPL(TAGS, LEVEL, SINK, FORMAT, ...)                  \
     (__extension__(                                                        \
         {                                                                  \
             static constexpr auto xtr_fmt =                                \
-                xtr::detail::string{LEVELSTR " {} {} "} +                  \
+                xtr::detail::string{"{}{} {} "} +                          \
                 xtr::detail::rcut<xtr::detail::rindex(__FILE__, '/') + 1>( \
                     __FILE__) +                                            \
                 xtr::detail::string{":"} +                                 \
                 xtr::detail::string{XTR_XSTR(__LINE__) ": " FORMAT "\n"};  \
             using xtr::nocopy;                                             \
-            (SINK).log<&xtr_fmt, void(TAGS)>(__VA_ARGS__);                 \
+            (SINK).log<&xtr_fmt, xtr::log_level_t::LEVEL, void(TAGS)>(     \
+                __VA_ARGS__);                                              \
         }))
 
 #include <fmt/format.h>
@@ -2645,7 +2512,7 @@ namespace xtr::detail
 {
     inline auto make_output_func(FILE* stream)
     {
-        return [stream](const char* buf, std::size_t size)
+        return [stream](log_level_t, const char* buf, std::size_t size)
         { return std::fwrite(buf, 1, size, stream); };
     }
 
@@ -2752,18 +2619,23 @@ public:
      *                    "/tmp") will be used instead. See @ref default_command_path for
      *                    further details. To prevent a socket from being created, pass
      *                    @ref null_command_path.
+     * @arg level_style: The log level style that will be used to prefix each log
+     *                   statement\---please refer to the @ref log_level_style_t
+     *                   documentation for details.
      */
     template<typename Clock = std::chrono::system_clock>
     logger(
         const char* path,
         Clock&& clock = Clock(),
-        std::string command_path = default_command_path()) :
+        std::string command_path = default_command_path(),
+        log_level_style_t level_style = default_log_level_style) :
         logger(
             path,
             detail::open_path(path),
             stderr,
             std::forward<Clock>(clock),
-            std::move(command_path))
+            std::move(command_path),
+            level_style)
     {
     }
 
@@ -2777,11 +2649,11 @@ public:
      * constructor is recommended instead.
      *
      * @note The logger will not take ownership of the stream\---i.e. it will
-     * not be closed when the logger destructs.
+     *       not be closed when the logger destructs.
      *
      * @note Reopening the log file via the
-     * <a href="xtrctl.html#rotating-log-files">xtrctl</a> tool is *not* supported.
-     *
+     *       <a href="xtrctl.html#rotating-log-files">xtrctl</a> tool is *not*
+     *       supported if this constructor is used.
      *
      * @arg stream: The stream to write log statements to.
      * @arg err_stream: A stream to write error messages to.
@@ -2789,13 +2661,17 @@ public:
      *             above.
      * @arg command_path: Please refer to the @ref command_path_arg
      *                    "description" above.
+     * @arg level_style: The log level style that will be used to prefix each log
+     *                   statement\---please refer to the @ref log_level_style_t
+     *                   documentation for details.
      */
     template<typename Clock = std::chrono::system_clock>
     logger(
         FILE* stream = stderr,
         FILE* err_stream = stderr,
         Clock&& clock = Clock(),
-        std::string command_path = default_command_path()) :
+        std::string command_path = default_command_path(),
+        log_level_style_t level_style = default_log_level_style) :
         logger(
             detail::make_output_func(stream),
             detail::make_error_func(err_stream),
@@ -2804,7 +2680,8 @@ public:
             []() { return true; }, // reopen
             []() {},               // close
             std::forward<Clock>(clock),
-            std::move(command_path))
+            std::move(command_path),
+            level_style)
     {
     }
 
@@ -2814,11 +2691,11 @@ public:
      * Stream constructor with reopen path.
      *
      * @note The logger will take ownership of
-     * the stream, closing it when the logger destructs.
+     *       the stream, closing it when the logger destructs.
      *
      * @note Reopening the log file via the
-     * <a href="xtrctl.html#rotating-log-files">xtrctl</a> tool is supported,
-     * with the reopen_path argument specifying the path to reopen.
+     *       <a href="xtrctl.html#rotating-log-files">xtrctl</a> tool is supported,
+     *       with the reopen_path argument specifying the path to reopen.
      *
      * @arg reopen_path: The path of the file associated with the stream argument.
      *                   This path will be used to reopen the stream if requested via
@@ -2829,6 +2706,9 @@ public:
      *             above.
      * @arg command_path: Please refer to the @ref command_path_arg
      *                    "description" above.
+     * @arg level_style: The log level style that will be used to prefix each log
+     *                   statement\---please refer to the @ref log_level_style_t
+     *                   documentation for details.
      */
     template<typename Clock = std::chrono::system_clock>
     logger(
@@ -2836,7 +2716,8 @@ public:
         FILE* stream,
         FILE* err_stream = stderr,
         Clock&& clock = Clock(),
-        std::string command_path = default_command_path()) :
+        std::string command_path = default_command_path(),
+        log_level_style_t level_style = default_log_level_style) :
         logger(
             detail::make_output_func(stream),
             detail::make_error_func(err_stream),
@@ -2845,7 +2726,8 @@ public:
             detail::make_reopen_func(reopen_path, stream),
             [stream]() { std::fclose(stream); }, // close
             std::forward<Clock>(clock),
-            std::move(command_path))
+            std::move(command_path),
+            level_style)
     {
     }
 
@@ -2873,20 +2755,24 @@ public:
      *             above.
      * @arg command_path: Please refer to the @ref command_path_arg
      *                    "description" above.
+     * @arg level_style: The log level style that will be used to prefix each log
+     *                   statement\---please refer to the @ref log_level_style_t
+     *                   documentation for details.
      */
     template<
         typename OutputFunction,
         typename ErrorFunction,
         typename Clock = std::chrono::system_clock>
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-    requires detail::invocable<OutputFunction, const char*, std::size_t> &&
+    requires detail::invocable<OutputFunction, log_level_t, const char*, std::size_t> &&
         detail::invocable<ErrorFunction, const char*, std::size_t>
 #endif
         logger(
             OutputFunction&& out,
             ErrorFunction&& err,
             Clock&& clock = Clock(),
-            std::string command_path = default_command_path()) :
+            std::string command_path = default_command_path(),
+            log_level_style_t level_style = default_log_level_style) :
         logger(
             std::forward<OutputFunction>(out),
             std::forward<ErrorFunction>(err),
@@ -2895,7 +2781,8 @@ public:
             []() { return true; }, // reopen
             []() {},               // close
             std::forward<Clock>(clock),
-            std::move(command_path))
+            std::move(command_path),
+            level_style)
     {
     }
 
@@ -2927,6 +2814,9 @@ public:
      *             above.
      * @arg command_path: Please refer to the @ref command_path_arg
      *                    "description" above.
+     * @arg level_style: The log level style that will be used to prefix each log
+     *                   statement\---please refer to the @ref log_level_style_t
+     *                   documentation for details.
      */
     template<
         typename OutputFunction,
@@ -2937,7 +2827,7 @@ public:
         typename CloseFunction,
         typename Clock = std::chrono::system_clock>
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-    requires detail::invocable<OutputFunction, const char*, std::size_t> &&
+    requires detail::invocable<OutputFunction, log_level_t, const char*, std::size_t> &&
         detail::invocable<ErrorFunction, const char*, std::size_t> &&
         detail::invocable<FlushFunction> && detail::invocable<SyncFunction> &&
         detail::invocable<ReopenFunction> && detail::invocable<CloseFunction>
@@ -2950,7 +2840,8 @@ public:
             ReopenFunction&& reopen,
             CloseFunction&& close,
             Clock&& clock = Clock(),
-            std::string command_path = default_command_path())
+            std::string command_path = default_command_path(),
+            log_level_style_t level_style = default_log_level_style)
     {
         consumer_ = jthread(
             &detail::consumer::run,
@@ -2961,6 +2852,7 @@ public:
                 std::forward<SyncFunction>(sync),
                 std::forward<ReopenFunction>(reopen),
                 std::forward<CloseFunction>(close),
+                level_style,
                 &control_),
             make_clock(std::forward<Clock>(clock)));
         control_.open_ = true;
@@ -3026,7 +2918,7 @@ public:
     {
         static_assert(
             std::is_convertible_v<
-                std::invoke_result_t<Func, const char*, std::size_t>,
+                std::invoke_result_t<Func, log_level_t, const char*, std::size_t>,
                 ::ssize_t>,
             "Output function type must be of type ssize_t(const char*, size_t) "
             "(returning the number of bytes written or -1 on error)");
@@ -3120,6 +3012,12 @@ public:
      * @ref command_path_arg "description" above for details.
      */
     void set_command_path(std::string path) noexcept;
+
+    /**
+     * Sets the logger log level style\---please refer to the @ref log_level_style_t
+     * documentation for details.
+     */
+    void set_log_level_style(log_level_style_t level_style) noexcept;
 
 private:
     template<typename Func>
@@ -3497,7 +3395,9 @@ inline void xtr::detail::consumer::run(std::function<::timespec()> clock) noexce
                 mbuf,
                 out,
                 err,
-                "W {} {}: {} messages dropped\n",
+                lstyle,
+                "{}{} {}: {} messages dropped\n",
+                log_level_t::warning,
                 ts,
                 sinks_[n].name,
                 n_dropped);
@@ -3707,6 +3607,52 @@ inline void xtr::logger::set_command_path(std::string path) noexcept
     post([s = std::move(path)](detail::consumer& c, auto&)
          { c.set_command_path(std::move(s)); });
     control_.sync();
+}
+
+inline void xtr::logger::set_log_level_style(log_level_style_t level_style) noexcept
+{
+    post([=](detail::consumer& c, auto&) { c.lstyle = level_style; });
+    control_.sync();
+}
+
+inline const char* xtr::default_log_level_style(log_level_t level)
+{
+    switch (level)
+    {
+    case log_level_t::none:
+        return "";
+    case log_level_t::fatal:
+        return "F ";
+    case log_level_t::error:
+        return "E ";
+    case log_level_t::warning:
+        return "W ";
+    case log_level_t::info:
+        return "I ";
+    case log_level_t::debug:
+        return "D ";
+    }
+    __builtin_unreachable();
+}
+
+inline const char* xtr::systemd_log_level_style(log_level_t level)
+{
+    switch (level)
+    {
+    case log_level_t::none:
+        return "";
+    case log_level_t::fatal:
+        return "<0>"; // SD_EMERG
+    case log_level_t::error:
+        return "<3>"; // SD_ERR
+    case log_level_t::warning:
+        return "<4>"; // SD_WARNING;
+    case log_level_t::info:
+        return "<6>"; // SD_INFO;
+    case log_level_t::debug:
+        return "<7>"; // SD_DEBUG;
+    }
+    __builtin_unreachable();
 }
 
 inline std::unique_ptr<xtr::detail::matcher> xtr::detail::make_matcher(
