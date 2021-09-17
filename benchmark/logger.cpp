@@ -30,7 +30,7 @@ namespace
     void NAME ## _discard(benchmark::State& state)                      \
     {                                                                   \
         xtr::logger log{                                                \
-            [](const char*, std::size_t size)                           \
+            [](xtr::log_level_t, const char*, std::size_t size)         \
             {                                                           \
                 return size;                                            \
             },                                                          \
