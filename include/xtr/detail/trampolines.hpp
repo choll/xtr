@@ -38,15 +38,15 @@ namespace xtr::detail
     //    +---------------------------+
     //    | function pointer (fptr_t) |---> trampoline0<Format, ...>
     //    +---------------------------+
-    template<auto Format, typename State>
+    template<auto Format, auto Level, typename State>
     std::byte* trampoline0(
         fmt::memory_buffer& mbuf,
         std::byte* buf,
-        State& state,
+        State& st,
         const char* timestamp,
         std::string& name) noexcept
     {
-        print(mbuf, state.out, state.err, *Format, timestamp, name);
+        print(mbuf, st.out, st.err, st.lstyle, *Format, Level, timestamp, name);
         return buf + sizeof(void(*)());
     }
 
@@ -62,11 +62,11 @@ namespace xtr::detail
     //    /    known at compile       /
     //    |    time                   |
     //    +---------------------------+
-    template<auto Format, typename State, typename Func>
+    template<auto Format, auto Level, typename State, typename Func>
     std::byte* trampolineN(
         fmt::memory_buffer& mbuf,
         std::byte* buf,
-        State& state,
+        State& st,
         [[maybe_unused]] const char* timestamp,
         std::string& name) noexcept
     {
@@ -82,9 +82,9 @@ namespace xtr::detail
         // thread such as adding a new producer or modifying the output stream.
         auto& func = *reinterpret_cast<Func*>(func_pos);
         if constexpr (std::is_same_v<decltype(Format), std::nullptr_t>)
-            func(state, name);
+            func(st, name);
         else
-            func(mbuf, state.out, state.err, *Format, timestamp, name);
+            func(mbuf, st.out, st.err, st.lstyle, *Format, Level, timestamp, name);
 
         static_assert(noexcept(func.~Func()));
         std::destroy_at(std::addressof(func));
@@ -111,11 +111,11 @@ namespace xtr::detail
     //             +---> /   known at run time       /
     //                   |                           |
     //                   +---------------------------+
-    template<auto Format, typename State, typename Func>
+    template<auto Format, auto Level, typename State, typename Func>
     std::byte* trampolineS(
         fmt::memory_buffer& mbuf,
         std::byte* buf,
-        State& state,
+        State& st,
         const char* timestamp,
         std::string& name) noexcept
     {
@@ -130,7 +130,7 @@ namespace xtr::detail
         assert(std::uintptr_t(func_pos) % alignof(Func) == 0);
 
         auto& func = *reinterpret_cast<Func*>(func_pos);
-        func(mbuf, state.out, state.err, *Format, timestamp, name);
+        func(mbuf, st.out, st.err, st.lstyle, *Format, Level, timestamp, name);
 
         static_assert(noexcept(func.~Func()));
         std::destroy_at(std::addressof(func));

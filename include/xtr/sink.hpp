@@ -72,6 +72,9 @@ namespace xtr
 class xtr::sink
 {
 private:
+    // Function pointer type for performing type erasure. Function pointers
+    // of this type are written to the sinks ring buffer and point to either
+    // trampoline0, trampolineN or trampolineS (see detail/trampolines.hpp)
     using fptr_t =
         std::byte* (*)(
             fmt::memory_buffer& mbuf,
@@ -139,11 +142,14 @@ public:
      *  should be used. It is provided for use in situations where use of
      *  a macro may be undesirable.
      */
-    template<auto Format, typename Tags = void(), typename... Args>
+    template<auto Format, auto Level, typename Tags = void(), typename... Args>
     void log(Args&&... args) noexcept((XTR_NOTHROW_INGESTIBLE(Args, args) && ...));
 
     /**
      *  Sets the log level of the sink to the specified level (see @ref log_level_t).
+     *  Any log statement made with a log level with lower importance than the
+     *  current level will be dropped\---please see the <a href="guide.html#log-levels">
+     *  log levels</a> section of the user guide for details.
      */
     void set_level(log_level_t l)
     {
@@ -161,10 +167,10 @@ public:
 private:
     sink(logger& owner, std::string name);
 
-    template<auto Format, typename Tags = void()>
+    template<auto Format, auto Level, typename Tags = void()>
     void log_impl() noexcept;
 
-    template<auto Format, typename Tags, typename... Args>
+    template<auto Format, auto Level, typename Tags, typename... Args>
     void log_impl(Args&&... args) noexcept((XTR_NOTHROW_INGESTIBLE(Args, args) && ...));
 
     template<typename T>
@@ -173,11 +179,12 @@ private:
 
     template<
         auto Format = nullptr,
+        auto Level = 0,
         typename Tags = void(),
         typename Func>
     void post(Func&& func) noexcept(XTR_NOTHROW_INGESTIBLE(Func, func));
 
-    template<auto Format, typename Tags, typename... Args>
+    template<auto Format, auto Level, typename Tags, typename... Args>
     void post_with_str_table(Args&&... args)
         noexcept((XTR_NOTHROW_INGESTIBLE(Args, args) && ...));
 
@@ -197,14 +204,14 @@ private:
     friend logger;
 };
 
-template<auto Format, typename Tags, typename... Args>
+template<auto Format, auto Level, typename Tags, typename... Args>
 void xtr::sink::log(Args&&... args)
     noexcept((XTR_NOTHROW_INGESTIBLE(Args, args) && ...))
 {
-    log_impl<Format, Tags>(std::forward<Args>(args)...);
+    log_impl<Format, Level, Tags>(std::forward<Args>(args)...);
 }
 
-template<auto Format, typename Tags>
+template<auto Format, auto Level, typename Tags>
 void xtr::sink::log_impl() noexcept
 {
     // This function is just an optimisation; if the log line has no arguments
@@ -213,11 +220,11 @@ void xtr::sink::log_impl() noexcept
     const ring_buffer::span s = buf_.write_span_spec<Tags>(sizeof(fptr_t));
     if (detail::is_non_blocking_v<Tags> && s.empty()) [[unlikely]]
         return;
-    copy(s.begin(), &detail::trampoline0<Format, detail::consumer>);
+    copy(s.begin(), &detail::trampoline0<Format, Level, detail::consumer>);
     buf_.reduce_writable(sizeof(fptr_t));
 }
 
-template<auto Format, typename Tags, typename... Args>
+template<auto Format, auto Level, typename Tags, typename... Args>
 void xtr::sink::log_impl(Args&&... args)
     noexcept((XTR_NOTHROW_INGESTIBLE(Args, args) && ...))
 {
@@ -228,12 +235,12 @@ void xtr::sink::log_impl(Args&&... args)
             std::is_same<std::remove_cvref_t<Args>, std::string_view>...,
             std::is_same<std::remove_cvref_t<Args>, std::string>...>;
     if constexpr (is_str)
-        post_with_str_table<Format, Tags>(std::forward<Args>(args)...);
+        post_with_str_table<Format, Level, Tags>(std::forward<Args>(args)...);
     else
-        post<Format, Tags>(make_lambda<Tags>(std::forward<Args>(args)...));
+        post<Format, Level, Tags>(make_lambda<Tags>(std::forward<Args>(args)...));
 }
 
-template<auto Format, typename Tags, typename... Args>
+template<auto Format, auto Level, typename Tags, typename... Args>
 void xtr::sink::post_with_str_table(Args&&... args)
     noexcept((XTR_NOTHROW_INGESTIBLE(Args, args) && ...))
 {
@@ -273,7 +280,7 @@ void xtr::sink::post_with_str_table(Args&&... args)
     auto str_cur = str_pos;
     auto str_end = s.end();
 
-    copy(s.begin(), &detail::trampolineS<Format, detail::consumer, lambda_t>);
+    copy(s.begin(), &detail::trampolineS<Format, Level, detail::consumer, lambda_t>);
     copy(
         func_pos,
         make_lambda<Tags>(
@@ -304,7 +311,7 @@ void xtr::sink::copy(std::byte* pos, T&& value)
     new (pos) std::remove_reference_t<T>(std::forward<T>(value));
 }
 
-template<auto Format, typename Tags, typename Func>
+template<auto Format, auto Level, typename Tags, typename Func>
 void xtr::sink::post(Func&& func)
     noexcept(XTR_NOTHROW_INGESTIBLE(Func, func))
 {
@@ -332,7 +339,7 @@ void xtr::sink::post(Func&& func)
             return;
     }
 
-    copy(s.begin(), &detail::trampolineN<Format, detail::consumer, Func>);
+    copy(s.begin(), &detail::trampolineN<Format, Level, detail::consumer, Func>);
     copy(func_pos, std::forward<Func>(func));
 
     buf_.reduce_writable(size);
@@ -350,7 +357,9 @@ auto xtr::sink::make_lambda(Args&&... args)
             fmt::memory_buffer& mbuf,
             const auto& out,
             const auto& err,
+            log_level_style_t lstyle,
             std::string_view fmt,
+            log_level_t level,
             [[maybe_unused]] const char* ts,
             const std::string& name) mutable noexcept
         {
@@ -363,7 +372,9 @@ auto xtr::sink::make_lambda(Args&&... args)
                     mbuf,
                     out,
                     err,
+                    lstyle,
                     fmt,
+                    level,
                     name,
                     args...);
             }
@@ -373,7 +384,9 @@ auto xtr::sink::make_lambda(Args&&... args)
                     mbuf,
                     out,
                     err,
+                    lstyle,
                     fmt,
+                    level,
                     ts,
                     name,
                     args...);

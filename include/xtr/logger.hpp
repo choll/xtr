@@ -84,7 +84,7 @@ namespace xtr::detail
     inline auto make_output_func(FILE* stream)
     {
         return
-            [stream](const char* buf, std::size_t size)
+            [stream](log_level_t, const char* buf, std::size_t size)
             {
                 return std::fwrite(buf, 1, size, stream);
             };
@@ -208,19 +208,24 @@ public:
      *                    "/tmp") will be used instead. See @ref default_command_path for
      *                    further details. To prevent a socket from being created, pass
      *                    @ref null_command_path.
+     * @arg level_style: The log level style that will be used to prefix each log
+     *                   statement\---please refer to the @ref log_level_style_t
+     *                   documentation for details.
      */
     template<typename Clock = std::chrono::system_clock>
     logger(
         const char* path,
         Clock&& clock = Clock(),
-        std::string command_path = default_command_path())
+        std::string command_path = default_command_path(),
+        log_level_style_t level_style = default_log_level_style)
     :
         logger(
             path,
             detail::open_path(path),
             stderr,
             std::forward<Clock>(clock),
-            std::move(command_path))
+            std::move(command_path),
+            level_style)
     {
     }
 
@@ -234,11 +239,11 @@ public:
      * constructor is recommended instead.
      *
      * @note The logger will not take ownership of the stream\---i.e. it will
-     * not be closed when the logger destructs.
+     *       not be closed when the logger destructs.
      *
      * @note Reopening the log file via the
-     * <a href="xtrctl.html#rotating-log-files">xtrctl</a> tool is *not* supported.
-     *
+     *       <a href="xtrctl.html#rotating-log-files">xtrctl</a> tool is *not*
+     *       supported if this constructor is used.
      *
      * @arg stream: The stream to write log statements to.
      * @arg err_stream: A stream to write error messages to.
@@ -246,13 +251,17 @@ public:
      *             above.
      * @arg command_path: Please refer to the @ref command_path_arg
      *                    "description" above.
+     * @arg level_style: The log level style that will be used to prefix each log
+     *                   statement\---please refer to the @ref log_level_style_t
+     *                   documentation for details.
      */
     template<typename Clock = std::chrono::system_clock>
     logger(
         FILE* stream = stderr,
         FILE* err_stream = stderr,
         Clock&& clock = Clock(),
-        std::string command_path = default_command_path())
+        std::string command_path = default_command_path(),
+        log_level_style_t level_style = default_log_level_style)
     :
         logger(
             detail::make_output_func(stream),
@@ -262,7 +271,8 @@ public:
             [](){ return true; }, // reopen
             [](){}, // close
             std::forward<Clock>(clock),
-            std::move(command_path))
+            std::move(command_path),
+            level_style)
     {
     }
 
@@ -272,11 +282,11 @@ public:
      * Stream constructor with reopen path.
      *
      * @note The logger will take ownership of
-     * the stream, closing it when the logger destructs.
+     *       the stream, closing it when the logger destructs.
      *
      * @note Reopening the log file via the
-     * <a href="xtrctl.html#rotating-log-files">xtrctl</a> tool is supported,
-     * with the reopen_path argument specifying the path to reopen.
+     *       <a href="xtrctl.html#rotating-log-files">xtrctl</a> tool is supported,
+     *       with the reopen_path argument specifying the path to reopen.
      *
      * @arg reopen_path: The path of the file associated with the stream argument.
      *                   This path will be used to reopen the stream if requested via
@@ -287,6 +297,9 @@ public:
      *             above.
      * @arg command_path: Please refer to the @ref command_path_arg
      *                    "description" above.
+     * @arg level_style: The log level style that will be used to prefix each log
+     *                   statement\---please refer to the @ref log_level_style_t
+     *                   documentation for details.
      */
     template<typename Clock = std::chrono::system_clock>
     logger(
@@ -294,7 +307,8 @@ public:
         FILE* stream,
         FILE* err_stream = stderr,
         Clock&& clock = Clock(),
-        std::string command_path = default_command_path())
+        std::string command_path = default_command_path(),
+        log_level_style_t level_style = default_log_level_style)
     :
         logger(
             detail::make_output_func(stream),
@@ -304,7 +318,8 @@ public:
             detail::make_reopen_func(reopen_path, stream),
             [stream](){ std::fclose(stream); }, // close
             std::forward<Clock>(clock),
-            std::move(command_path))
+            std::move(command_path),
+            level_style)
     {
     }
 
@@ -332,6 +347,9 @@ public:
      *             above.
      * @arg command_path: Please refer to the @ref command_path_arg
      *                    "description" above.
+     * @arg level_style: The log level style that will be used to prefix each log
+     *                   statement\---please refer to the @ref log_level_style_t
+     *                   documentation for details.
      */
     template<
         typename OutputFunction,
@@ -339,14 +357,15 @@ public:
         typename Clock = std::chrono::system_clock>
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
     requires
-        detail::invocable<OutputFunction, const char*, std::size_t> &&
+        detail::invocable<OutputFunction, log_level_t, const char*, std::size_t> &&
         detail::invocable<ErrorFunction, const char*, std::size_t>
 #endif
     logger(
         OutputFunction&& out,
         ErrorFunction&& err,
         Clock&& clock = Clock(),
-        std::string command_path = default_command_path())
+        std::string command_path = default_command_path(),
+        log_level_style_t level_style = default_log_level_style)
     :
         logger(
             std::forward<OutputFunction>(out),
@@ -356,7 +375,8 @@ public:
             [](){ return true; }, // reopen
             [](){}, // close
             std::forward<Clock>(clock),
-            std::move(command_path))
+            std::move(command_path),
+            level_style)
     {
     }
 
@@ -388,6 +408,9 @@ public:
      *             above.
      * @arg command_path: Please refer to the @ref command_path_arg
      *                    "description" above.
+     * @arg level_style: The log level style that will be used to prefix each log
+     *                   statement\---please refer to the @ref log_level_style_t
+     *                   documentation for details.
      */
     template<
         typename OutputFunction,
@@ -399,7 +422,7 @@ public:
         typename Clock = std::chrono::system_clock>
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
     requires
-        detail::invocable<OutputFunction, const char*, std::size_t> &&
+        detail::invocable<OutputFunction, log_level_t, const char*, std::size_t> &&
         detail::invocable<ErrorFunction, const char*, std::size_t> &&
         detail::invocable<FlushFunction> &&
         detail::invocable<SyncFunction> &&
@@ -414,7 +437,8 @@ public:
         ReopenFunction&& reopen,
         CloseFunction&& close,
         Clock&& clock = Clock(),
-        std::string command_path = default_command_path())
+        std::string command_path = default_command_path(),
+        log_level_style_t level_style = default_log_level_style)
     {
         // The consumer thread must be started after control_ has been
         // constructed
@@ -428,6 +452,7 @@ public:
                     std::forward<SyncFunction>(sync),
                     std::forward<ReopenFunction>(reopen),
                     std::forward<CloseFunction>(close),
+                    level_style,
                     &control_),
                 make_clock(std::forward<Clock>(clock)));
         // Passing control_ to the consumer is equivalent to calling
@@ -495,7 +520,7 @@ public:
     {
         static_assert(
             std::is_convertible_v<
-                std::invoke_result_t<Func, const char*, std::size_t>,
+                std::invoke_result_t<Func, log_level_t, const char*, std::size_t>,
                 ::ssize_t>,
             "Output function type must be of type ssize_t(const char*, size_t) "
             "(returning the number of bytes written or -1 on error)");
@@ -586,6 +611,12 @@ public:
      * @ref command_path_arg "description" above for details.
      */
     void set_command_path(std::string path) noexcept;
+
+    /**
+     * Sets the logger log level style\---please refer to the @ref log_level_style_t
+     * documentation for details.
+     */
+    void set_log_level_style(log_level_style_t level_style) noexcept;
 
 private:
     template<typename Func>

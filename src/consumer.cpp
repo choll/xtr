@@ -110,7 +110,9 @@ void xtr::detail::consumer::run(std::function<::timespec()> clock) noexcept
                 mbuf,
                 out,
                 err,
-                "W {} {}: {} messages dropped\n",
+                lstyle,
+                "{}{} {}: {} messages dropped\n",
+                log_level_t::warning,
                 ts,
                 sinks_[n].name,
                 n_dropped);

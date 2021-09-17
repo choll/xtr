@@ -126,15 +126,24 @@ namespace
         FILE* fp_{::open_memstream(&buf_, &size_)};
     };
 
-    auto make_write_func(std::vector<std::string>& v, std::mutex& m)
+    auto make_output_func(std::vector<std::string>& v, std::mutex& m)
     {
         return
-            [&v, &m](const char* buf, std::size_t length)
+            [&v, &m](xtr::log_level_t, const char* buf, std::size_t length)
             {
                 std::scoped_lock lock{m};
                 assert(buf[length - 1] == '\n');
                 v.push_back(std::string(buf, length - 1));
                 return length;
+            };
+    }
+
+    auto make_error_func(std::vector<std::string>& v, std::mutex& m)
+    {
+        return
+            [out = make_output_func(v, m)](const char* buf, std::size_t length)
+            {
+                out(xtr::log_level_t::none, buf, length);
             };
     }
 
@@ -188,8 +197,8 @@ namespace
         std::vector<std::string> errors_;
         std::atomic<std::int64_t> clock_nanos_{946688523123456789L};
         xtr::logger log_{
-            make_write_func(lines_, m_),
-            make_write_func(errors_, m_),
+            make_output_func(lines_, m_),
+            make_error_func(errors_, m_),
             test_clock{&clock_nanos_},
             xtr::null_command_path};
         xtr::sink s_ = log_.get_sink("Name");
@@ -947,7 +956,7 @@ TEST_CASE("logger set error file test", "[logger]")
 
     f.log_.set_error_stream(buf.fp_);
     f.log_.set_output_function(
-        [](const char*, std::size_t)
+        [](xtr::log_level_t, const char*, std::size_t)
         {
             return -1;
         });
@@ -967,10 +976,13 @@ TEST_CASE("logger set error file test", "[logger]")
 TEST_CASE_METHOD(fixture, "logger set output func test", "[logger]")
 {
     std::string output;
+    xtr::log_level_t level;
+
     log_.set_output_function(
-        [&output](const char* buf, std::size_t size)
+        [&](xtr::log_level_t l, const char* buf, std::size_t size)
         {
             output = std::string(buf, size);
+            level = l;
             return size;
         });
 
@@ -981,13 +993,14 @@ TEST_CASE_METHOD(fixture, "logger set output func test", "[logger]")
     REQUIRE(errors_.empty());
 
     REQUIRE(output == "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test\n"_format(line_));
+    REQUIRE(level == xtr::log_level_t::info);
 }
 
 TEST_CASE_METHOD(fixture, "logger set error func test", "[logger]")
 {
     std::string error;
     log_.set_output_function(
-        [](const char*, std::size_t)
+        [](xtr::log_level_t, const char*, std::size_t)
         {
             return -1;
         });
@@ -1022,7 +1035,7 @@ TEST_CASE("logger set close func test", "[logger]")
 TEST_CASE_METHOD(fixture, "logger short write test", "[logger]")
 {
     log_.set_output_function(
-        [&](const char* buf, std::size_t size)
+        [&](xtr::log_level_t, const char* buf, std::size_t size)
         {
             size -= 21;
             std::scoped_lock lock{m_};
@@ -1052,13 +1065,13 @@ TEST_CASE_METHOD(fixture, "logger sink change name test", "[logger]")
 
 TEST_CASE_METHOD(fixture, "logger no macro test", "[logger]")
 {
-    static constexpr xtrd::string test1{"{} {} Test\n"};
-    s_.log<&test1>();
-    REQUIRE(last_line() == "2000-01-01 01:02:03.123456 Name Test"_format(line_));
+    static constexpr xtrd::string test1{"{}{} {} Test\n"};
+    s_.log<&test1, xtr::log_level_t::info>();
+    REQUIRE(last_line() == "I 2000-01-01 01:02:03.123456 Name Test"_format(line_));
 
-    static constexpr xtrd::string test2{"{} {} Test {}\n"};
-    s_.log<&test2>(42);
-    REQUIRE(last_line() == "2000-01-01 01:02:03.123456 Name Test 42"_format(line_));
+    static constexpr xtrd::string test2{"{}{} {} Test {}\n"};
+    s_.log<&test2, xtr::log_level_t::info>(42);
+    REQUIRE(last_line() == "I 2000-01-01 01:02:03.123456 Name Test 42"_format(line_));
 }
 
 TEST_CASE_METHOD(fixture, "logger alignment test", "[logger]")
@@ -1301,7 +1314,7 @@ TEST_CASE_METHOD(path_fixture, "logger throughput", "[.logger]")
     {
         const auto t0 = clock::now();
         for (std::size_t i = 0; i < n; ++i)
-            s_.log<&fmt>();
+            s_.log<&fmt, xtr::log_level_t::info>();
         s_.sync();
         const auto t1 = clock::now();
         print_result(t0, t1, "Logger");
@@ -1325,10 +1338,10 @@ TEST_CASE("logger no fixture test", "[.logger]")
     XTR_LOG(p, "Hello world");
     XTR_LOG(p, "Hello world {}", 42);
     p.set_level(xtr::log_level_t::debug);
-    XTR_LOG_ERROR(p, "Hello {}", "amazing");
-    XTR_LOG_WARN(p, "Hello {}", "amazing");
-    XTR_LOG_INFO(p, "Hello {}", "amazing");
-    XTR_LOG_DEBUG(p, "Hello {}", "amazing");
+    XTR_LOGL(error, p, "Hello {}", "amazing");
+    XTR_LOGL(warning, p, "Hello {}", "amazing");
+    XTR_LOGL(info, p, "Hello {}", "amazing");
+    XTR_LOGL(debug, p, "Hello {}", "amazing");
 }
 
 TEST_CASE("logger no exit test", "[.logger]")
@@ -1419,10 +1432,10 @@ TEST_CASE_METHOD(fixture, "logger log level test", "[logger]")
 {
     s_.set_level(xtr::log_level_t::none);
 
-    XTR_LOG_ERROR(s_, "Test"), line_ = __LINE__;
-    XTR_LOG_WARN(s_, "Test"), line_ = __LINE__;
-    XTR_LOG_INFO(s_, "Test"), line_ = __LINE__;
-    XTR_LOG_DEBUG(s_, "Test"), line_ = __LINE__;
+    XTR_LOGL(error, s_, "Test"), line_ = __LINE__;
+    XTR_LOGL(warning, s_, "Test"), line_ = __LINE__;
+    XTR_LOGL(info, s_, "Test"), line_ = __LINE__;
+    XTR_LOGL(debug, s_, "Test"), line_ = __LINE__;
 
     // At `none', nothing should be logged
     s_.sync();
@@ -1430,10 +1443,10 @@ TEST_CASE_METHOD(fixture, "logger log level test", "[logger]")
 
     s_.set_level(xtr::log_level_t::fatal);
 
-    XTR_LOG_ERROR(s_, "Test"), line_ = __LINE__;
-    XTR_LOG_WARN(s_, "Test"), line_ = __LINE__;
-    XTR_LOG_INFO(s_, "Test"), line_ = __LINE__;
-    XTR_LOG_DEBUG(s_, "Test"), line_ = __LINE__;
+    XTR_LOGL(error, s_, "Test"), line_ = __LINE__;
+    XTR_LOGL(warning, s_, "Test"), line_ = __LINE__;
+    XTR_LOGL(info, s_, "Test"), line_ = __LINE__;
+    XTR_LOGL(debug, s_, "Test"), line_ = __LINE__;
 
     // At `fatal', nothing should be logged (except fatal logs, however
     // fatal logs call abort() so isn't called here).
@@ -1443,43 +1456,43 @@ TEST_CASE_METHOD(fixture, "logger log level test", "[logger]")
     // Error
     s_.set_level(xtr::log_level_t::error);
 
-    XTR_LOG_ERROR(s_, "Test"), line_ = __LINE__;
+    XTR_LOGL(error, s_, "Test"), line_ = __LINE__;
     REQUIRE(last_line() == "E 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test"_format(line_));
-    XTR_LOG_WARN(s_, "Test"), line_ = __LINE__;
-    XTR_LOG_INFO(s_, "Test"), line_ = __LINE__;
-    XTR_LOG_DEBUG(s_, "Test"), line_ = __LINE__;
+    XTR_LOGL(warning, s_, "Test"), line_ = __LINE__;
+    XTR_LOGL(info, s_, "Test"), line_ = __LINE__;
+    XTR_LOGL(debug, s_, "Test"), line_ = __LINE__;
 
     // Warning
     s_.set_level(xtr::log_level_t::warning);
 
-    XTR_LOG_ERROR(s_, "Test"), line_ = __LINE__;
+    XTR_LOGL(error, s_, "Test"), line_ = __LINE__;
     REQUIRE(last_line() == "E 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test"_format(line_));
-    XTR_LOG_WARN(s_, "Test"), line_ = __LINE__;
+    XTR_LOGL(warning, s_, "Test"), line_ = __LINE__;
     REQUIRE(last_line() == "W 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test"_format(line_));
-    XTR_LOG_INFO(s_, "Test"), line_ = __LINE__;
-    XTR_LOG_DEBUG(s_, "Test"), line_ = __LINE__;
+    XTR_LOGL(info, s_, "Test"), line_ = __LINE__;
+    XTR_LOGL(debug, s_, "Test"), line_ = __LINE__;
 
     // Info
     s_.set_level(xtr::log_level_t::info);
 
-    XTR_LOG_ERROR(s_, "Test"), line_ = __LINE__;
+    XTR_LOGL(error, s_, "Test"), line_ = __LINE__;
     REQUIRE(last_line() == "E 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test"_format(line_));
-    XTR_LOG_WARN(s_, "Test"), line_ = __LINE__;
+    XTR_LOGL(warning, s_, "Test"), line_ = __LINE__;
     REQUIRE(last_line() == "W 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test"_format(line_));
-    XTR_LOG_INFO(s_, "Test"), line_ = __LINE__;
+    XTR_LOGL(info, s_, "Test"), line_ = __LINE__;
     REQUIRE(last_line() == "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test"_format(line_));
-    XTR_LOG_DEBUG(s_, "Test"), line_ = __LINE__;
+    XTR_LOGL(debug, s_, "Test"), line_ = __LINE__;
 
     // Debug
     s_.set_level(xtr::log_level_t::debug);
 
-    XTR_LOG_ERROR(s_, "Test"), line_ = __LINE__;
+    XTR_LOGL(error, s_, "Test"), line_ = __LINE__;
     REQUIRE(last_line() == "E 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test"_format(line_));
-    XTR_LOG_WARN(s_, "Test"), line_ = __LINE__;
+    XTR_LOGL(warning, s_, "Test"), line_ = __LINE__;
     REQUIRE(last_line() == "W 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test"_format(line_));
-    XTR_LOG_INFO(s_, "Test"), line_ = __LINE__;
+    XTR_LOGL(info, s_, "Test"), line_ = __LINE__;
     REQUIRE(last_line() == "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test"_format(line_));
-    XTR_LOG_DEBUG(s_, "Test"), line_ = __LINE__;
+    XTR_LOGL(debug, s_, "Test"), line_ = __LINE__;
     REQUIRE(last_line() == "D 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test"_format(line_));
 
     // Check total lines to ensure nothing extra was logged
@@ -2157,131 +2170,75 @@ TEST_CASE_METHOD(fixture, "logger macro test", "[logger]")
 
     // XTR_LOG and variants
     XTR_LOG(s_, "Test");
-    XTR_LOG_LEVEL("E", error, s_, "Test");
     if (true == false)
-        XTR_LOG_FATAL(s_, "Test");
-    XTR_LOG_ERROR(s_, "Test");
-    XTR_LOG_WARN(s_, "Test");
-    XTR_LOG_INFO(s_, "Test");
-    XTR_LOG_DEBUG(s_, "Test");
-    if (true == false)
-        XTR_LOGF(s_, "Test");
-    XTR_LOGE(s_, "Test");
-    XTR_LOGW(s_, "Test");
-    XTR_LOGI(s_, "Test");
-    XTR_LOGD(s_, "Test");
+        XTR_LOGL(fatal, s_, "Test");
+    XTR_LOGL(error, s_, "Test");
+    XTR_LOGL(warning, s_, "Test");
+    XTR_LOGL(info, s_, "Test");
+    XTR_LOGL(debug, s_, "Test");
 
     // XTR_TRY_LOG and variants
     XTR_TRY_LOG(s_, "Test");
-    XTR_TRY_LOG_LEVEL("E", error, s_, "Test");
     if (true == false)
-        XTR_TRY_LOG_FATAL(s_, "Test");
-    XTR_TRY_LOG_ERROR(s_, "Test");
-    XTR_TRY_LOG_WARN(s_, "Test");
-    XTR_TRY_LOG_INFO(s_, "Test");
-    XTR_TRY_LOG_DEBUG(s_, "Test");
-    if (true == false)
-        XTR_TRY_LOGF(s_, "Test");
-    XTR_TRY_LOGE(s_, "Test");
-    XTR_TRY_LOGW(s_, "Test");
-    XTR_TRY_LOGI(s_, "Test");
-    XTR_TRY_LOGD(s_, "Test");
+        XTR_TRY_LOGL(fatal, s_, "Test");
+    XTR_TRY_LOGL(error, s_, "Test");
+    XTR_TRY_LOGL(warning, s_, "Test");
+    XTR_TRY_LOGL(info, s_, "Test");
+    XTR_TRY_LOGL(debug, s_, "Test");
 
     // XTR_LOG_TS and variants
     XTR_LOG_TS(s_, ts, "Test");
-    XTR_LOG_TS_LEVEL("E", error, s_, ts, "Test");
     if (true == false)
-        XTR_LOG_TS_FATAL(s_, ts, "Test");
-    XTR_LOG_TS_ERROR(s_, ts, "Test");
-    XTR_LOG_TS_WARN(s_, ts, "Test");
-    XTR_LOG_TS_INFO(s_, ts, "Test");
-    XTR_LOG_TS_DEBUG(s_, ts, "Test");
-    if (true == false)
-        XTR_LOG_TSF(s_, ts, "Test");
-    XTR_LOG_TSE(s_, ts, "Test");
-    XTR_LOG_TSW(s_, ts, "Test");
-    XTR_LOG_TSI(s_, ts, "Test");
-    XTR_LOG_TSD(s_, ts, "Test");
+        XTR_LOGL_TS(fatal, s_, ts, "Test");
+    XTR_LOGL_TS(error, s_, ts, "Test");
+    XTR_LOGL_TS(warning, s_, ts, "Test");
+    XTR_LOGL_TS(info, s_, ts, "Test");
+    XTR_LOGL_TS(debug, s_, ts, "Test");
 
     // XTR_TRY_LOG_TS and variants
     XTR_TRY_LOG_TS(s_, ts, "Test");
-    XTR_TRY_LOG_TS_LEVEL("E", error, s_, ts, "Test");
     if (true == false)
-        XTR_TRY_LOG_TS_FATAL(s_, ts, "Test");
-    XTR_TRY_LOG_TS_ERROR(s_, ts, "Test");
-    XTR_TRY_LOG_TS_WARN(s_, ts, "Test");
-    XTR_TRY_LOG_TS_INFO(s_, ts, "Test");
-    XTR_TRY_LOG_TS_DEBUG(s_, ts, "Test");
-    if (true == false)
-        XTR_TRY_LOG_TSF(s_, ts, "Test");
-    XTR_TRY_LOG_TSE(s_, ts, "Test");
-    XTR_TRY_LOG_TSW(s_, ts, "Test");
-    XTR_TRY_LOG_TSI(s_, ts, "Test");
-    XTR_TRY_LOG_TSD(s_, ts, "Test");
+        XTR_TRY_LOGL_TS(fatal, s_, ts, "Test");
+    XTR_TRY_LOGL_TS(error, s_, ts, "Test");
+    XTR_TRY_LOGL_TS(warning, s_, ts, "Test");
+    XTR_TRY_LOGL_TS(info, s_, ts, "Test");
+    XTR_TRY_LOGL_TS(debug, s_, ts, "Test");
 
     // XTR_LOG_RTC and variants
     XTR_LOG_RTC(s_, "Test");
-    XTR_LOG_RTC_LEVEL("E", error, s_, "Test");
     if (true == false)
-        XTR_LOG_RTC_FATAL(s_, "Test");
-    XTR_LOG_RTC_ERROR(s_, "Test");
-    XTR_LOG_RTC_WARN(s_, "Test");
-    XTR_LOG_RTC_INFO(s_, "Test");
-    XTR_LOG_RTC_DEBUG(s_, "Test");
-    if (true == false)
-        XTR_LOG_RTCF(s_, "Test");
-    XTR_LOG_RTCE(s_, "Test");
-    XTR_LOG_RTCW(s_, "Test");
-    XTR_LOG_RTCI(s_, "Test");
-    XTR_LOG_RTCD(s_, "Test");
+        XTR_LOGL_RTC(fatal, s_, "Test");
+    XTR_LOGL_RTC(error, s_, "Test");
+    XTR_LOGL_RTC(warning, s_, "Test");
+    XTR_LOGL_RTC(info, s_, "Test");
+    XTR_LOGL_RTC(debug, s_, "Test");
 
     // XTR_TRY_LOG_RTC and variants
     XTR_TRY_LOG_RTC(s_, "Test");
-    XTR_TRY_LOG_RTC_LEVEL("E", error, s_, "Test");
     if (true == false)
-        XTR_TRY_LOG_RTC_FATAL(s_, "Test");
-    XTR_TRY_LOG_RTC_ERROR(s_, "Test");
-    XTR_TRY_LOG_RTC_WARN(s_, "Test");
-    XTR_TRY_LOG_RTC_INFO(s_, "Test");
-    XTR_TRY_LOG_RTC_DEBUG(s_, "Test");
-    if (true == false)
-        XTR_TRY_LOG_RTCF(s_, "Test");
-    XTR_TRY_LOG_RTCE(s_, "Test");
-    XTR_TRY_LOG_RTCW(s_, "Test");
-    XTR_TRY_LOG_RTCI(s_, "Test");
-    XTR_TRY_LOG_RTCD(s_, "Test");
+        XTR_TRY_LOGL_RTC(fatal, s_, "Test");
+    XTR_TRY_LOGL_RTC(error, s_, "Test");
+    XTR_TRY_LOGL_RTC(warning, s_, "Test");
+    XTR_TRY_LOGL_RTC(info, s_, "Test");
+    XTR_TRY_LOGL_RTC(debug, s_, "Test");
 
     // XTR_LOG_TSC and variants
     XTR_LOG_TSC(s_, "Test");
-    XTR_LOG_TSC_LEVEL("E", error, s_, "Test");
     if (true == false)
-        XTR_LOG_TSC_FATAL(s_, "Test");
-    XTR_LOG_TSC_ERROR(s_, "Test");
-    XTR_LOG_TSC_WARN(s_, "Test");
-    XTR_LOG_TSC_INFO(s_, "Test");
-    XTR_LOG_TSC_DEBUG(s_, "Test");
-    if (true == false)
-        XTR_LOG_TSCF(s_, "Test");
-    XTR_LOG_TSCE(s_, "Test");
-    XTR_LOG_TSCW(s_, "Test");
-    XTR_LOG_TSCI(s_, "Test");
-    XTR_LOG_TSCD(s_, "Test");
+        XTR_LOGL_TSC(fatal, s_, "Test");
+    XTR_LOGL_TSC(error, s_, "Test");
+    XTR_LOGL_TSC(warning, s_, "Test");
+    XTR_LOGL_TSC(info, s_, "Test");
+    XTR_LOGL_TSC(debug, s_, "Test");
 
     // XTR_TRY_LOG_TSC and variants
     XTR_TRY_LOG_TSC(s_, "Test");
-    XTR_TRY_LOG_TSC_LEVEL("E", error, s_, "Test");
     if (true == false)
-        XTR_TRY_LOG_TSC_FATAL(s_, "Test");
-    XTR_TRY_LOG_TSC_ERROR(s_, "Test");
-    XTR_TRY_LOG_TSC_WARN(s_, "Test");
-    XTR_TRY_LOG_TSC_INFO(s_, "Test");
-    XTR_TRY_LOG_TSC_DEBUG(s_, "Test");
-    if (true == false)
-        XTR_TRY_LOG_TSCF(s_, "Test");
-    XTR_TRY_LOG_TSCE(s_, "Test");
-    XTR_TRY_LOG_TSCW(s_, "Test");
-    XTR_TRY_LOG_TSCI(s_, "Test");
-    XTR_TRY_LOG_TSCD(s_, "Test");
+        XTR_TRY_LOGL_TSC(fatal, s_, "Test");
+    XTR_TRY_LOGL_TSC(error, s_, "Test");
+    XTR_TRY_LOGL_TSC(warning, s_, "Test");
+    XTR_TRY_LOGL_TSC(info, s_, "Test");
+    XTR_TRY_LOGL_TSC(debug, s_, "Test");
 }
 
 TEST_CASE("default_command_path fallback test", "[logger]")
@@ -2310,6 +2267,60 @@ TEST_CASE("default_command_path fallback test", "[logger]")
         ::setenv("XDG_RUNTIME_DIR", rundir.c_str(), 1);
     if (!tmpdir.empty())
         ::setenv("TMPDIR", tmpdir.c_str(), 1);
+}
+
+TEST_CASE_METHOD(fixture, "logger custom log level style test", "[logger]")
+{
+    auto style =
+        [](xtr::log_level_t level)
+        {
+            switch (level)
+            {
+            case xtr::log_level_t::error:
+                return "ERROR ";
+            case xtr::log_level_t::warning:
+                return "WARNING ";
+            case xtr::log_level_t::info:
+                return "INFO ";
+            case xtr::log_level_t::debug:
+                return "DEBUG ";
+            default:
+                return "";
+            }
+        };
+
+    log_.set_log_level_style(style);
+    s_.set_level(xtr::log_level_t::debug);
+
+    XTR_LOGL(error, s_, "Test"), line_ = __LINE__;
+    REQUIRE(last_line() == "ERROR 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test"_format(line_));
+
+    XTR_LOGL(warning, s_, "Test"), line_ = __LINE__;
+    REQUIRE(last_line() == "WARNING 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test"_format(line_));
+
+    XTR_LOGL(info, s_, "Test"), line_ = __LINE__;
+    REQUIRE(last_line() == "INFO 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test"_format(line_));
+
+    XTR_LOGL(debug, s_, "Test"), line_ = __LINE__;
+    REQUIRE(last_line() == "DEBUG 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test"_format(line_));
+}
+
+TEST_CASE_METHOD(fixture, "logger systemd log level style test", "[logger]")
+{
+    log_.set_log_level_style(xtr::systemd_log_level_style);
+    s_.set_level(xtr::log_level_t::debug);
+
+    XTR_LOGL(error, s_, "Test"), line_ = __LINE__;
+    REQUIRE(last_line() == "<3>2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test"_format(line_));
+
+    XTR_LOGL(warning, s_, "Test"), line_ = __LINE__;
+    REQUIRE(last_line() == "<4>2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test"_format(line_));
+
+    XTR_LOGL(info, s_, "Test"), line_ = __LINE__;
+    REQUIRE(last_line() == "<6>2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test"_format(line_));
+
+    XTR_LOGL(debug, s_, "Test"), line_ = __LINE__;
+    REQUIRE(last_line() == "<7>2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test"_format(line_));
 }
 
 #if __cpp_exceptions

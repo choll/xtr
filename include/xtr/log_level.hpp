@@ -24,6 +24,35 @@
 namespace xtr
 {
     enum class log_level_t {none, fatal, error, warning, info, debug};
+
+    /**
+     * Log level styles are used to customise the formatting used when prefixing
+     * log statements with their associated log level (see @ref log_level_t).
+     * Styles are simply function pointers\---to provide a custom style, define
+     * a function returning a string literal and accepting a single argument of
+     * type @ref log_level_t and pass the function to logger::logger or
+     * logger::set_log_level_style. The values returned by the function will be
+     * prefixed to log statements produced by the logger. Two formatters are
+     * provided, the default formatter @ref default_log_level_style and a
+     * System D compatible style @ref systemd_log_level_style.
+     */
+    using log_level_style_t = const char *(*)(log_level_t);
+
+    /**
+     * The default log level style (see @ref log_level_style_t). Yields a
+     * single upper-case character representing the log level followed by a
+     * space, e.g. "E ", "W ", "I " for log_level_t::error,
+     * log_level_t::warning, log_level_t::info and so on.
+     */
+    const char* default_log_level_style(log_level_t level);
+
+    /**
+     * System D log level style (see @ref log_level_style_t). Yields strings as
+     * described in
+     * <a href="https://man7.org/linux/man-pages/man3/sd-daemon.3.html">sd-daemon(3)</a>,
+     * e.g. "<0>", "<1>", "<2>" etc.
+     */
+    const char* systemd_log_level_style(log_level_t level);
 }
 
 #endif

@@ -21,6 +21,7 @@
 #ifndef XTR_DETAIL_CONSUMER_HPP
 #define XTR_DETAIL_CONSUMER_HPP
 
+#include "../log_level.hpp"
 #include "commands/command_dispatcher_fwd.hpp"
 #include "commands/requests_fwd.hpp"
 
@@ -76,6 +77,7 @@ public:
         SyncFunction&& sf,
         ReopenFunction&& rf,
         CloseFunction&& cf,
+        log_level_style_t ls,
         sink* control)
     :
         out(std::forward<OutputFunction>(of)),
@@ -84,18 +86,20 @@ public:
         sync(std::forward<SyncFunction>(sf)),
         reopen(std::forward<ReopenFunction>(rf)),
         close(std::forward<CloseFunction>(cf)),
+        lstyle(ls),
         sinks_({{control, "control", 0}})
     {
     }
 
     void add_sink(sink& p, const std::string& name);
 
-    std::function<::ssize_t(const char* buf, std::size_t size)> out;
+    std::function<::ssize_t(log_level_t level, const char* buf, std::size_t size)> out;
     std::function<void(const char* buf, std::size_t size)> err;
     std::function<void()> flush;
     std::function<void()> sync;
     std::function<bool()> reopen;
     std::function<void()> close;
+    log_level_style_t lstyle;
     bool destroy = false;
 
 private:

@@ -113,10 +113,10 @@ endif
 TARGET = $(BUILD_DIR)/libxtr.a
 SRCS := \
 	src/command_dispatcher.cpp src/command_path.cpp src/consumer.cpp \
-	src/file_descriptor.cpp src/logger.cpp src/matcher.cpp \
-	src/memory_mapping.cpp src/mirrored_memory_mapping.cpp src/pagesize.cpp \
-	src/regex_matcher.cpp src/sink.cpp src/throw.cpp \
-	src/tsc.cpp src/wildcard_matcher.cpp
+	src/file_descriptor.cpp src/logger.cpp src/log_level.cpp \
+	src/matcher.cpp src/memory_mapping.cpp src/mirrored_memory_mapping.cpp \
+	src/pagesize.cpp src/regex_matcher.cpp src/sink.cpp \
+	src/throw.cpp src/tsc.cpp src/wildcard_matcher.cpp
 OBJS = $(SRCS:%=$(BUILD_DIR)/%.o)
 
 TEST_TARGET = $(BUILD_DIR)/test/test
