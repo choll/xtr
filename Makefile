@@ -213,6 +213,7 @@ clean:
 	$(DEPS) $(COVERAGE_DATA)
 
 coverage_report: $(BUILD_DIR)/coverage_report/index.html
+	xdg-open $< 2> /dev/null
 
 build/doxygen/xml/index.xml: docs-src/Doxyfile $(INCLUDES)
 	@mkdir -p $(@D)
