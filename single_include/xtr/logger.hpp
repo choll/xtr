@@ -984,7 +984,7 @@ namespace xtr
     using log_level_style_t = const char* (*)(log_level_t);
 
     /**
-     * The default log level style (see @ref log_level_style_t). Yields a
+     * The default log level style (see @ref log_level_style_t). Returns a
      * single upper-case character representing the log level followed by a
      * space, e.g. "E ", "W ", "I " for log_level_t::error,
      * log_level_t::warning, log_level_t::info and so on.
@@ -992,7 +992,7 @@ namespace xtr
     const char* default_log_level_style(log_level_t level);
 
     /**
-     * System D log level style (see @ref log_level_style_t). Yields strings as
+     * System D log level style (see @ref log_level_style_t). Returns strings as
      * described in
      * <a href="https://man7.org/linux/man-pages/man3/sd-daemon.3.html">sd-daemon(3)</a>,
      * e.g. "<0>", "<1>", "<2>" etc.
@@ -2732,19 +2732,21 @@ public:
     }
 
     /**
-     * Basic custom back-end constructor.
+     * Basic custom back-end constructor (please refer to the
+     * <a href="guide.html#custom-back-ends">custom back-ends</a> section of
+     * the user guide for further details on implementing a custom back-end).
      *
      * @arg out: @anchor out_arg
-     *           A function accepting a const char* buffer of formatted log
-     *           data and a std::size_t argument specifying the length of the
-     *           buffer in bytes. The logger will invoke this function from the
-     *           background thread in order to output log data. The return type
-     *           should be ssize_t and return value should be -1 if an error
-     *           occurred, otherwise the number of bytes successfully written
-     *           should be returned. Note that returning anything less than the
-     *           number of bytes given by the length argument is considered an
-     *           error, resulting in the 'err' function being invoked with a
-     *           "Short write" error string.
+     *           A function accepting a @ref xtr::log_level_t, const char* buffer
+     *           of formatted log data and a std::size_t argument specifying the
+     *           length of the buffer in bytes. The logger will invoke this function
+     *           from the background thread in order to output log data, invoking
+     *           the function once per log line. The return type should be ssize_t
+     *           and return value should be -1 if an error occurred, otherwise the
+     *           number of bytes successfully written should be returned. Note that
+     *           returning anything less than the number of bytes given by the
+     *           length argument is considered an error, resulting in the 'err'
+     *           function being invoked with a "Short write" error string.
      * @arg err: @anchor err_arg
      *           A function accepting a const char* buffer of formatted log
      *           data and a std::size_t argument specifying the length of the
@@ -2787,7 +2789,9 @@ public:
     }
 
     /**
-     * Custom back-end constructor.
+     * Custom back-end constructor (please refer to the
+     * <a href="guide.html#custom-back-ends">custom back-ends</a> section of
+     * the user guide for further details on implementing a custom back-end).
      *
      * @arg out: Please refer to the @ref out_arg "description" above.
      * @arg err: Please refer to the @ref err_arg "description" above.
