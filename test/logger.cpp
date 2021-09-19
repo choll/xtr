@@ -2324,8 +2324,8 @@ TEST_CASE_METHOD(fixture, "logger systemd log level style test", "[logger]")
     XTR_LOGL(debug, s_, "Test"), line_ = __LINE__;
     REQUIRE(last_line() == "<7>2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test"_format(line_));
 
-    struct sigaction act;
-    struct sigaction oldact;
+    struct sigaction act{};
+    struct sigaction oldact{};
 
     static jmp_buf jbuf;
 
@@ -2358,8 +2358,8 @@ TEST_CASE("logger open invalid path test", "[logger]")
 
 TEST_CASE_METHOD(fixture, "logger fatal test", "[logger]")
 {
-    struct sigaction act;
-    struct sigaction oldact;
+    struct sigaction act{};
+    struct sigaction oldact{};
 
     static sig_atomic_t abort_handler_count = 0;
     static sig_atomic_t abort_handler_signo = 0;
