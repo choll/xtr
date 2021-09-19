@@ -148,11 +148,6 @@ namespace xtr::detail
 #endif
 }
 
-// TODO: Specify buffer size via template parameter, or as dynamic,
-// dynamic_capacity will need to become part of the interface.
-// XXX SHOULD GET_SINK SUPPORT SPECIFYING THE SIZE? CONSUMER CAN
-// READ VIA TYPE ERASED FUNC
-
 /**
  * The main logger class. When constructed a background thread will be created
  * which is used for formatting log messages and performing I/O. To write to the
@@ -324,19 +319,21 @@ public:
     }
 
     /**
-     * Basic custom back-end constructor.
+     * Basic custom back-end constructor (please refer to the
+     * <a href="guide.html#custom-back-ends">custom back-ends</a> section of
+     * the user guide for further details on implementing a custom back-end).
      *
      * @arg out: @anchor out_arg
-     *           A function accepting a const char* buffer of formatted log
-     *           data and a std::size_t argument specifying the length of the
-     *           buffer in bytes. The logger will invoke this function from the
-     *           background thread in order to output log data. The return type
-     *           should be ssize_t and return value should be -1 if an error
-     *           occurred, otherwise the number of bytes successfully written
-     *           should be returned. Note that returning anything less than the
-     *           number of bytes given by the length argument is considered an
-     *           error, resulting in the 'err' function being invoked with a
-     *           "Short write" error string.
+     *           A function accepting a @ref xtr::log_level_t, const char* buffer
+     *           of formatted log data and a std::size_t argument specifying the
+     *           length of the buffer in bytes. The logger will invoke this function
+     *           from the background thread in order to output log data, invoking
+     *           the function once per log line. The return type should be ssize_t
+     *           and return value should be -1 if an error occurred, otherwise the
+     *           number of bytes successfully written should be returned. Note that
+     *           returning anything less than the number of bytes given by the
+     *           length argument is considered an error, resulting in the 'err'
+     *           function being invoked with a "Short write" error string.
      * @arg err: @anchor err_arg
      *           A function accepting a const char* buffer of formatted log
      *           data and a std::size_t argument specifying the length of the
@@ -381,7 +378,9 @@ public:
     }
 
     /**
-     * Custom back-end constructor.
+     * Custom back-end constructor (please refer to the
+     * <a href="guide.html#custom-back-ends">custom back-ends</a> section of
+     * the user guide for further details on implementing a custom back-end).
      *
      * @arg out: Please refer to the @ref out_arg "description" above.
      * @arg err: Please refer to the @ref err_arg "description" above.

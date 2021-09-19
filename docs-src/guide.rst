@@ -106,6 +106,8 @@ Examples
 
 .. code-block:: c++
 
+    #include <xtr/logger.hpp>
+
     xtr::logger log;
 
     xtr::sink s = log.get_sink("Main");
@@ -130,6 +132,8 @@ Examples
 ~~~~~~~~
 
 .. code-block:: c++
+
+    #include <xtr/logger.hpp>
 
     xtr::logger log;
 
@@ -523,74 +527,144 @@ Custom Back-ends
 The logger allows custom back-ends to be used. This is done by constructing the logger
 with functions that implement the back-end functionality, which are listed below:
 
-+----------+-------------------------------------------------------------+-------------+
-| Function | Signature                                                   | Description |
-+==========+=============================================================+=============+
-| Output   | :cpp:func:`::ssize_t out(const char* buf, std::size_t size)`| |output|    |
-+----------+-------------------------------------------------------------+-------------+
-| Error    | :cpp:func:`void err(const char* buf, std::size_t size)`     | |error|     |
-+----------+-------------------------------------------------------------+-------------+
-| Flush    | :cpp:func:`void flush()`                                    | |flush|     |
-+----------+-------------------------------------------------------------+-------------+
-| Sync     | :cpp:func:`void sync()`                                     | |sync|      |
-+----------+-------------------------------------------------------------+-------------+
-| Reopen   | :cpp:func:`void reopen()`                                   | |reopen|    |
-+----------+-------------------------------------------------------------+-------------+
-| Close    | :cpp:func:`void close()`                                    | |close|     |
-+----------+-------------------------------------------------------------+-------------+
++----------+-------------------------------------------------------------------------------------+
+| Function | Signature                                                                           |
++==========+=====================================================================================+
+| Output   | :cpp:func:`::ssize_t out(xtr::log_level_t level, const char* buf, std::size_t size)`|
++----------+-------------------------------------------------------------------------------------+
+| Error    | :cpp:func:`void err(const char* buf, std::size_t size)`                             |
++----------+-------------------------------------------------------------------------------------+
+| Flush    | :cpp:func:`void flush()`                                                            |
++----------+-------------------------------------------------------------------------------------+
+| Sync     | :cpp:func:`void sync()`                                                             |
++----------+-------------------------------------------------------------------------------------+
+| Reopen   | :cpp:func:`void reopen()`                                                           |
++----------+-------------------------------------------------------------------------------------+
+| Close    | :cpp:func:`void close()`                                                            |
++----------+-------------------------------------------------------------------------------------+
 
-.. |output| replace:: replacement text
+The constructors to pass these functions to are the
+`basic custom back-end constructor <api.html#_CPPv4I000EN3xtr6logger6loggerERR14OutputFunctionRR13ErrorFunctionRR5ClockNSt6stringE17log_level_style_t>`__
+and the
+`custom back-end constructor <api.html#_CPPv4I0000000EN3xtr6logger6loggerERR14OutputFunctionRR13ErrorFunctionRR13FlushFunctionRR12SyncFunctionRR14ReopenFunctionRR13CloseFunctionRR5ClockNSt6stringE17log_level_style_t>`__.
+The basic constructor only accepts an *output* and *error* function.
 
-.. |error| replace:: replacement text
+.. NOTE::
+   All back-end functions are invoked from the logger's background consumer thread.
 
-.. |flush| replace:: replacement text
+:output:
+    The output function is invoked when a log line is produced.
+    The first argument *level* is the log level associated with the
+    statement, the second argument *buf* is a pointer to the formatted
+    statement (including log level, timestamp and sink name), and
+    the third argument *size* is the length in bytes of the formatted
+    statement. This function should return the number of bytes
+    accepted by the back-end, or -1 if an error occurred. Note
+    that it is currently considered an error for a back-end to
+    return anything less than the number of bytes given by the
+    length argument, resulting in the 'error' function being
+    invoked with a "Short write" error string. This requirement
+    may be relaxed in the future.
 
-.. |sync| replace:: replacement text
+    .. ATTENTION::
+       The string data pointed to by the *buf* argument is only valid while
+       the output function is being invoked. It must not be accessed after
+       the output function returns.
 
-.. |reopen| replace:: replacement text
+    .. ATTENTION::
+       The string data pointed to by *buf* is not nul terminated.
 
-.. |close| replace:: replacement text
+:error:
+    The error function is invoked when an error occurs, for example if the
+    output function fails. The first argument *buf* is a pointer to
+    an error description string, the second argument *size* is the length of the
+    string in bytes.
 
-NEED TO MAKE IT CLEAR THAT OUT IS CALLED ONCE PER LOG LINE
+    .. ATTENTION::
+       The string data pointed to by the *buf* argument is only valid while
+       the output function is being invoked. It must not be accessed after
+       the error function returns.
+
+    .. ATTENTION::
+       The string data pointed to by *buf* is not nul terminated.
+
+:flush:
+    The flush function is invoked to indicate that the back-end should write
+    any buffered data to its associated backing store.
+
+:sync:
+    The sync function is invoked to indicate that the back-end should ensure
+    that all data written to the associated backing store has reached permanent
+    storage.
+
+:reopen:
+    The reopen function is invoked to indicate that if the back-end has a regular
+    file opened for writing log data then the file should be reopened. This is
+    intended to be used to implement log rotation via tool such as
+    `logrotate(8) <https://www.man7.org/linux/man-pages/man8/logrotate.8.html>`__.
+    Please refer to the :ref:`Reopening Log Files <reopening-log-files>` section
+    of the :ref:`xtrctl <xtrctl>` documentation for further details.
+
+:close:
+    The close function is invoked to indicate that the back-end should close any
+    associated backing store.
 
 Examples
 ~~~~~~~~
 
-Custom back-end using the
-`basic custom back-end constructor <api.html#_CPPv4I000EN3xtr6logger6loggerERR14OutputFunctionRR13ErrorFunctionRR5ClockNSt6stringE>`__:
+Using the
+`basic custom back-end constructor <api.html#_CPPv4I000EN3xtr6logger6loggerERR14OutputFunctionRR13ErrorFunctionRR5ClockNSt6stringE17log_level_style_t>`__
+to send log statements to `syslog(3) <https://www.man7.org/linux/man-pages/man3/syslog.3.html>`__:
 
 .. code-block:: c++
 
-    std::vector<std::string> lines;
-    std::mutex lines_mutex;
+    #include <syslog.h>
 
-    xtr::logger log(
-        [&](const char* buf, std::size_t size)
+    namespace
+    {
+        int xtr_to_syslog(xtr::log_level_t level)
         {
-            std::unique_lock lock{lines_mutex};
-            lines.emplace_back(buf, size);
-            return size;
-        },
-        [](const char* buf, std::size_t size)
-        {
-            std::cout << std::string_view{buf, size} << "\n";
+            switch (level)
+            {
+                case xtr::log_level_t::fatal:
+                    return LOG_CRIT;
+                case xtr::log_level_t::error:
+                    return LOG_ERR;
+                case xtr::log_level_t::warning:
+                    return LOG_WARNING;
+                case xtr::log_level_t::info:
+                    return LOG_INFO;
+                case xtr::log_level_t::debug:
+                    return LOG_DEBUG;
+            }
+            __builtin_unreachable();
         }
-    );
+    }
 
-    xtr::sink s = log.get_sink("Main");
+    int main()
+    {
+        ::openlog("Example", LOG_PERROR, LOG_USER);
 
-    XTR_LOG(s, "Hello world");
+        xtr::logger log(
+            [&](xtr::log_level_t level, const char* buf, std::size_t size)
+            {
+                ::syslog(xtr_to_syslog(level), "%.*s", int(size), buf);
+                return size;
+            },
+            [](const char* buf, std::size_t size)
+            {
+                ::syslog(LOG_ERR, "%.*s", int(size), buf);
+            }
+        );
 
-    s.sync(); // Ensure all log statements are delivered to the back-end
+        xtr::sink s = log.get_sink("Main");
 
-    std::cout << lines[0] << "\n";
+        XTR_LOG(s, "Hello world");
 
-Custom back-end using the
-`custom back-end constructor <api.html#_CPPv4I0000000EN3xtr6logger6loggerERR14OutputFunctionRR13ErrorFunctionRR13FlushFunctionRR12SyncFunctionRR14ReopenFunctionRR13CloseFunctionRR5ClockNSt6stringE>`__:
+        return 0;
+    }
 
-.. code-block:: c++
-
-    TODO
+View this example on `Compiler Explorer <https://godbolt.org/z/TbPMs49db>`__.
 
 Custom Log Level Styles
 -----------------------
@@ -604,6 +678,11 @@ a :cpp:expr:`const char*` string literal.
 
 Examples
 ~~~~~~~~
+
+The following example will output::
+
+    info: 2021-09-17 23:36:39.043028 Main <source>:18: Hello world
+    not-info: 2021-09-17 23:36:39.043028 Main <source>:19: Hello world
 
 .. code-block:: c++
 
@@ -625,10 +704,8 @@ Examples
     XTR_LOGL(info, s, "Hello world");
     XTR_LOGL(error, s, "Hello world");
 
-Will output::
+View this example on `Compiler Explorer <https://godbolt.org/z/ohcW6ndoz>`__.
 
-    info: 2021-09-17 23:36:39.043028 Main <source>:18: Hello world
-    not-info: 2021-09-17 23:36:39.043028 Main <source>:19: Hello world
 
 .. rubric:: Footnotes
 

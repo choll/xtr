@@ -39,7 +39,7 @@ namespace xtr
     using log_level_style_t = const char *(*)(log_level_t);
 
     /**
-     * The default log level style (see @ref log_level_style_t). Yields a
+     * The default log level style (see @ref log_level_style_t). Returns a
      * single upper-case character representing the log level followed by a
      * space, e.g. "E ", "W ", "I " for log_level_t::error,
      * log_level_t::warning, log_level_t::info and so on.
@@ -47,7 +47,7 @@ namespace xtr
     const char* default_log_level_style(log_level_t level);
 
     /**
-     * System D log level style (see @ref log_level_style_t). Yields strings as
+     * System D log level style (see @ref log_level_style_t). Returns strings as
      * described in
      * <a href="https://man7.org/linux/man-pages/man3/sd-daemon.3.html">sd-daemon(3)</a>,
      * e.g. "<0>", "<1>", "<2>" etc.
