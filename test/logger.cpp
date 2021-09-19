@@ -57,6 +57,8 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/un.h>
+#include <setjmp.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
@@ -2321,6 +2323,28 @@ TEST_CASE_METHOD(fixture, "logger systemd log level style test", "[logger]")
 
     XTR_LOGL(debug, s_, "Test"), line_ = __LINE__;
     REQUIRE(last_line() == "<7>2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test"_format(line_));
+
+    struct sigaction act;
+    struct sigaction oldact;
+
+    static jmp_buf jbuf;
+
+    const int val = setjmp(jbuf);
+
+    if (val == 0)
+    {
+        act.sa_handler =
+            [](int)
+            {
+                longjmp(jbuf, 1);
+            };
+
+        REQUIRE(::sigaction(SIGABRT, &act, &oldact) == 0);
+        line_ = __LINE__, XTR_LOGL(fatal, s_, "Test");
+    }
+
+    REQUIRE(::sigaction(SIGABRT, &oldact, nullptr) == 0);
+    REQUIRE(last_line() == "<0>2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test"_format(line_));
 }
 
 #if __cpp_exceptions
@@ -2331,3 +2355,34 @@ TEST_CASE("logger open invalid path test", "[logger]")
         "Failed to open `/no/such/file': No such file or directory");
 }
 #endif
+
+TEST_CASE_METHOD(fixture, "logger fatal test", "[logger]")
+{
+    struct sigaction act;
+    struct sigaction oldact;
+
+    static sig_atomic_t abort_handler_count = 0;
+    static sig_atomic_t abort_handler_signo = 0;
+    static jmp_buf jbuf;
+
+    const int val = setjmp(jbuf);
+
+    if (val == 0)
+    {
+        act.sa_handler =
+            [](int signo)
+            {
+                ++abort_handler_count;
+                abort_handler_signo = signo;
+                longjmp(jbuf, 1);
+            };
+
+        REQUIRE(::sigaction(SIGABRT, &act, &oldact) == 0);
+        XTR_LOGL(fatal, s_, "Fatal error");
+    }
+
+    REQUIRE(::sigaction(SIGABRT, &oldact, nullptr) == 0);
+    REQUIRE(val == 1);
+    REQUIRE(abort_handler_count == 1);
+    REQUIRE(abort_handler_signo == SIGABRT);
+}
