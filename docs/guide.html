@@ -210,7 +210,9 @@ style formatting as found in {fmt}. The {fmt} format string documentation can be
 <a class="reference external" href="https://fmt.dev/latest/syntax.html">here</a>.</p>
 <section id="id2">
 <h3>Examples<a class="headerlink" href="#id2" title="Permalink to this headline"></a></h3>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">xtr</span><span class="o">::</span><span class="n">logger</span> <span class="n">log</span><span class="p">;</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;xtr/logger.hpp&gt;</span><span class="cp"></span>
+
+<span class="n">xtr</span><span class="o">::</span><span class="n">logger</span> <span class="n">log</span><span class="p">;</span>
 
 <span class="n">xtr</span><span class="o">::</span><span class="n">sink</span> <span class="n">s</span> <span class="o">=</span> <span class="n">log</span><span class="p">.</span><span class="n">get_sink</span><span class="p">(</span><span class="s">&quot;Main&quot;</span><span class="p">);</span>
 
@@ -230,7 +232,9 @@ logger when this is done. If copying is undesirable then arguments may be
 passed by reference by wrapping them in a call to <a class="reference internal" href="api.html#_CPPv4I0EN3xtr6nocopyEDaRK1T" title="xtr::nocopy"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">xtr::nocopy()</span></code></a>.</p>
 <section id="id3">
 <h3>Examples<a class="headerlink" href="#id3" title="Permalink to this headline"></a></h3>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">xtr</span><span class="o">::</span><span class="n">logger</span> <span class="n">log</span><span class="p">;</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;xtr/logger.hpp&gt;</span><span class="cp"></span>
+
+<span class="n">xtr</span><span class="o">::</span><span class="n">logger</span> <span class="n">log</span><span class="p">;</span>
 
 <span class="n">xtr</span><span class="o">::</span><span class="n">sink</span> <span class="n">s</span> <span class="o">=</span> <span class="n">log</span><span class="p">.</span><span class="n">get_sink</span><span class="p">(</span><span class="s">&quot;Main&quot;</span><span class="p">);</span>
 
@@ -609,78 +613,160 @@ the <a class="reference internal" href="xtrctl.html#xtrctl"><span class="std std
 with functions that implement the back-end functionality, which are listed below:</p>
 <table class="docutils align-default">
 <colgroup>
-<col style="width: 12%" />
-<col style="width: 73%" />
-<col style="width: 15%" />
+<col style="width: 11%" />
+<col style="width: 89%" />
 </colgroup>
 <thead>
 <tr class="row-odd"><th class="head"><p>Function</p></th>
 <th class="head"><p>Signature</p></th>
-<th class="head"><p>Description</p></th>
 </tr>
 </thead>
 <tbody>
 <tr class="row-even"><td><p>Output</p></td>
-<td><p><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">::ssize_t</span> <span class="pre">out(const</span> <span class="pre">char*</span> <span class="pre">buf,</span> <span class="pre">std::size_t</span> <span class="pre">size)()</span></code></p></td>
-<td><p>replacement text</p></td>
+<td><p><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">::ssize_t</span> <span class="pre">out(xtr::log_level_t</span> <span class="pre">level,</span> <span class="pre">const</span> <span class="pre">char*</span> <span class="pre">buf,</span> <span class="pre">std::size_t</span> <span class="pre">size)()</span></code></p></td>
 </tr>
 <tr class="row-odd"><td><p>Error</p></td>
 <td><p><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">void</span> <span class="pre">err(const</span> <span class="pre">char*</span> <span class="pre">buf,</span> <span class="pre">std::size_t</span> <span class="pre">size)()</span></code></p></td>
-<td><p>replacement text</p></td>
 </tr>
 <tr class="row-even"><td><p>Flush</p></td>
 <td><p><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">void</span> <span class="pre">flush()</span></code></p></td>
-<td><p>replacement text</p></td>
 </tr>
 <tr class="row-odd"><td><p>Sync</p></td>
 <td><p><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">void</span> <span class="pre">sync()</span></code></p></td>
-<td><p>replacement text</p></td>
 </tr>
 <tr class="row-even"><td><p>Reopen</p></td>
 <td><p><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">void</span> <span class="pre">reopen()</span></code></p></td>
-<td><p>replacement text</p></td>
 </tr>
 <tr class="row-odd"><td><p>Close</p></td>
 <td><p><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">void</span> <span class="pre">close()</span></code></p></td>
-<td><p>replacement text</p></td>
 </tr>
 </tbody>
 </table>
-<p>NEED TO MAKE IT CLEAR THAT OUT IS CALLED ONCE PER LOG LINE</p>
+<p>The constructors to pass these functions to are the
+<a class="reference external" href="api.html#_CPPv4I000EN3xtr6logger6loggerERR14OutputFunctionRR13ErrorFunctionRR5ClockNSt6stringE17log_level_style_t">basic custom back-end constructor</a>
+and the
+<a class="reference external" href="api.html#_CPPv4I0000000EN3xtr6logger6loggerERR14OutputFunctionRR13ErrorFunctionRR13FlushFunctionRR12SyncFunctionRR14ReopenFunctionRR13CloseFunctionRR5ClockNSt6stringE17log_level_style_t">custom back-end constructor</a>.
+The basic constructor only accepts an <em>output</em> and <em>error</em> function.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>All back-end functions are invoked from the logger’s background consumer thread.</p>
+</div>
+<dl class="field-list">
+<dt class="field-odd">output</dt>
+<dd class="field-odd"><p>The output function is invoked when a log line is produced.
+The first argument <em>level</em> is the log level associated with the
+statement, the second argument <em>buf</em> is a pointer to the formatted
+statement (including log level, timestamp and sink name), and
+the third argument <em>size</em> is the length in bytes of the formatted
+statement. This function should return the number of bytes
+accepted by the back-end, or -1 if an error occurred. Note
+that it is currently considered an error for a back-end to
+return anything less than the number of bytes given by the
+length argument, resulting in the ‘error’ function being
+invoked with a “Short write” error string. This requirement
+may be relaxed in the future.</p>
+<div class="admonition attention">
+<p class="admonition-title">Attention</p>
+<p>The string data pointed to by the <em>buf</em> argument is only valid while
+the output function is being invoked. It must not be accessed after
+the output function returns.</p>
+</div>
+<div class="admonition attention">
+<p class="admonition-title">Attention</p>
+<p>The string data pointed to by <em>buf</em> is not nul terminated.</p>
+</div>
+</dd>
+<dt class="field-even">error</dt>
+<dd class="field-even"><p>The error function is invoked when an error occurs, for example if the
+output function fails. The first argument <em>buf</em> is a pointer to
+an error description string, the second argument <em>size</em> is the length of the
+string in bytes.</p>
+<div class="admonition attention">
+<p class="admonition-title">Attention</p>
+<p>The string data pointed to by the <em>buf</em> argument is only valid while
+the output function is being invoked. It must not be accessed after
+the error function returns.</p>
+</div>
+<div class="admonition attention">
+<p class="admonition-title">Attention</p>
+<p>The string data pointed to by <em>buf</em> is not nul terminated.</p>
+</div>
+</dd>
+<dt class="field-odd">flush</dt>
+<dd class="field-odd"><p>The flush function is invoked to indicate that the back-end should write
+any buffered data to its associated backing store.</p>
+</dd>
+<dt class="field-even">sync</dt>
+<dd class="field-even"><p>The sync function is invoked to indicate that the back-end should ensure
+that all data written to the associated backing store has reached permanent
+storage.</p>
+</dd>
+<dt class="field-odd">reopen</dt>
+<dd class="field-odd"><p>The reopen function is invoked to indicate that if the back-end has a regular
+file opened for writing log data then the file should be reopened. This is
+intended to be used to implement log rotation via tool such as
+<a class="reference external" href="https://www.man7.org/linux/man-pages/man8/logrotate.8.html">logrotate(8)</a>.
+Please refer to the <a class="reference internal" href="xtrctl.html#reopening-log-files"><span class="std std-ref">Reopening Log Files</span></a> section
+of the <a class="reference internal" href="xtrctl.html#xtrctl"><span class="std std-ref">xtrctl</span></a> documentation for further details.</p>
+</dd>
+<dt class="field-even">close</dt>
+<dd class="field-even"><p>The close function is invoked to indicate that the back-end should close any
+associated backing store.</p>
+</dd>
+</dl>
 <section id="id9">
 <h3>Examples<a class="headerlink" href="#id9" title="Permalink to this headline"></a></h3>
-<p>Custom back-end using the
-<a class="reference external" href="api.html#_CPPv4I000EN3xtr6logger6loggerERR14OutputFunctionRR13ErrorFunctionRR5ClockNSt6stringE">basic custom back-end constructor</a>:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span> <span class="n">lines</span><span class="p">;</span>
-<span class="n">std</span><span class="o">::</span><span class="n">mutex</span> <span class="n">lines_mutex</span><span class="p">;</span>
+<p>Using the
+<a class="reference external" href="api.html#_CPPv4I000EN3xtr6logger6loggerERR14OutputFunctionRR13ErrorFunctionRR5ClockNSt6stringE17log_level_style_t">basic custom back-end constructor</a>
+to send log statements to <a class="reference external" href="https://www.man7.org/linux/man-pages/man3/syslog.3.html">syslog(3)</a>:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;syslog.h&gt;</span><span class="cp"></span>
 
-<span class="n">xtr</span><span class="o">::</span><span class="n">logger</span> <span class="n">log</span><span class="p">(</span>
-    <span class="p">[</span><span class="o">&amp;</span><span class="p">](</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">buf</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">size</span><span class="p">)</span>
+<span class="k">namespace</span>
+<span class="p">{</span>
+    <span class="kt">int</span> <span class="n">xtr_to_syslog</span><span class="p">(</span><span class="n">xtr</span><span class="o">::</span><span class="n">log_level_t</span> <span class="n">level</span><span class="p">)</span>
     <span class="p">{</span>
-        <span class="n">std</span><span class="o">::</span><span class="n">unique_lock</span> <span class="n">lock</span><span class="p">{</span><span class="n">lines_mutex</span><span class="p">};</span>
-        <span class="n">lines</span><span class="p">.</span><span class="n">emplace_back</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="n">size</span><span class="p">);</span>
-        <span class="k">return</span> <span class="n">size</span><span class="p">;</span>
-    <span class="p">},</span>
-    <span class="p">[](</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">buf</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">size</span><span class="p">)</span>
-    <span class="p">{</span>
-        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">string_view</span><span class="p">{</span><span class="n">buf</span><span class="p">,</span> <span class="n">size</span><span class="p">}</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">;</span>
+        <span class="k">switch</span> <span class="p">(</span><span class="n">level</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">case</span> <span class="n">xtr</span><span class="o">::</span><span class="n">log_level_t</span><span class="o">::</span><span class="nl">fatal</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">LOG_CRIT</span><span class="p">;</span>
+            <span class="k">case</span> <span class="n">xtr</span><span class="o">::</span><span class="n">log_level_t</span><span class="o">::</span><span class="nl">error</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">LOG_ERR</span><span class="p">;</span>
+            <span class="k">case</span> <span class="n">xtr</span><span class="o">::</span><span class="n">log_level_t</span><span class="o">::</span><span class="nl">warning</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">LOG_WARNING</span><span class="p">;</span>
+            <span class="k">case</span> <span class="n">xtr</span><span class="o">::</span><span class="n">log_level_t</span><span class="o">::</span><span class="nl">info</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">LOG_INFO</span><span class="p">;</span>
+            <span class="k">case</span> <span class="n">xtr</span><span class="o">::</span><span class="n">log_level_t</span><span class="o">::</span><span class="nl">debug</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">LOG_DEBUG</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="n">__builtin_unreachable</span><span class="p">();</span>
     <span class="p">}</span>
-<span class="p">);</span>
+<span class="p">}</span>
 
-<span class="n">xtr</span><span class="o">::</span><span class="n">sink</span> <span class="n">s</span> <span class="o">=</span> <span class="n">log</span><span class="p">.</span><span class="n">get_sink</span><span class="p">(</span><span class="s">&quot;Main&quot;</span><span class="p">);</span>
+<span class="kt">int</span> <span class="n">main</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="o">::</span><span class="n">openlog</span><span class="p">(</span><span class="s">&quot;Example&quot;</span><span class="p">,</span> <span class="n">LOG_PERROR</span><span class="p">,</span> <span class="n">LOG_USER</span><span class="p">);</span>
 
-<span class="n">XTR_LOG</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="s">&quot;Hello world&quot;</span><span class="p">);</span>
+    <span class="n">xtr</span><span class="o">::</span><span class="n">logger</span> <span class="n">log</span><span class="p">(</span>
+        <span class="p">[</span><span class="o">&amp;</span><span class="p">](</span><span class="n">xtr</span><span class="o">::</span><span class="n">log_level_t</span> <span class="n">level</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">buf</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">size</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="o">::</span><span class="n">syslog</span><span class="p">(</span><span class="n">xtr_to_syslog</span><span class="p">(</span><span class="n">level</span><span class="p">),</span> <span class="s">&quot;%.*s&quot;</span><span class="p">,</span> <span class="kt">int</span><span class="p">(</span><span class="n">size</span><span class="p">),</span> <span class="n">buf</span><span class="p">);</span>
+            <span class="k">return</span> <span class="n">size</span><span class="p">;</span>
+        <span class="p">},</span>
+        <span class="p">[](</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">buf</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">size</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="o">::</span><span class="n">syslog</span><span class="p">(</span><span class="n">LOG_ERR</span><span class="p">,</span> <span class="s">&quot;%.*s&quot;</span><span class="p">,</span> <span class="kt">int</span><span class="p">(</span><span class="n">size</span><span class="p">),</span> <span class="n">buf</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">);</span>
 
-<span class="n">s</span><span class="p">.</span><span class="n">sync</span><span class="p">();</span> <span class="c1">// Ensure all log statements are delivered to the back-end</span>
+    <span class="n">xtr</span><span class="o">::</span><span class="n">sink</span> <span class="n">s</span> <span class="o">=</span> <span class="n">log</span><span class="p">.</span><span class="n">get_sink</span><span class="p">(</span><span class="s">&quot;Main&quot;</span><span class="p">);</span>
 
-<span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">lines</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">;</span>
+    <span class="n">XTR_LOG</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="s">&quot;Hello world&quot;</span><span class="p">);</span>
+
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
 </pre></div>
 </div>
-<p>Custom back-end using the
-<a class="reference external" href="api.html#_CPPv4I0000000EN3xtr6logger6loggerERR14OutputFunctionRR13ErrorFunctionRR13FlushFunctionRR12SyncFunctionRR14ReopenFunctionRR13CloseFunctionRR5ClockNSt6stringE">custom back-end constructor</a>:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">TODO</span>
-</pre></div>
-</div>
+<p>View this example on <a class="reference external" href="https://godbolt.org/z/TbPMs49db">Compiler Explorer</a>.</p>
 </section>
 </section>
 <section id="custom-log-level-styles">
@@ -693,6 +779,11 @@ a single argument of type <a class="reference internal" href="api.html#_CPPv4N3x
 a <span class="cpp-expr sig sig-inline cpp"><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="p">*</span></span> string literal.</p>
 <section id="id10">
 <h3>Examples<a class="headerlink" href="#id10" title="Permalink to this headline"></a></h3>
+<p>The following example will output:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">info</span><span class="p">:</span> <span class="mi">2021</span><span class="o">-</span><span class="mi">09</span><span class="o">-</span><span class="mi">17</span> <span class="mi">23</span><span class="p">:</span><span class="mi">36</span><span class="p">:</span><span class="mf">39.043028</span> <span class="n">Main</span> <span class="o">&lt;</span><span class="n">source</span><span class="o">&gt;</span><span class="p">:</span><span class="mi">18</span><span class="p">:</span> <span class="n">Hello</span> <span class="n">world</span>
+<span class="ow">not</span><span class="o">-</span><span class="n">info</span><span class="p">:</span> <span class="mi">2021</span><span class="o">-</span><span class="mi">09</span><span class="o">-</span><span class="mi">17</span> <span class="mi">23</span><span class="p">:</span><span class="mi">36</span><span class="p">:</span><span class="mf">39.043028</span> <span class="n">Main</span> <span class="o">&lt;</span><span class="n">source</span><span class="o">&gt;</span><span class="p">:</span><span class="mi">19</span><span class="p">:</span> <span class="n">Hello</span> <span class="n">world</span>
+</pre></div>
+</div>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;xtr/logger.hpp&gt;</span><span class="cp"></span>
 
 <span class="n">xtr</span><span class="o">::</span><span class="n">logger</span> <span class="n">log</span><span class="p">;</span>
@@ -712,11 +803,7 @@ a <span class="cpp-expr sig sig-inline cpp"><span class="k">const</span><span cl
 <span class="n">XTR_LOGL</span><span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="s">&quot;Hello world&quot;</span><span class="p">);</span>
 </pre></div>
 </div>
-<p>Will output:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">info</span><span class="p">:</span> <span class="mi">2021</span><span class="o">-</span><span class="mi">09</span><span class="o">-</span><span class="mi">17</span> <span class="mi">23</span><span class="p">:</span><span class="mi">36</span><span class="p">:</span><span class="mf">39.043028</span> <span class="n">Main</span> <span class="o">&lt;</span><span class="n">source</span><span class="o">&gt;</span><span class="p">:</span><span class="mi">18</span><span class="p">:</span> <span class="n">Hello</span> <span class="n">world</span>
-<span class="ow">not</span><span class="o">-</span><span class="n">info</span><span class="p">:</span> <span class="mi">2021</span><span class="o">-</span><span class="mi">09</span><span class="o">-</span><span class="mi">17</span> <span class="mi">23</span><span class="p">:</span><span class="mi">36</span><span class="p">:</span><span class="mf">39.043028</span> <span class="n">Main</span> <span class="o">&lt;</span><span class="n">source</span><span class="o">&gt;</span><span class="p">:</span><span class="mi">19</span><span class="p">:</span> <span class="n">Hello</span> <span class="n">world</span>
-</pre></div>
-</div>
+<p>View this example on <a class="reference external" href="https://godbolt.org/z/ohcW6ndoz">Compiler Explorer</a>.</p>
 <p class="rubric">Footnotes</p>
 <dl class="footnote brackets">
 <dt class="label" id="queue"><span class="brackets"><a class="fn-backref" href="#id1">1</a></span></dt>
