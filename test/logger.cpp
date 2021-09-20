@@ -24,6 +24,7 @@
 #include "xtr/detail/commands/message_id.hpp"
 #include "xtr/detail/commands/requests.hpp"
 #include "xtr/detail/commands/responses.hpp"
+#include "xtr/detail/config.hpp"
 
 #include "command_client.hpp"
 
@@ -2325,6 +2326,7 @@ TEST_CASE_METHOD(fixture, "logger systemd log level style test", "[logger]")
     XTR_LOGL(debug, s_, "Test"), line_ = __LINE__;
     REQUIRE(last_line() == "<7>2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test"_format(line_));
 
+#ifndef XTR_THREAD_SANITIZER_ENABLED
     struct sigaction act{};
     static struct sigaction oldact{};
     static sigjmp_buf jbuf;
@@ -2346,6 +2348,7 @@ TEST_CASE_METHOD(fixture, "logger systemd log level style test", "[logger]")
     if (::sigaction(SIGABRT, &oldact, nullptr) != 0)
         err(EXIT_FAILURE, "sigaction failed");
     REQUIRE(last_line() == "<0>2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test"_format(line_));
+#endif
 }
 
 #if __cpp_exceptions
@@ -2357,6 +2360,7 @@ TEST_CASE("logger open invalid path test", "[logger]")
 }
 #endif
 
+#ifndef XTR_THREAD_SANITIZER_ENABLED
 TEST_CASE_METHOD(fixture, "logger fatal test", "[logger]")
 {
     struct sigaction act{};
@@ -2387,3 +2391,4 @@ TEST_CASE_METHOD(fixture, "logger fatal test", "[logger]")
     REQUIRE(abort_handler_count == 1);
     REQUIRE(abort_handler_signo == SIGABRT);
 }
+#endif
