@@ -2325,8 +2325,7 @@ TEST_CASE_METHOD(fixture, "logger systemd log level style test", "[logger]")
     REQUIRE(last_line() == "<7>2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test"_format(line_));
 
     struct sigaction act{};
-    struct sigaction oldact{};
-
+    static struct sigaction oldact{};
     static jmp_buf jbuf;
 
     const int val = sigsetjmp(jbuf, 1);
@@ -2343,7 +2342,7 @@ TEST_CASE_METHOD(fixture, "logger systemd log level style test", "[logger]")
         line_ = __LINE__, XTR_LOGL(fatal, s_, "Test");
     }
 
-    REQUIRE(::sigaction(SIGABRT, &oldact, nullptr) == 0);
+    assert(::sigaction(SIGABRT, &oldact, nullptr) == 0);
     REQUIRE(last_line() == "<0>2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test"_format(line_));
 }
 
@@ -2359,8 +2358,7 @@ TEST_CASE("logger open invalid path test", "[logger]")
 TEST_CASE_METHOD(fixture, "logger fatal test", "[logger]")
 {
     struct sigaction act{};
-    struct sigaction oldact{};
-
+    static struct sigaction oldact{};
     static sig_atomic_t abort_handler_count = 0;
     static sig_atomic_t abort_handler_signo = 0;
     static jmp_buf jbuf;
@@ -2381,7 +2379,7 @@ TEST_CASE_METHOD(fixture, "logger fatal test", "[logger]")
         XTR_LOGL(fatal, s_, "Fatal error");
     }
 
-    REQUIRE(::sigaction(SIGABRT, &oldact, nullptr) == 0);
+    assert(::sigaction(SIGABRT, &oldact, nullptr) == 0);
     REQUIRE(val == 1);
     REQUIRE(abort_handler_count == 1);
     REQUIRE(abort_handler_signo == SIGABRT);
