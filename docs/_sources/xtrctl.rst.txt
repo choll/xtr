@@ -109,11 +109,11 @@ Examples
 Querying the status of all sinks::
 
     > xtrctl status /run/user/1000/xtrctl.7852.0 
-    Test0 (info) 64K capacity, 0K size, 0 dropped
-    Test1 (info) 64K capacity, 0K size, 0 dropped
-    Test2 (info) 64K capacity, 0K size, 0 dropped
-    Test3 (info) 64K capacity, 0K size, 0 dropped
-    Test4 (info) 64K capacity, 0K size, 0 dropped
+    Test0 (info) 64K capacity, 0K used, 0 dropped
+    Test1 (info) 64K capacity, 0K used, 0 dropped
+    Test2 (info) 64K capacity, 0K used, 0 dropped
+    Test3 (info) 64K capacity, 0K used, 0 dropped
+    Test4 (info) 64K capacity, 0K used, 0 dropped
 
 Setting the level of all sinks to 'error'::
 
@@ -128,9 +128,9 @@ Setting the level of sinks matching a pattern to 'warning'::
 Querying the status of sinks matching a pattern::
 
     > xtrctl status 'Test[0-2]' /run/user/1000/xtrctl.7852.0 
-    Test0 (warning) 64K capacity, 0K size, 0 dropped
-    Test1 (warning) 64K capacity, 0K size, 0 dropped
-    Test2 (warning) 64K capacity, 0K size, 0 dropped
+    Test0 (warning) 64K capacity, 0K used, 0 dropped
+    Test1 (warning) 64K capacity, 0K used, 0 dropped
+    Test2 (warning) 64K capacity, 0K used, 0 dropped
 
 Accessing xtrctl via Conan
 --------------------------
