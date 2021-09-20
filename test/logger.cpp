@@ -2342,7 +2342,7 @@ TEST_CASE_METHOD(fixture, "logger systemd log level style test", "[logger]")
         line_ = __LINE__, XTR_LOGL(fatal, s_, "Test");
     }
 
-    assert(::sigaction(SIGABRT, &oldact, nullptr) == 0);
+    REQUIRE(::sigaction(SIGABRT, &oldact, nullptr) == 0);
     REQUIRE(last_line() == "<0>2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test"_format(line_));
 }
 
@@ -2379,7 +2379,7 @@ TEST_CASE_METHOD(fixture, "logger fatal test", "[logger]")
         XTR_LOGL(fatal, s_, "Fatal error");
     }
 
-    assert(::sigaction(SIGABRT, &oldact, nullptr) == 0);
+    REQUIRE(::sigaction(SIGABRT, &oldact, nullptr) == 0);
     REQUIRE(val == 1);
     REQUIRE(abort_handler_count == 1);
     REQUIRE(abort_handler_signo == SIGABRT);
