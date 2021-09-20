@@ -57,6 +57,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/un.h>
+#include <err.h>
 #include <setjmp.h>
 #include <signal.h>
 #include <stdlib.h>
@@ -2342,7 +2343,8 @@ TEST_CASE_METHOD(fixture, "logger systemd log level style test", "[logger]")
         line_ = __LINE__, XTR_LOGL(fatal, s_, "Test");
     }
 
-    REQUIRE(::sigaction(SIGABRT, &oldact, nullptr) == 0);
+    if (::sigaction(SIGABRT, &oldact, nullptr) != 0)
+        err(EXIT_FAILURE, "sigaction failed");
     REQUIRE(last_line() == "<0>2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test"_format(line_));
 }
 
@@ -2379,7 +2381,8 @@ TEST_CASE_METHOD(fixture, "logger fatal test", "[logger]")
         XTR_LOGL(fatal, s_, "Fatal error");
     }
 
-    REQUIRE(::sigaction(SIGABRT, &oldact, nullptr) == 0);
+    if (::sigaction(SIGABRT, &oldact, nullptr) != 0)
+        err(EXIT_FAILURE, "sigaction failed");
     REQUIRE(val == 1);
     REQUIRE(abort_handler_count == 1);
     REQUIRE(abort_handler_signo == SIGABRT);
