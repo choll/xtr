@@ -25,8 +25,6 @@ const char* xtr::default_log_level_style(log_level_t level)
 {
     switch (level)
     {
-    case log_level_t::none:
-        return "";
     case log_level_t::fatal:
         return "F ";
     case log_level_t::error:
@@ -37,8 +35,9 @@ const char* xtr::default_log_level_style(log_level_t level)
         return "I ";
     case log_level_t::debug:
         return "D ";
+    default:
+        return "";
     }
-    __builtin_unreachable();
 }
 
 XTR_FUNC
@@ -46,18 +45,17 @@ const char* xtr::systemd_log_level_style(log_level_t level)
 {
     switch (level)
     {
-    case log_level_t::none:
-        return "";
     case log_level_t::fatal:
         return "<0>"; // SD_EMERG
     case log_level_t::error:
         return "<3>"; // SD_ERR
     case log_level_t::warning:
-        return "<4>"; // SD_WARNING;
+        return "<4>"; // SD_WARNING
     case log_level_t::info:
-        return "<6>"; // SD_INFO;
+        return "<6>"; // SD_INFO
     case log_level_t::debug:
-        return "<7>"; // SD_DEBUG;
+        return "<7>"; // SD_DEBUG
+    default:
+        return "";
     }
-    __builtin_unreachable();
 }
