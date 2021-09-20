@@ -1122,7 +1122,7 @@ TEST_CASE_METHOD(fixture, "logger non-blocking drop test", "[logger]")
 
     XTR_LOG(s_, "{}", b);
 
-    for (std::size_t j = 0; j < n; ++j)
+    for (std::size_t i = 0; i < n; ++i)
         XTR_TRY_LOG(s_, "Test");
 
     b.release();
@@ -1572,7 +1572,7 @@ TEST_CASE_METHOD(command_fixture<>, "logger status command dropped count test", 
 
     XTR_LOG(s_, "{}", b);
 
-    for (std::size_t j = 0; j < n; ++j)
+    for (std::size_t i = 0; i < n; ++i)
         XTR_TRY_LOG(s_, "Test");
 
     b.release();
