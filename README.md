@@ -27,10 +27,6 @@ It is designed so that the cost of a log statement is consistently fast---i.e.
 every call is fast, not just the average case. No allocations or system calls
 are made when a log statement is made.
 
-## Status
-
-:construction: :construction: Under construction! :construction: :construction:
-
 ## Features
 
 * Fast (please see benchmark results).
