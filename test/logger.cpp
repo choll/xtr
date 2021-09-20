@@ -2329,14 +2329,14 @@ TEST_CASE_METHOD(fixture, "logger systemd log level style test", "[logger]")
 
     static jmp_buf jbuf;
 
-    const int val = setjmp(jbuf);
+    const int val = sigsetjmp(jbuf, 1);
 
     if (val == 0)
     {
         act.sa_handler =
             [](int)
             {
-                longjmp(jbuf, 1);
+                siglongjmp(jbuf, 1);
             };
 
         REQUIRE(::sigaction(SIGABRT, &act, &oldact) == 0);
@@ -2365,7 +2365,7 @@ TEST_CASE_METHOD(fixture, "logger fatal test", "[logger]")
     static sig_atomic_t abort_handler_signo = 0;
     static jmp_buf jbuf;
 
-    const int val = setjmp(jbuf);
+    const int val = sigsetjmp(jbuf, 1);
 
     if (val == 0)
     {
@@ -2374,7 +2374,7 @@ TEST_CASE_METHOD(fixture, "logger fatal test", "[logger]")
             {
                 ++abort_handler_count;
                 abort_handler_signo = signo;
-                longjmp(jbuf, 1);
+                siglongjmp(jbuf, 1);
             };
 
         REQUIRE(::sigaction(SIGABRT, &act, &oldact) == 0);
