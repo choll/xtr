@@ -2326,7 +2326,7 @@ TEST_CASE_METHOD(fixture, "logger systemd log level style test", "[logger]")
 
     struct sigaction act{};
     static struct sigaction oldact{};
-    static jmp_buf jbuf;
+    static sigjmp_buf jbuf;
 
     const int val = sigsetjmp(jbuf, 1);
 
@@ -2361,7 +2361,7 @@ TEST_CASE_METHOD(fixture, "logger fatal test", "[logger]")
     static struct sigaction oldact{};
     static sig_atomic_t abort_handler_count = 0;
     static sig_atomic_t abort_handler_signo = 0;
-    static jmp_buf jbuf;
+    static sigjmp_buf jbuf;
 
     const int val = sigsetjmp(jbuf, 1);
 
