@@ -144,5 +144,4 @@ Add a `virtualenv` generator, for example if using conanfile.txt:
     ...etc..
 
 After running :code:`conan install` run :code:`source activate.sh` and xtrctl
-should be in your $PATH. A man page for xtrctl (this file) will also be added
-to your $MANPATH.
+should be in your $PATH.
