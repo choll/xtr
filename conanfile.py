@@ -5,10 +5,9 @@ import os
 
 
 class XtrConan(ConanFile):
-    requires = "fmt/[>=6.0.0]"
+    requires = "fmt/[>=6.0.0 < 8.0.0 || > 8.0.0]"
     build_requires = "benchmark/1.5.0", "catch2/2.13.0"
     name = "xtr"
-    version = "0.1"
     license = "MIT"
     author = "Chris Holloway (c.holloway@gmail.com)"
     url = "https://github.com/choll/xtr"
