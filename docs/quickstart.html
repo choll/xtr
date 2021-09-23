@@ -133,7 +133,7 @@ on FreeBSD:</p>
 <p>Write to the log if the log level of the sink is at the ‘info’ level or a level
 with lower importance than ‘info’. The default sink level ‘info’ so this
 message will be logged:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">XTR_LOG</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="s">&quot;Hello world&quot;</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">XTR_LOGL</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="s">&quot;Hello world&quot;</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>Set the log level of the sink ‘s’ to ‘error’, causing messages with importance
@@ -141,12 +141,12 @@ lower than ‘error’ to be dropped. Available log levels are debug, info, warn
 error and fatal—see <a class="reference internal" href="api.html#_CPPv4N3xtr11log_level_tE" title="xtr::log_level_t"><code class="xref cpp cpp-enum docutils literal notranslate"><span class="pre">xtr::log_level_t</span></code></a>.</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">s</span><span class="p">.</span><span class="n">set_level</span><span class="p">(</span><span class="n">xtr</span><span class="o">::</span><span class="n">log_level_t</span><span class="o">::</span><span class="n">error</span><span class="p">);</span>
 
-<span class="n">XTR_LOG</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="s">&quot;Hello world&quot;</span><span class="p">);</span> <span class="c1">// Dropped</span>
+<span class="n">XTR_LOGL</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="s">&quot;Hello world&quot;</span><span class="p">);</span> <span class="c1">// Dropped</span>
 </pre></div>
 </div>
 <p>Fatal errors will log and then terminate the program using
 <a class="reference external" href="https://www.man7.org/linux/man-pages/man3/abort.3.html">abort(3)</a>:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">XTR_LOG</span><span class="p">(</span><span class="n">fatal</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="s">&quot;Goodbye cruel world&quot;</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">XTR_LOGL</span><span class="p">(</span><span class="n">fatal</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="s">&quot;Goodbye cruel world&quot;</span><span class="p">);</span>
 <span class="c1">// NOTREACHED</span>
 </pre></div>
 </div>

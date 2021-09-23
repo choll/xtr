@@ -266,7 +266,7 @@ xtr::sink s = log.get_sink("Main");
 
 s.set_level(xtr::log_level_t::error);
 
-XTR_LOG(info, s, "Hello {}", foo());
+XTR_LOGL(info, s, "Hello {}", foo());
 .ft P
 .fi
 .UNINDENT

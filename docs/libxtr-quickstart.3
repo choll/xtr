@@ -129,7 +129,7 @@ message will be logged:
 .sp
 .nf
 .ft C
-XTR_LOG(info, s, "Hello world");
+XTR_LOGL(info, s, "Hello world");
 .ft P
 .fi
 .UNINDENT
@@ -145,7 +145,7 @@ error and fatal\-\-\-see \fBxtr::log_level_t\fP\&.
 .ft C
 s.set_level(xtr::log_level_t::error);
 
-XTR_LOG(info, s, "Hello world"); // Dropped
+XTR_LOGL(info, s, "Hello world"); // Dropped
 .ft P
 .fi
 .UNINDENT
@@ -158,7 +158,7 @@ Fatal errors will log and then terminate the program using
 .sp
 .nf
 .ft C
-XTR_LOG(fatal, s, "Goodbye cruel world");
+XTR_LOGL(fatal, s, "Goodbye cruel world");
 // NOTREACHED
 .ft P
 .fi
