@@ -212,7 +212,7 @@ so in the following example the function :cpp:func:`foo` is not called:
 
     s.set_level(xtr::log_level_t::error);
 
-    XTR_LOG(info, s, "Hello {}", foo());
+    XTR_LOGL(info, s, "Hello {}", foo());
 
 View this example on `Compiler Explorer <https://godbolt.org/z/ss36qzo1c>`__.
 
