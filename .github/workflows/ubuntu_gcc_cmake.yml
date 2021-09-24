@@ -33,6 +33,6 @@ jobs:
         cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MODULE_PATH=${PWD} -DBUILD_TESTING=ON -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INSTALL_PREFIX=/tmp/install
         cmake --build .
     - name: test
-      run: cmake --build . --target test
+      run: cd build/ && cmake --build . --target test
     - name: install
-      run: cmake --build . --target install
+      run: cd build/ && cmake --build . --target install
