@@ -1,11 +1,13 @@
 cmake_minimum_required(VERSION 3.15)
 project(xtr CXX)
 
-set(XTRCRL_TARGET xtrcrl)
+set(XTRCTL_TARGET xtrctl)
 
 option(BUILD_BENCHMARK "Build benchmark test" ON)
 option(BUILD_SINGLE_HEADER "Build header-only" ON)
 option(INSTALL_DOCS "Install man pages" ON)
+option(ENABLE_EXCEPTIONS "Enable the use of exceptions" ON)
+option(ENABLE_LTO "Enable link-time optimisation" OFF)
 
 find_package(Threads REQUIRED)
 find_package(fmt REQUIRED)
@@ -37,11 +39,31 @@ if (CMAKE_CXX_COMPILER_ID MATCHES ".*Clang" OR CMAKE_CXX_COMPILER_ID MATCHES ".*
     target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wconversion -Wshadow -Wcast-qual -Wformat=2 -pedantic -pipe)
 endif()
 
-add_executable(${XTRCRL_TARGET} src/xtrctl.cpp)
-target_link_libraries(${XTRCRL_TARGET} ${PROJECT_NAME})
+if (NOT ENABLE_EXCEPTIONS)
+    target_compile_options(${PROJECT_NAME} PRIVATE -fno-exceptions)
+endif()
+
+if (ENABLE_LTO)
+    target_compile_options(${PROJECT_NAME} PRIVATE -flto)
+    if (CMAKE_CXX_COMPILER_ID MATCHES ".*GNU")
+        find_program(GCC_AR gcc-ar)
+        if (GCC_AR)
+            set(CMAKE_AR ${GCC_AR})
+        endif()
+        find_program(GCC_RANLIB gcc-ranlib)
+        if (GCC_RANLIB)
+            set(CMAKE_RANLIB ${GCC_RANLIB})
+        endif()
+    elseif(CMAKE_CXX_COMPILER_ID MATCHES ".*Clang")
+        include(llvm-toolchain)
+    endif()
+endif()
+
+add_executable(${XTRCTL_TARGET} src/xtrctl.cpp)
+target_link_libraries(${XTRCTL_TARGET} ${PROJECT_NAME})
 
 include(GNUInstallDirs)
-install(TARGETS ${PROJECT_NAME} ${XTRCRL_TARGET}
+install(TARGETS ${PROJECT_NAME} ${XTRCTL_TARGET}
         RUNTIME DESTINATION bin
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib
