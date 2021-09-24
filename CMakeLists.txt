@@ -5,6 +5,7 @@ set(XTRCRL_TARGET xtrcrl)
 
 option(BUILD_BENCHMARK "Build benchmark test" ON)
 option(BUILD_SINGLE_HEADER "Build header-only" ON)
+option(INSTALL_DOCS "Install man pages" ON)
 
 find_package(Threads REQUIRED)
 find_package(fmt REQUIRED)
@@ -61,4 +62,11 @@ if(BUILD_SINGLE_HEADER)
                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
     install(FILES single_include/xtr/logger.hpp
             DESTINATION single_include/xtr)
+endif()
+
+if(INSTALL_DOCS)
+    install(FILES docs/xtrctl.1
+            DESTINATION man/man1)
+    install(FILES docs/libxtr.3 docs/libxtr-quickstart.3 docs/libxtr-userguide.3
+            DESTINATION man/man3)
 endif()
