@@ -300,13 +300,13 @@ Formatting a custom type via fmt::formatter:
     struct fmt::formatter<custom>
     {
         template<typename ParseContext>
-        constexpr auto parse(ParseContext &ctx)
+        constexpr auto parse(ParseContext& ctx)
         {
             return ctx.begin();
         }
 
         template<typename FormatContext>
-        auto format(const custom&, FormatContext &ctx)
+        auto format(const custom&, FormatContext& ctx)
         {
             return format_to(ctx.out(), "custom");
         }
@@ -323,7 +323,7 @@ Formatting a custom type via fmt::formatter:
         return 0;
     }
 
-View this example on `Compiler Explorer <https://godbolt.org/z/Woov3fMsr>`__.
+View this example on `Compiler Explorer <https://godbolt.org/z/W56zdWEh1>`__.
 
 .. _time-sources:
 
