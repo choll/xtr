@@ -9,7 +9,7 @@
 
 ## Installing using Conan
 
-1. If using the Conan Center [package](https://conan.io/center/search/xtr) then skip to the
+1. If using the Conan Center [package](https://conan.io/center/xtr) then skip to the
 next step on editing your conanfile, otherwise create a package in your local cache via `conan create .`
 2. Add a requirement for 'xtr' in your conanfile and run `conan install .` (refer to the Conan
    [cheat sheet](https://docs.conan.io/en/latest/cheatsheet.html#using-packages-in-an-application)
