@@ -9,7 +9,7 @@ add_executable(${PROJECT_NAME}  align.cpp
                                 file_descriptor.cpp
                                 logger.cpp
                                 main.cpp
-	                            memory_mapping.cpp
+                                memory_mapping.cpp
                                 mirrored_memory_mapping.cpp
                                 pagesize.cpp
                                 synchronized_ring_buffer.cpp
