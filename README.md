@@ -53,7 +53,7 @@ https://choll.github.io/xtr
 
 ## Benchmarks
 
-Below is the output of `make benchmark` on a stock Ryzen 5950X, with g++ version 10.2.1. No cores are pinned. Benchmarks with pinning, and on other CPUs will be completed soon.
+Below is the output of `make benchmark` on a stock Ryzen 5950X, with g++ version 10.2.1. No cores are isolated. Benchmarks with isolation, and on other CPUs will be completed soon.
 
 ```
 2021-07-31 22:30:11
