@@ -32,6 +32,7 @@ are made when a log statement is made.
 
 * Fast (please see benchmark results).
 * No allocations when logging, even when logging strings.
+* Formatting, I/O etc are all delegated to a background thread. Work done at the log statement call-site is minimized---for example a no argument log statement only involves writing a single pointer to a ring buffer.
 * Safe: No references taken to arguments unless explicitly requested.
 * Comprehensive suite of unit tests which run cleanly under AddressSanitizer, UndefinedBehaviourSanitizer, ThreadSanitizer and LeakSanitizer.
 * Log sinks with independent log levels (so that levels for different subsystems may be modified independently).
