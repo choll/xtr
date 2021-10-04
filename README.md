@@ -32,6 +32,7 @@ are made when a log statement is made.
 
 * Fast (please see benchmark results).
 * No allocations when logging, even when logging strings.
+* Formatting, I/O etc are all delegated to a background thread. Work done at the log statement call-site is minimized---for example a no argument log statement only involves writing a single pointer to a ring buffer.
 * Safe: No references taken to arguments unless explicitly requested.
 * Comprehensive suite of unit tests which run cleanly under AddressSanitizer, UndefinedBehaviourSanitizer, ThreadSanitizer and LeakSanitizer.
 * Log sinks with independent log levels (so that levels for different subsystems may be modified independently).
@@ -53,7 +54,7 @@ https://choll.github.io/xtr
 
 ## Benchmarks
 
-Below is the output of `make benchmark` on a stock Ryzen 5950X, with g++ version 10.2.1. No cores are pinned. Benchmarks with pinning, and on other CPUs will be completed soon.
+Below is the output of `make benchmark` on a stock Ryzen 5950X, with g++ version 10.2.1. No cores are isolated. Benchmarks with isolation, and on other CPUs will be completed soon.
 
 ```
 2021-07-31 22:30:11
