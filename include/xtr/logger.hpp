@@ -208,7 +208,7 @@ public:
      *                   documentation for details.
      */
     template<typename Clock = std::chrono::system_clock>
-    logger(
+    explicit logger(
         const char* path,
         Clock&& clock = Clock(),
         std::string command_path = default_command_path(),
