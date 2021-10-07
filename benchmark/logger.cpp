@@ -2,17 +2,17 @@
 
 #include <benchmark/benchmark.h>
 
+#include <cerrno>
 #include <cstdio>
 #include <cstdint>
 #include <cstdlib>
 #include <ctime>
+#include <iostream>
 #include <string>
 #include <string_view>
 
 #include <pthread.h>
 #include <sched.h>
-
-// XXX TODO NEED TO ACCEPT AFFINITY AS ARGUMENTS
 
 namespace
 {
@@ -23,6 +23,22 @@ namespace
         CPU_SET(cpu, &cpus);
         if (::pthread_setaffinity_np(thread, sizeof(cpus), &cpus) != 0)
             abort();
+    }
+
+    int getenv_int(const char* name)
+    {
+        const char* env = ::getenv(name);
+        if (env == nullptr)
+            return -1;
+        char* end;
+        errno = 0;
+        const long result = std::strtol(env, &end, 10);
+        if (errno != 0 || name == end || *end != '\0')
+        {
+            std::cerr << name << "=" << env << " is invalid\n";
+            abort();
+        }
+        return int(result);
     }
 }
 
@@ -38,8 +54,11 @@ namespace
             {                                                           \
             }};                                                         \
                                                                         \
-        set_thread_attrs(::pthread_self(), 4);                          \
-        set_thread_attrs(log.consumer_thread_native_handle(), 5);       \
+        if (const int cpu = getenv_int("PRODUCER_CPU"); cpu != -1)      \
+            set_thread_attrs(::pthread_self(), cpu);                    \
+                                                                        \
+        if (const int cpu = getenv_int("CONSUMER_CPU"); cpu != -1)      \
+            set_thread_attrs(log.consumer_thread_native_handle(), cpu); \
                                                                         \
         xtr::sink p = log.get_sink("Name");                             \
         std::size_t n = 0;                                              \

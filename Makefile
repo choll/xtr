@@ -191,6 +191,11 @@ check: $(TEST_TARGET)
 benchmark: $(BENCH_TARGET)
 	$<
 
+benchmark_cpu: $(BENCH_TARGET)
+	sudo cpupower --cpu $(PRODUCER_CPU),$(CONSUMER_CPU) frequency-set --governor performance
+	$<
+	sudo cpupower --cpu $(PRODUCER_CPU),$(CONSUMER_CPU) frequency-set --governor schedutil
+
 xtrctl: $(XTRCTL_TARGET)
 
 single_include/xtr/logger.hpp: $(SRCS) $(INCLUDES)
