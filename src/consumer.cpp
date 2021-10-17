@@ -252,7 +252,7 @@ void xtr::detail::consumer::set_level_handler(int fd, detail::set_level& sl)
 }
 
 XTR_FUNC
-void xtr::detail::consumer::reopen_handler(int fd, detail::reopen&)
+void xtr::detail::consumer::reopen_handler(int fd, detail::reopen& /* unused */)
 {
     if (!reopen())
         cmds_->send_error(fd, std::strerror(errno));

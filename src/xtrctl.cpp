@@ -49,7 +49,7 @@ namespace
         if (reason != nullptr)
             std::cout << reason << "\n\n";
 
-        (status ? std::cerr : std::cout)
+        (status != 0 ? std::cerr : std::cout)
             << "Usage: " << progname << " [--help] <command> [<args>] <socket path>\n"
             "Available commands are:\n"
             "\n"
@@ -176,7 +176,7 @@ int main(int argc, char* argv[])
         }
     }
 
-    if (argc > optind + 2 - reopen)
+    if (argc > optind + 2 - int(reopen))
         usage(argv[0], EXIT_FAILURE, "Too many arguments");
 
     if (argc < optind + 1)

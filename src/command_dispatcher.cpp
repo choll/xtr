@@ -144,7 +144,7 @@ void xtr::detail::command_dispatcher::process_commands(int timeout) noexcept
             ::nfds_t(pollfds_.size()),
             timeout);
 
-    if (pollfds_[0].revents & POLLIN)
+    if ((pollfds_[0].revents & POLLIN) != 0)
     {
         detail::file_descriptor fd(
             ::accept4(pollfds_[0].fd.get(), nullptr, nullptr, SOCK_NONBLOCK));
@@ -158,12 +158,12 @@ void xtr::detail::command_dispatcher::process_commands(int timeout) noexcept
     for (std::size_t i = 1; i < pollfds_.size() && nfds > 0; ++i)
     {
         const int fd = pollfds_[i].fd.get();
-        if (pollfds_[i].revents & POLLOUT)
+        if ((pollfds_[i].revents & POLLOUT) != 0)
         {
             process_socket_write(pollfds_[i]);
             --nfds;
         }
-        else if (pollfds_[i].revents & (POLLHUP|POLLIN))
+        else if ((pollfds_[i].revents & (POLLHUP|POLLIN)) != 0)
         {
             process_socket_read(pollfds_[i]);
             --nfds;

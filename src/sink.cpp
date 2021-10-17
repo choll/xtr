@@ -62,7 +62,7 @@ void xtr::sink::close()
 {
     if (open_)
     {
-        sync(/*destruct=*/true);
+        sync(/*destroy=*/true);
         open_ = false;
         // clear() is called here in case the sink is registered with the
         // logger again, e.g. via assignment. This is because when the

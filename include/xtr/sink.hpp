@@ -199,7 +199,7 @@ private:
     auto make_lambda(Args&&... args)
         noexcept((XTR_NOTHROW_INGESTIBLE(Args, args) && ...));
 
-    void sync(bool destruct);
+    void sync(bool destroy);
 
     using ring_buffer = detail::synchronized_ring_buffer<64 * 1024>;
 
