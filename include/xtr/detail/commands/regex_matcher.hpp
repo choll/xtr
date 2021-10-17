@@ -30,7 +30,7 @@ namespace xtr::detail
     class regex_matcher;
 }
 
-class xtr::detail::regex_matcher : public matcher
+class xtr::detail::regex_matcher final : public matcher
 {
 public:
     regex_matcher(const char* pattern, bool ignore_case, bool extended);

@@ -60,7 +60,7 @@ private:
     };
 
 public:
-    void run(std::function<std::timespec()> clock) noexcept;
+    void run(std::function<std::timespec()>&& clock) noexcept;
     void set_command_path(std::string path) noexcept;
 
     template<
@@ -91,7 +91,7 @@ public:
     {
     }
 
-    void add_sink(sink& p, const std::string& name);
+    void add_sink(sink& s, const std::string& name);
 
     std::function<::ssize_t(log_level_t level, const char* buf, std::size_t size)> out;
     std::function<void(const char* buf, std::size_t size)> err;

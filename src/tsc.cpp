@@ -165,8 +165,8 @@ std::timespec xtr::detail::tsc::to_timespec(tsc ts)
     const auto total_nanos = std::uint64_t(last_epoch_nanos + nano_delta);
 
     std::timespec result;
-    result.tv_sec = total_nanos / 1000000000UL;
-    result.tv_nsec = total_nanos % 1000000000UL;
+    result.tv_sec = std::time_t(total_nanos / 1000000000UL);
+    result.tv_nsec = long(total_nanos % 1000000000UL);
 
     return result;
 }

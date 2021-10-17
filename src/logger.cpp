@@ -65,7 +65,7 @@ XTR_FUNC
 void xtr::logger::set_command_path(std::string path) noexcept
 {
     post(
-        [s = std::move(path)](detail::consumer& c, auto&)
+        [s = std::move(path)](detail::consumer& c, auto&) mutable
         {
             c.set_command_path(std::move(s));
         });

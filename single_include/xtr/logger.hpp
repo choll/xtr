@@ -1437,6 +1437,13 @@ public:
     void close();
 
     /**
+     * Returns true if the sink is open (connected to a logger), or false if
+     * the sink is closed (not connected to a logger). Log messages may only
+     * be written to a sink that is open.
+     */
+    bool is_open() const noexcept;
+
+    /**
      *  Synchronizes all log calls previously made by this sink to back-end
      *  storage.
      *
@@ -2040,7 +2047,7 @@ namespace xtr::detail
     class regex_matcher;
 }
 
-class xtr::detail::regex_matcher : public matcher
+class xtr::detail::regex_matcher final : public matcher
 {
 public:
     regex_matcher(const char* pattern, bool ignore_case, bool extended);
@@ -2066,7 +2073,7 @@ namespace xtr::detail
     class wildcard_matcher;
 }
 
-class xtr::detail::wildcard_matcher : public matcher
+class xtr::detail::wildcard_matcher final : public matcher
 {
 public:
     wildcard_matcher(const char* pattern, bool ignore_case);
@@ -2113,7 +2120,7 @@ private:
     };
 
 public:
-    void run(std::function<std::timespec()> clock) noexcept;
+    void run(std::function<std::timespec()>&& clock) noexcept;
     void set_command_path(std::string path) noexcept;
 
     template<
@@ -2143,7 +2150,7 @@ public:
     {
     }
 
-    void add_sink(sink& p, const std::string& name);
+    void add_sink(sink& s, const std::string& name);
 
     std::function<::ssize_t(log_level_t level, const char* buf, std::size_t size)>
         out;
@@ -3335,7 +3342,7 @@ inline std::string xtr::default_command_path()
 #include <cstring>
 #include <version>
 
-inline void xtr::detail::consumer::run(std::function<::timespec()> clock) noexcept
+inline void xtr::detail::consumer::run(std::function<::timespec()>&& clock) noexcept
 {
     char ts[32] = {};
     bool ts_stale = true;
@@ -3608,7 +3615,7 @@ inline void xtr::logger::set_error_stream(FILE* stream) noexcept
 
 inline void xtr::logger::set_command_path(std::string path) noexcept
 {
-    post([s = std::move(path)](detail::consumer& c, auto&)
+    post([s = std::move(path)](detail::consumer& c, auto&) mutable
          { c.set_command_path(std::move(s)); });
     control_.sync();
 }
@@ -3930,13 +3937,21 @@ inline xtr::sink::sink(const sink& other)
 
 inline xtr::sink& xtr::sink::operator=(const sink& other)
 {
+    if (this == &other) [[unlikely]]
+        return *this;
+
+    close();
+
     level_ = other.level_.load(std::memory_order_relaxed);
-    if (!std::exchange(open_, other.open_)) // if previously closed, register
+
+    if (other.open_)
     {
         const_cast<sink&>(other).post(
             [this](detail::consumer& c, const auto& name)
             { c.add_sink(*this, name); });
+        open_ = true;
     }
+
     return *this;
 }
 
@@ -3953,6 +3968,11 @@ inline void xtr::sink::close()
         open_ = false;
         buf_.clear();
     }
+}
+
+inline bool xtr::sink::is_open() const noexcept
+{
+    return open_;
 }
 
 inline void xtr::sink::sync(bool destroy)
@@ -3981,7 +4001,7 @@ inline void xtr::sink::sync(bool destroy)
 
 inline void xtr::sink::set_name(std::string name)
 {
-    post([name = std::move(name)](auto&, auto& oldname)
+    post([name = std::move(name)](auto&, auto& oldname) mutable
          { oldname = std::move(name); });
     sync();
 }
@@ -4173,8 +4193,8 @@ inline std::timespec xtr::detail::tsc::to_timespec(tsc ts)
     const auto total_nanos = std::uint64_t(last_epoch_nanos + nano_delta);
 
     std::timespec result;
-    result.tv_sec = total_nanos / 1000000000UL;
-    result.tv_nsec = total_nanos % 1000000000UL;
+    result.tv_sec = std::time_t(total_nanos / 1000000000UL);
+    result.tv_nsec = long(total_nanos % 1000000000UL);
 
     return result;
 }

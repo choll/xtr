@@ -53,6 +53,7 @@
 #include <string>
 #include <string_view>
 #include <system_error>
+#include <utility>
 #include <vector>
 
 #include <sys/stat.h>
@@ -980,7 +981,7 @@ TEST_CASE("logger set error file test", "[logger]")
 TEST_CASE_METHOD(fixture, "logger set output func test", "[logger]")
 {
     std::string output;
-    xtr::log_level_t level;
+    xtr::log_level_t level{};
 
     log_.set_output_function(
         [&](xtr::log_level_t l, const char* buf, std::size_t size)
@@ -1370,28 +1371,28 @@ TEST_CASE("logger no exit test", "[.logger]")
 
 TEST_CASE_METHOD(fixture, "logger sink copy test", "[logger]")
 {
-    xtr::sink p_copy(s_);
-    p_copy.set_name("p_copy");
-    xtr::sink p_assign;
-    p_assign = p_copy;
-    p_assign.set_name("p_assign");
+    xtr::sink s_copy(s_);
+    s_copy.set_name("s_copy");
+    xtr::sink s_assign;
+    s_assign = s_copy;
+    s_assign.set_name("s_assign");
 
     std::vector<xtr::sink> v;
 
-    v.push_back(p_assign);
+    v.push_back(s_assign);
     v.back().set_name("vec0");
-    v.push_back(p_assign);
+    v.push_back(s_assign);
     v.back().set_name("vec1");
-    v.push_back(p_assign);
+    v.push_back(s_assign);
     v.back().set_name("vec2");
 
-    XTR_LOG(p_copy, "Test"), line_ = __LINE__;
-    p_copy.sync();
-    REQUIRE(last_line() == "I 2000-01-01 01:02:03.123456 p_copy logger.cpp:{}: Test"_format(line_));
+    XTR_LOG(s_copy, "Test"), line_ = __LINE__;
+    s_copy.sync();
+    REQUIRE(last_line() == "I 2000-01-01 01:02:03.123456 s_copy logger.cpp:{}: Test"_format(line_));
 
-    XTR_LOG(p_assign, "Test"), line_ = __LINE__;
-    p_assign.sync();
-    REQUIRE(last_line() == "I 2000-01-01 01:02:03.123456 p_assign logger.cpp:{}: Test"_format(line_));
+    XTR_LOG(s_assign, "Test"), line_ = __LINE__;
+    s_assign.sync();
+    REQUIRE(last_line() == "I 2000-01-01 01:02:03.123456 s_assign logger.cpp:{}: Test"_format(line_));
 
     XTR_LOG(v[0], "Test"), line_ = __LINE__;
     v[0].sync();
@@ -1405,31 +1406,67 @@ TEST_CASE_METHOD(fixture, "logger sink copy test", "[logger]")
     v[2].sync();
     REQUIRE(last_line() == "I 2000-01-01 01:02:03.123456 vec2 logger.cpp:{}: Test"_format(line_));
 
-    p_assign = p_copy;
-    p_assign.set_name("p_assign2");
-    XTR_LOG(p_assign, "Test"), line_ = __LINE__;
-    p_assign.sync();
-    REQUIRE(last_line() == "I 2000-01-01 01:02:03.123456 p_assign2 logger.cpp:{}: Test"_format(line_));
+    s_assign = s_copy;
+    s_assign.set_name("s_assign2");
+    XTR_LOG(s_assign, "Test"), line_ = __LINE__;
+    s_assign.sync();
+    REQUIRE(last_line() == "I 2000-01-01 01:02:03.123456 s_assign2 logger.cpp:{}: Test"_format(line_));
 
-    p_assign.close();
-    p_assign = p_copy;
-    p_assign.set_name("p_assign3");
-    XTR_LOG(p_assign, "Test"), line_ = __LINE__;
-    p_assign.sync();
-    REQUIRE(last_line() == "I 2000-01-01 01:02:03.123456 p_assign3 logger.cpp:{}: Test"_format(line_));
+    s_assign.close();
+    s_assign = s_copy;
+    s_assign.set_name("s_assign3");
+    XTR_LOG(s_assign, "Test"), line_ = __LINE__;
+    s_assign.sync();
+    REQUIRE(last_line() == "I 2000-01-01 01:02:03.123456 s_assign3 logger.cpp:{}: Test"_format(line_));
 
     // Copy and assign without calling set_name to verify names are
     // copied correctly.
-    xtr::sink p_copy2(p_copy);
-    XTR_LOG(p_copy2, "Test"), line_ = __LINE__;
-    p_copy2.sync();
-    REQUIRE(last_line() == "I 2000-01-01 01:02:03.123456 p_copy logger.cpp:{}: Test"_format(line_));
+    xtr::sink s_copy2(s_copy);
+    XTR_LOG(s_copy2, "Test"), line_ = __LINE__;
+    s_copy2.sync();
+    REQUIRE(last_line() == "I 2000-01-01 01:02:03.123456 s_copy logger.cpp:{}: Test"_format(line_));
 
-    xtr::sink p_assign2;
-    p_assign2 = p_assign;
-    XTR_LOG(p_assign2, "Test"), line_ = __LINE__;
-    p_assign2.sync();
-    REQUIRE(last_line() == "I 2000-01-01 01:02:03.123456 p_assign3 logger.cpp:{}: Test"_format(line_));
+    xtr::sink s_assign2;
+    s_assign2 = s_assign;
+    XTR_LOG(s_assign2, "Test"), line_ = __LINE__;
+    s_assign2.sync();
+    REQUIRE(last_line() == "I 2000-01-01 01:02:03.123456 s_assign3 logger.cpp:{}: Test"_format(line_));
+}
+
+TEST_CASE_METHOD(fixture, "logger sink name overwrite test", "[logger]")
+{
+    xtr::sink s = log_.get_sink("Overwritten");
+
+    s = s_;
+
+    XTR_LOG(s, "Test"), line_ = __LINE__;
+    REQUIRE(last_line() == "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test"_format(line_));
+}
+
+TEST_CASE_METHOD(fixture, "logger sink assign from closed sink test", "[logger]")
+{
+    xtr::sink s1 = log_.get_sink("Test1");
+    xtr::sink s2;
+
+    REQUIRE(s1.is_open());
+    REQUIRE(!s2.is_open());
+
+    s1 = s2;
+
+    REQUIRE(!s1.is_open());
+    REQUIRE(!s2.is_open());
+}
+
+TEST_CASE_METHOD(fixture, "logger sink self assign test", "[logger]")
+{
+    xtr::sink s = log_.get_sink("Test1");
+
+    s = s;
+
+    REQUIRE(s.is_open());
+
+    XTR_LOG(s, "Test"), line_ = __LINE__;
+    REQUIRE(last_line() == "I 2000-01-01 01:02:03.123456 Test1 logger.cpp:{}: Test"_format(line_));
 }
 
 TEST_CASE_METHOD(fixture, "logger log level test", "[logger]")

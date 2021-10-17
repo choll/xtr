@@ -117,6 +117,13 @@ public:
     void close();
 
     /**
+     * Returns true if the sink is open (connected to a logger), or false if
+     * the sink is closed (not connected to a logger). Log messages may only
+     * be written to a sink that is open.
+     */
+    bool is_open() const noexcept;
+
+    /**
      *  Synchronizes all log calls previously made by this sink to back-end
      *  storage.
      *

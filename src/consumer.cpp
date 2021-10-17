@@ -36,7 +36,7 @@
 #include <version>
 
 XTR_FUNC
-void xtr::detail::consumer::run(std::function<::timespec()> clock) noexcept
+void xtr::detail::consumer::run(std::function<::timespec()>&& clock) noexcept
 {
     char ts[32] = {};
     bool ts_stale = true;

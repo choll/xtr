@@ -34,12 +34,20 @@ xtr::sink::sink(const sink& other)
 XTR_FUNC
 xtr::sink& xtr::sink::operator=(const sink& other)
 {
+    if (this == &other) [[unlikely]]
+        return *this;
+
+    close();
+
     level_ = other.level_.load(std::memory_order_relaxed);
-    if (!std::exchange(open_, other.open_)) // if previously closed, register
+
+    if (other.open_)
     {
         const_cast<sink&>(other).post(
             [this](detail::consumer& c, const auto& name) { c.add_sink(*this, name); });
+        open_ = true;
     }
+
     return *this;
 }
 
@@ -65,6 +73,12 @@ void xtr::sink::close()
         // to be cleared.
         buf_.clear();
     }
+}
+
+XTR_FUNC
+bool xtr::sink::is_open() const noexcept
+{
+    return open_;
 }
 
 XTR_FUNC
@@ -118,7 +132,7 @@ XTR_FUNC
 void xtr::sink::set_name(std::string name)
 {
     post(
-        [name = std::move(name)](auto&, auto& oldname)
+        [name = std::move(name)](auto&, auto& oldname) mutable
         {
             oldname = std::move(name);
         });

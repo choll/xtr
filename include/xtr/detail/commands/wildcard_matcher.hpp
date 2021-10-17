@@ -28,7 +28,7 @@ namespace xtr::detail
     class wildcard_matcher;
 }
 
-class xtr::detail::wildcard_matcher : public matcher
+class xtr::detail::wildcard_matcher final : public matcher
 {
 public:
     wildcard_matcher(const char* pattern, bool ignore_case);
