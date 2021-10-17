@@ -392,6 +392,29 @@ int main()
 .UNINDENT
 .sp
 View this example on \fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/W56zdWEh1\fP>\&.
+.SH FORMATTING CONTAINERS, TUPLES AND PAIRS
+.sp
+Formatters for containers, tuples and pairs are provided in
+\fIxtr/formatters.hpp\fP\&. Types which will be formatted are:
+.INDENT 0.0
+.IP \(bu 2
+Any non\-string iterable type\-\-\-specifically any type that meets all of the
+following criteria;
+.INDENT 2.0
+.IP 1. 3
+Is not constructible from const  char*\&.
+.IP 2. 3
+\fBstd::begin()\fP and \fBstd::end()\fP are defined.
+.IP 3. 3
+Is not an associative container.
+.UNINDENT
+.IP \(bu 2
+Any associative container\-\-\-specifically any type that provides a
+\fBmapped_type\fP member.
+.IP \(bu 2
+Any tuple\-like type\-\-\-specifically any type for which a
+\fBstd::tuple_size\fP overload is defined.
+.UNINDENT
 .SH TIME SOURCES
 .sp
 The logger provides a choice of time\-sources when logging messages, each with

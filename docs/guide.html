@@ -65,6 +65,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#id5">Examples</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#formatting-containers-tuples-and-pairs">Formatting Containers, Tuples and Pairs</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#time-sources">Time Sources</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#basic">Basic</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#real-time-clock">Real-time Clock</a></li>
@@ -406,6 +407,25 @@ that fmt/ostream.h must be included.</p></li>
 </div>
 <p>View this example on <a class="reference external" href="https://godbolt.org/z/W56zdWEh1">Compiler Explorer</a>.</p>
 </section>
+</section>
+<section id="formatting-containers-tuples-and-pairs">
+<h2>Formatting Containers, Tuples and Pairs<a class="headerlink" href="#formatting-containers-tuples-and-pairs" title="Permalink to this headline"></a></h2>
+<p>Formatters for containers, tuples and pairs are provided in
+<cite>xtr/formatters.hpp</cite>. Types which will be formatted are:</p>
+<ul class="simple">
+<li><p>Any non-string iterable type—specifically any type that meets all of the
+following criteria;</p>
+<ol class="arabic simple">
+<li><p>Is not constructible from <span class="cpp-expr sig sig-inline cpp"><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="p">*</span></span>.</p></li>
+<li><p><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">std::begin()</span></code> and <code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">std::end()</span></code> are defined.</p></li>
+<li><p>Is not an associative container.</p></li>
+</ol>
+</li>
+<li><p>Any associative container—specifically any type that provides a
+<code class="xref cpp cpp-type docutils literal notranslate"><span class="pre">mapped_type</span></code> member.</p></li>
+<li><p>Any tuple-like type—specifically any type for which a
+<code class="xref cpp cpp-class docutils literal notranslate"><span class="pre">std::tuple_size</span></code> overload is defined.</p></li>
+</ul>
 </section>
 <section id="time-sources">
 <span id="id6"></span><h2>Time Sources<a class="headerlink" href="#time-sources" title="Permalink to this headline"></a></h2>
