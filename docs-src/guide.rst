@@ -325,6 +325,24 @@ Formatting a custom type via fmt::formatter:
 
 View this example on `Compiler Explorer <https://godbolt.org/z/W56zdWEh1>`__.
 
+Formatting Containers, Tuples and Pairs
+---------------------------------------
+
+Formatters for containers, tuples and pairs are provided in
+`xtr/formatters.hpp`. Types which will be formatted are:
+
+* Any non-string iterable type---specifically any type that meets all of the
+  following criteria;
+
+  1. Is not constructible from :cpp:expr:`const char*`.
+  2. :cpp:func:`std::begin()` and :cpp:func:`std::end()` are defined.
+  3. Is not an associative container.
+
+* Any associative container---specifically any type that provides a
+  :cpp:type:`mapped_type` member.
+* Any tuple-like type---specifically any type for which a
+  :cpp:class:`std::tuple_size` overload is defined.
+
 .. _time-sources:
 
 Time Sources

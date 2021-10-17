@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 #include "xtr/logger.hpp"
+#include "xtr/formatters.hpp"
 
 #include "xtr/detail/commands/frame.hpp"
 #include "xtr/detail/commands/message_id.hpp"
@@ -44,15 +45,22 @@
 #include <cstdint>
 #include <cstring>
 #include <ctime>
+#include <deque>
+#include <forward_list>
 #include <functional>
+#include <list>
 #include <iostream>
 #include <iterator>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <ostream>
+#include <set>
+#include <span>
 #include <string>
 #include <string_view>
 #include <system_error>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -2430,3 +2438,54 @@ TEST_CASE_METHOD(fixture, "logger fatal test", "[logger]")
     REQUIRE(abort_handler_signo == SIGABRT);
 }
 #endif
+
+TEST_CASE_METHOD(fixture, "logger formatter helpers test", "[logger]")
+{
+    std::deque<int> d{1, 2, 3};
+    XTR_LOG(s_, "{}", d), line_ = __LINE__;
+    REQUIRE(last_line() == "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: [1, 2, 3]"_format(line_));
+
+    std::forward_list<int> f{1, 2, 3};
+    XTR_LOG(s_, "{}", f), line_ = __LINE__;
+    REQUIRE(last_line() == "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: [1, 2, 3]"_format(line_));
+
+    std::list<int> l{1, 2, 3};
+    XTR_LOG(s_, "{}", l), line_ = __LINE__;
+    REQUIRE(last_line() == "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: [1, 2, 3]"_format(line_));
+
+    std::vector<int> v{1, 2, 3};
+    XTR_LOG(s_, "{}", v), line_ = __LINE__;
+    REQUIRE(last_line() == "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: [1, 2, 3]"_format(line_));
+
+    std::array a{1, 2, 3};
+    XTR_LOG(s_, "{}", a), line_ = __LINE__;
+    REQUIRE(last_line() == "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: [1, 2, 3]"_format(line_));
+
+    std::map<int, int> m{{1, 2}, {3, 4}, {5, 6}};
+    XTR_LOG(s_, "{}", m), line_ = __LINE__;
+    REQUIRE(last_line() == "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: {{1: 2, 3: 4, 5: 6}}"_format(line_));
+
+    std::multimap<int, int> mm{{1, 2}, {3, 4}, {5, 6}, {1, 7}, {3, 8}, {5, 9}};
+    XTR_LOG(s_, "{}", mm), line_ = __LINE__;
+    REQUIRE(last_line() == "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: {{1: 2, 1: 7, 3: 4, 3: 8, 5: 6, 5: 9}}"_format(line_));
+
+    std::set<int> s{1, 2, 3};
+    XTR_LOG(s_, "{}", s), line_ = __LINE__;
+    REQUIRE(last_line() == "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: [1, 2, 3]"_format(line_));
+
+    std::multiset<int> ms{1, 2, 3, 1, 2, 3};
+    XTR_LOG(s_, "{}", ms), line_ = __LINE__;
+    REQUIRE(last_line() == "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: [1, 1, 2, 2, 3, 3]"_format(line_));
+
+    std::pair<int, int> p{1, 2};
+    XTR_LOG(s_, "{}", p), line_ = __LINE__;
+    REQUIRE(last_line() == "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: (1, 2)"_format(line_));
+
+    std::tuple<int, int, int> t{1, 2, 3};
+    XTR_LOG(s_, "{}", t), line_ = __LINE__;
+    REQUIRE(last_line() == "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: (1, 2, 3)"_format(line_));
+
+    const int ca[] = {1, 2, 3};
+    XTR_LOG(s_, "{}", std::span(std::begin(ca), std::end(ca))), line_ = __LINE__;
+    REQUIRE(last_line() == "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: [1, 2, 3]"_format(line_));
+}
