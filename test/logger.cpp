@@ -1440,6 +1440,7 @@ TEST_CASE_METHOD(fixture, "logger sink name overwrite test", "[logger]")
     s = s_;
 
     XTR_LOG(s, "Test"), line_ = __LINE__;
+    s.sync();
     REQUIRE(last_line() == "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test"_format(line_));
 }
 
