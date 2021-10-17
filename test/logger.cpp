@@ -1470,7 +1470,14 @@ TEST_CASE_METHOD(fixture, "logger sink self assign test", "[logger]")
 {
     xtr::sink s = log_.get_sink("Test1");
 
+#if defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wself-assign-overloaded"
+#endif
     s = s;
+#if defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
     REQUIRE(s.is_open());
 

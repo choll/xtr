@@ -21,6 +21,7 @@
 #ifndef XTR_FORMATTERS_HPP
 #define XTR_FORMATTERS_HPP
 
+#include <concepts>
 #include <cstddef>
 #include <utility>
 
@@ -101,7 +102,7 @@ namespace fmt
     template<typename T>
     requires
         iterable<T> &&
-        (!std::constructible_from<T, const char*>) &&
+        (!std::is_constructible_v<T, const char*>) &&
         (!associative_container<T>)
     struct formatter<T>
     {
