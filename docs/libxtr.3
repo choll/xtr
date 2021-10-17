@@ -490,6 +490,11 @@ Closes the sink. After this function returns the sink is closed and \fI\%log()\f
 .UNINDENT
 .INDENT 7.0
 .TP
+.B bool  is_open()  const  noexcept 
+Returns true if the sink is open (connected to a logger), or false if the sink is closed (not connected to a logger). Log messages may only be written to a sink that is open. 
+.UNINDENT
+.INDENT 7.0
+.TP
 .B inline  void  sync() 
 Synchronizes all log calls previously made by this sink to back\-end storage.
 .INDENT 7.0
