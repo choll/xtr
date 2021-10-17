@@ -1475,6 +1475,7 @@ TEST_CASE_METHOD(fixture, "logger sink self assign test", "[logger]")
     REQUIRE(s.is_open());
 
     XTR_LOG(s, "Test"), line_ = __LINE__;
+    s.sync();
     REQUIRE(last_line() == "I 2000-01-01 01:02:03.123456 Test1 logger.cpp:{}: Test"_format(line_));
 }
 
