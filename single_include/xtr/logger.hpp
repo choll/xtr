@@ -4007,6 +4007,7 @@ inline xtr::sink::~sink()
 #include <cstdarg>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <stdexcept>
 #include <system_error>
 
