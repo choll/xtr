@@ -27,7 +27,6 @@
 #include <utility>
 
 #include <stdlib.h>
-#include <fcntl.h>
 #include <unistd.h>
 
 namespace xtrd = xtr::detail;

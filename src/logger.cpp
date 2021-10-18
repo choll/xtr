@@ -20,10 +20,7 @@
 
 #include "xtr/logger.hpp"
 
-#include <fmt/chrono.h>
-
-#include <string>
-#include <utility>
+#include <cassert>
 
 XTR_FUNC
 xtr::logger::~logger()

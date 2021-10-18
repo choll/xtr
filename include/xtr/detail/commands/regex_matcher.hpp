@@ -23,6 +23,8 @@
 
 #include "matcher.hpp"
 
+#include <cstddef>
+
 #include <regex.h>
 
 namespace xtr::detail

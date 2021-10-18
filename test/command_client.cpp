@@ -22,8 +22,6 @@
 #include "xtr/detail/commands/connect.hpp"
 #include "xtr/detail/throw.hpp"
 
-#include <cassert>
-
 void xtr::detail::command_client::connect(const std::string& path)
 {
     fd_ = command_connect(path);

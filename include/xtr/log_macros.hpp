@@ -21,6 +21,7 @@
 #ifndef XTR_LOG_MACROS_HPP
 #define XTR_LOG_MACROS_HPP
 
+#include "detail/clock_ids.hpp"
 #include "detail/get_time.hpp"
 #include "detail/string.hpp"
 #include "detail/tags.hpp"

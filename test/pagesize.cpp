@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 #include "xtr/detail/pagesize.hpp"
-#include "xtr/detail/align.hpp"
 
 #include <catch2/catch.hpp>
 

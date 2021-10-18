@@ -23,8 +23,6 @@
 
 #include <cassert>
 
-#include <unistd.h>
-
 XTR_FUNC
 xtr::detail::memory_mapping::memory_mapping(
     void* addr,

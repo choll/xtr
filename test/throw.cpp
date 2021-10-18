@@ -22,6 +22,10 @@
 
 #include <catch2/catch.hpp>
 
+#include <cerrno>
+#include <stdexcept>
+#include <system_error>
+
 #if __cpp_exceptions
 TEST_CASE("runtime_error", "[throw]")
 {

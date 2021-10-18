@@ -7,6 +7,7 @@
 #include <ctime>
 
 #include <fmt/chrono.h>
+#include <fmt/format.h>
 
 namespace xtr::detail
 {

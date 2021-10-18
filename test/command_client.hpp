@@ -30,7 +30,7 @@
 #include <string>
 #include <vector>
 
-#include <sys/socket.h>
+#include <sys/types.h>
 
 namespace xtr::detail
 {

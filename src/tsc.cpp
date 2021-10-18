@@ -22,6 +22,7 @@
 #include "xtr/detail/clock_ids.hpp"
 #include "xtr/detail/cpuid.hpp"
 
+#include <algorithm>
 #include <array>
 #include <chrono>
 #include <thread>

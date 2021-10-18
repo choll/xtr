@@ -26,13 +26,13 @@
 #include "mirrored_memory_mapping.hpp"
 #include "pagesize.hpp"
 #include "pause.hpp"
-#include "align.hpp"
 
 #include <atomic>
+#include <cassert>
 #include <bit>
 #include <cstddef>
+#include <cstdint>
 #include <limits>
-#include <new>
 #include <type_traits>
 #include <version>
 

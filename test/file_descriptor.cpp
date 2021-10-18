@@ -23,6 +23,7 @@
 #include <catch2/catch.hpp>
 
 #include <utility>
+#include <system_error>
 
 #include <fcntl.h>
 #include <unistd.h>

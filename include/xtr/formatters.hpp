@@ -25,6 +25,8 @@
 #include <cstddef>
 #include <utility>
 
+#include <fmt/format.h>
+
 template<typename T>
 concept iterable = requires(T t) { std::begin(t); std::end(t); };
 

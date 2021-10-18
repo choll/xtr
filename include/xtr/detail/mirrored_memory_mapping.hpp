@@ -24,7 +24,6 @@
 #include "memory_mapping.hpp"
 
 #include <cstddef>
-#include <utility>
 
 // Creates two adjacent memory mappings which map to the same underlying memory.
 // This is useful for implementing a ring buffer where the producer/consumer do

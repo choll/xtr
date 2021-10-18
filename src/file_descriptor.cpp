@@ -22,8 +22,6 @@
 #include "xtr/detail/retry.hpp"
 #include "xtr/detail/throw.hpp"
 
-#include <cerrno>
-
 #include <fcntl.h>
 #include <unistd.h>
 

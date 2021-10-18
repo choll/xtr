@@ -20,7 +20,9 @@
 
 #include "xtr/command_path.hpp"
 #include "xtr/detail/commands/command_dispatcher.hpp"
+#include "xtr/detail/commands/frame.hpp"
 #include "xtr/detail/commands/responses.hpp"
+#include "xtr/detail/retry.hpp"
 
 #include "command_client.hpp"
 
@@ -28,8 +30,11 @@
 
 #include <atomic>
 #include <string>
+#include <string_view>
 #include <stdexcept>
 #include <thread>
+
+#include <sys/socket.h>
 
 namespace xtrd = xtr::detail;
 

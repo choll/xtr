@@ -22,36 +22,22 @@
 #define XTR_LOGGER_HPP
 
 #include "command_path.hpp"
-#include "detail/align.hpp"
-#include "detail/clock_ids.hpp"
 #include "detail/consumer.hpp"
-#include "detail/is_c_string.hpp"
 #include "detail/string_ref.hpp"
 #include "detail/throw.hpp"
 #include "log_macros.hpp"
 #include "log_level.hpp"
 #include "sink.hpp"
 
-#include <fmt/format.h>
-
-#include <algorithm>
-#include <atomic>
-#include <concepts>
 #include <chrono>
-#include <cstddef>
 #include <cstdio>
-#include <cstdint>
 #include <ctime>
 #include <mutex>
-#include <new>
-#include <stdexcept>
+#include <functional>
 #include <string>
-#include <string_view>
 #include <thread>
 #include <type_traits>
 #include <utility>
-#include <vector>
-#include <version>
 
 #include <unistd.h>
 

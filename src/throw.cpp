@@ -22,9 +22,8 @@
 
 #include <cerrno>
 #include <cstdio>
-#include <cstdarg>
 #include <cstdlib>
-#include <cstring>
+#include <cstdarg>
 #include <stdexcept>
 #include <system_error>
 

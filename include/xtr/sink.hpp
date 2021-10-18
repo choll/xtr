@@ -21,17 +21,25 @@
 #ifndef XTR_SINK_HPP
 #define XTR_SINK_HPP
 
+#include "detail/align.hpp"
+#include "detail/is_c_string.hpp"
 #include "detail/pause.hpp"
 #include "detail/print.hpp"
 #include "detail/string_table.hpp"
 #include "detail/synchronized_ring_buffer.hpp"
-#include "detail/tags.hpp"
 #include "detail/trampolines.hpp"
 #include "log_level.hpp"
 
+#include <fmt/format.h>
+
 #include <atomic>
+#include <cassert>
 #include <cstddef>
+#include <cstdint>
+#include <memory>
+#include <new>
 #include <string>
+#include <string_view>
 #include <type_traits>
 #include <utility>
 
