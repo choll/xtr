@@ -333,7 +333,6 @@ private:
 };
 
 #include <cstddef>
-#include <utility>
 
 namespace xtr::detail
 {
@@ -537,9 +536,10 @@ namespace xtr::detail
 
 #include <atomic>
 #include <bit>
+#include <cassert>
 #include <cstddef>
+#include <cstdint>
 #include <limits>
-#include <new>
 #include <type_traits>
 #include <version>
 
@@ -866,6 +866,7 @@ private:
 #include <ctime>
 
 #include <fmt/chrono.h>
+#include <fmt/format.h>
 
 namespace xtr::detail
 {
@@ -1358,9 +1359,16 @@ namespace xtr::detail
     }
 }
 
+#include <fmt/format.h>
+
 #include <atomic>
+#include <cassert>
 #include <cstddef>
+#include <cstdint>
+#include <memory>
+#include <new>
 #include <string>
+#include <string_view>
 #include <type_traits>
 #include <utility>
 
@@ -2040,6 +2048,8 @@ public:
     virtual ~matcher(){};
 };
 
+#include <cstddef>
+
 #include <regex.h>
 
 namespace xtr::detail
@@ -2470,26 +2480,15 @@ namespace xtr
                 __VA_ARGS__);                                              \
         }))
 
-#include <fmt/format.h>
-
-#include <algorithm>
-#include <atomic>
 #include <chrono>
-#include <concepts>
-#include <cstddef>
-#include <cstdint>
 #include <cstdio>
 #include <ctime>
+#include <functional>
 #include <mutex>
-#include <new>
-#include <stdexcept>
 #include <string>
-#include <string_view>
 #include <thread>
 #include <type_traits>
 #include <utility>
-#include <vector>
-#include <version>
 
 #include <unistd.h>
 
@@ -3295,7 +3294,6 @@ inline void xtr::detail::command_dispatcher_deleter::operator()(
 
 #include <limits.h>
 #include <stdlib.h>
-#include <sys/types.h>
 #include <unistd.h>
 
 namespace xtr::detail
@@ -3544,8 +3542,6 @@ inline void xtr::detail::consumer::reopen_handler(
         cmds_->send(fd, detail::frame<detail::success>());
 }
 
-#include <cerrno>
-
 #include <fcntl.h>
 #include <unistd.h>
 
@@ -3581,10 +3577,7 @@ inline void xtr::detail::file_descriptor::reset(int fd) noexcept
     fd_ = fd;
 }
 
-#include <fmt/chrono.h>
-
-#include <string>
-#include <utility>
+#include <cassert>
 
 inline xtr::logger::~logger()
 {
@@ -3683,8 +3676,6 @@ inline std::unique_ptr<xtr::detail::matcher> xtr::detail::make_matcher(
 }
 
 #include <cassert>
-
-#include <unistd.h>
 
 inline xtr::detail::memory_mapping::memory_mapping(
     void* addr,
@@ -4016,7 +4007,6 @@ inline xtr::sink::~sink()
 #include <cstdarg>
 #include <cstdio>
 #include <cstdlib>
-#include <cstring>
 #include <stdexcept>
 #include <system_error>
 
@@ -4087,6 +4077,7 @@ inline void xtr::detail::throw_invalid_argument(const char* what)
 #endif
 }
 
+#include <algorithm>
 #include <array>
 #include <chrono>
 #include <thread>
