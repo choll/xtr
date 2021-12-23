@@ -7,7 +7,7 @@ option(BUILD_BENCHMARK "Build benchmark test" ON)
 option(BUILD_SINGLE_HEADER "Build header-only" ON)
 option(INSTALL_DOCS "Install man pages" ON)
 option(ENABLE_EXCEPTIONS "Enable the use of exceptions" ON)
-option(ENABLE_LTO "Enable link-time optimisation" OFF)
+option(ENABLE_LTO "Enable link-time optimisation" ON)
 
 find_package(Threads REQUIRED)
 find_package(fmt REQUIRED)
@@ -75,7 +75,7 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
     add_subdirectory(test)
 endif()
 
-if(BUILD_BENCHMARK)
+if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_BENCHMARK)
     add_subdirectory(benchmark)
 endif()
 
