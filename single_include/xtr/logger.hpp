@@ -1224,7 +1224,7 @@ namespace xtr::detail
         while (end < str_end + 1)
             [[unlikely]]
             {
-                detail::pause();
+                pause();
                 const auto s = buf.write_span();
                 if (s.end() < str_end + 1) [[unlikely]]
                 {
@@ -1251,7 +1251,7 @@ namespace xtr::detail
             while (pos == end)
                 [[unlikely]]
                 {
-                    detail::pause();
+                    pause();
                     const auto s = buf.write_span();
                     if (s.end() == end) [[unlikely]]
                     {
@@ -1592,15 +1592,11 @@ void xtr::sink::post_with_str_table(Args&&... args) noexcept(
     const auto str_pos = func_pos + sizeof(lambda_t);
     const auto size = ring_buffer::size_type(str_pos - s.begin());
 
-    while (s.size() < size)
-        [[unlikely]]
-        {
-            if constexpr (!detail::is_non_blocking_v<Tags>)
-                detail::pause();
-            s = buf_.write_span<Tags>();
-            if (detail::is_non_blocking_v<Tags> && s.empty()) [[unlikely]]
-                return;
-        }
+    if (s.size() < size) [[unlikely]]
+        s = buf_.write_span<Tags>(size);
+
+    if (detail::is_non_blocking_v<Tags> && s.empty()) [[unlikely]]
+        return;
 
     auto str_cur = str_pos;
     auto str_end = s.end();
@@ -1648,15 +1644,11 @@ void xtr::sink::post(Func&& func) noexcept(XTR_NOTHROW_INGESTIBLE(Func, func))
     const auto next = func_pos + detail::align(sizeof(Func), alignof(fptr_t));
     const auto size = ring_buffer::size_type(next - s.begin());
 
-    while ((s.size() < size))
-        [[unlikely]]
-        {
-            if constexpr (!detail::is_non_blocking_v<Tags>)
-                detail::pause();
-            s = buf_.write_span<Tags>();
-            if (detail::is_non_blocking_v<Tags> && s.empty()) [[unlikely]]
-                return;
-        }
+    if ((s.size() < size)) [[unlikely]]
+        s = buf_.write_span<Tags>(size);
+
+    if (detail::is_non_blocking_v<Tags> && s.empty()) [[unlikely]]
+        return;
 
     copy(s.begin(), &detail::trampolineN<Format, Level, detail::consumer, Func>);
     copy(func_pos, std::forward<Func>(func));
