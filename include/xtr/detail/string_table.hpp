@@ -64,7 +64,7 @@ namespace xtr::detail
         std::byte* str_end = pos + sv.length();
         while (end < str_end + 1) [[unlikely]]
         {
-            detail::pause();
+            pause();
             const auto s = buf.write_span();
             if (s.end() < str_end + 1) [[unlikely]]
             {
@@ -93,7 +93,7 @@ namespace xtr::detail
         {
             while (pos == end) [[unlikely]]
             {
-                detail::pause();
+                pause();
                 const auto s = buf.write_span();
                 if (s.end() == end) [[unlikely]]
                 {

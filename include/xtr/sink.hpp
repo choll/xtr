@@ -23,7 +23,6 @@
 
 #include "detail/align.hpp"
 #include "detail/is_c_string.hpp"
-#include "detail/pause.hpp"
 #include "detail/print.hpp"
 #include "detail/string_table.hpp"
 #include "detail/synchronized_ring_buffer.hpp"
@@ -281,14 +280,11 @@ void xtr::sink::post_with_str_table(Args&&... args)
     const auto str_pos = func_pos + sizeof(lambda_t);
     const auto size = ring_buffer::size_type(str_pos - s.begin());
 
-    while (s.size() < size) [[unlikely]]
-    {
-        if constexpr (!detail::is_non_blocking_v<Tags>)
-            detail::pause();
-        s = buf_.write_span<Tags>();
-        if (detail::is_non_blocking_v<Tags> && s.empty()) [[unlikely]]
-            return;
-    }
+    if (s.size() < size) [[unlikely]]
+        s = buf_.write_span<Tags>(size);
+
+    if (detail::is_non_blocking_v<Tags> && s.empty()) [[unlikely]]
+        return;
 
     // str_cur and str_end are mutated by build_string_table as the
     // table is built
@@ -345,14 +341,11 @@ void xtr::sink::post(Func&& func)
     const auto next = func_pos + detail::align(sizeof(Func), alignof(fptr_t));
     const auto size = ring_buffer::size_type(next - s.begin());
 
-    while ((s.size() < size)) [[unlikely]]
-    {
-        if constexpr (!detail::is_non_blocking_v<Tags>)
-            detail::pause();
-        s = buf_.write_span<Tags>();
-        if (detail::is_non_blocking_v<Tags> && s.empty()) [[unlikely]]
-            return;
-    }
+    if ((s.size() < size)) [[unlikely]]
+        s = buf_.write_span<Tags>(size);
+
+    if (detail::is_non_blocking_v<Tags> && s.empty()) [[unlikely]]
+        return;
 
     copy(s.begin(), &detail::trampolineN<Format, Level, detail::consumer, Func>);
     copy(func_pos, std::forward<Func>(func));

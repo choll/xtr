@@ -1120,11 +1120,22 @@ TEST_CASE_METHOD(fixture, "logger non-blocking test", "[logger]")
 
 TEST_CASE_METHOD(fixture, "logger non-blocking drop test", "[logger]")
 {
-    // 64kb default size buffer, 8 bytes per log record, 16 bytes taken
-    // by blocker.
+    auto log_func_and_sizes =
+        GENERATE(
+            std::make_tuple(+[](xtr::sink& s) { XTR_TRY_LOG(s, "Test"); }, 8),
+            std::make_tuple(+[](xtr::sink& s) { XTR_TRY_LOGL(info, s, "Test"); }, 8),
+            std::make_tuple(+[](xtr::sink& s) { XTR_TRY_LOG_TS(s, 0, "Test"); }, 16),
+            std::make_tuple(+[](xtr::sink& s) { XTR_TRY_LOGL_TS(info, s, 0, "Test"); }, 16),
+            std::make_tuple(+[](xtr::sink& s) { XTR_TRY_LOG_TSC(s, "Test"); }, 16),
+            std::make_tuple(+[](xtr::sink& s) { XTR_TRY_LOGL_TSC(info, s, "Test"); }, 16),
+            std::make_tuple(+[](xtr::sink& s) { XTR_TRY_LOG_RTC(s, "Test"); }, 24),
+            std::make_tuple(+[](xtr::sink& s) { XTR_TRY_LOGL_RTC(info, s, "Test"); }, 24));
+
+    // 64kb default size buffer, 16 bytes taken by blocker, bytes per log record
+    // given above.
     const std::size_t n_dropped = 100;
     const std::size_t blocker_sz = 16;
-    const std::size_t msg_sz = 8;
+    const std::size_t msg_sz = std::get<1>(log_func_and_sizes);
     const std::size_t n = (64 * 1024 - blocker_sz) / msg_sz + n_dropped;
 
     auto next_sink = log_.get_sink("next");
@@ -1134,7 +1145,7 @@ TEST_CASE_METHOD(fixture, "logger non-blocking drop test", "[logger]")
     XTR_LOG(s_, "{}", b);
 
     for (std::size_t i = 0; i < n; ++i)
-        XTR_TRY_LOG(s_, "Test");
+        std::get<0>(log_func_and_sizes)(s_);
 
     b.release();
     sync();
