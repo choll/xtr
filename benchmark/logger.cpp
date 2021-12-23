@@ -86,8 +86,11 @@ namespace
         FILE* fp = ::fopen("/dev/null", "w");                           \
         xtr::logger log{fp, fp};                                        \
                                                                         \
-        set_thread_attrs(::pthread_self(), 4);                          \
-        set_thread_attrs(log.consumer_thread_native_handle(), 5);       \
+        if (const int cpu = getenv_int("PRODUCER_CPU"); cpu != -1)      \
+            set_thread_attrs(::pthread_self(), cpu);                    \
+                                                                        \
+        if (const int cpu = getenv_int("CONSUMER_CPU"); cpu != -1)      \
+            set_thread_attrs(log.consumer_thread_native_handle(), cpu); \
                                                                         \
         xtr::sink p = log.get_sink("Name");                             \
         std::size_t n = 0;                                              \
