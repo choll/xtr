@@ -21,6 +21,7 @@
 #ifndef XTR_SINK_HPP
 #define XTR_SINK_HPP
 
+#include "config.hpp"
 #include "detail/align.hpp"
 #include "detail/is_c_string.hpp"
 #include "detail/print.hpp"
@@ -178,6 +179,15 @@ public:
         return level_.load(std::memory_order_relaxed);
     }
 
+    /**
+     * Returns the capacity (in bytes) of the queue that the sink uses to send
+     * log data to the background thread.
+     */
+    std::size_t capacity() const
+    {
+        return buf_.capacity();
+    }
+
 private:
     sink(logger& owner, std::string name);
 
@@ -208,7 +218,7 @@ private:
 
     void sync(bool destroy);
 
-    using ring_buffer = detail::synchronized_ring_buffer<64 * 1024>;
+    using ring_buffer = detail::synchronized_ring_buffer<XTR_SINK_CAPACITY>;
 
     ring_buffer buf_;
     std::atomic<log_level_t> level_{log_level_t::info};

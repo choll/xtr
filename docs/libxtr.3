@@ -1,5 +1,8 @@
 .\" Man page generated from reStructuredText.
 .
+.TH "LIBXTR" "3" "January 2022" "" "xtr"
+.SH NAME
+libxtr \- C++ logging library API reference
 .
 .nr rst2man-indent-level 0
 .
@@ -27,9 +30,6 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .in \\n[rst2man-indent\\n[rst2man-indent-level]]u
 ..
-.TH "LIBXTR" "3" "December 2021" "" "xtr"
-.SH NAME
-libxtr \- C++ logging library API reference
 .SH LOG MACROS
 .SS Basic Macros
 .INDENT 0.0
@@ -126,7 +126,7 @@ LEVEL: The unqualified log level name, for example simply "info" or "error".
 .UNINDENT
 
 .UNINDENT
-.SS Real\-time Clock
+.SS Real\-Time Clock
 .INDENT 0.0
 .TP
 .B XTR_LOG_RTC(SINK, \&...) 
@@ -523,6 +523,11 @@ Sets the log level of the sink to the specified level (see \fI\%log_level_t\fP).
 .B inline  \fI\%log_level_t\fP  level()  const 
 Returns the current log level (see \fI\%log_level_t\fP). 
 .UNINDENT
+.INDENT 7.0
+.TP
+.B inline  std::size_t  capacity()  const 
+Returns the capacity (in bytes) of the queue that the sink uses to send log data to the background thread. 
+.UNINDENT
 .UNINDENT
 .SH NOCOPY
 .INDENT 0.0
@@ -591,6 +596,16 @@ Returns the default command path used for the \fI\%command_path\fP argument of \
 .TP
 .B constexpr  auto  xtr::null_command_path  =  "" 
 When passed to the \fI\%command_path\fP argument of \fI\%logger::logger\fP (or other logger constructors) indicates that no command socket should be created. 
+.UNINDENT
+.SH CONFIGURATION VARIABLES
+.sp
+The header file \fIxtr/config.hpp\fP contains configuration variables that may be
+overridden by users\-\-\-either by modifying config.hpp, or by defining variables
+prior to including xtr headers.
+.INDENT 0.0
+.TP
+.B XTR_SINK_CAPACITY 
+Sets the capacity (in bytes) of the queue that sinks use to send log data to the background thread. Each sink will have an individual queue of this size. Users are permitted to define this variable in order to set a custom capacity. User provided capacities may be rounded up\-\-\-to obtain the actual capacity invoke \fI\%xtr::sink::capacity\fP\&. 
 .UNINDENT
 .SH AUTHOR
 Chris E. Holloway

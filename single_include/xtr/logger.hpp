@@ -1359,6 +1359,17 @@ namespace xtr::detail
     }
 }
 
+/**
+ * Sets the capacity (in bytes) of the queue that sinks use to send log data
+ * to the background thread. Each sink will have an individual queue of this
+ * size. Users are permitted to define this variable in order to set a custom
+ * capacity. User provided capacities may be rounded up\---to obtain the
+ * actual capacity invoke @ref xtr::sink::capacity.
+ */
+#if !defined(XTR_SINK_CAPACITY)
+#define XTR_SINK_CAPACITY (256 * 1024)
+#endif
+
 #include <fmt/format.h>
 
 #include <atomic>
@@ -1499,6 +1510,15 @@ public:
         return level_.load(std::memory_order_relaxed);
     }
 
+    /**
+     * Returns the capacity (in bytes) of the queue that the sink uses to send
+     * log data to the background thread.
+     */
+    std::size_t capacity() const
+    {
+        return buf_.capacity();
+    }
+
 private:
     sink(logger& owner, std::string name);
 
@@ -1526,7 +1546,7 @@ private:
 
     void sync(bool destroy);
 
-    using ring_buffer = detail::synchronized_ring_buffer<64 * 1024>;
+    using ring_buffer = detail::synchronized_ring_buffer<XTR_SINK_CAPACITY>;
 
     ring_buffer buf_;
     std::atomic<log_level_t> level_{log_level_t::info};

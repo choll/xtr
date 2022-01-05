@@ -33,7 +33,7 @@ TSC
 
 .. _rtc-macros:
 
-Real-time Clock
+Real-Time Clock
 ^^^^^^^^^^^^^^^
 
 .. doxygendefine:: XTR_LOG_RTC
@@ -90,12 +90,21 @@ Log Level Styles
 .. doxygenfunction:: xtr::default_log_level_style
 .. doxygenfunction:: xtr::systemd_log_level_style
 
-Default command path
+Default Command Path
 --------------------
 
 .. doxygenfunction:: default_command_path
 
-Null command path
+Null Command Path
 -----------------
 
 .. doxygenvariable:: null_command_path
+
+Configuration Variables
+-----------------------
+
+The header file `xtr/config.hpp` contains configuration variables that may be
+overridden by users---either by modifying config.hpp, or by defining variables
+prior to including xtr headers.
+
+.. doxygendefine:: XTR_SINK_CAPACITY

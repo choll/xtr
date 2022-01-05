@@ -755,7 +755,7 @@ TEST_CASE_METHOD(fixture, "logger string overflow test", "[logger]")
 {
     // Three pointers are for the formatter pointer, string pointer and record
     // size -1 is for the terminating nul on the string.
-    std::string s(64UL * 1024UL - sizeof(void*) * 3 - 1, char('X'));
+    std::string s(s_.capacity() - sizeof(void*) * 3 - 1, char('X'));
     XTR_LOG(s_, "Test {}", s), line_ = __LINE__;
     REQUIRE(
         last_line() ==
@@ -772,7 +772,7 @@ TEST_CASE_METHOD(fixture, "logger string overflow test", "[logger]")
 
 TEST_CASE_METHOD(fixture, "logger const string overflow test", "[logger]")
 {
-    const std::string s(64UL * 1024UL - sizeof(void*) * 3, char('X'));
+    const std::string s(s_.capacity() - sizeof(void*) * 3, char('X'));
     XTR_LOG(s_, "Test {}", s), line_ = __LINE__;
     REQUIRE(
         last_line() ==
@@ -783,7 +783,7 @@ TEST_CASE_METHOD(fixture, "logger string_view overflow test", "[logger]")
 {
     // Three pointers are for the formatter pointer, string pointer and record
     // size -1 is for the terminating nul on the string.
-    std::string s(64UL * 1024UL - sizeof(void*) * 3 - 1, char('X'));
+    std::string s(s_.capacity() - sizeof(void*) * 3 - 1, char('X'));
     std::string_view sv{s};
     XTR_LOG(s_, "Test {}", sv), line_ = __LINE__;
     REQUIRE(
@@ -804,7 +804,7 @@ TEST_CASE_METHOD(fixture, "logger c string overflow test", "[logger]")
 {
     // Three pointers are for the formatter pointer, string pointer and record
     // size -1 is for the terminating nul on the string.
-    std::string s(64UL * 1024UL - sizeof(void*) * 3 - 1, char('X'));
+    std::string s(s_.capacity() - sizeof(void*) * 3 - 1, char('X'));
     XTR_LOG(s_, "Test {}", s.c_str()), line_ = __LINE__;
     REQUIRE(
         last_line() ==
@@ -1131,12 +1131,11 @@ TEST_CASE_METHOD(fixture, "logger non-blocking drop test", "[logger]")
             std::make_tuple(+[](xtr::sink& s) { XTR_TRY_LOG_RTC(s, "Test"); }, 24),
             std::make_tuple(+[](xtr::sink& s) { XTR_TRY_LOGL_RTC(info, s, "Test"); }, 24));
 
-    // 64kb default size buffer, 16 bytes taken by blocker, bytes per log record
-    // given above.
+    // 16 bytes taken by blocker, bytes per log record given above.
     const std::size_t n_dropped = 100;
     const std::size_t blocker_sz = 16;
     const std::size_t msg_sz = std::get<1>(log_func_and_sizes);
-    const std::size_t n = (64 * 1024 - blocker_sz) / msg_sz + n_dropped;
+    const std::size_t n = (s_.capacity() - blocker_sz) / msg_sz + n_dropped;
 
     auto next_sink = log_.get_sink("next");
 
@@ -1597,43 +1596,42 @@ TEST_CASE_METHOD(command_fixture<>, "logger status command test", "[logger]")
 
     REQUIRE(infos[0].name == "Name"sv);
     REQUIRE(infos[0].level == xtr::log_level_t::info);
-    REQUIRE(infos[0].buf_capacity == 64 * 1024);
+    REQUIRE(infos[0].buf_capacity == s_.capacity());
     REQUIRE(infos[0].buf_nbytes == 0);
     REQUIRE(infos[0].dropped_count == 0);
 
     REQUIRE(infos[1].name == "Producer0"sv);
     REQUIRE(infos[1].level == xtr::log_level_t::debug);
-    REQUIRE(infos[1].buf_capacity == 64 * 1024);
+    REQUIRE(infos[1].buf_capacity == s_.capacity());
     REQUIRE(infos[1].buf_nbytes == 0);
     REQUIRE(infos[1].dropped_count == 0);
 
     REQUIRE(infos[2].name == "Producer1"sv);
     REQUIRE(infos[2].level == xtr::log_level_t::warning);
-    REQUIRE(infos[2].buf_capacity == 64 * 1024);
+    REQUIRE(infos[2].buf_capacity == s_.capacity());
     REQUIRE(infos[2].buf_nbytes == 0);
     REQUIRE(infos[2].dropped_count == 0);
 
     REQUIRE(infos[3].name == "Producer2"sv);
     REQUIRE(infos[3].level == xtr::log_level_t::error);
-    REQUIRE(infos[3].buf_capacity == 64 * 1024);
+    REQUIRE(infos[3].buf_capacity == s_.capacity());
     REQUIRE(infos[3].buf_nbytes == 0);
     REQUIRE(infos[3].dropped_count == 0);
 
     REQUIRE(infos[4].name == "Producer3"sv);
     REQUIRE(infos[4].level == xtr::log_level_t::fatal);
-    REQUIRE(infos[4].buf_capacity == 64 * 1024);
+    REQUIRE(infos[4].buf_capacity == s_.capacity());
     REQUIRE(infos[4].buf_nbytes == 0);
     REQUIRE(infos[4].dropped_count == 0);
 }
 
 TEST_CASE_METHOD(command_fixture<>, "logger status command dropped count test", "[logger]")
 {
-    // 64kb default size buffer, 8 bytes per log record, 16 bytes taken
-    // by blocker.
+    // 8 bytes per log record, 16 bytes taken by blocker.
     const std::size_t n_dropped = 100;
     const std::size_t blocker_sz = 16;
     const std::size_t msg_sz = 8;
-    const std::size_t n = (64 * 1024 - blocker_sz) / msg_sz + n_dropped;
+    const std::size_t n = (s_.capacity() - blocker_sz) / msg_sz + n_dropped;
 
     blocker b;
 

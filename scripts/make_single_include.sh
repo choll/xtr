@@ -34,6 +34,7 @@ for file in \
     include/xtr/detail/string_table.hpp \
     include/xtr/detail/trampolines.hpp \
     include/xtr/detail/strzcpy.hpp \
+    include/xtr/config.hpp \
     include/xtr/sink.hpp \
     include/xtr/detail/commands/frame.hpp \
     include/xtr/detail/commands/pattern.hpp \
