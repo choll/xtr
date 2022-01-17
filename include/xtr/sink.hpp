@@ -36,6 +36,7 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <memory>
 #include <new>
 #include <string>
@@ -220,6 +221,11 @@ private:
 
     using ring_buffer = detail::synchronized_ring_buffer<XTR_SINK_CAPACITY>;
 
+    static_assert(
+        XTR_SINK_CAPACITY <=
+        std::numeric_limits<decltype(detail::string_table_entry::size)>::max(),
+        "XTR_SINK_CAPACITY is too large");
+
     ring_buffer buf_;
     std::atomic<log_level_t> level_{log_level_t::info};
     bool open_ = false;
@@ -279,11 +285,8 @@ void xtr::sink::post_with_str_table(Args&&... args)
 
     ring_buffer::span s = buf_.write_span_spec();
 
-    static_assert(alignof(std::size_t) <= alignof(fptr_t));
-    const auto size_pos = s.begin() + sizeof(fptr_t);
-
-    auto func_pos = size_pos + sizeof(size_t);
-    if constexpr (alignof(lambda_t) > alignof(size_t))
+    auto func_pos = s.begin() + sizeof(fptr_t);
+    if constexpr (alignof(lambda_t) > alignof(fptr_t))
         func_pos = align<alignof(lambda_t)>(func_pos);
 
     static_assert(alignof(char) == 1);
@@ -314,7 +317,6 @@ void xtr::sink::post_with_str_table(Args&&... args)
     const auto next = detail::align<alignof(fptr_t)>(str_cur);
     const auto total_size = ring_buffer::size_type(next - s.begin());
 
-    copy(size_pos, total_size);
     buf_.reduce_writable(total_size);
 }
 
@@ -373,6 +375,7 @@ auto xtr::sink::make_lambda(Args&&... args)
     return
         [... args = std::forward<Args>(args)](
             fmt::memory_buffer& mbuf,
+            std::byte*& buf,
             const auto& out,
             const auto& err,
             log_level_style_t lstyle,
@@ -386,7 +389,7 @@ auto xtr::sink::make_lambda(Args&&... args)
             // so there is no point in moving them out of the lambda.
             if constexpr (detail::is_timestamp_v<Tags>)
             {
-                xtr::detail::print_ts(
+                detail::print_ts(
                     mbuf,
                     out,
                     err,
@@ -394,11 +397,11 @@ auto xtr::sink::make_lambda(Args&&... args)
                     fmt,
                     level,
                     name,
-                    args...);
+                    detail::transform_string_table_entry(buf, args)...);
             }
             else
             {
-                xtr::detail::print(
+                detail::print(
                     mbuf,
                     out,
                     err,
@@ -407,7 +410,7 @@ auto xtr::sink::make_lambda(Args&&... args)
                     level,
                     ts,
                     name,
-                    args...);
+                    detail::transform_string_table_entry(buf, args)...);
             }
         };
 }

@@ -1196,12 +1196,44 @@ namespace xtr::detail
 
 #include <concepts>
 #include <cstddef>
+#include <cstdint>
 #include <string>
 #include <string_view>
 #include <type_traits>
+#include <utility>
 
 namespace xtr::detail
 {
+    struct string_table_entry
+    {
+        static constexpr std::uint32_t truncated = -1;
+
+        explicit string_table_entry(std::size_t sz) : size(std::uint32_t(sz))
+        {
+        }
+
+        std::uint32_t size;
+    };
+
+    template<typename T>
+    requires(!std::same_as<std::remove_cvref_t<T>, string_table_entry>) T &&
+        transform_string_table_entry(const std::byte*, T&& value)
+    {
+        return std::forward<T>(value);
+    }
+
+    inline string_ref<std::string_view> transform_string_table_entry(
+        std::byte*& pos, string_table_entry entry)
+    {
+        if (entry.size == string_table_entry::truncated) [[unlikely]]
+            return string_ref<std::string_view>("<truncated>");
+        const std::string_view str(
+            reinterpret_cast<const char*>(pos),
+            entry.size);
+        pos += entry.size;
+        return string_ref<std::string_view>(str);
+    }
+
     template<typename Tags, typename T, typename Buffer>
     requires(
         std::is_rvalue_reference_v<decltype(std::forward<T>(std::declval<T>()))>&&
@@ -1217,36 +1249,35 @@ namespace xtr::detail
     template<typename Tags, typename Buffer, typename String>
     requires std::same_as<String, std::string> ||
         std::same_as<String, std::string_view>
-            string_ref<const char*> build_string_table(
+            string_table_entry build_string_table(
                 std::byte*& pos, std::byte*& end, Buffer& buf, const String& sv)
     {
         std::byte* str_end = pos + sv.length();
-        while (end < str_end + 1)
+        while (end < str_end)
             [[unlikely]]
             {
                 pause();
                 const auto s = buf.write_span();
-                if (s.end() < str_end + 1) [[unlikely]]
+                if (s.end() < str_end) [[unlikely]]
                 {
                     if (s.size() == buf.capacity() || is_non_blocking_v<Tags>)
-                        return string_ref("<truncated>");
+                        return string_table_entry{string_table_entry::truncated};
                 }
                 end = s.end();
             }
-        const char* result = reinterpret_cast<char*>(pos);
-        const char* str = sv.data();
-        while (pos != str_end)
-            new (pos++) char(*str++);
-        new (pos++) char('\0');
-        return string_ref(result);
+
+        std::memcpy(pos, sv.data(), sv.length());
+        pos += sv.length();
+
+        return string_table_entry(sv.length());
     }
 
     template<typename Tags, typename Buffer>
-    string_ref<const char*> build_string_table(
+    string_table_entry build_string_table(
         std::byte*& pos, std::byte*& end, Buffer& buf, const char* str)
     {
-        const char* result = reinterpret_cast<char*>(pos);
-        do
+        std::byte* begin = pos;
+        while (*str != '\0')
         {
             while (pos == end)
                 [[unlikely]]
@@ -1257,13 +1288,17 @@ namespace xtr::detail
                     {
                         if (s.size() == buf.capacity() ||
                             is_non_blocking_v<Tags>)
-                            return string_ref("<truncated>");
+                        {
+                            pos = begin;
+                            return string_table_entry{
+                                string_table_entry::truncated};
+                        }
                     }
                     end = s.end();
                 }
-            new (pos++) char(*str);
-        } while (*str++ != '\0');
-        return string_ref(result);
+            new (pos++) char(*str++);
+        }
+        return string_table_entry(pos - begin);
     }
 }
 
@@ -1308,7 +1343,16 @@ namespace xtr::detail
         if constexpr (std::is_same_v<decltype(Format), std::nullptr_t>)
             func(st, name);
         else
-            func(mbuf, st.out, st.err, st.lstyle, *Format, Level, timestamp, name);
+            func(
+                mbuf,
+                buf,
+                st.out,
+                st.err,
+                st.lstyle,
+                *Format,
+                Level,
+                timestamp,
+                name);
 
         static_assert(noexcept(func.~Func()));
         std::destroy_at(std::addressof(func));
@@ -1326,21 +1370,19 @@ namespace xtr::detail
     {
         typedef void (*fptr_t)();
 
-        auto size_pos = buf + sizeof(fptr_t);
-        assert(std::uintptr_t(size_pos) % alignof(std::size_t) == 0);
-
-        auto func_pos = size_pos + sizeof(std::size_t);
-        if constexpr (alignof(Func) > alignof(std::size_t))
+        auto func_pos = buf + sizeof(fptr_t);
+        if constexpr (alignof(Func) > alignof(fptr_t))
             func_pos = align<alignof(Func)>(func_pos);
         assert(std::uintptr_t(func_pos) % alignof(Func) == 0);
 
         auto& func = *reinterpret_cast<Func*>(func_pos);
-        func(mbuf, st.out, st.err, st.lstyle, *Format, Level, timestamp, name);
+        buf = func_pos + sizeof(Func);
+        func(mbuf, buf, st.out, st.err, st.lstyle, *Format, Level, timestamp, name);
 
         static_assert(noexcept(func.~Func()));
         std::destroy_at(std::addressof(func));
 
-        return buf + *reinterpret_cast<const std::size_t*>(size_pos);
+        return align<alignof(fptr_t)>(buf);
     }
 }
 
@@ -1376,6 +1418,7 @@ namespace xtr::detail
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <memory>
 #include <new>
 #include <string>
@@ -1548,6 +1591,11 @@ private:
 
     using ring_buffer = detail::synchronized_ring_buffer<XTR_SINK_CAPACITY>;
 
+    static_assert(
+        XTR_SINK_CAPACITY <=
+            std::numeric_limits<decltype(detail::string_table_entry::size)>::max(),
+        "XTR_SINK_CAPACITY is too large");
+
     ring_buffer buf_;
     std::atomic<log_level_t> level_{log_level_t::info};
     bool open_ = false;
@@ -1601,11 +1649,8 @@ void xtr::sink::post_with_str_table(Args&&... args) noexcept(
 
     ring_buffer::span s = buf_.write_span_spec();
 
-    static_assert(alignof(std::size_t) <= alignof(fptr_t));
-    const auto size_pos = s.begin() + sizeof(fptr_t);
-
-    auto func_pos = size_pos + sizeof(size_t);
-    if constexpr (alignof(lambda_t) > alignof(size_t))
+    auto func_pos = s.begin() + sizeof(fptr_t);
+    if constexpr (alignof(lambda_t) > alignof(fptr_t))
         func_pos = align<alignof(lambda_t)>(func_pos);
 
     static_assert(alignof(char) == 1);
@@ -1635,7 +1680,6 @@ void xtr::sink::post_with_str_table(Args&&... args) noexcept(
     const auto next = detail::align<alignof(fptr_t)>(str_cur);
     const auto total_size = ring_buffer::size_type(next - s.begin());
 
-    copy(size_pos, total_size);
     buf_.reduce_writable(total_size);
 }
 
@@ -1682,6 +1726,7 @@ auto xtr::sink::make_lambda(Args&&... args) noexcept(
 {
     return [... args = std::forward<Args>(args)](
                fmt::memory_buffer& mbuf,
+               std::byte*& buf,
                const auto& out,
                const auto& err,
                log_level_style_t lstyle,
@@ -1692,11 +1737,28 @@ auto xtr::sink::make_lambda(Args&&... args) noexcept(
     {
         if constexpr (detail::is_timestamp_v<Tags>)
         {
-            xtr::detail::print_ts(mbuf, out, err, lstyle, fmt, level, name, args...);
+            detail::print_ts(
+                mbuf,
+                out,
+                err,
+                lstyle,
+                fmt,
+                level,
+                name,
+                detail::transform_string_table_entry(buf, args)...);
         }
         else
         {
-            xtr::detail::print(mbuf, out, err, lstyle, fmt, level, ts, name, args...);
+            detail::print(
+                mbuf,
+                out,
+                err,
+                lstyle,
+                fmt,
+                level,
+                ts,
+                name,
+                detail::transform_string_table_entry(buf, args)...);
         }
     };
 }

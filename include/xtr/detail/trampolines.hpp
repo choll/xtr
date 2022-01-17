@@ -84,7 +84,7 @@ namespace xtr::detail
         if constexpr (std::is_same_v<decltype(Format), std::nullptr_t>)
             func(st, name);
         else
-            func(mbuf, st.out, st.err, st.lstyle, *Format, Level, timestamp, name);
+            func(mbuf, buf, st.out, st.err, st.lstyle, *Format, Level, timestamp, name);
 
         static_assert(noexcept(func.~Func()));
         std::destroy_at(std::addressof(func));
@@ -99,14 +99,12 @@ namespace xtr::detail
     //                   +---------------------------+
     //                   | function pointer (fptr_t) |---> trampolineS<Format, ...>
     //                   +---------------------------+          |
-    //                   | record size (size_t)      |          | [ trampoline
-    //                   +---------------------------+          |   invokes lambda ]
-    //                   | lambda:                   | <--------+
-    //             +-----/    variable size          /
-    //    pointers | +---/    known at compile       /
-    //    into     | |   |    time                   |
-    //    string   | |   +---------------------------+
-    //    table    | |   | string table:             |
+    //                   | lambda:                   |          | [ trampoline
+    //             +-----/    variable size          /          |   invokes lambda ]
+    //    string   | +---/    known at compile       / <--------+
+    //    table    | |   |    time                   |
+    //    entries  | |   +---------------------------+
+    //             | |   | string table:             |
     //             | +-> /   variable size           /
     //             +---> /   known at run time       /
     //                   |                           |
@@ -121,21 +119,20 @@ namespace xtr::detail
     {
         typedef void(*fptr_t)();
 
-        auto size_pos = buf + sizeof(fptr_t);
-        assert(std::uintptr_t(size_pos) % alignof(std::size_t) == 0);
-
-        auto func_pos = size_pos + sizeof(std::size_t);
-        if constexpr (alignof(Func) > alignof(std::size_t))
+        auto func_pos = buf + sizeof(fptr_t);
+        if constexpr (alignof(Func) > alignof(fptr_t))
             func_pos = align<alignof(Func)>(func_pos);
         assert(std::uintptr_t(func_pos) % alignof(Func) == 0);
 
         auto& func = *reinterpret_cast<Func*>(func_pos);
-        func(mbuf, st.out, st.err, st.lstyle, *Format, Level, timestamp, name);
+        buf = func_pos + sizeof(Func);
+        // buf is modified by the lambda to point to the end of the string table
+        func(mbuf, buf, st.out, st.err, st.lstyle, *Format, Level, timestamp, name);
 
         static_assert(noexcept(func.~Func()));
         std::destroy_at(std::addressof(func));
 
-        return buf + *reinterpret_cast<const std::size_t*>(size_pos);
+        return align<alignof(fptr_t)>(buf);
     }
 }
 

@@ -755,9 +755,8 @@ TEST_CASE_METHOD(fixture, "logger string table test", "[logger]")
 
 TEST_CASE_METHOD(fixture, "logger string overflow test", "[logger]")
 {
-    // Three pointers are for the formatter pointer, string pointer and record
-    // size -1 is for the terminating nul on the string.
-    std::string s(s_.capacity() - sizeof(void*) * 3 - 1, char('X'));
+    const std::size_t record_size = sizeof(void*) + 4;
+    std::string s(s_.capacity() - record_size, char('X'));
     XTR_LOG(s_, "Test {}", s), line_ = __LINE__;
     REQUIRE(
         last_line() ==
@@ -774,7 +773,8 @@ TEST_CASE_METHOD(fixture, "logger string overflow test", "[logger]")
 
 TEST_CASE_METHOD(fixture, "logger const string overflow test", "[logger]")
 {
-    const std::string s(s_.capacity() - sizeof(void*) * 3, char('X'));
+    const std::size_t record_size = sizeof(void*) + 4;
+    const std::string s(s_.capacity() - record_size + 1, char('X'));
     XTR_LOG(s_, "Test {}", s), line_ = __LINE__;
     REQUIRE(
         last_line() ==
@@ -783,9 +783,8 @@ TEST_CASE_METHOD(fixture, "logger const string overflow test", "[logger]")
 
 TEST_CASE_METHOD(fixture, "logger string_view overflow test", "[logger]")
 {
-    // Three pointers are for the formatter pointer, string pointer and record
-    // size -1 is for the terminating nul on the string.
-    std::string s(s_.capacity() - sizeof(void*) * 3 - 1, char('X'));
+    const std::size_t record_size = sizeof(void*) + 4;
+    std::string s(s_.capacity() - record_size, char('X'));
     std::string_view sv{s};
     XTR_LOG(s_, "Test {}", sv), line_ = __LINE__;
     REQUIRE(
@@ -804,9 +803,8 @@ TEST_CASE_METHOD(fixture, "logger string_view overflow test", "[logger]")
 
 TEST_CASE_METHOD(fixture, "logger c string overflow test", "[logger]")
 {
-    // Three pointers are for the formatter pointer, string pointer and record
-    // size -1 is for the terminating nul on the string.
-    std::string s(s_.capacity() - sizeof(void*) * 3 - 1, char('X'));
+    const std::size_t record_size = sizeof(void*) + 4;
+    std::string s(s_.capacity() - record_size, char('X'));
     XTR_LOG(s_, "Test {}", s.c_str()), line_ = __LINE__;
     REQUIRE(
         last_line() ==
@@ -819,6 +817,18 @@ TEST_CASE_METHOD(fixture, "logger c string overflow test", "[logger]")
     REQUIRE(
         last_line() ==
         fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test <truncated>", line_));
+}
+
+TEST_CASE_METHOD(fixture, "logger c string overflow followed by c string test", "[logger]")
+{
+    const std::string s1(s_.capacity(), char('X'));
+    const char* s2 = "hello";
+
+    XTR_LOG(s_, "Test {} {}", s1.c_str(), s2), line_ = __LINE__;
+
+    REQUIRE(
+        last_line() ==
+        "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test <truncated> hello"_format(line_));
 }
 
 TEST_CASE_METHOD(fixture, "logger streams formatter test", "[logger]")
@@ -2507,4 +2517,12 @@ TEST_CASE_METHOD(fixture, "logger formatter helpers test", "[logger]")
     const int ca[] = {1, 2, 3};
     XTR_LOG(s_, "{}", std::span(std::begin(ca), std::end(ca))), line_ = __LINE__;
     REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: [1, 2, 3]", line_));
+}
+
+TEST_CASE_METHOD(fixture, "logger embedded nul test", "[logger]")
+{
+    const char str[] = "abc\0def";
+    const std::string_view sv(str, sizeof(str) - 1);
+    XTR_LOG(s_, "{}", sv), line_ = __LINE__;
+    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: abc\\x00def", line_));
 }
