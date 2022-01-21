@@ -828,7 +828,7 @@ TEST_CASE_METHOD(fixture, "logger c string overflow followed by c string test", 
 
     REQUIRE(
         last_line() ==
-        "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test <truncated> hello"_format(line_));
+        fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test <truncated> hello", line_));
 }
 
 TEST_CASE_METHOD(fixture, "logger streams formatter test", "[logger]")
