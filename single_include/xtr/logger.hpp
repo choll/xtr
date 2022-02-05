@@ -1197,6 +1197,7 @@ namespace xtr::detail
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <string>
 #include <string_view>
 #include <type_traits>
@@ -1206,7 +1207,8 @@ namespace xtr::detail
 {
     struct string_table_entry
     {
-        static constexpr std::uint32_t truncated = -1;
+        static constexpr auto truncated =
+            std::numeric_limits<std::uint32_t>::max();
 
         explicit string_table_entry(std::size_t sz) : size(std::uint32_t(sz))
         {
@@ -1298,7 +1300,7 @@ namespace xtr::detail
                 }
             new (pos++) char(*str++);
         }
-        return string_table_entry(pos - begin);
+        return string_table_entry(std::size_t(pos - begin));
     }
 }
 
