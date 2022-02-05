@@ -29,6 +29,7 @@
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <string>
 #include <string_view>
 #include <type_traits>
@@ -38,7 +39,7 @@ namespace xtr::detail
 {
     struct string_table_entry
     {
-        static constexpr std::uint32_t truncated = - 1;
+        static constexpr auto truncated = std::numeric_limits<std::uint32_t>::max();
 
         // This conversion is safe as sink cannot have a capacity greater
         // than UINT_MAX (via a static assertion in sink.hpp). Additionally
@@ -143,7 +144,7 @@ namespace xtr::detail
             }
             new (pos++) char(*str++);
         }
-        return string_table_entry(pos - begin);
+        return string_table_entry(std::size_t(pos - begin));
     }
 }
 

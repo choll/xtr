@@ -1134,14 +1134,14 @@ TEST_CASE_METHOD(fixture, "logger non-blocking drop test", "[logger]")
 {
     auto log_func_and_sizes =
         GENERATE(
-            std::make_tuple(+[](xtr::sink& s) { XTR_TRY_LOG(s, "Test"); }, 8),
-            std::make_tuple(+[](xtr::sink& s) { XTR_TRY_LOGL(info, s, "Test"); }, 8),
-            std::make_tuple(+[](xtr::sink& s) { XTR_TRY_LOG_TS(s, 0, "Test"); }, 16),
-            std::make_tuple(+[](xtr::sink& s) { XTR_TRY_LOGL_TS(info, s, 0, "Test"); }, 16),
-            std::make_tuple(+[](xtr::sink& s) { XTR_TRY_LOG_TSC(s, "Test"); }, 16),
-            std::make_tuple(+[](xtr::sink& s) { XTR_TRY_LOGL_TSC(info, s, "Test"); }, 16),
-            std::make_tuple(+[](xtr::sink& s) { XTR_TRY_LOG_RTC(s, "Test"); }, 24),
-            std::make_tuple(+[](xtr::sink& s) { XTR_TRY_LOGL_RTC(info, s, "Test"); }, 24));
+            std::make_tuple(+[](xtr::sink& s) { XTR_TRY_LOG(s, "Test"); }, 8UL),
+            std::make_tuple(+[](xtr::sink& s) { XTR_TRY_LOGL(info, s, "Test"); }, 8UL),
+            std::make_tuple(+[](xtr::sink& s) { XTR_TRY_LOG_TS(s, 0, "Test"); }, 16UL),
+            std::make_tuple(+[](xtr::sink& s) { XTR_TRY_LOGL_TS(info, s, 0, "Test"); }, 16UL),
+            std::make_tuple(+[](xtr::sink& s) { XTR_TRY_LOG_TSC(s, "Test"); }, 16UL),
+            std::make_tuple(+[](xtr::sink& s) { XTR_TRY_LOGL_TSC(info, s, "Test"); }, 16UL),
+            std::make_tuple(+[](xtr::sink& s) { XTR_TRY_LOG_RTC(s, "Test"); }, 24UL),
+            std::make_tuple(+[](xtr::sink& s) { XTR_TRY_LOGL_RTC(info, s, "Test"); }, 24UL));
 
     // 16 bytes taken by blocker, bytes per log record given above.
     const std::size_t n_dropped = 100;
