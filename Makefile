@@ -30,7 +30,7 @@ CXXFLAGS += \
 	-pedantic -pipe -pthread
 CPPFLAGS += -MMD -MP -I include $(FMT_CPPFLAGS) -DXTR_FUNC=
 LDFLAGS += -fuse-ld=gold
-LDLIBS += -lxtr
+LDLIBS += -lxtr -l$(CONAN_LIBS_LIBURING)
 
 TEST_CPPFLAGS = $(CATCH2_CPPFLAGS) 
 TEST_LDFLAGS = -L $(BUILD_DIR) $(FMT_LDFLAGS)
@@ -113,10 +113,12 @@ endif
 TARGET = $(BUILD_DIR)/libxtr.a
 SRCS := \
 	src/command_dispatcher.cpp src/command_path.cpp src/consumer.cpp \
-	src/file_descriptor.cpp src/logger.cpp src/log_level.cpp \
-	src/matcher.cpp src/memory_mapping.cpp src/mirrored_memory_mapping.cpp \
-	src/pagesize.cpp src/regex_matcher.cpp src/sink.cpp \
-	src/throw.cpp src/tsc.cpp src/wildcard_matcher.cpp
+	src/fd_storage.cpp src/file_descriptor.cpp src/logger.cpp \
+	src/log_level.cpp src/matcher.cpp src/memory_mapping.cpp \
+	src/mirrored_memory_mapping.cpp src/pagesize.cpp src/regex_matcher.cpp \
+	src/sink.cpp src/throw.cpp src/tsc.cpp \
+	src/wildcard_matcher.cpp
+
 OBJS = $(SRCS:%=$(BUILD_DIR)/%.o)
 
 TEST_TARGET = $(BUILD_DIR)/test/test
@@ -152,7 +154,9 @@ DEPS = $(OBJS:.o=.d) $(TEST_OBJS:.o=.d) $(BENCH_OBJS:.o=.d) $(XTRCTL_OBJS:.o=.d)
 INCLUDES = \
 	$(wildcard include/xtr/*.hpp) \
 	$(wildcard include/xtr/detail/*.hpp) \
-	$(wildcard include/xtr/detail/commands/*.hpp)
+	$(wildcard include/xtr/detail/commands/*.hpp \
+	$(wildcard include/xtr/io/*.hpp) \
+	$(wildcard include/xtr/io/detail/*.hpp))
 
 $(TARGET): $(OBJS)
 	$(AR) rc $@ $^
@@ -241,7 +245,7 @@ ifeq ($(COVERAGE), 0)
 endif
 	$<
 	@mkdir -p $(@D)
-	gcovr --exclude test --exclude third_party --html-detail $@ -r .
+	gcovr --exclude test --exclude third_party --html-details $@ -r .
 
 -include $(DEPS)
 

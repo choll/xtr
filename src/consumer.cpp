@@ -29,10 +29,12 @@
 #include "xtr/timespec.hpp"
 
 #include <fmt/chrono.h>
+#include <fmt/format.h>
 
 #include <algorithm>
 #include <climits>
 #include <cstring>
+#include <cstdio>
 #include <version>
 
 XTR_FUNC
@@ -41,7 +43,6 @@ void xtr::detail::consumer::run(std::function<::timespec()>&& clock) noexcept
     char ts[32] = {};
     bool ts_stale = true;
     std::size_t flush_count = 0;
-    fmt::memory_buffer mbuf;
 
     for (std::size_t i = 0; !sinks_.empty(); ++i)
     {
@@ -61,7 +62,7 @@ void xtr::detail::consumer::run(std::function<::timespec()>&& clock) noexcept
         {
             // flush if no further data available (all sinks empty)
             if (flush_count != 0 && flush_count-- == 1)
-                flush();
+                buf.flush();
             continue;
         }
 
@@ -88,7 +89,7 @@ void xtr::detail::consumer::run(std::function<::timespec()>&& clock) noexcept
             assert(std::uintptr_t(pos) % alignof(sink::fptr_t) == 0);
             assert(!destroy);
             const sink::fptr_t fptr = *reinterpret_cast<const sink::fptr_t*>(pos);
-            pos = fptr(mbuf, pos, *this, ts, sinks_[n].name);
+            pos = fptr(buf, pos, *this, ts, sinks_[n].name);
         } while (pos < end);
 
         if (destroy)
@@ -107,9 +108,7 @@ void xtr::detail::consumer::run(std::function<::timespec()>&& clock) noexcept
             (n_dropped = sinks_[n]->buf_.dropped_count()) > 0)
         {
             detail::print(
-                mbuf,
-                out,
-                err,
+                buf,
                 lstyle,
                 "{}{} {}: {} messages dropped\n",
                 log_level_t::warning,
@@ -122,8 +121,6 @@ void xtr::detail::consumer::run(std::function<::timespec()>&& clock) noexcept
         // flushing may be late/early if sinks is modified, doesn't matter
         flush_count = sinks_.size();
     }
-
-    close();
 }
 
 XTR_FUNC
@@ -254,8 +251,9 @@ void xtr::detail::consumer::set_level_handler(int fd, detail::set_level& sl)
 XTR_FUNC
 void xtr::detail::consumer::reopen_handler(int fd, detail::reopen& /* unused */)
 {
-    if (!reopen())
-        cmds_->send_error(fd, std::strerror(errno));
+    buf.flush();
+    if (const int errnum = buf.storage().reopen())
+        cmds_->send_error(fd, std::strerror(errnum));
     else
         cmds_->send(fd, detail::frame<detail::success>());
 }

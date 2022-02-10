@@ -36,6 +36,7 @@ xtr::detail::file_descriptor::file_descriptor(
     if (fd_ == -1)
     {
         throw_system_error_fmt(
+            errno,
             "xtr::detail::file_descriptor::file_descriptor: "
             "Failed to open `%s'", path);
     }

@@ -93,8 +93,8 @@ void xtr::sink::sync(bool destroy)
         {
             c.destroy = destroy;
 
-            c.flush();
-            c.sync();
+            c.buf.flush();
+            c.buf.storage().sync();
 
             std::scoped_lock lock{m};
             notified = true;
@@ -136,7 +136,6 @@ void xtr::sink::set_name(std::string name)
         {
             oldname = std::move(name);
         });
-    sync();
 }
 
 XTR_FUNC

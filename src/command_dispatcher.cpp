@@ -271,7 +271,7 @@ void xtr::detail::command_dispatcher::send_error(int fd, std::string_view reason
 }
 
 XTR_FUNC
-void xtr::detail::command_dispatcher_deleter::operator()(command_dispatcher* d)
+void xtr::detail::command_dispatcher_deleter::operator()(command_dispatcher* d) const
 {
     delete d;
 }

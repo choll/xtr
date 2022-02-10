@@ -26,6 +26,9 @@
 #include "xtr/detail/commands/requests.hpp"
 #include "xtr/detail/commands/responses.hpp"
 #include "xtr/detail/config.hpp"
+#include "xtr/detail/file_descriptor.hpp"
+#include "xtr/io/fd_storage.hpp"
+#include "xtr/io/storage_interface.hpp"
 
 #include "command_client.hpp"
 
@@ -65,9 +68,10 @@
 #include <utility>
 #include <vector>
 
+#include <sys/mman.h>
+#include <sys/un.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <sys/un.h>
 #include <err.h>
 #include <setjmp.h>
 #include <signal.h>
@@ -105,65 +109,105 @@ namespace
     {
         file_buf()
         {
-            REQUIRE(fp_ != nullptr);
-        }
-
-        ~file_buf()
-        {
-            std::fclose(fp_);
-            std::free(buf_);
+            REQUIRE(fd_);
         }
 
         void push_lines(std::vector<std::string>& lines)
         {
-            if (fp_ == nullptr)
-                return;
-            // Note: buf_ may be updated by stdio/open_memstream (as in, a new
-            // buffer may be allocated, and the buf_ pointer overwritten to
-            // point to the new buffer), hence using std::string and not
-            // std::string_view in lines_.
-            std::fflush(fp_);
-            if (size_ == 0)
-                return;
-            for (
-                std::size_t nl = 0;
-                nl = std::strcspn(&buf_[off_], "\n"), buf_[off_ + nl] != '\0';
-                off_ += nl + 1)
+            // pread is used here because writes to the file descriptor modify
+            // the file offset
+            while (const ::ssize_t nread = ::pread(fd_.get(), buf_, sizeof(buf_), offset_))
             {
-                lines.emplace_back(&buf_[off_], nl);
+                REQUIRE(nread != -1);
+                for (auto it = buf_; it != buf_ + nread; ++it)
+                {
+                    if (*it == '\n')
+                        lines.push_back(std::move(current_line_));
+                    else
+                        current_line_.push_back(*it);
+                }
+                offset_ += nread;
             }
         }
 
-        std::size_t size_{};
-        std::size_t off_{};
-        char *buf_ = nullptr;
-        FILE* fp_{::open_memstream(&buf_, &size_)};
+        std::string current_line_;
+        ::off_t offset_{};
+        xtrd::file_descriptor fd_{::memfd_create("xtr_unit_test_file_buf", 0)};
+        char buf_[128];
     };
 
-    auto make_output_func(std::vector<std::string>& v, std::mutex& m)
+    struct container_storage : xtr::storage_interface
     {
-        return
-            [&v, &m](xtr::log_level_t, const char* buf, std::size_t length)
-            {
-                std::scoped_lock lock{m};
-                assert(buf[length - 1] == '\n');
-                v.push_back(std::string(buf, length - 1));
-                return length;
-            };
-    }
+        static constexpr std::size_t buffer_capacity = 64 * 1024;
 
-    auto make_error_func(std::vector<std::string>& v, std::mutex& m)
-    {
-        return
-            [out = make_output_func(v, m)](const char* buf, std::size_t length)
+        container_storage(std::mutex& m, std::vector<std::string>& lines)
+        :
+            m_(m),
+            lines_(lines)
+        {
+        }
+
+        void sync() override
+        {
+            ++sync_count_;
+        }
+
+        int reopen() override
+        {
+            assert(reopen_func_);
+            return reopen_func_();
+        }
+
+        ~container_storage()
+        {
+            if (dtor_func_)
+                dtor_func_();
+        }
+
+        std::span<char> allocate_buffer() override
+        {
+            return {buf_.get(), buffer_capacity};
+        }
+
+        void submit_buffer(char* buf, std::size_t size, bool) override
+        {
+            for (auto it = buf, end = buf + size; it != end; ++it)
             {
-                out(xtr::log_level_t::none, buf, length);
-            };
-    }
+                if (*it == '\n')
+                {
+                    std::scoped_lock lock{m_};
+                    lines_.push_back(std::move(current_line_));
+                }
+                else
+                {
+                    current_line_.push_back(*it);
+                }
+            }
+        }
+
+        std::mutex& m_;
+        std::function<int()> reopen_func_;
+        std::function<void()> dtor_func_;
+        std::atomic<std::size_t> sync_count_{};
+        std::vector<std::string>& lines_;
+
+private:
+        std::unique_ptr<char[]> buf_ =
+            std::make_unique_for_overwrite<char[]>(buffer_capacity);
+        std::string current_line_;
+    };
 
     struct fixture
     {
-        fixture() = default;
+        fixture()
+        :
+            storage_(new container_storage(m_, lines_)),
+            log_(
+                xtr::storage_interface_ptr(storage_),
+                test_clock{&clock_nanos_},
+                xtr::null_command_path)
+        {
+        }
 
         template<typename... Args>
         fixture(Args&&... args)
@@ -185,14 +229,6 @@ namespace
             return lines_.back();
         }
 
-        std::string last_err()
-        {
-            sync();
-            std::scoped_lock lock{m_};
-            REQUIRE(!errors_.empty());
-            return errors_.back();
-        }
-
         std::size_t line_count()
         {
             std::scoped_lock lock{m_};
@@ -206,15 +242,11 @@ namespace
         }
 
         int line_{};
+        std::atomic<std::int64_t> clock_nanos_{946688523123456789L};
         std::mutex m_;
         std::vector<std::string> lines_;
-        std::vector<std::string> errors_;
-        std::atomic<std::int64_t> clock_nanos_{946688523123456789L};
-        xtr::logger log_{
-            make_output_func(lines_, m_),
-            make_error_func(errors_, m_),
-            test_clock{&clock_nanos_},
-            xtr::null_command_path};
+        container_storage* storage_ = nullptr;
+        xtr::logger log_;
         xtr::sink s_ = log_.get_sink("Name");
     };
 
@@ -222,7 +254,6 @@ namespace
     {
     protected:
         file_buf outbuf_;
-        file_buf errbuf_;
     };
 
     struct file_fixture : file_fixture_base, fixture
@@ -230,8 +261,7 @@ namespace
         file_fixture()
         :
             fixture(
-                outbuf_.fp_,
-                errbuf_.fp_,
+                xtr::make_fd_storage(outbuf_.fd_.get()),
                 test_clock{&clock_nanos_},
                 xtr::null_command_path)
         {
@@ -241,7 +271,6 @@ namespace
         {
             fixture::sync();
             outbuf_.push_lines(lines_);
-            errbuf_.push_lines(errors_);
         }
     };
 
@@ -256,15 +285,21 @@ namespace
     {
         ~path_fixture()
         {
-            ::unlink(path_);
+            ::unlink(path_.c_str());
         }
 
-        char path_[32] = "/tmp/xtr.test.XXXXXX";
-        FILE* fp_ = fmktemp(path_);
+        static std::string get_tmpdir()
+        {
+            if (const char* tmpdir = ::getenv("TMPDIR"))
+                return tmpdir;
+            return "/tmp";
+        }
+
+        std::string path_ = get_tmpdir() + "/xtr.test.XXXXXX";
+        FILE* fp_ = fmktemp(path_.data());
         std::atomic<std::int64_t> clock_nanos_{946688523123456789L};
         xtr::logger log_{
-            path_,
-            fp_,
+            path_.c_str(),
             fp_,
             test_clock{&clock_nanos_},
             xtr::null_command_path};
@@ -936,9 +971,23 @@ TEST_CASE_METHOD(fixture, "tsc estimation test", "[logger]")
 #if __cpp_exceptions
 TEST_CASE_METHOD(fixture, "logger error handling test", "[logger]")
 {
-    XTR_LOG(s_, "Test {}", thrower{}), line_ = __LINE__;
-    REQUIRE(last_err() == "E 2000-01-01 01:02:03.123456 Name: Error: Exception error text");
+    file_buf errbuf;
+    std::vector<std::string> errors;
+
+    xtrd::file_descriptor saved_stderr(::dup(STDERR_FILENO));
+    REQUIRE(dup2(errbuf.fd_.get(), STDERR_FILENO) == STDERR_FILENO);
+
+    XTR_LOG(s_, "Test {}", thrower{});
+    s_.sync();
+
+    errbuf.push_lines(errors);
+    REQUIRE(errors.size() == 1);
+    REQUIRE(
+        errors.back() ==
+        "E 2000-01-01 01:02:03.123456: Error writing log: Exception error text");
     REQUIRE(lines_.empty());
+
+    REQUIRE(dup2(saved_stderr.get(), STDERR_FILENO) == STDERR_FILENO);
 }
 #endif
 
@@ -953,125 +1002,6 @@ TEST_CASE_METHOD(fixture, "logger argument destruction test", "[logger]")
         REQUIRE(!lines_.empty());
     }
     REQUIRE(w.expired());
-}
-
-TEST_CASE("logger set output file test", "[logger]")
-{
-    file_buf buf;
-    fixture f;
-
-    f.log_.set_output_stream(buf.fp_);
-
-    XTR_LOG(f.s_, "Test"), f.line_ = __LINE__;
-
-    f.sync();
-    REQUIRE(f.lines_.empty());
-    REQUIRE(f.errors_.empty());
-
-    std::vector<std::string> lines;
-    buf.push_lines(lines);
-    REQUIRE(lines.size() == 1);
-    REQUIRE(lines.back() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", f.line_));
-}
-
-TEST_CASE("logger set error file test", "[logger]")
-{
-    file_buf buf;
-    fixture f;
-
-    f.log_.set_error_stream(buf.fp_);
-    f.log_.set_output_function(
-        [](xtr::log_level_t, const char*, std::size_t)
-        {
-            return -1;
-        });
-
-    XTR_LOG(f.s_, "Test"), f.line_ = __LINE__;
-
-    f.sync();
-    REQUIRE(f.lines_.empty());
-    REQUIRE(f.errors_.empty());
-
-    std::vector<std::string> lines;
-    buf.push_lines(lines);
-    REQUIRE(lines.size() == 1);
-    REQUIRE(lines.back() == "E 2000-01-01 01:02:03.123456 Name: Error: Write error");
-}
-
-TEST_CASE_METHOD(fixture, "logger set output func test", "[logger]")
-{
-    std::string output;
-    xtr::log_level_t level{};
-
-    log_.set_output_function(
-        [&](xtr::log_level_t l, const char* buf, std::size_t size)
-        {
-            output = std::string(buf, size);
-            level = l;
-            return size;
-        });
-
-    XTR_LOG(s_, "Test"), line_ = __LINE__;
-
-    sync();
-    REQUIRE(lines_.empty());
-    REQUIRE(errors_.empty());
-
-    REQUIRE(output == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test\n", line_));
-    REQUIRE(level == xtr::log_level_t::info);
-}
-
-TEST_CASE_METHOD(fixture, "logger set error func test", "[logger]")
-{
-    std::string error;
-    log_.set_output_function(
-        [](xtr::log_level_t, const char*, std::size_t)
-        {
-            return -1;
-        });
-    log_.set_error_function(
-        [&error](const char* buf, std::size_t size)
-        {
-            error = std::string(buf, size);
-        });
-
-    XTR_LOG(s_, "Test"), line_ = __LINE__;
-
-    sync();
-    REQUIRE(lines_.empty());
-    REQUIRE(errors_.empty());
-
-    REQUIRE(error == "E 2000-01-01 01:02:03.123456 Name: Error: Write error\n");
-}
-
-TEST_CASE("logger set close func test", "[logger]")
-{
-    bool closed = false;
-
-    {
-        fixture f;
-        f.log_.set_close_function([&closed](){ closed = true; });
-        REQUIRE(!closed);
-    }
-
-    REQUIRE(closed);
-}
-
-TEST_CASE_METHOD(fixture, "logger short write test", "[logger]")
-{
-    log_.set_output_function(
-        [&](xtr::log_level_t, const char* buf, std::size_t size)
-        {
-            size -= 21;
-            std::scoped_lock lock{m_};
-            lines_.push_back(std::string(buf, size));
-            return size;
-        });
-
-    XTR_LOG(s_, "Test {} {} {}", 1, 2, 3), line_ = __LINE__;
-
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.", line_));
-    REQUIRE(last_err() == fmt::format("E 2000-01-01 01:02:03.123456 Name: Error: Short write", line_));
 }
 
 TEST_CASE_METHOD(fixture, "logger sink change name test", "[logger]")
@@ -1132,6 +1062,10 @@ TEST_CASE_METHOD(fixture, "logger non-blocking test", "[logger]")
 
 TEST_CASE_METHOD(fixture, "logger non-blocking drop test", "[logger]")
 {
+#pragma GCC diagnostic push
+#if defined(__clang__)
+#pragma GCC diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
+#endif
     auto log_func_and_sizes =
         GENERATE(
             std::make_tuple(+[](xtr::sink& s) { XTR_TRY_LOG(s, "Test"); }, 8UL),
@@ -1142,6 +1076,7 @@ TEST_CASE_METHOD(fixture, "logger non-blocking drop test", "[logger]")
             std::make_tuple(+[](xtr::sink& s) { XTR_TRY_LOGL_TSC(info, s, "Test"); }, 16UL),
             std::make_tuple(+[](xtr::sink& s) { XTR_TRY_LOG_RTC(s, "Test"); }, 24UL),
             std::make_tuple(+[](xtr::sink& s) { XTR_TRY_LOGL_RTC(info, s, "Test"); }, 24UL));
+#pragma GCC diagnostic pop
 
     // 16 bytes taken by blocker, bytes per log record given above.
     const std::size_t n_dropped = 100;
@@ -1175,40 +1110,44 @@ TEST_CASE_METHOD(fixture, "logger non-blocking drop test", "[logger]")
 // Calling these tests `soak' tests is stretching things but I can't think
 // of a better name.
 
-TEST_CASE_METHOD(fixture, "logger soak test", "[logger]")
+TEMPLATE_TEST_CASE("logger soak test", "[logger]", fixture, file_fixture)
 {
     constexpr std::size_t n = 100000;
 
+    TestType f;
+
     for (std::size_t i = 0; i < n; ++i)
     {
-        XTR_LOG(s_, "Test {}", i), line_ = __LINE__;
-        XTR_LOG(s_, "Test {}", i);
+        XTR_LOG(f.s_, "Test {}", i), f.line_ = __LINE__;
+        XTR_LOG(f.s_, "Test {}", i);
     }
 
-    sync();
-    REQUIRE(line_count() == n * 2);
+    f.sync();
+    REQUIRE(f.line_count() == n * 2);
 
     for (std::size_t i = 0; i < n * 2; i += 2)
     {
-        REQUIRE(lines_[i] == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test {}", line_, i / 2));
-        REQUIRE(lines_[i + 1] == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test {}", line_ + 1, i / 2));
+        REQUIRE(f.lines_[i] == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test {}", f.line_, i / 2));
+        REQUIRE(f.lines_[i + 1] == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test {}", f.line_ + 1, i / 2));
     }
 }
 
-TEST_CASE_METHOD(fixture, "logger multiple sink soak test", "[logger]")
+TEMPLATE_TEST_CASE("logger multiple sink soak test", "[logger]", fixture, file_fixture)
 {
     constexpr std::size_t n = 100000;
     constexpr std::size_t n_sinks = 1024;
 
+    TestType f;
+
     std::vector<xtr::sink> sinks;
 
     for (std::size_t i = 0; i < n_sinks; ++i)
-        sinks.push_back(log_.get_sink("Name"));
+        sinks.push_back(f.log_.get_sink("Name"));
 
     for (std::size_t i = 0; i < n; ++i)
     {
         auto& p = sinks[i & (n_sinks - 1)];
-        XTR_LOG(p, "Test"), line_ = __LINE__;
+        XTR_LOG(p, "Test"), f.line_ = __LINE__;
     }
 
     for (std::size_t i = 0; i < n; ++i)
@@ -1217,10 +1156,12 @@ TEST_CASE_METHOD(fixture, "logger multiple sink soak test", "[logger]")
         p.sync();
     }
 
-    REQUIRE(line_count() == n);
+    f.sync(); // only required for file_fixture
+
+    REQUIRE(f.line_count() == n);
 
     for (std::size_t i = 0; i < n; ++i)
-        REQUIRE(lines_[i] == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
+        REQUIRE(f.lines_[i] == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", f.line_));
 }
 
 TEST_CASE_METHOD(fixture, "logger string soak test", "[logger]")
@@ -1266,69 +1207,33 @@ TEST_CASE_METHOD(fixture, "logger escape sequence test", "[logger]")
 
 TEST_CASE_METHOD(fixture, "logger sync test", "[logger]")
 {
-    std::atomic<std::size_t> sync_count{};
+    REQUIRE(storage_->sync_count_ == 0);
 
-    log_.set_sync_function(
-        [&sync_count]()
-        {
-            ++sync_count;
-        });
-
-    // set_sync_function calls sync
-    REQUIRE(sync_count == 1);
-
-    const std::size_t n = 10;
-
-    for (std::size_t i = 0; i < n; ++i)
+    for (std::size_t i = 0; i < 10; ++i)
     {
-        std::size_t target_count = sync_count + 1;
         sync();
-        REQUIRE(sync_count == target_count);
+        REQUIRE(storage_->sync_count_ == i + 1);
     }
-
-    // Set an empty function to avoid accessing a dangling reference
-    // to sync_count
-    log_.set_sync_function([](){});
 }
 
-TEST_CASE_METHOD(fixture, "logger flush test", "[logger]")
+TEST_CASE("logger storage destructor test", "[logger]")
 {
-    std::atomic<std::size_t> flush_count{};
+    bool destructed = false;
 
-    log_.set_flush_function(
-        [&flush_count]()
-        {
-            ++flush_count;
-        });
-
-    // set_flush_function calls sync, which calls flush, so here flush_count
-    // is either 1, or 2 if flush was called in between set_flush_function
-    // and sync being processed.
-    REQUIRE((flush_count == 1 || flush_count == 2));
-
-    const std::size_t n = 10;
-
-    for (std::size_t i = 0; i < n; ++i)
     {
-        std::size_t target_count = flush_count + 1;
-        XTR_LOG(s_, "Test");
-        // Wait for flush to be called, unfortunately this is racy, however
-        // sync() cannot be called as it would interfere with the test itself. 
-        for (std::size_t j = 0; j < 10000 && flush_count < target_count; ++j)
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        REQUIRE(flush_count == target_count);
+        fixture f;
+        f.storage_->dtor_func_ = [&destructed](){ destructed = true; };
+        REQUIRE(!destructed);
     }
 
-    // Set an empty function to avoid accessing a dangling reference
-    // to flush_count
-    log_.set_flush_function([](){});
+    REQUIRE(destructed);
 }
 
 TEST_CASE_METHOD(path_fixture, "logger throughput", "[.logger]")
 {
     using clock = std::chrono::high_resolution_clock;
 
-    constexpr std::size_t n = 10000000;
+    constexpr std::size_t n = 100000000;
 
     static constexpr char fmt[] =
         "{}{} Test message of length 80 chars Test message of length 80 chars Test message of\n";
@@ -2119,7 +2024,7 @@ TEST_CASE_METHOD(command_fixture<>, "logger reopen command test", "[logger]")
 {
     bool reopened = false;
 
-    log_.set_reopen_function([&reopened](){ reopened = true; return true; });
+    storage_->reopen_func_ = [&reopened](){ reopened = true; return 0; };
 
     REQUIRE(!reopened);
 
@@ -2131,7 +2036,7 @@ TEST_CASE_METHOD(command_fixture<>, "logger reopen command test", "[logger]")
 
 TEST_CASE_METHOD(command_fixture<>, "logger reopen command error test", "[logger]")
 {
-    log_.set_reopen_function([](){ errno = EBADF; return false; });
+    storage_->reopen_func_ = [](){ return EBADF; };
 
     xtrd::frame<xtrd::reopen> ro;
     const auto errors = send_frame<xtrd::error>(ro);
@@ -2144,16 +2049,27 @@ TEST_CASE_METHOD(command_fixture<>, "logger reopen command error test", "[logger
 
 TEST_CASE_METHOD(command_fixture<path_fixture>, "logger reopen command path test", "[logger]")
 {
-    ::unlink(path_);
+    ::unlink(path_.c_str());
 
     struct stat sb;
 
-    REQUIRE(::stat(path_, &sb) == -1);
+    REQUIRE(::stat(path_.c_str(), &sb) == -1);
 
     xtrd::frame<xtrd::reopen> ro;
     send_frame<xtrd::success>(ro);
 
-    REQUIRE(::stat(path_, &sb) == 0);
+    REQUIRE(::stat(path_.c_str(), &sb) == 0);
+}
+
+TEST_CASE_METHOD(command_fixture<file_fixture>, "logger null_reopen_path test", "[logger]")
+{
+    xtrd::frame<xtrd::reopen> ro;
+    const auto errors = send_frame<xtrd::error>(ro);
+
+    using namespace std::literals::string_view_literals;
+
+    REQUIRE(errors.size() == 1);
+    REQUIRE(errors[0].reason == "No such file or directory"sv);
 }
 
 TEST_CASE_METHOD(fixture, "logger socket path too long test", "[logger]")

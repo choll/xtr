@@ -20,15 +20,16 @@
 
 #include "xtr/detail/throw.hpp"
 
-#include <cerrno>
 #include <cstdio>
 #include <cstdlib>
 #include <cstdarg>
 #include <cstring>
+#include <new>
 #include <stdexcept>
 #include <system_error>
 
-XTR_FUNC void xtr::detail::throw_runtime_error(const char* what)
+XTR_FUNC
+void xtr::detail::throw_runtime_error(const char* what)
 {
 #if __cpp_exceptions
     throw std::runtime_error(what);
@@ -38,7 +39,8 @@ XTR_FUNC void xtr::detail::throw_runtime_error(const char* what)
 #endif
 }
 
-XTR_FUNC void xtr::detail::throw_runtime_error_fmt(const char* format, ...)
+XTR_FUNC
+void xtr::detail::throw_runtime_error_fmt(const char* format, ...)
 {
     va_list args;
     va_start(args, format);;
@@ -53,34 +55,35 @@ XTR_FUNC void xtr::detail::throw_runtime_error_fmt(const char* format, ...)
 #endif
 }
 
-XTR_FUNC void xtr::detail::throw_system_error(const char* what)
+XTR_FUNC
+void xtr::detail::throw_system_error(int errnum, const char* what)
 {
 #if __cpp_exceptions
-    throw std::system_error(std::error_code(errno, std::generic_category()), what);
+    throw std::system_error(std::error_code(errnum, std::system_category()), what);
 #else
-    std::fprintf(stderr, "system error: %s: %s\n", what, std::strerror(errno));
+    std::fprintf(stderr, "system error: %s: %s\n", what, std::strerror(errnum));
     std::abort();
 #endif
 }
 
 XTR_FUNC
-void xtr::detail::throw_system_error_fmt(const char* format, ...)
+void xtr::detail::throw_system_error_fmt(int errnum, const char* format, ...)
 {
-    const int errnum = errno; // in case vsnprintf modifies errno
     va_list args;
     va_start(args, format);;
     char buf[1024];
     std::vsnprintf(buf, sizeof(buf), format, args);
     va_end(args);
 #if __cpp_exceptions
-    throw std::system_error(std::error_code(errnum, std::generic_category()), buf);
+    throw std::system_error(std::error_code(errnum, std::system_category()), buf);
 #else
     std::fprintf(stderr, "system error: %s: %s\n", buf, std::strerror(errnum));
     std::abort();
 #endif
 }
 
-XTR_FUNC void xtr::detail::throw_invalid_argument(const char* what)
+XTR_FUNC
+void xtr::detail::throw_invalid_argument(const char* what)
 {
 #if __cpp_exceptions
     throw std::invalid_argument(what);
@@ -90,3 +93,13 @@ XTR_FUNC void xtr::detail::throw_invalid_argument(const char* what)
 #endif
 }
 
+XTR_FUNC
+void xtr::detail::throw_bad_alloc()
+{
+#if __cpp_exceptions
+    throw std::bad_alloc();
+#else
+    std::fprintf(stderr, "bad alloc\n");
+    std::abort();
+#endif
+}

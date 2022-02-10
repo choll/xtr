@@ -1,4 +1,4 @@
-// Copyright 2021 Chris E. Holloway
+// Copyright 2022 Chris E. Holloway
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,19 +18,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "command_client.hpp"
-#include "xtr/detail/commands/connect.hpp"
-#include "xtr/detail/throw.hpp"
+#ifndef XTR_IO_FD_STORAGE_HPP
+#define XTR_IO_FD_STORAGE_HPP
 
-void xtr::detail::command_client::connect(const std::string& path)
+#include "xtr/io/storage_interface.hpp"
+
+#include <cstddef>
+#include <string>
+
+namespace xtr
 {
-    fd_ = command_connect(path);
-    if (!fd_)
-        throw_system_error_fmt(errno, "Failed to connect to `%s'", path.c_str());
-    cmd_path_ = path;
+    storage_interface_ptr make_fd_storage(
+        int outfd,
+        std::string reopen_path = null_reopen_path);
 }
 
-void xtr::detail::command_client::reconnect()
-{
-    connect(cmd_path_);
-}
+#endif

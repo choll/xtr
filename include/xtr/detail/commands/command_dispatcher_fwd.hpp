@@ -27,7 +27,7 @@ namespace xtr::detail
 
     struct command_dispatcher_deleter
     {
-        void operator()(command_dispatcher*);
+        void operator()(command_dispatcher*) const;
     };
 }
 

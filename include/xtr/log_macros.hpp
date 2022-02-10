@@ -303,7 +303,8 @@
                 xtr::detail::string{":"} +                                          \
                 xtr::detail::string{XTR_XSTR(__LINE__) ": " FORMAT "\n"};           \
             using xtr::nocopy;                                                      \
-            (SINK).log<&xtr_fmt, xtr::log_level_t::LEVEL, void(TAGS)>(__VA_ARGS__); \
+            (SINK).template                                                         \
+                log<&xtr_fmt, xtr::log_level_t::LEVEL, void(TAGS)>(__VA_ARGS__);    \
         }))
 
 #endif

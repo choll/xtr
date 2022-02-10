@@ -22,7 +22,6 @@
 
 #include <catch2/catch.hpp>
 
-#include <cerrno>
 #include <stdexcept>
 #include <system_error>
 
@@ -39,18 +38,27 @@ TEST_CASE("runtime_error_fmt", "[throw]")
 
 TEST_CASE("system_error", "[throw]")
 {
-    REQUIRE_THROWS_AS(xtr::detail::throw_system_error(""), std::system_error);
+    using namespace Catch::Matchers;
+    REQUIRE_THROWS_WITH(
+        xtr::detail::throw_system_error(EBUSY, "error text"),
+        Contains("error text: ") && Contains("busy"));
 }
 
 TEST_CASE("system_error_fmt", "[throw]")
 {
-    errno = EBUSY;
     using namespace Catch::Matchers;
-    REQUIRE_THROWS_WITH(xtr::detail::throw_system_error_fmt("error text"), Contains("error text: ") && Contains("busy"));
+    REQUIRE_THROWS_WITH(
+        xtr::detail::throw_system_error_fmt(EBUSY, "error text %d", 42),
+        Contains("error text 42: ") && Contains("busy"));
 }
 
 TEST_CASE("invalid_argument", "[throw]")
 {
     REQUIRE_THROWS_AS(xtr::detail::throw_invalid_argument(""), std::invalid_argument);
+}
+
+TEST_CASE("bad_alloc", "[throw]")
+{
+    REQUIRE_THROWS_AS(xtr::detail::throw_bad_alloc(), std::bad_alloc);
 }
 #endif

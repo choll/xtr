@@ -21,6 +21,7 @@
 #include "xtr/detail/memory_mapping.hpp"
 #include "xtr/detail/throw.hpp"
 
+#include <cerrno>
 #include <cassert>
 
 XTR_FUNC
@@ -38,6 +39,7 @@ xtr::detail::memory_mapping::memory_mapping(
     if (mem_ == MAP_FAILED)
     {
         throw_system_error(
+            errno,
             "xtr::detail::memory_mapping::memory_mapping: mmap failed");
     }
 }

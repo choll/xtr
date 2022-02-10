@@ -22,6 +22,8 @@
 #define XTR_LOGGER_HPP
 
 #include "command_path.hpp"
+#include "io/fd_storage.hpp"
+#include "io/storage_interface.hpp"
 #include "detail/consumer.hpp"
 #include "detail/string_ref.hpp"
 #include "detail/throw.hpp"
@@ -29,17 +31,18 @@
 #include "log_level.hpp"
 #include "sink.hpp"
 
+#include <cerrno>
 #include <chrono>
 #include <cstdio>
 #include <ctime>
+#include <memory>
 #include <mutex>
-#include <functional>
 #include <string>
 #include <thread>
 #include <type_traits>
 #include <utility>
 
-#include <unistd.h>
+#include <stdio.h> // fileno
 
 namespace xtr
 {
@@ -67,71 +70,13 @@ namespace xtr
 
 namespace xtr::detail
 {
-    inline auto make_output_func(FILE* stream)
-    {
-        return
-            [stream](log_level_t, const char* buf, std::size_t size)
-            {
-                return std::fwrite(buf, 1, size, stream);
-            };
-    }
-
-    inline auto make_error_func(FILE* stream)
-    {
-        return
-            [stream](const char* buf, std::size_t size)
-            {
-                (void)std::fwrite(buf, 1, size, stream);
-            };
-    }
-
-    inline auto make_flush_func(FILE* stream, FILE* err_stream)
-    {
-        return
-            [stream, err_stream]()
-            {
-                std::fflush(stream);
-                std::fflush(err_stream);
-            };
-    }
-
-    inline auto make_sync_func(FILE* stream, FILE* err_stream)
-    {
-        return
-            [stream, err_stream]()
-            {
-                ::fsync(::fileno(stream));
-                ::fsync(::fileno(err_stream));
-            };
-    }
-
-    inline auto make_reopen_func(std::string path, FILE* stream)
-    {
-        return
-            [path = std::move(path), stream]()
-            {
-                return std::freopen(path.c_str(), "a", stream) != nullptr;
-            };
-    }
-
     inline FILE* open_path(const char* path)
     {
         FILE* const fp = std::fopen(path, "a");
         if (fp == nullptr)
-            detail::throw_system_error_fmt("Failed to open `%s'", path);
+            detail::throw_system_error_fmt(errno, "Failed to open `%s'", path);
         return fp;
     }
-
-#if defined(__cpp_lib_invocable)
-    using invocable = std::invocable;
-#else
-    // This can be removed when libc++ supports invocable
-    template<typename F, typename... Args>
-    concept invocable = requires(F&& f, Args&&... args)
-    {
-        std::invoke(std::forward<F>(f), std::forward<Args>(args)...);
-    };
-#endif
 }
 
 /**
@@ -203,7 +148,6 @@ public:
         logger(
             path,
             detail::open_path(path),
-            stderr,
             std::forward<Clock>(clock),
             std::move(command_path),
             level_style)
@@ -217,7 +161,10 @@ public:
      * stdout or stderr. If a stream that has been opened by the user is to
      * be passed to the logger then the
      * @ref stream-with-reopen "stream constructor with reopen path"
-     * constructor is recommended instead.
+     * constructor is recommended instead, as this will mean that the log file
+     * can be rotated\---please refer to the xtrctl documentation for the
+     * <a href="xtrctl.html#reopening-log-files">reopening log files</a> command
+     * for details.
      *
      * @note The logger will not take ownership of the stream\---i.e. it will
      *       not be closed when the logger destructs.
@@ -227,7 +174,6 @@ public:
      *       supported if this constructor is used.
      *
      * @arg stream: The stream to write log statements to.
-     * @arg err_stream: A stream to write error messages to.
      * @arg clock: Please refer to the @ref clock_arg "description"
      *             above.
      * @arg command_path: Please refer to the @ref command_path_arg
@@ -239,18 +185,13 @@ public:
     template<typename Clock = std::chrono::system_clock>
     logger(
         FILE* stream = stderr,
-        FILE* err_stream = stderr,
         Clock&& clock = Clock(),
         std::string command_path = default_command_path(),
         log_level_style_t level_style = default_log_level_style)
     :
         logger(
-            detail::make_output_func(stream),
-            detail::make_error_func(err_stream),
-            detail::make_flush_func(stream, err_stream),
-            detail::make_sync_func(stream, err_stream),
-            [](){ return true; }, // reopen
-            [](){}, // close
+            null_reopen_path,
+            stream,
             std::forward<Clock>(clock),
             std::move(command_path),
             level_style)
@@ -273,7 +214,6 @@ public:
      *                   This path will be used to reopen the stream if requested via
      *                   the <a href="xtrctl.html#rotating-log-files">xtrctl</a> tool.
      * @arg stream: The stream to write log statements to.
-     * @arg err_stream: A stream to write error messages to.
      * @arg clock: Please refer to the @ref clock_arg "description"
      *             above.
      * @arg command_path: Please refer to the @ref command_path_arg
@@ -284,79 +224,15 @@ public:
      */
     template<typename Clock = std::chrono::system_clock>
     logger(
-        const char* reopen_path,
+        std::string reopen_path,
         FILE* stream,
-        FILE* err_stream = stderr,
         Clock&& clock = Clock(),
         std::string command_path = default_command_path(),
         log_level_style_t level_style = default_log_level_style)
     :
         logger(
-            detail::make_output_func(stream),
-            detail::make_error_func(err_stream),
-            detail::make_flush_func(stream, err_stream),
-            detail::make_sync_func(stream, err_stream),
-            detail::make_reopen_func(reopen_path, stream),
-            [stream](){ std::fclose(stream); }, // close
-            std::forward<Clock>(clock),
-            std::move(command_path),
-            level_style)
-    {
-    }
-
-    /**
-     * Basic custom back-end constructor (please refer to the
-     * <a href="guide.html#custom-back-ends">custom back-ends</a> section of
-     * the user guide for further details on implementing a custom back-end).
-     *
-     * @arg out: @anchor out_arg
-     *           A function accepting a @ref xtr::log_level_t, const char* buffer
-     *           of formatted log data and a std::size_t argument specifying the
-     *           length of the buffer in bytes. The logger will invoke this function
-     *           from the background thread in order to output log data, invoking
-     *           the function once per log line. The return type should be ssize_t
-     *           and return value should be -1 if an error occurred, otherwise the
-     *           number of bytes successfully written should be returned. Note that
-     *           returning anything less than the number of bytes given by the
-     *           length argument is considered an error, resulting in the 'err'
-     *           function being invoked with a "Short write" error string.
-     * @arg err: @anchor err_arg
-     *           A function accepting a const char* buffer of formatted log
-     *           data and a std::size_t argument specifying the length of the
-     *           buffer in bytes. The logger will invoke this function from the
-     *           background thread if an error occurs. The return type should
-     *           be void.
-     * @arg clock: Please refer to the @ref clock_arg "description"
-     *             above.
-     * @arg command_path: Please refer to the @ref command_path_arg
-     *                    "description" above.
-     * @arg level_style: The log level style that will be used to prefix each log
-     *                   statement\---please refer to the @ref log_level_style_t
-     *                   documentation for details.
-     */
-    template<
-        typename OutputFunction,
-        typename ErrorFunction,
-        typename Clock = std::chrono::system_clock>
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
-    requires
-        detail::invocable<OutputFunction, log_level_t, const char*, std::size_t> &&
-        detail::invocable<ErrorFunction, const char*, std::size_t>
-#endif
-    logger(
-        OutputFunction&& out,
-        ErrorFunction&& err,
-        Clock&& clock = Clock(),
-        std::string command_path = default_command_path(),
-        log_level_style_t level_style = default_log_level_style)
-    :
-        logger(
-            std::forward<OutputFunction>(out),
-            std::forward<ErrorFunction>(err),
-            [](){}, // flush
-            [](){}, // sync
-            [](){ return true; }, // reopen
-            [](){}, // close
+            make_fd_storage(
+                ::fileno(stream), std::move(reopen_path)),
             std::forward<Clock>(clock),
             std::move(command_path),
             level_style)
@@ -368,27 +244,12 @@ public:
      * <a href="guide.html#custom-back-ends">custom back-ends</a> section of
      * the user guide for further details on implementing a custom back-end).
      *
-     * @arg out: Please refer to the @ref out_arg "description" above.
-     * @arg err: Please refer to the @ref err_arg "description" above.
-     * @arg flush: @anchor flush_arg
-     *             A function that the logger will invoke from
-     *             the background thread to indicate that the back-end
-     *             should write any buffered data to its associated
-     *             backing store.
-     * @arg sync: @anchor sync_arg
-     *            A function that the logger will invoke from
-     *            the background thread to indicate that the back-end
-     *            should ensure that all data written to the associated
-     *            backing store has reached permanent storage.
-     * @arg reopen: @anchor reopen_arg
-     *              A function that the logger will invoke from
-     *              the background thread to indicate that if the back-end
-     *              has a file opened for writing log data then the
-     *              file should be reopened (in order to rotate it).
-     * @arg close: @anchor close_arg
-     *             A function that the logger will invoke from
-     *             the background thread to indicate that the back-end
-     *             should close any associated backing store.
+     * @arg storage: Unique pointer to an object implementing the
+     *               @ref storage_interface interface. The logger will invoke
+     *               methods on this object from the background thread in
+     *               order to write log data to whatever underlying storage
+     *               medium is implemented by the object, such as disk,
+     *               network, dot-matrix printer etc.
      * @arg clock: Please refer to the @ref clock_arg "description"
      *             above.
      * @arg command_path: Please refer to the @ref command_path_arg
@@ -397,30 +258,9 @@ public:
      *                   statement\---please refer to the @ref log_level_style_t
      *                   documentation for details.
      */
-    template<
-        typename OutputFunction,
-        typename ErrorFunction,
-        typename FlushFunction,
-        typename SyncFunction,
-        typename ReopenFunction,
-        typename CloseFunction,
-        typename Clock = std::chrono::system_clock>
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
-    requires
-        detail::invocable<OutputFunction, log_level_t, const char*, std::size_t> &&
-        detail::invocable<ErrorFunction, const char*, std::size_t> &&
-        detail::invocable<FlushFunction> &&
-        detail::invocable<SyncFunction> &&
-        detail::invocable<ReopenFunction> &&
-        detail::invocable<CloseFunction>
-#endif
+    template<typename Clock = std::chrono::system_clock>
     logger(
-        OutputFunction&& out,
-        ErrorFunction&& err,
-        FlushFunction&& flush,
-        SyncFunction&& sync,
-        ReopenFunction&& reopen,
-        CloseFunction&& close,
+        storage_interface_ptr storage,
         Clock&& clock = Clock(),
         std::string command_path = default_command_path(),
         log_level_style_t level_style = default_log_level_style)
@@ -431,19 +271,14 @@ public:
             jthread(
                 &detail::consumer::run,
                 detail::consumer(
-                    std::forward<OutputFunction>(out),
-                    std::forward<ErrorFunction>(err),
-                    std::forward<FlushFunction>(flush),
-                    std::forward<SyncFunction>(sync),
-                    std::forward<ReopenFunction>(reopen),
-                    std::forward<CloseFunction>(close),
+                    detail::buffer(std::move(storage)),
                     level_style,
-                    &control_),
+                    &control_,
+                    std::move(command_path)),
                 make_clock(std::forward<Clock>(clock)));
         // Passing control_ to the consumer is equivalent to calling
         // register_sink, so mark it as open.
         control_.open_ = true;
-        set_command_path(std::move(command_path));
     }
 
     /**
@@ -483,113 +318,6 @@ public:
      *  @pre The sink must be closed.
      */
     void register_sink(sink& s, std::string name) noexcept;
-
-    /**
-     * Sets the logger output to the specified stream. The existing output
-     * will be flushed and closed.
-     */
-    void set_output_stream(FILE* stream) noexcept;
-
-    /**
-     * Sets the logger error output to the specified stream.
-     */
-    void set_error_stream(FILE* stream) noexcept;
-
-    /**
-     * Sets the logger output to the specified function. The existing output
-     * will be flushed and closed. Please refer to the 'out' argument @ref
-     * out_arg "description" above for details.
-     */
-    template<typename Func>
-    void set_output_function(Func&& f) noexcept
-    {
-        static_assert(
-            std::is_convertible_v<
-                std::invoke_result_t<Func, log_level_t, const char*, std::size_t>,
-                ::ssize_t>,
-            "Output function type must be of type ssize_t(const char*, size_t) "
-            "(returning the number of bytes written or -1 on error)");
-        post(
-            [f = std::forward<Func>(f)](auto& c, auto&)
-            {
-                c.flush();
-                c.close();
-                c.out = std::move(f);
-            });
-        control_.sync();
-    }
-
-    /**
-     * Sets the logger error output to the specified function. Please refer to
-     * the 'err' argument @ref err_arg "description" above for details.
-     */
-    template<typename Func>
-    void set_error_function(Func&& f) noexcept
-    {
-        static_assert(
-            std::is_same_v<
-                std::invoke_result_t<Func, const char*, std::size_t>,
-                void>,
-            "Error function must be of type void(const char*, size_t)");
-        post([f = std::forward<Func>(f)](detail::consumer& c, auto&) { c.err = std::move(f); });
-        control_.sync();
-    }
-
-    /**
-     * Sets the logger flush function\---please refer to the 'flush' argument
-     * @ref flush_arg "description" above for details.
-     */
-    template<typename Func>
-    void set_flush_function(Func&& f) noexcept
-    {
-        static_assert(
-            std::is_same_v<std::invoke_result_t<Func>, void>,
-            "Flush function must be of type void()");
-        post([f = std::forward<Func>(f)](detail::consumer& c, auto&) { c.flush = std::move(f); });
-        control_.sync();
-    }
-
-    /**
-     * Sets the logger sync function\---please refer to the 'sync' argument
-     * @ref sync_arg "description" above for details.
-     */
-    template<typename Func>
-    void set_sync_function(Func&& f) noexcept
-    {
-        static_assert(
-            std::is_same_v<std::invoke_result_t<Func>, void>,
-            "Sync function must be of type void()");
-        post([f = std::forward<Func>(f)](detail::consumer& c, auto&) { c.sync = std::move(f); });
-        control_.sync();
-    }
-
-    /**
-     * Sets the logger reopen function\---please refer to the 'reopen' argument
-     * @ref reopen_arg "description" above for details.
-     */
-    template<typename Func>
-    void set_reopen_function(Func&& f) noexcept
-    {
-        static_assert(
-            std::is_same_v<std::invoke_result_t<Func>, bool>,
-            "Reopen function must be of type bool()");
-        post([f = std::forward<Func>(f)](detail::consumer& c, auto&) { c.reopen = std::move(f); });
-        control_.sync();
-    }
-
-    /**
-     * Sets the logger close function\---please refer to the 'close' argument
-     * @ref close_arg "description" above for details.
-     */
-    template<typename Func>
-    void set_close_function(Func&& f) noexcept
-    {
-        static_assert(
-            std::is_same_v<std::invoke_result_t<Func>, void>,
-            "Close function must be of type void()");
-        post([f = std::forward<Func>(f)](detail::consumer& c, auto&) { c.close = std::move(f); });
-        control_.close();
-    }
 
     /**
      * Sets the logger command path\---please refer to the 'command_path' argument

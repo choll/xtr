@@ -22,13 +22,15 @@
 #include "xtr/detail/throw.hpp"
 #include "xtr/detail/align.hpp"
 
+#include <cerrno>
+
 #include <unistd.h>
 
 XTR_FUNC std::size_t xtr::detail::align_to_page_size(std::size_t length)
 {
     static const long pagesize(::sysconf(_SC_PAGESIZE));
     if (pagesize == -1)
-        throw_system_error("sysconf(_SC_PAGESIZE) failed");
+        throw_system_error(errno, "sysconf(_SC_PAGESIZE) failed");
     return align(length, std::size_t(pagesize));
 }
 

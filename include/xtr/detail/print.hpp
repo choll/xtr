@@ -21,111 +21,71 @@
 #ifndef XTR_DETAIL_PRINT_HPP
 #define XTR_DETAIL_PRINT_HPP
 
+#include "buffer.hpp"
 #include "xtr/log_level.hpp"
 
 #include <fmt/format.h>
 
-#include <cstddef>
 #include <iterator>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 
 namespace xtr::detail
 {
-    template<typename ErrorFunction,typename Timestamp>
-    [[gnu::cold, gnu::noinline]] void report_error(
-        fmt::memory_buffer& mbuf,
-        const ErrorFunction& err,
-        log_level_style_t lstyle,
-        Timestamp ts,
-        const std::string& name,
-        const char* reason)
-    {
-        using namespace std::literals::string_view_literals;
-        mbuf.clear();
-#if FMT_VERSION >= 80000
-        fmt::format_to(
-            std::back_inserter(mbuf),
-            "{}{} {}: Error: {}\n"sv,
-            lstyle(log_level_t::error),
-            ts,
-            name,
-            reason);
-#else
-        fmt::format_to(
-            mbuf,
-            "{}{} {}: Error: {}\n"sv,
-            lstyle(log_level_t::error),
-            ts,
-            name,
-            reason);
-#endif
-        err(mbuf.data(), mbuf.size());
-    }
-
-    template<
-        typename OutputFunction,
-        typename ErrorFunction,
-        typename Timestamp,
-        typename... Args>
+    template<typename Timestamp, typename... Args>
     void print(
-        fmt::memory_buffer& mbuf,
-        const OutputFunction& out,
-        [[maybe_unused]] const ErrorFunction& err,
+        buffer& buf,
         log_level_style_t lstyle,
         std::string_view fmt,
         log_level_t level,
         Timestamp ts,
         const std::string& name,
-        const Args&... args)
+        const Args&... args) noexcept
     {
 #if __cpp_exceptions
         try
         {
 #endif
-            mbuf.clear();
-#if FMT_VERSION >= 80000
             fmt::format_to(
-                std::back_inserter(mbuf),
+                std::back_inserter(buf.line),
+#if FMT_VERSION >= 80000
                 fmt::runtime(fmt),
+#else
+                fmt,
+#endif
                 lstyle(level),
                 ts,
                 name,
                 args...);
-#else
-            fmt::format_to(mbuf, fmt, lstyle(level), ts, name, args...);
-#endif
-            const auto result = out(level, mbuf.data(), mbuf.size());
-            if (result == -1)
-                return report_error(mbuf, err, lstyle, ts, name, "Write error");
-            if (std::size_t(result) != mbuf.size())
-                return report_error(mbuf, err, lstyle, ts, name, "Short write");
+
+            buf.append_line();
 #if __cpp_exceptions
         }
         catch (const std::exception& e)
         {
-            report_error(mbuf, err, lstyle, ts, name, e.what());
+            using namespace std::literals::string_view_literals;
+            fmt::print(
+                stderr,
+                "{}{}: Error writing log: {}\n"sv,
+                lstyle(log_level_t::error),
+                ts,
+                e.what());
         }
 #endif
     }
 
-    template<
-        typename OutputFunction,
-        typename ErrorFunction,
-        typename Timestamp,
-        typename... Args>
+    template<typename Timestamp, typename... Args>
     void print_ts(
-        fmt::memory_buffer& mbuf,
-        const OutputFunction& out,
-        const ErrorFunction& err,
+        buffer& buf,
         log_level_style_t lstyle,
         std::string_view fmt,
         log_level_t level,
         const std::string& name,
         Timestamp ts,
-        const Args&... args)
+        const Args&... args) noexcept
     {
-        print(mbuf, out, err, lstyle, fmt, level, ts, name, args...);
+        print(buf, lstyle, fmt, level, ts, name, args...);
     }
 }
 

@@ -47,18 +47,6 @@ void xtr::logger::register_sink(sink& s, std::string name) noexcept
 }
 
 XTR_FUNC
-void xtr::logger::set_output_stream(FILE* stream) noexcept
-{
-    set_output_function(detail::make_output_func(stream));
-}
-
-XTR_FUNC
-void xtr::logger::set_error_stream(FILE* stream) noexcept
-{
-    set_error_function(detail::make_error_func(stream));
-}
-
-XTR_FUNC
 void xtr::logger::set_command_path(std::string path) noexcept
 {
     post(

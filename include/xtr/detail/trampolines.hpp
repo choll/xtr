@@ -22,8 +22,7 @@
 #define XTR_DETAIL_TRAMPOLINES_HPP
 
 #include "align.hpp"
-
-#include <fmt/format.h>
+#include "buffer.hpp"
 
 #include <cassert>
 #include <cstddef>
@@ -40,14 +39,14 @@ namespace xtr::detail
     //    +---------------------------+
     template<auto Format, auto Level, typename State>
     std::byte* trampoline0(
-        fmt::memory_buffer& mbuf,
-        std::byte* buf,
+        buffer& buf,
+        std::byte* record,
         State& st,
         const char* timestamp,
         std::string& name) noexcept
     {
-        print(mbuf, st.out, st.err, st.lstyle, *Format, Level, timestamp, name);
-        return buf + sizeof(void(*)());
+        print(buf, st.lstyle, *Format, Level, timestamp, name);
+        return record + sizeof(void(*)());
     }
 
     // Fixed-size capture trampoline---log has arguments but the sizes of all
@@ -64,15 +63,15 @@ namespace xtr::detail
     //    +---------------------------+
     template<auto Format, auto Level, typename State, typename Func>
     std::byte* trampolineN(
-        fmt::memory_buffer& mbuf,
-        std::byte* buf,
+        buffer& buf,
+        std::byte* record,
         State& st,
         [[maybe_unused]] const char* timestamp,
         std::string& name) noexcept
     {
         typedef void(*fptr_t)();
 
-        auto func_pos = buf + sizeof(fptr_t);
+        auto func_pos = record + sizeof(fptr_t);
         if constexpr (alignof(Func) > alignof(fptr_t))
             func_pos = align<alignof(Func)>(func_pos);
 
@@ -84,7 +83,7 @@ namespace xtr::detail
         if constexpr (std::is_same_v<decltype(Format), std::nullptr_t>)
             func(st, name);
         else
-            func(mbuf, buf, st.out, st.err, st.lstyle, *Format, Level, timestamp, name);
+            func(buf, record, st.lstyle, *Format, Level, timestamp, name);
 
         static_assert(noexcept(func.~Func()));
         std::destroy_at(std::addressof(func));
@@ -111,28 +110,28 @@ namespace xtr::detail
     //                   +---------------------------+
     template<auto Format, auto Level, typename State, typename Func>
     std::byte* trampolineS(
-        fmt::memory_buffer& mbuf,
-        std::byte* buf,
+        buffer& buf,
+        std::byte* record,
         State& st,
         const char* timestamp,
         std::string& name) noexcept
     {
         typedef void(*fptr_t)();
 
-        auto func_pos = buf + sizeof(fptr_t);
+        auto func_pos = record + sizeof(fptr_t);
         if constexpr (alignof(Func) > alignof(fptr_t))
             func_pos = align<alignof(Func)>(func_pos);
         assert(std::uintptr_t(func_pos) % alignof(Func) == 0);
 
         auto& func = *reinterpret_cast<Func*>(func_pos);
-        buf = func_pos + sizeof(Func);
-        // buf is modified by the lambda to point to the end of the string table
-        func(mbuf, buf, st.out, st.err, st.lstyle, *Format, Level, timestamp, name);
+        record = func_pos + sizeof(Func);
+        // record is modified by the lambda to point to the end of the string table
+        func(buf, record, st.lstyle, *Format, Level, timestamp, name);
 
         static_assert(noexcept(func.~Func()));
         std::destroy_at(std::addressof(func));
 
-        return align<alignof(fptr_t)>(buf);
+        return align<alignof(fptr_t)>(record);
     }
 }
 

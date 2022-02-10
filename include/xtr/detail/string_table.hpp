@@ -142,7 +142,7 @@ namespace xtr::detail
                 }
                 end = s.end();
             }
-            new (pos++) char(*str++);
+            ::new (pos++) char(*str++);
         }
         return string_table_entry(std::size_t(pos - begin));
     }
