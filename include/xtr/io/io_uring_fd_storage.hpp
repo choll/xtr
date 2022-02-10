@@ -104,7 +104,7 @@ public:
         ::io_uring_queue_exit(&ring_);
     }
 
-    void sync() override final
+    void sync() noexcept override final
     {
         while (pending_cqe_count_ > 0)
             wait_for_one_cqe();
@@ -157,9 +157,8 @@ private:
 
         buffer** next = &free_list_;
 
-        buffer_storage_ =
-            std::make_unique_for_overwrite<std::byte[]>(
-                buffer::size(buffer_capacity_) * queue_size);
+        buffer_storage_.reset(
+            new std::byte[buffer::size(buffer_capacity_) * queue_size]);
 
         for (std::size_t i = 0; i < queue_size; ++i)
         {

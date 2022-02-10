@@ -147,12 +147,12 @@ namespace
         {
         }
 
-        void sync() override
+        void sync() noexcept override
         {
             ++sync_count_;
         }
 
-        int reopen() override
+        int reopen() noexcept override
         {
             assert(reopen_func_);
             return reopen_func_();
@@ -192,8 +192,7 @@ namespace
         std::vector<std::string>& lines_;
 
 private:
-        std::unique_ptr<char[]> buf_ =
-            std::make_unique_for_overwrite<char[]>(buffer_capacity);
+        std::unique_ptr<char[]> buf_{new char[buffer_capacity]};
         std::string current_line_;
     };
 

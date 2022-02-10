@@ -52,12 +52,12 @@ public:
             fd_.release();
     }
 
-    void sync() override
+    void sync() noexcept override
     {
         ::fsync(fd_.get());
     }
 
-    int reopen() override
+    int reopen() noexcept override
     {
         if (reopen_path_ == null_reopen_path)
             return ENOENT;

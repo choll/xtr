@@ -36,39 +36,21 @@ namespace xtr
     //
     // XXX USE FD FIXTURE FOR TESTS? AND ADD EXTRA TESTS FOR CHECKING THAT IO_URING CAN HANDLE WRITING ERRORS.
 
-    /**
-     * Blah
-     */
     using storage_interface_ptr = std::unique_ptr<storage_interface>;
 
-    /**
-     */
     inline constexpr auto null_reopen_path = "";
 }
 
-/**
- * Blah
- */
 struct xtr::storage_interface
 {
-    /**
-     */
-    virtual void sync() = 0;
+    virtual void sync() noexcept = 0;
 
-    /**
-     */
-    virtual int reopen() = 0;
+    virtual int reopen() noexcept = 0;
 
-    /**
-     */
     virtual std::span<char> allocate_buffer() = 0;
 
-    /**
-     */
     virtual void submit_buffer(char* buf, std::size_t size, bool flushed) = 0;
 
-    /**
-     */
     virtual ~storage_interface() = default;
 };
 

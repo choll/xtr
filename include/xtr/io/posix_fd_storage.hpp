@@ -45,7 +45,7 @@ public:
         std::size_t buffer_capacity = default_buffer_capacity)
     :
         fd_storage_base(fd, std::move(reopen_path)),
-        buf_(std::make_unique_for_overwrite<char[]>(buffer_capacity)),
+        buf_(new char[buffer_capacity]),
         buffer_capacity_(buffer_capacity)
     {
     }
