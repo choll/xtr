@@ -23,6 +23,9 @@ ifeq ($(CXXFLAGS),)
 	DEBUG_CPPFLAGS = -DXTR_ENABLE_TEST_STATIC_ASSERTIONS
 	OPT_CXXFLAGS = -O3 -march=native
 	OPT_CPPFLAGS = -DNDEBUG
+ifeq (,$(/usr/lib/x86_64-linux-gnu/liburing.a))
+	LDLIBS += -luring
+endif
 endif
 
 CXXFLAGS += \
@@ -30,7 +33,7 @@ CXXFLAGS += \
 	-pedantic -pipe -pthread
 CPPFLAGS += -MMD -MP -I include $(FMT_CPPFLAGS) -DXTR_FUNC=
 LDFLAGS += -fuse-ld=gold
-LDLIBS += -lxtr -l$(CONAN_LIBS_LIBURING)
+LDLIBS += -lxtr $(addprefix -l, $(CONAN_LIBS_LIBURING))
 
 TEST_CPPFLAGS = $(CATCH2_CPPFLAGS) 
 TEST_LDFLAGS = -L $(BUILD_DIR) $(FMT_LDFLAGS)
