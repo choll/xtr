@@ -23,7 +23,7 @@ ifeq ($(CXXFLAGS),)
 	DEBUG_CPPFLAGS = -DXTR_ENABLE_TEST_STATIC_ASSERTIONS
 	OPT_CXXFLAGS = -O3 -march=native
 	OPT_CPPFLAGS = -DNDEBUG
-ifeq (,$(/usr/lib/x86_64-linux-gnu/liburing.a))
+ifneq (,$(wildcard /usr/lib/x86_64-linux-gnu/liburing.a))
 	LDLIBS += -luring
 endif
 endif
