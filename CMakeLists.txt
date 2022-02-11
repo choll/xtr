@@ -17,6 +17,7 @@ file(GLOB_RECURSE HEADER_FILES include/*.hpp)
 add_library(${PROJECT_NAME} src/command_dispatcher.cpp
                             src/command_path.cpp
                             src/consumer.cpp
+                            src/fd_storage.cpp
                             src/file_descriptor.cpp
                             src/logger.cpp
                             src/log_level.cpp
