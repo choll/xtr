@@ -271,8 +271,7 @@ public:
             jthread(
                 &detail::consumer::run,
                 detail::consumer(
-                    detail::buffer(std::move(storage)),
-                    level_style,
+                    detail::buffer(std::move(storage), level_style),
                     &control_,
                     std::move(command_path)),
                 make_clock(std::forward<Clock>(clock)));
@@ -287,7 +286,7 @@ public:
      * will not terminate until the sinks disconnect, i.e. the destructor
      * will block until all connected sinks disconnect from the logger.
      */
-    ~logger();
+    ~logger() = default;
 
     /**
      *  Returns the native handle for the logger's consumer thread. This
@@ -359,8 +358,8 @@ private:
             };
     }
 
-    sink control_; // aligned to cache line so first to avoid extra padding
     jthread consumer_;
+    sink control_;
     std::mutex control_mutex_;
 
     friend sink;

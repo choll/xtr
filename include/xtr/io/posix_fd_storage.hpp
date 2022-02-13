@@ -22,11 +22,8 @@
 #define XTR_IO_POSIX_FD_STORAGE_HPP
 
 #include "detail/fd_storage_base.hpp"
-#include "xtr/detail/throw.hpp"
 
-#include <cerrno>
 #include <cstddef>
-#include <memory>
 #include <string>
 
 namespace xtr
@@ -42,35 +39,12 @@ public:
     explicit posix_fd_storage(
         int fd,
         std::string reopen_path = null_reopen_path,
-        std::size_t buffer_capacity = default_buffer_capacity)
-    :
-        fd_storage_base(fd, std::move(reopen_path)),
-        buf_(new char[buffer_capacity]),
-        buffer_capacity_(buffer_capacity)
-    {
-    }
+        std::size_t buffer_capacity = default_buffer_capacity);
 
 protected:
-    std::span<char> allocate_buffer() override final
-    {
-        return {buf_.get(), buffer_capacity_};
-    }
+    std::span<char> allocate_buffer() override final;
 
-    void submit_buffer(char* buf, std::size_t size, bool) override final
-    {
-        while (size > 0)
-        {
-            const ::ssize_t nwritten =
-                XTR_TEMP_FAILURE_RETRY(::write(fd_.get(), buf, size));
-            if (nwritten == -1)
-            {
-                detail::throw_system_error_fmt(errno, "XXX");
-                return;
-            }
-            size -= std::size_t(nwritten);
-            buf += std::size_t(nwritten);
-        }
-    }
+    void submit_buffer(char* buf, std::size_t size, bool) override final;
 
 private:
     std::unique_ptr<char[]> buf_;

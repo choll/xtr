@@ -18,34 +18,44 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef XTR_IO_STORAGE_INTERFACE_HPP
-#define XTR_IO_STORAGE_INTERFACE_HPP
+#include "xtr/io/detail/fd_storage_base.hpp"
+#include "xtr/detail/retry.hpp"
 
-#include <cstddef>
-#include <memory>
-#include <span>
-#include <string_view>
+#include <utility>
 
-namespace xtr
+#include <fcntl.h>
+#include <unistd.h>
+
+xtr::detail::fd_storage_base::fd_storage_base(int fd, std::string reopen_path)
+:
+    reopen_path_(std::move(reopen_path)),
+    fd_(fd)
 {
-    struct storage_interface;
-
-    using storage_interface_ptr = std::unique_ptr<storage_interface>;
-
-    inline constexpr auto null_reopen_path = "";
 }
 
-struct xtr::storage_interface
+xtr::detail::fd_storage_base::~fd_storage_base()
 {
-    virtual void sync() noexcept = 0;
+    if (reopen_path_ == null_reopen_path)
+        fd_.release();
+}
 
-    virtual int reopen() noexcept = 0;
+void xtr::detail::fd_storage_base::sync() noexcept
+{
+    ::fsync(fd_.get());
+}
 
-    virtual std::span<char> allocate_buffer() = 0;
+int xtr::detail::fd_storage_base::reopen() noexcept
+{
+    if (reopen_path_ == null_reopen_path)
+        return ENOENT;
 
-    virtual void submit_buffer(char* buf, std::size_t size, bool flushed) = 0;
+    const int newfd =
+        XTR_TEMP_FAILURE_RETRY(
+            ::open(reopen_path_.c_str(), O_CREAT|O_APPEND));
 
-    virtual ~storage_interface() = default;
-};
+    if (newfd == -1)
+        return errno;
 
-#endif
+    fd_.reset(newfd);
+    return 0;
+}

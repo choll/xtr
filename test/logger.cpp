@@ -169,13 +169,15 @@ namespace
             return {buf_.get(), buffer_capacity};
         }
 
-        void submit_buffer(char* buf, std::size_t size, bool) override
+        void submit_buffer(char* buf, std::size_t size, bool flushed) override
         {
+            std::scoped_lock lock{m_};
+            if (submit_func_)
+                submit_func_(buf, size, flushed);
             for (auto it = buf, end = buf + size; it != end; ++it)
             {
                 if (*it == '\n')
                 {
-                    std::scoped_lock lock{m_};
                     lines_.push_back(std::move(current_line_));
                 }
                 else
@@ -186,6 +188,7 @@ namespace
         }
 
         std::mutex& m_;
+        std::function<void(char*, std::size_t, bool)> submit_func_;
         std::function<int()> reopen_func_;
         std::function<void()> dtor_func_;
         std::atomic<std::size_t> sync_count_{};
@@ -986,7 +989,45 @@ TEST_CASE_METHOD(fixture, "logger error handling test", "[logger]")
         "E 2000-01-01 01:02:03.123456: Error writing log: Exception error text");
     REQUIRE(lines_.empty());
 
+    // Check that the logger is still usable
+    XTR_LOG(s_, "Test"), line_ = __LINE__;
+    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
+
+    {
+        std::scoped_lock lock{storage_->m_};
+        storage_->submit_func_ =
+            [](char*, std::size_t, bool)
+            {
+                throw std::runtime_error("Flush error text");
+            };
+    }
+
+    XTR_LOG(s_, "Test");
+    s_.sync();
+
+    errbuf.push_lines(errors);
+    REQUIRE(errors.size() >= 2);
+    REQUIRE_THAT(
+        errors.back(),
+        Catch::Matchers::StartsWith("E ") &&
+        Catch::Matchers::EndsWith("Error flushing log: Flush error text"));
+    REQUIRE(lines_.size() == 1);
+
+    {
+        std::scoped_lock lock{storage_->m_};
+        storage_->submit_func_ = decltype(storage_->submit_func_)();
+    }
+
+    // Check that the logger is still usable
+    XTR_LOG(s_, "Test"), line_ = __LINE__;
+    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
+
     REQUIRE(dup2(saved_stderr.get(), STDERR_FILENO) == STDERR_FILENO);
+
+    {
+        std::scoped_lock lock{storage_->m_};
+        storage_->submit_func_ = decltype(storage_->submit_func_)();
+    }
 }
 #endif
 
@@ -1232,7 +1273,7 @@ TEST_CASE_METHOD(path_fixture, "logger throughput", "[.logger]")
 {
     using clock = std::chrono::high_resolution_clock;
 
-    constexpr std::size_t n = 100000000;
+    constexpr std::size_t n = 1'000'000'000;
 
     static constexpr char fmt[] =
         "{}{} Test message of length 80 chars Test message of length 80 chars Test message of\n";

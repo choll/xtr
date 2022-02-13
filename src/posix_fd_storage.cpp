@@ -18,34 +18,45 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef XTR_IO_STORAGE_INTERFACE_HPP
-#define XTR_IO_STORAGE_INTERFACE_HPP
+#include "xtr/io/posix_fd_storage.hpp"
+#include "xtr/detail/retry.hpp"
+#include "xtr/detail/throw.hpp"
 
-#include <cstddef>
+#include <cerrno>
 #include <memory>
-#include <span>
-#include <string_view>
+#include <utility>
 
-namespace xtr
+xtr::posix_fd_storage::posix_fd_storage(
+    int fd,
+    std::string reopen_path,
+    std::size_t buffer_capacity)
+:
+    fd_storage_base(fd, std::move(reopen_path)),
+    buf_(new char[buffer_capacity]),
+    buffer_capacity_(buffer_capacity)
 {
-    struct storage_interface;
-
-    using storage_interface_ptr = std::unique_ptr<storage_interface>;
-
-    inline constexpr auto null_reopen_path = "";
 }
 
-struct xtr::storage_interface
+std::span<char> xtr::posix_fd_storage::allocate_buffer()
 {
-    virtual void sync() noexcept = 0;
+    return {buf_.get(), buffer_capacity_};
+}
 
-    virtual int reopen() noexcept = 0;
+void xtr::posix_fd_storage::submit_buffer(char* buf, std::size_t size, bool)
+{
+    while (size > 0)
+    {
+        const ::ssize_t nwritten =
+            XTR_TEMP_FAILURE_RETRY(::write(fd_.get(), buf, size));
+        if (nwritten == -1)
+        {
+            detail::throw_system_error_fmt(
+                errno,
+                "xtr::posix_fd_storage::submit_buffer: write failed");
+            return;
+        }
+        size -= std::size_t(nwritten);
+        buf += std::size_t(nwritten);
+    }
+}
 
-    virtual std::span<char> allocate_buffer() = 0;
-
-    virtual void submit_buffer(char* buf, std::size_t size, bool flushed) = 0;
-
-    virtual ~storage_interface() = default;
-};
-
-#endif

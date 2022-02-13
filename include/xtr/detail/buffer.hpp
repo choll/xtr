@@ -22,63 +22,32 @@
 #define XTR_DETAIL_BUFFER_HPP
 
 #include "xtr/io/storage_interface.hpp"
+#include "xtr/log_level.hpp"
 
 #include <fmt/core.h>
-#include <fmt/format.h> // XXX
 
+#include <algorithm>
 #include <cstddef>
-#include <span>
-#include <string_view>
-#include <system_error>
-#include <type_traits>
-
-#include <cassert> // XXX
-#include <cstring> // XXX memcpy
-#include <iostream> // XXX
-#include <iterator> // XXX contiguous
-#include <vector> // XXX
+#include <cstring>
+#include <iterator>
 
 namespace xtr::detail
 {
     class buffer;
 }
 
-// If is_contiguous yields true, then when fmt::format_to receives a
-// std::back_insert_iterator<buffer> it will extract the underlying
-// container type from the back-inserter, and will use operator[],
-// size() and resize() to copy data into the buffer, instead of
-// push_back, which increases throughput by around 1.5x.
-//template<>
-//struct fmt::is_contiguous<xtr::detail::buffer> : std::true_type {};
-
 class xtr::detail::buffer
 {
 public:
     using value_type = char;
 
-    explicit buffer(storage_interface_ptr storage)
-    :
-        storage_(std::move(storage))
-    {
-    }
+    explicit buffer(storage_interface_ptr storage, log_level_style_t ls);
 
     buffer(buffer&&) = default;
 
-    ~buffer()
-    {
-        flush();
-    }
+    ~buffer();
 
-#if 1
-    void push_back(char c)
-    {
-        if (pos_ == end_) [[unlikely]]
-            next_buffer(/* flushed= */ false);
-        *pos_++ = c;
-    }
-#endif
-
-    template<std::contiguous_iterator InputIterator>
+    template<typename InputIterator>
     void append(InputIterator first, InputIterator last)
     {
         while (first != last)
@@ -96,36 +65,20 @@ public:
         }
     }
 
-    void flush()
-    {
-        if (pos_ != begin_)
-            next_buffer(/* flushed= */ true);
-    }
+    void flush() noexcept;
 
     storage_interface& storage() noexcept
     {
         return *storage_;
     }
 
-    std::string line;
+    void append_line();
 
-    // XXX explain this, 60%
-    void append_line()
-    {
-        append(line.begin(), line.end());
-        line.clear();
-    }
+    std::string line;
+    log_level_style_t lstyle;
 
 private:
-    void next_buffer(bool flushed)
-    {
-        if (pos_ != begin_) [[likely]] // if not the first call to push_back
-            storage_->submit_buffer(begin_, std::size_t(pos_ - begin_), flushed);
-        const std::span<char> s = storage_->allocate_buffer();
-        begin_ = s.data();
-        end_ = begin_ + s.size();
-        pos_ = begin_;
-    }
+    void next_buffer(bool flushed);
 
     storage_interface_ptr storage_;
     char* pos_ = nullptr;

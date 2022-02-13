@@ -36,7 +36,6 @@ namespace xtr::detail
     template<typename Timestamp, typename... Args>
     void print(
         buffer& buf,
-        log_level_style_t lstyle,
         std::string_view fmt,
         log_level_t level,
         Timestamp ts,
@@ -54,7 +53,7 @@ namespace xtr::detail
 #else
                 fmt,
 #endif
-                lstyle(level),
+                buf.lstyle(level),
                 ts,
                 name,
                 args...);
@@ -68,9 +67,10 @@ namespace xtr::detail
             fmt::print(
                 stderr,
                 "{}{}: Error writing log: {}\n"sv,
-                lstyle(log_level_t::error),
+                buf.lstyle(log_level_t::error),
                 ts,
                 e.what());
+            buf.line.clear();
         }
 #endif
     }
@@ -78,14 +78,13 @@ namespace xtr::detail
     template<typename Timestamp, typename... Args>
     void print_ts(
         buffer& buf,
-        log_level_style_t lstyle,
         std::string_view fmt,
         log_level_t level,
         const std::string& name,
         Timestamp ts,
         const Args&... args) noexcept
     {
-        print(buf, lstyle, fmt, level, ts, name, args...);
+        print(buf, fmt, level, ts, name, args...);
     }
 }
 

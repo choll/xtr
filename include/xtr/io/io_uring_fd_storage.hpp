@@ -23,13 +23,10 @@
 
 #include "detail/fd_storage_base.hpp"
 #include "xtr/detail/align.hpp"
-#include "xtr/detail/throw.hpp"
 
 #include <liburing.h>
 
-#include <cassert>
 #include <cstddef>
-#include <limits>
 #include <memory>
 #include <span>
 #include <string>
@@ -74,183 +71,23 @@ public:
         std::string reopen_path = null_reopen_path,
         std::size_t buffer_capacity = default_buffer_capacity,
         std::size_t queue_size = default_queue_size,
-        std::size_t batch_size = default_batch_size)
-    :
-        fd_storage_base(fd, std::move(reopen_path)),
-        buffer_capacity_(buffer_capacity),
-        batch_size_(batch_size)
-    {
-        if (buffer_capacity > std::numeric_limits<decltype(io_uring_cqe::res)>::max())
-            detail::throw_invalid_argument("buffer_capacity too large");
+        std::size_t batch_size = default_batch_size);
 
-        if (queue_size > std::numeric_limits<decltype(buffer::index_)>::max())
-            detail::throw_invalid_argument("queue_size too large");
+    ~io_uring_fd_storage();
 
-        if (const int errnum =
-            ::io_uring_queue_init(unsigned(queue_size), &ring_, /* flags = */ 0))
-        {
-            detail::throw_system_error_fmt(
-                errnum,
-                "xtr::io_uring_fd_storage::io_uring_fd_storage: "
-                "io_uring_queue_init failed");
-        }
-
-        allocate_buffers(queue_size);
-    }
-
-    ~io_uring_fd_storage()
-    {
-        sync();
-        ::io_uring_queue_exit(&ring_);
-    }
-
-    void sync() noexcept override final
-    {
-        while (pending_cqe_count_ > 0)
-            wait_for_one_cqe();
-        fd_storage_base::sync();
-    }
+    void sync() noexcept override final;
 
 protected:
-    std::span<char> allocate_buffer() override final
-    {
-        if (free_list_ == nullptr)
-            wait_for_one_cqe();
+    std::span<char> allocate_buffer() override final;
 
-        assert(free_list_ != nullptr);
-
-        buffer* buf = free_list_;
-        free_list_ = free_list_->next_;
-
-        buf->size_ = 0;
-        buf->offset_ = 0;
-        buf->file_offset_ = offset_;
-
-        return {buf->data_, buffer_capacity_};
-    }
-
-    void submit_buffer(char* data, std::size_t size, bool flushed) override final
-    {
-        buffer* buf = buffer::data_to_buffer(data);
-        buf->size_ = unsigned(size);
-
-        struct io_uring_sqe* sqe = io_uring_get_sqe(&ring_);
-
-        io_uring_prep_write_fixed(
-            sqe, fd_.get(), buf->data_, buf->size_, buf->file_offset_, buf->index_);
-        io_uring_sqe_set_data(sqe, buf);
-
-        offset_ += size;
-        ++pending_cqe_count_;
-
-        if (flushed || ++batch_index_ % batch_size_ == 0)
-            io_uring_submit(&ring_);
-    }
+    void submit_buffer(char* data, std::size_t size, bool flushed) override final;
 
 private:
-    void allocate_buffers(std::size_t queue_size)
-    {
-        assert(queue_size > 0);
+    void allocate_buffers(std::size_t queue_size);
 
-        std::vector<::iovec> iov;
-        iov.reserve(queue_size);
+    void wait_for_one_cqe();
 
-        buffer** next = &free_list_;
-
-        buffer_storage_.reset(
-            new std::byte[buffer::size(buffer_capacity_) * queue_size]);
-
-        for (std::size_t i = 0; i < queue_size; ++i)
-        {
-            std::byte* storage =
-                buffer_storage_.get() + buffer::size(buffer_capacity_) * i;
-            buffer* buf = ::new (storage) buffer;
-            buf->index_ = int(i);
-            iov.push_back({buf->data_, buffer_capacity_});
-            // Push the buffer to the end of free_list_:
-            *next = buf;
-            next = &buf->next_;
-        }
-
-        *next = nullptr;
-        assert(free_list_ != nullptr);
-
-        io_uring_register_buffers(&ring_, &iov[0], unsigned(iov.size()));
-    }
-
-    void wait_for_one_cqe()
-    {
-        assert(pending_cqe_count_ > 0);
-
-        struct io_uring_cqe* cqe = nullptr;
-        int errnum;
-
-    retry:
-        while ((errnum = io_uring_peek_cqe(&ring_, &cqe)) == -EAGAIN)
-            ;
-
-        if (errnum != 0) [[unlikely]]
-        {
-            detail::throw_system_error(
-                -errnum,
-                "xtr::io_uring_fd_storage::wait_for_one_cqe: io_uring_peek_cqe failed");
-        }
-
-        --pending_cqe_count_;
-
-        buffer* buf = static_cast<buffer*>(io_uring_cqe_get_data(cqe));
-
-        if (cqe->res == -EAGAIN)
-        {
-            resubmit_buffer(buf, 0);
-            goto retry;
-        }
-
-        if (cqe->res < 0) [[unlikely]]
-        {
-            detail::throw_system_error(
-                -cqe->res,
-                "xtr::io_uring_fd_storage::wait_for_one_cqe: write error");
-        }
-
-        const auto nwritten = unsigned(cqe->res);
-
-        assert(nwritten <= buf->size_);
-
-        if (nwritten != buf->size_) [[unlikely]] // Short write
-        {
-            resubmit_buffer(buf, nwritten);
-            goto retry;
-        }
-
-        // Push the reclaimed buffer to the front of free_list_
-        assert(buf != nullptr);
-        buf->next_ = free_list_;
-        free_list_ = buf;
-
-        io_uring_cqe_seen(&ring_, cqe);
-    }
-
-    void resubmit_buffer(buffer* buf, unsigned nwritten)
-    {
-        buf->size_ -= nwritten;
-        buf->offset_ += nwritten;
-        buf->file_offset_ += nwritten;
-
-        struct io_uring_sqe* sqe = io_uring_get_sqe(&ring_);
-
-        io_uring_prep_write_fixed(
-            sqe,
-            fd_.get(),
-            buf->data_ + buf->offset_,
-            buf->size_,
-            buf->file_offset_,
-            buf->index_);
-
-        io_uring_sqe_set_data(sqe, buf);
-
-        ++pending_cqe_count_;
-    }
+    void resubmit_buffer(buffer* buf, unsigned nwritten);
 
     io_uring ring_;
     std::size_t buffer_capacity_;

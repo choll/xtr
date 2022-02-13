@@ -24,7 +24,6 @@
 #include "buffer.hpp"
 #include "commands/command_dispatcher_fwd.hpp"
 #include "commands/requests_fwd.hpp"
-#include "xtr/log_level.hpp"
 
 #include <ctime>
 #include <cstddef>
@@ -64,14 +63,9 @@ public:
     void run(std::function<std::timespec()>&& clock) noexcept;
     void set_command_path(std::string path) noexcept;
 
-    consumer(
-        buffer&& bf,
-        log_level_style_t ls,
-        sink* control,
-        std::string command_path)
+    consumer(buffer&& bf, sink* control, std::string command_path)
     :
         buf(std::move(bf)),
-        lstyle(ls),
         sinks_({{control, "control", 0}})
     {
         set_command_path(std::move(command_path));
@@ -80,7 +74,6 @@ public:
     void add_sink(sink& s, const std::string& name);
 
     buffer buf;
-    log_level_style_t lstyle;
     bool destroy = false;
 
 private:

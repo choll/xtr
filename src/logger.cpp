@@ -23,12 +23,6 @@
 #include <cassert>
 
 XTR_FUNC
-xtr::logger::~logger()
-{
-    control_.close();
-}
-
-XTR_FUNC
 xtr::sink xtr::logger::get_sink(std::string name)
 {
     return sink(*this, std::move(name));
@@ -63,7 +57,7 @@ void xtr::logger::set_log_level_style(log_level_style_t level_style) noexcept
     post(
         [=](detail::consumer& c, auto&)
         {
-            c.lstyle = level_style;
+            c.buf.lstyle = level_style;
         });
     control_.sync();
 }

@@ -373,7 +373,6 @@ auto xtr::sink::make_lambda(Args&&... args)
         [... args = std::forward<Args>(args)](
             detail::buffer& buf,
             std::byte*& record,
-            log_level_style_t lstyle,
             std::string_view fmt,
             log_level_t level,
             [[maybe_unused]] const char* ts,
@@ -386,7 +385,6 @@ auto xtr::sink::make_lambda(Args&&... args)
             {
                 detail::print_ts(
                     buf,
-                    lstyle,
                     fmt,
                     level,
                     name,
@@ -396,7 +394,6 @@ auto xtr::sink::make_lambda(Args&&... args)
             {
                 detail::print(
                     buf,
-                    lstyle,
                     fmt,
                     level,
                     ts,

@@ -25,6 +25,7 @@
 #include "xtr/detail/commands/responses.hpp"
 #include "xtr/detail/strzcpy.hpp"
 #include "xtr/command_path.hpp"
+#include "xtr/log_level.hpp"
 #include "xtr/sink.hpp"
 #include "xtr/timespec.hpp"
 
@@ -109,7 +110,6 @@ void xtr::detail::consumer::run(std::function<::timespec()>&& clock) noexcept
         {
             detail::print(
                 buf,
-                lstyle,
                 "{}{} {}: {} messages dropped\n",
                 log_level_t::warning,
                 ts,
