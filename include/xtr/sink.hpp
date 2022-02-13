@@ -142,7 +142,10 @@ public:
      *        back-end this means fflush(3) and fsync(2) (if available)
      *        have been called.
      */
-    void sync();
+    void sync()
+    {
+        sync(/*destroy=*/false);
+    }
 
     /**
      *  Sets the sink's name to the specified value.
@@ -210,12 +213,11 @@ private:
     void post_with_str_table(Args&&... args)
         noexcept((XTR_NOTHROW_INGESTIBLE(Args, args) && ...));
 
-    template<typename Func>
-    void sync_post(Func&& func);
-
     template<typename Tags, typename... Args>
     auto make_lambda(Args&&... args)
         noexcept((XTR_NOTHROW_INGESTIBLE(Args, args) && ...));
+
+    void sync(bool destroy);
 
     using ring_buffer = detail::synchronized_ring_buffer<XTR_SINK_CAPACITY>;
 
