@@ -42,14 +42,17 @@ xtr::detail::buffer::~buffer()
 
 void xtr::detail::buffer::flush() noexcept
 {
-    if (pos_ == begin_)
-        return; // Nothing to flush
-
 #if __cpp_exceptions
     try
     {
 #endif
-        next_buffer(/* flushed= */ true);
+        if (pos_ != begin_)
+        {
+            storage_->submit_buffer(begin_, std::size_t(pos_ - begin_));
+            pos_ = begin_ = end_ = nullptr;
+        }
+        if (storage_)
+            storage_->flush();
 #if __cpp_exceptions
     }
     catch (const std::exception& e)
@@ -85,10 +88,10 @@ void xtr::detail::buffer::append_line()
     line.clear();
 }
 
-void xtr::detail::buffer::next_buffer(bool flushed)
+void xtr::detail::buffer::next_buffer()
 {
     if (pos_ != begin_) [[likely]] // if not the first call to push_back
-        storage_->submit_buffer(begin_, std::size_t(pos_ - begin_), flushed);
+        storage_->submit_buffer(begin_, std::size_t(pos_ - begin_));
     const std::span<char> s = storage_->allocate_buffer();
     begin_ = s.data();
     end_ = begin_ + s.size();

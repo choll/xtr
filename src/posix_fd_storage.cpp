@@ -42,7 +42,7 @@ std::span<char> xtr::posix_fd_storage::allocate_buffer()
     return {buf_.get(), buffer_capacity_};
 }
 
-void xtr::posix_fd_storage::submit_buffer(char* buf, std::size_t size, bool)
+void xtr::posix_fd_storage::submit_buffer(char* buf, std::size_t size)
 {
     while (size > 0)
     {

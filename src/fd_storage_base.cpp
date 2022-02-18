@@ -49,13 +49,24 @@ int xtr::detail::fd_storage_base::reopen() noexcept
     if (reopen_path_ == null_reopen_path)
         return ENOENT;
 
+    flush();
+
     const int newfd =
         XTR_TEMP_FAILURE_RETRY(
-            ::open(reopen_path_.c_str(), O_CREAT|O_APPEND));
+            ::open(
+                reopen_path_.c_str(),
+                O_CREAT|O_APPEND|O_WRONLY,
+                S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH));
 
     if (newfd == -1)
         return errno;
 
-    fd_.reset(newfd);
+    replace_fd(newfd);
+
     return 0;
+}
+
+void xtr::detail::fd_storage_base::replace_fd(int newfd) noexcept
+{
+    fd_.reset(newfd);
 }

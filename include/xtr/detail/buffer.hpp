@@ -53,7 +53,7 @@ public:
         while (first != last)
         {
             if (pos_ == end_) [[unlikely]]
-                next_buffer(/* flushed= */ false);
+                next_buffer();
 
             const auto n = std::min(last - first, end_ - pos_);
 
@@ -78,7 +78,7 @@ public:
     log_level_style_t lstyle;
 
 private:
-    void next_buffer(bool flushed);
+    void next_buffer();
 
     storage_interface_ptr storage_;
     char* pos_ = nullptr;

@@ -41,10 +41,13 @@ public:
         std::string reopen_path = null_reopen_path,
         std::size_t buffer_capacity = default_buffer_capacity);
 
-protected:
     std::span<char> allocate_buffer() override final;
 
-    void submit_buffer(char* buf, std::size_t size, bool) override final;
+    void submit_buffer(char* buf, std::size_t size) override final;
+
+    void flush() override final
+    {
+    }
 
 private:
     std::unique_ptr<char[]> buf_;

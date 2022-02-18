@@ -12,12 +12,24 @@
 #define XTR_SINK_CAPACITY (256 * 1024)
 #endif
 
-#if !defined(XTR_DISABLE_CPUID)
-#define XTR_DISABLE_CPUID 0
+/**
+ */
+#if !defined(XTR_FORCE_TSC_CALIBRATION)
+#define XTR_FORCE_TSC_CALIBRATION 0
 #endif
 
+/**
+ */
 #if !defined(XTR_USE_IO_URING)
 #define XTR_USE_IO_URING __has_include(<liburing.h>)
+#endif
+
+#define XTR_IO_URING_POLL 0
+
+/**
+ */
+#if !defined(XTR_IO_URING_POLL)
+#define XTR_IO_URING_POLL 1
 #endif
 
 #endif

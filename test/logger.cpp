@@ -31,6 +31,7 @@
 #include "xtr/io/storage_interface.hpp"
 
 #include "command_client.hpp"
+#include "temp_file.hpp"
 
 #include <catch2/catch.hpp>
 
@@ -75,7 +76,7 @@
 #include <err.h>
 #include <setjmp.h>
 #include <signal.h>
-#include <stdlib.h>
+#include <stdio.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -147,6 +148,11 @@ namespace
         {
         }
 
+        void flush() noexcept override
+        {
+            ++flush_count_;
+        }
+
         void sync() noexcept override
         {
             ++sync_count_;
@@ -169,11 +175,11 @@ namespace
             return {buf_.get(), buffer_capacity};
         }
 
-        void submit_buffer(char* buf, std::size_t size, bool flushed) override
+        void submit_buffer(char* buf, std::size_t size) override
         {
             std::scoped_lock lock{m_};
             if (submit_func_)
-                submit_func_(buf, size, flushed);
+                submit_func_(buf, size);
             for (auto it = buf, end = buf + size; it != end; ++it)
             {
                 if (*it == '\n')
@@ -188,9 +194,10 @@ namespace
         }
 
         std::mutex& m_;
-        std::function<void(char*, std::size_t, bool)> submit_func_;
+        std::function<void(char*, std::size_t)> submit_func_;
         std::function<int()> reopen_func_;
         std::function<void()> dtor_func_;
+        std::atomic<std::size_t> flush_count_{};
         std::atomic<std::size_t> sync_count_{};
         std::vector<std::string>& lines_;
 
@@ -276,32 +283,13 @@ private:
         }
     };
 
-    FILE* fmktemp(char* path)
-    {
-        const int fd = ::mkstemp(path);
-        REQUIRE(fd != -1);
-        return ::fdopen(fd, "w");
-    }
-
     struct path_fixture
     {
-        ~path_fixture()
-        {
-            ::unlink(path_.c_str());
-        }
-
-        static std::string get_tmpdir()
-        {
-            if (const char* tmpdir = ::getenv("TMPDIR"))
-                return tmpdir;
-            return "/tmp";
-        }
-
-        std::string path_ = get_tmpdir() + "/xtr.test.XXXXXX";
-        FILE* fp_ = fmktemp(path_.data());
+        temp_file tmp_;
+        FILE* fp_ = ::fdopen(tmp_.fd_.release(), "w");
         std::atomic<std::int64_t> clock_nanos_{946688523123456789L};
         xtr::logger log_{
-            path_.c_str(),
+            tmp_.path_.c_str(),
             fp_,
             test_clock{&clock_nanos_},
             xtr::null_command_path};
@@ -530,7 +518,7 @@ TEST_CASE_METHOD(fixture, "logger mixed types test", "[logger]")
     REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42.0 42 42.0 42", line_));
 }
 
-TEST_CASE_METHOD(file_fixture, "logger file buffer test", "[logger]")
+TEST_CASE_METHOD(file_fixture, "logger file test", "[logger]")
 {
     XTR_LOG(s_, "Test"), line_ = __LINE__;
     REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
@@ -996,7 +984,7 @@ TEST_CASE_METHOD(fixture, "logger error handling test", "[logger]")
     {
         std::scoped_lock lock{storage_->m_};
         storage_->submit_func_ =
-            [](char*, std::size_t, bool)
+            [](char*, std::size_t)
             {
                 throw std::runtime_error("Flush error text");
             };
@@ -1102,9 +1090,9 @@ TEST_CASE_METHOD(fixture, "logger non-blocking test", "[logger]")
 
 TEST_CASE_METHOD(fixture, "logger non-blocking drop test", "[logger]")
 {
-#pragma GCC diagnostic push
 #if defined(__clang__)
-#pragma GCC diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
 #endif
     auto log_func_and_sizes =
         GENERATE(
@@ -1116,7 +1104,9 @@ TEST_CASE_METHOD(fixture, "logger non-blocking drop test", "[logger]")
             std::make_tuple(+[](xtr::sink& s) { XTR_TRY_LOGL_TSC(info, s, "Test"); }, 16UL),
             std::make_tuple(+[](xtr::sink& s) { XTR_TRY_LOG_RTC(s, "Test"); }, 24UL),
             std::make_tuple(+[](xtr::sink& s) { XTR_TRY_LOGL_RTC(info, s, "Test"); }, 24UL));
-#pragma GCC diagnostic pop
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
     // 16 bytes taken by blocker, bytes per log record given above.
     const std::size_t n_dropped = 100;
@@ -1245,14 +1235,16 @@ TEST_CASE_METHOD(fixture, "logger escape sequence test", "[logger]")
     REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: \\x1B]0;Test\\x07", line_));
 }
 
-TEST_CASE_METHOD(fixture, "logger sync test", "[logger]")
+TEST_CASE_METHOD(fixture, "logger flush/sync test", "[logger]")
 {
     REQUIRE(storage_->sync_count_ == 0);
+    REQUIRE(storage_->flush_count_ == 0);
 
     for (std::size_t i = 0; i < 10; ++i)
     {
         sync();
         REQUIRE(storage_->sync_count_ == i + 1);
+        REQUIRE(storage_->flush_count_ == i + 1);
     }
 }
 
@@ -1438,12 +1430,12 @@ TEST_CASE_METHOD(fixture, "logger sink self assign test", "[logger]")
     xtr::sink s = log_.get_sink("Test1");
 
 #if defined(__clang__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wself-assign-overloaded"
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wself-assign-overloaded"
 #endif
     s = s;
 #if defined(__clang__)
-#pragma GCC diagnostic pop
+#pragma clang diagnostic pop
 #endif
 
     REQUIRE(s.is_open());
@@ -2089,16 +2081,16 @@ TEST_CASE_METHOD(command_fixture<>, "logger reopen command error test", "[logger
 
 TEST_CASE_METHOD(command_fixture<path_fixture>, "logger reopen command path test", "[logger]")
 {
-    ::unlink(path_.c_str());
+    ::unlink(tmp_.path_.c_str());
 
     struct stat sb;
 
-    REQUIRE(::stat(path_.c_str(), &sb) == -1);
+    REQUIRE(::stat(tmp_.path_.c_str(), &sb) == -1);
 
     xtrd::frame<xtrd::reopen> ro;
     send_frame<xtrd::success>(ro);
 
-    REQUIRE(::stat(path_.c_str(), &sb) == 0);
+    REQUIRE(::stat(tmp_.path_.c_str(), &sb) == 0);
 }
 
 TEST_CASE_METHOD(command_fixture<file_fixture>, "logger null_reopen_path test", "[logger]")

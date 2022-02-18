@@ -37,6 +37,7 @@ LDLIBS += -lxtr $(addprefix -l, $(CONAN_LIBS_LIBURING))
 
 TEST_CPPFLAGS = $(CATCH2_CPPFLAGS) 
 TEST_LDFLAGS = -L $(BUILD_DIR) $(FMT_LDFLAGS)
+TEST_LDLIBS = -ldl
 
 BENCH_CPPFLAGS = $(GOOGLE_BENCH_CPPFLAGS)
 BENCH_LDFLAGS = -L $(BUILD_DIR) $(GOOGLE_BENCH_LDFLAGS) $(FMT_LDFLAGS)
@@ -128,9 +129,9 @@ OBJS = $(SRCS:%=$(BUILD_DIR)/%.o)
 TEST_TARGET = $(BUILD_DIR)/test/test
 TEST_SRCS := \
 	test/align.cpp test/command_client.cpp test/command_dispatcher.cpp \
-	test/file_descriptor.cpp test/logger.cpp test/main.cpp \
-	test/memory_mapping.cpp test/mirrored_memory_mapping.cpp test/pagesize.cpp \
-	test/synchronized_ring_buffer.cpp test/throw.cpp
+	test/fd_storage.cpp test/file_descriptor.cpp test/logger.cpp \
+	test/main.cpp test/memory_mapping.cpp test/mirrored_memory_mapping.cpp \
+	test/pagesize.cpp test/synchronized_ring_buffer.cpp test/throw.cpp
 TEST_OBJS = $(TEST_SRCS:%=$(BUILD_DIR)/%.o)
 
 BENCH_TARGET = $(BUILD_DIR)/benchmark/benchmark
@@ -167,7 +168,7 @@ $(TARGET): $(OBJS)
 	$(RANLIB) $@
 
 $(TEST_TARGET): $(TARGET) $(TEST_OBJS)
-	$(LINK.cc) -o $@ $(TEST_LDFLAGS) $(TEST_OBJS) $(LDLIBS)
+	$(LINK.cc) -o $@ $(TEST_LDFLAGS) $(TEST_OBJS) $(LDLIBS) $(TEST_LDLIBS)
 
 $(BENCH_TARGET): $(TARGET) $(BENCH_OBJS)
 	$(LINK.cc) -o $@ $(BENCH_LDFLAGS) $(BENCH_OBJS) $(LDLIBS) $(BENCH_LDLIBS)

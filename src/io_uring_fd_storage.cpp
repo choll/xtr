@@ -19,12 +19,17 @@
 // SOFTWARE.
 
 #include "xtr/io/io_uring_fd_storage.hpp"
+#include "xtr/config.hpp"
 #include "xtr/detail/throw.hpp"
 
 #include <liburing.h>
 
 #include <cassert>
+#include <cstdio>
+#include <cstring>
 #include <limits>
+
+#include <iostream> // XXX
 
 xtr::io_uring_fd_storage::io_uring_fd_storage(
     int fd,
@@ -43,8 +48,15 @@ xtr::io_uring_fd_storage::io_uring_fd_storage(
     if (queue_size > std::numeric_limits<decltype(buffer::index_)>::max())
         detail::throw_invalid_argument("queue_size too large");
 
+    const int flags =
+#if XTR_IO_URING_POLL
+        IORING_SETUP_SQPOLL;
+#else
+        0;
+#endif
+
     if (const int errnum =
-        ::io_uring_queue_init(unsigned(queue_size), &ring_, /* flags = */ 0))
+        ::io_uring_queue_init(unsigned(queue_size), &ring_, flags))
     {
         detail::throw_system_error_fmt(
             errnum,
@@ -57,23 +69,27 @@ xtr::io_uring_fd_storage::io_uring_fd_storage(
 
 xtr::io_uring_fd_storage::~io_uring_fd_storage()
 {
+    flush();
     sync();
     ::io_uring_queue_exit(&ring_);
+}
+
+void xtr::io_uring_fd_storage::flush()
+{
+    ::io_uring_submit(&ring_);
 }
 
 void xtr::io_uring_fd_storage::sync() noexcept
 {
     while (pending_cqe_count_ > 0)
-        wait_for_one_cqe();
+        wait_for_one_cqe(); // XXX CAN THROW!
     fd_storage_base::sync();
 }
 
 std::span<char> xtr::io_uring_fd_storage::allocate_buffer()
 {
-    if (free_list_ == nullptr)
+    while (free_list_ == nullptr)
         wait_for_one_cqe();
-
-    assert(free_list_ != nullptr);
 
     buffer* buf = free_list_;
     free_list_ = free_list_->next_;
@@ -85,25 +101,42 @@ std::span<char> xtr::io_uring_fd_storage::allocate_buffer()
     return {buf->data_, buffer_capacity_};
 }
 
-void xtr::io_uring_fd_storage::submit_buffer(
-    char* data,
-    std::size_t size,
-    bool flushed)
+void xtr::io_uring_fd_storage::submit_buffer(char* data, std::size_t size)
 {
     buffer* buf = buffer::data_to_buffer(data);
     buf->size_ = unsigned(size);
 
-    struct io_uring_sqe* sqe = io_uring_get_sqe(&ring_);
+    io_uring_sqe* sqe = get_sqe();
 
-    io_uring_prep_write_fixed(
+    // Per https://github.com/axboe/liburing/issues/507#issuecomment-1005869351
+    // using seek offsets is preferred over appending (via passing an offset of
+    // -1).
+    ::io_uring_prep_write_fixed(
         sqe, fd_.get(), buf->data_, buf->size_, buf->file_offset_, buf->index_);
-    io_uring_sqe_set_data(sqe, buf);
+
+    ::io_uring_sqe_set_data(sqe, buf);
 
     offset_ += size;
     ++pending_cqe_count_;
 
-    if (flushed || ++batch_index_ % batch_size_ == 0)
-        io_uring_submit(&ring_);
+    if (++batch_index_ % batch_size_ == 0)
+        ::io_uring_submit(&ring_);
+}
+
+void xtr::io_uring_fd_storage::replace_fd(int newfd) noexcept
+{
+    // As write events might be in-flight, closing the file descriptor must
+    // be queued up behind any pending writes. IOSQE_IO_DRAIN is used to
+    // ensure that all previous writes complete before closing.
+    //
+    // XXX this is now a problem because wait_for_one can throw!
+    io_uring_sqe* sqe = get_sqe();
+    ::io_uring_prep_close(sqe, fd_.release());
+    sqe->flags |= IOSQE_IO_DRAIN;
+    ++pending_cqe_count_;
+    ::io_uring_submit(&ring_);
+
+    fd_.reset(newfd);
 }
 
 void xtr::io_uring_fd_storage::allocate_buffers(std::size_t queue_size)
@@ -133,7 +166,17 @@ void xtr::io_uring_fd_storage::allocate_buffers(std::size_t queue_size)
     *next = nullptr;
     assert(free_list_ != nullptr);
 
-    io_uring_register_buffers(&ring_, &iov[0], unsigned(iov.size()));
+    ::io_uring_register_buffers(&ring_, &iov[0], unsigned(iov.size()));
+}
+
+io_uring_sqe* xtr::io_uring_fd_storage::get_sqe()
+{
+    io_uring_sqe* sqe;
+
+    while ((sqe = ::io_uring_get_sqe(&ring_)) == nullptr)
+        wait_for_one_cqe();
+
+    return sqe;
 }
 
 void xtr::io_uring_fd_storage::wait_for_one_cqe()
@@ -144,8 +187,12 @@ void xtr::io_uring_fd_storage::wait_for_one_cqe()
     int errnum;
 
 retry:
+#if XTR_IO_URING_POLL
     while ((errnum = io_uring_peek_cqe(&ring_, &cqe)) == -EAGAIN)
         ;
+#else
+    errnum = ::io_uring_wait_cqe(&ring_, &cqe);
+#endif
 
     if (errnum != 0) [[unlikely]]
     {
@@ -156,22 +203,40 @@ retry:
 
     --pending_cqe_count_;
 
-    buffer* buf = static_cast<buffer*>(io_uring_cqe_get_data(cqe));
+    buffer* buf = static_cast<buffer*>(::io_uring_cqe_get_data(cqe));
+    const int res = cqe->res;
 
-    if (cqe->res == -EAGAIN)
+    ::io_uring_cqe_seen(&ring_, cqe);
+
+    if (buf == nullptr) // close operation queued by replace_fd()
+    {
+        // If close(2) failed, there is nothing to be done except report an
+        // error, as the state of the file descriptor is ambiguous (according
+        // to POSIX).
+        if (res < 0)
+        {
+            std::fprintf(
+                stderr,
+                "Error: close(2) failed during reopen: %s",
+                std::strerror(-res));
+        }
+        return;
+    }
+
+    if (res == -EAGAIN) [[unlikely]]
     {
         resubmit_buffer(buf, 0);
         goto retry;
     }
 
-    if (cqe->res < 0) [[unlikely]]
+    if (res < 0) [[unlikely]]
     {
         detail::throw_system_error(
-            -cqe->res,
+            -res,
             "xtr::io_uring_fd_storage::wait_for_one_cqe: write error");
     }
 
-    const auto nwritten = unsigned(cqe->res);
+    const auto nwritten = unsigned(res);
 
     assert(nwritten <= buf->size_);
 
@@ -185,8 +250,6 @@ retry:
     assert(buf != nullptr);
     buf->next_ = free_list_;
     free_list_ = buf;
-
-    io_uring_cqe_seen(&ring_, cqe);
 }
 
 void xtr::io_uring_fd_storage::resubmit_buffer(buffer* buf, unsigned nwritten)
@@ -195,9 +258,20 @@ void xtr::io_uring_fd_storage::resubmit_buffer(buffer* buf, unsigned nwritten)
     buf->offset_ += nwritten;
     buf->file_offset_ += nwritten;
 
-    struct io_uring_sqe* sqe = io_uring_get_sqe(&ring_);
+    std::cout << "resubmit, nwritten=" << nwritten << "\n";
 
-    io_uring_prep_write_fixed(
+    assert(io_uring_sq_space_left(&ring_) >= 1);
+
+    // Don't call get_sqe() as this function is only called from wait_for_one_cqe,
+    // so space in the submission queue must be available (and if this is incorrect,
+    // calling get_sqe() might have problems due to it calling wait_for_one_cqe).
+    io_uring_sqe* sqe = ::io_uring_get_sqe(&ring_);
+
+    assert(sqe != nullptr);
+
+    std::cout << "set resubmit to " << buf->size_ << ", off=" << buf->file_offset_ << "\n";
+
+    ::io_uring_prep_write_fixed(
         sqe,
         fd_.get(),
         buf->data_ + buf->offset_,
@@ -205,7 +279,9 @@ void xtr::io_uring_fd_storage::resubmit_buffer(buffer* buf, unsigned nwritten)
         buf->file_offset_,
         buf->index_);
 
-    io_uring_sqe_set_data(sqe, buf);
+    ::io_uring_sqe_set_data(sqe, buf);
 
     ++pending_cqe_count_;
+
+    ::io_uring_submit(&ring_);
 }

@@ -77,13 +77,19 @@ public:
 
     void sync() noexcept override final;
 
-protected:
+    void flush() override final;
+
     std::span<char> allocate_buffer() override final;
 
-    void submit_buffer(char* data, std::size_t size, bool flushed) override final;
+    void submit_buffer(char* data, std::size_t size) override final;
+
+protected:
+    void replace_fd(int newfd) noexcept override final;
 
 private:
     void allocate_buffers(std::size_t queue_size);
+
+    io_uring_sqe* get_sqe();
 
     void wait_for_one_cqe();
 

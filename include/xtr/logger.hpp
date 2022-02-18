@@ -42,7 +42,7 @@
 #include <type_traits>
 #include <utility>
 
-#include <stdio.h> // fileno
+#include <stdio.h> // XXX fileno, which is a bug because you should call fclose! need to dup the fd, then close the FILE, if taking ownership (filename passed)
 
 namespace xtr
 {
