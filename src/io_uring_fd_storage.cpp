@@ -200,9 +200,12 @@ retry:
 
     if (errnum != 0) [[unlikely]]
     {
-        detail::throw_system_error(
-            -errnum,
-            "xtr::io_uring_fd_storage::wait_for_one_cqe: io_uring_peek_cqe failed");
+        std::fprintf(
+            stderr,
+            "xtr::io_uring_fd_storage::wait_for_one_cqe: "
+            "io_uring_peek_cqe/io_uring_wait_cqe failed: %s\n",
+            std::strerror(-errnum));
+        return;
     }
 
     --pending_cqe_count_;
