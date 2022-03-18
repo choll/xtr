@@ -1238,13 +1238,12 @@ TEST_CASE_METHOD(fixture, "logger escape sequence test", "[logger]")
 TEST_CASE_METHOD(fixture, "logger flush/sync test", "[logger]")
 {
     REQUIRE(storage_->sync_count_ == 0);
-    REQUIRE(storage_->flush_count_ == 0);
 
-    for (std::size_t i = 0; i < 10; ++i)
+    for (std::size_t i = 1; i <= 10; ++i)
     {
         sync();
-        REQUIRE(storage_->sync_count_ == i + 1);
-        REQUIRE(storage_->flush_count_ == i + 1);
+        CHECK(storage_->sync_count_ == i);
+        CHECK(storage_->flush_count_ >= i); // flush may also be called by the consumer
     }
 }
 

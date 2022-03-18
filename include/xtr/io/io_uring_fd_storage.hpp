@@ -95,6 +95,8 @@ private:
 
     void resubmit_buffer(buffer* buf, unsigned nwritten);
 
+    void free_buffer(buffer* buf);
+
     io_uring ring_;
     std::size_t buffer_capacity_;
     std::size_t batch_size_;

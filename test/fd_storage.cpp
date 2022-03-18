@@ -26,14 +26,11 @@
 #include <catch2/catch.hpp>
 #include <liburing.h>
 
+#include <cerrno>
 #include <functional>
 
 #include <dlfcn.h>
-//#include <sys/socket.h>
 #include <unistd.h>
-
-#include <iostream> // XXX
-#include <fcntl.h> // XXX
 
 namespace
 {
@@ -53,21 +50,15 @@ namespace
     std::function<decltype(io_uring_get_sqe)> get_sqe_hook = get_sqe_next;
     std::function<decltype(__io_uring_get_cqe)> get_cqe_hook = get_cqe_next;
 
-    // XXX make a separate socket fixture?
-
     struct fixture
     {
         fixture()
         {
-            //REQUIRE(::socketpair(AF_LOCAL, SOCK_STREAM, 0, fds_) == 0);
             storage_ = xtr::make_fd_storage(tmp_.fd_.release(), tmp_.path_);
         }
 
         ~fixture()
         {
-            std::cout << "dtor\n";
-            //::close(fds_[0]);
-            //::close(fds_[1]);
             reset_hooks();
         }
 
@@ -75,20 +66,19 @@ namespace
         {
             submit_hook = submit_next;
             get_sqe_hook = get_sqe_next;
+            get_cqe_hook = get_cqe_next;
+        }
+
+        void flush_and_sync()
+        {
+            storage_->flush();
+            storage_->sync();
         }
 
         temp_file tmp_;
-        //int fd_;
-        //int fds_[2];
         xtr::storage_interface_ptr storage_;
     };
 }
-
-// XXX
-// FLUSHING AS YOU DO WHEN THERE IS NOTHING TO READ IS INCORRECT, IF A SLOW
-// STREAM OF DATA IS WRITTEN IT WILL BE VERY SLOW FOR IT TO APPEAR, POSSIBLY
-// WANT TO FLUSH EVERY X SECONDS? Why would it though, if data is written slowly
-// then it will surely loop and find empty queues?
 
 extern "C"
 {
@@ -113,24 +103,56 @@ extern "C"
     }
 }
 
-TEST_CASE_METHOD(fixture, "small write test", "[fd_storage]")
+TEST_CASE_METHOD(fixture, "write test", "[fd_storage]")
 {
-    for (std::size_t i = 0; i < 16; ++i)
+    const std::size_t n = 16;
+    std::size_t cqe_count = 0;
+
+    get_cqe_hook =
+        [&](auto ring, auto cqe, auto... args)
+        {
+            ++cqe_count;
+            const int ret = get_cqe_next(ring, cqe, args...);
+            REQUIRE((*cqe)->res == xtr::io_uring_fd_storage::default_buffer_capacity);
+            return ret;
+        };
+
+    for (std::size_t i = 0; i < n; ++i)
     {
         std::span<char> span;
         REQUIRE_NOTHROW(span = storage_->allocate_buffer());
         REQUIRE_NOTHROW(storage_->submit_buffer(span.data(), span.size()));
     }
+
+    flush_and_sync();
+
+    REQUIRE(cqe_count == n);
 }
 
-TEST_CASE_METHOD(fixture, "big write test", "[fd_storage]")
+TEST_CASE_METHOD(fixture, "write more than queue size test", "[fd_storage]")
 {
-    for (std::size_t i = 0; i < xtr::io_uring_fd_storage::default_queue_size * 2; ++i)
+    const std::size_t n = xtr::io_uring_fd_storage::default_queue_size * 2;
+    std::size_t cqe_count = 0;
+
+    get_cqe_hook =
+        [&](auto ring, auto cqe, auto... args)
+        {
+            ++cqe_count;
+            const int ret = get_cqe_next(ring, cqe, args...);
+            REQUIRE((*cqe)->res == xtr::io_uring_fd_storage::default_buffer_capacity);
+            return ret;
+        };
+
+    for (std::size_t i = 0; i < n; ++i)
     {
         std::span<char> span;
         REQUIRE_NOTHROW(span = storage_->allocate_buffer());
         REQUIRE_NOTHROW(storage_->submit_buffer(span.data(), span.size()));
     }
+
+    flush_and_sync();
+
+    REQUIRE(cqe_count == n);
 }
 
 TEST_CASE_METHOD(fixture, "reopen with writes queued", "[fd_storage]")
@@ -167,94 +189,208 @@ TEST_CASE_METHOD(fixture, "reopen with writes queued", "[fd_storage]")
     }
 }
 
-TEST_CASE_METHOD(fixture, "null return from get_sqe", "[fd_storage]")
+TEST_CASE_METHOD(fixture, "submission queue full on submit", "[fd_storage]")
 {
-    // Simulate the submission queue becoming full by returning nullptr
-    // from the get_sqe hook.
-
-    io_uring* saved_ring = nullptr;
-
-    submit_hook =
-        [&](io_uring* ring)
-        {
-            saved_ring = ring;
-            return 0;
-        };
-
     // First send a close operation so that there is a completion event to wait on
     REQUIRE(storage_->reopen() == 0);
 
+    // Return null when an SQE is requested (submission queue full) to cause
+    // progress to block/spin waiting for a CQE to complete (which implies a
+    // SQE is then available)
     get_sqe_hook =
         [&](io_uring*)
         {
             return nullptr;
         };
 
-    // XXX need to also test reopen():
-    // REQUIRE(storage_->reopen() == 0);
+    bool get_cqe_called = false;
 
-//int __io_uring_get_cqe(struct io_uring *ring,
-//			struct io_uring_cqe **cqe_ptr, unsigned submit,
-//			unsigned wait_nr, sigset_t *sigmask);
+    get_cqe_hook =
+        [&](auto... args)
+        {
+            if (!get_cqe_called)
+            {
+                get_cqe_called = true;
+                get_sqe_hook = get_sqe_next;
+            }
+            return get_cqe_next(args...);
+        };
 
     // Try to submit a buffer, get_sqe returns null so get_cqe should be called
     const auto span = storage_->allocate_buffer();
     storage_->submit_buffer(span.data(), span.size());
 
-
-
-
-    std::cout << "Not reached\n";
+    REQUIRE(get_cqe_called);
 }
 
-#if 0
+TEST_CASE_METHOD(fixture, "submission queue full on reopen", "[fd_storage]")
+{
+    // First send a close operation so that there is a completion event to wait on
+    REQUIRE(storage_->reopen() == 0);
+
+    // Return null when an SQE is requested to cause progress to block/spin
+    // waiting for a CQE to complete (which implies a SQE is then available)
+    get_sqe_hook =
+        [&](io_uring*)
+        {
+            return nullptr;
+        };
+
+    bool get_cqe_called = false;
+
+    get_cqe_hook =
+        [&](auto... args)
+        {
+            if (!get_cqe_called)
+            {
+                get_cqe_called = true;
+                get_sqe_hook = get_sqe_next;
+            }
+            return get_cqe_next(args...);
+        };
+
+    // Try to reopen, get_sqe returns null so get_cqe should be called
+    REQUIRE(storage_->reopen() == 0);
+
+    REQUIRE(get_cqe_called);
+}
 
 TEST_CASE_METHOD(fixture, "short write test", "[fd_storage]")
 {
-    const auto span = storage_->allocate_buffer();
-
-    const std::size_t size = 1024;
-
-    REQUIRE(span.size() >= size);
+    const unsigned missing_size = 1024;
 
     io_uring_sqe* sqe = nullptr;
+
+    std::size_t sqe_count = 0;
+    std::size_t cqe_count = 0;
+    std::size_t submit_count = 0;
+
+    get_sqe_hook =
+        [&](io_uring* ring)
+        {
+            ++sqe_count;
+            return sqe = get_sqe_next(ring);
+        };
+
+    get_cqe_hook =
+        [&](auto... args)
+        {
+            ++cqe_count;
+            return get_cqe_next(args...);
+        };
 
     submit_hook =
         [&](io_uring* ring)
         {
-            std::cout << "submit, sqe length=" << sqe->len << "\n";
+            ++submit_count;
             if (sqe->len == 64 * 1024)
-            {
-                std::cout << "adjust\n";
-                sqe->len -= 1024;
-            }
+                sqe->len -= missing_size;
             return submit_next(ring);
         };
+
+    const auto span = storage_->allocate_buffer();
+    REQUIRE(span.size() > missing_size);
+    storage_->submit_buffer(span.data(), span.size());
+    flush_and_sync();
+
+    REQUIRE(sqe_count == 2);
+    REQUIRE(cqe_count == 2);
+    REQUIRE(submit_count == 2);
+}
+
+TEST_CASE_METHOD(fixture, "EAGAIN test", "[fd_storage]")
+{
+    std::size_t sqe_count = 0;
+    std::size_t cqe_count = 0;
+    std::size_t submit_count = 0;
+    io_uring_sqe* sqe;
+
     get_sqe_hook =
         [&](io_uring* ring)
         {
-            return get_sqe_next(ring);
+            ++sqe_count;
+            return sqe = get_sqe_next(ring);
+        };
+
+    get_cqe_hook =
+        [&](auto ring, auto cqe, auto... args)
+        {
+            const int ret = get_cqe_next(ring, cqe, args...);
+            if (++cqe_count == 1)
+                (*cqe)->res = -EAGAIN;
+            return ret;
+        };
+
+    const auto span = storage_->allocate_buffer();
+
+    submit_hook =
+        [&](io_uring* ring)
+        {
+            ++submit_count;
+            // Full buffer should be resubmitted
+            REQUIRE(sqe->len == span.size());
+            return submit_next(ring);
         };
 
     storage_->submit_buffer(span.data(), span.size());
-    storage_->flush();
+    flush_and_sync();
 
-/*
-    char buf[16];
-    std::size_t total_nread = 0;
-
-    while (total_nread < span.size())
-    {
-        const ::ssize_t nread = ::read(fds_[1], buf, sizeof(buf));
-        REQUIRE(nread != -1);
-        total_nread += std::size_t(nread);
-    }*/
+    // Request should be resubmitted
+    REQUIRE(sqe_count == 2);
+    REQUIRE(cqe_count == 2);
+    REQUIRE(submit_count == 2);
 }
-#endif
-// WRITE TESTS FOR SHORT WRITES
-//
-// Could just interpose? Then when entering the test you modify a function pointer.
-//
-// Either that or open a socketpair, but don't read from the socket? Interposing seems better really.
-//
-//
+
+TEST_CASE_METHOD(fixture, "close fail test", "[fd_storage]")
+{
+    std::size_t sqe_count = 0;
+    std::size_t cqe_count = 0;
+    std::size_t submit_count = 0;
+
+    get_sqe_hook =
+        [&](io_uring* ring)
+        {
+            ++sqe_count;
+            return get_sqe_next(ring);
+        };
+
+    get_cqe_hook =
+        [&](auto ring, auto cqe, auto... args)
+        {
+            ++cqe_count;
+            const int ret = get_cqe_next(ring, cqe, args...);
+            REQUIRE(::io_uring_cqe_get_data(*cqe) == nullptr);
+            (*cqe)->res = -EIO;
+            return ret;
+        };
+
+    submit_hook =
+        [&](io_uring* ring)
+        {
+            ++submit_count;
+            return submit_next(ring);
+        };
+
+    REQUIRE(storage_->reopen() == 0);
+    storage_->sync();
+
+    // Request should not be resubmitted
+    REQUIRE(sqe_count == 1);
+    REQUIRE(cqe_count == 1);
+    REQUIRE(submit_count == 1);
+}
+
+TEST_CASE_METHOD(fixture, "write error test", "[fd_storage]")
+{
+    get_cqe_hook =
+        [&](auto ring, auto cqe, auto... args)
+        {
+            const int ret = get_cqe_next(ring, cqe, args...);
+            (*cqe)->res = -EIO;
+            return ret;
+        };
+
+    const auto span = storage_->allocate_buffer();
+    storage_->submit_buffer(span.data(), span.size());
+    flush_and_sync();
+}

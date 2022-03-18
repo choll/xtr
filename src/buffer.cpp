@@ -68,6 +68,24 @@ void xtr::detail::buffer::flush() noexcept
 #endif
 }
 
+template<typename InputIterator>
+void xtr::detail::buffer::append(InputIterator first, InputIterator last)
+{
+    while (first != last)
+    {
+        if (pos_ == end_) [[unlikely]]
+            next_buffer();
+
+        const auto n = std::min(last - first, end_ - pos_);
+
+        // Safe as the input iterator is contiguous
+        std::memcpy(pos_, &*first, std::size_t(n));
+
+        pos_ += n;
+        first += n;
+    }
+}
+
 // This class could support zero-copy I/O, with fmt writing directly into it
 // via a push_back method. Instead fmt writes into a std::string (the line
 // member of this class), then the function below copies the string into this

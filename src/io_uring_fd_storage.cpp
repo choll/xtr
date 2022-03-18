@@ -29,8 +29,6 @@
 #include <cstring>
 #include <limits>
 
-#include <iostream> // XXX
-
 xtr::io_uring_fd_storage::io_uring_fd_storage(
     int fd,
     std::string reopen_path,
@@ -76,13 +74,14 @@ xtr::io_uring_fd_storage::~io_uring_fd_storage()
 
 void xtr::io_uring_fd_storage::flush()
 {
+    // SQEs may have been prepared but not submitted, due to batching
     ::io_uring_submit(&ring_);
 }
 
 void xtr::io_uring_fd_storage::sync() noexcept
 {
     while (pending_cqe_count_ > 0)
-        wait_for_one_cqe(); // XXX CAN THROW!
+        wait_for_one_cqe();
     fd_storage_base::sync();
 }
 
@@ -128,8 +127,6 @@ void xtr::io_uring_fd_storage::replace_fd(int newfd) noexcept
     // As write events might be in-flight, closing the file descriptor must
     // be queued up behind any pending writes. IOSQE_IO_DRAIN is used to
     // ensure that all previous writes complete before closing.
-    //
-    // XXX this is now a problem because wait_for_one can throw!
     io_uring_sqe* sqe = get_sqe();
     ::io_uring_prep_close(sqe, fd_.release());
     sqe->flags |= IOSQE_IO_DRAIN;
@@ -174,7 +171,14 @@ io_uring_sqe* xtr::io_uring_fd_storage::get_sqe()
     io_uring_sqe* sqe;
 
     while ((sqe = ::io_uring_get_sqe(&ring_)) == nullptr)
+    {
+#if XTR_IO_URING_POLL
+        ::io_uring_sqring_wait(&ring_);
+#else
+        // Waiting for a CQE seems to be the only option here
         wait_for_one_cqe();
+#endif
+    }
 
     return sqe;
 }
@@ -203,12 +207,17 @@ retry:
 
     --pending_cqe_count_;
 
-    buffer* buf = static_cast<buffer*>(::io_uring_cqe_get_data(cqe));
     const int res = cqe->res;
+
+    auto deleter = [this](buffer* ptr) { free_buffer(ptr); };
+
+    std::unique_ptr<buffer, decltype(deleter)> buf(
+        static_cast<buffer*>(::io_uring_cqe_get_data(cqe)),
+        std::move(deleter));
 
     ::io_uring_cqe_seen(&ring_, cqe);
 
-    if (buf == nullptr) // close operation queued by replace_fd()
+    if (!buf) // close operation queued by replace_fd()
     {
         // If close(2) failed, there is nothing to be done except report an
         // error, as the state of the file descriptor is ambiguous (according
@@ -217,7 +226,8 @@ retry:
         {
             std::fprintf(
                 stderr,
-                "Error: close(2) failed during reopen: %s",
+                "xtr::io_uring_fd_storage::wait_for_one_cqe: "
+                "Error: close(2) failed during reopen: %s\n",
                 std::strerror(-res));
         }
         return;
@@ -225,15 +235,22 @@ retry:
 
     if (res == -EAGAIN) [[unlikely]]
     {
-        resubmit_buffer(buf, 0);
+        resubmit_buffer(buf.release(), 0);
         goto retry;
     }
 
     if (res < 0) [[unlikely]]
     {
-        detail::throw_system_error(
-            -res,
-            "xtr::io_uring_fd_storage::wait_for_one_cqe: write error");
+        std::fprintf(
+            stderr,
+            "xtr::io_uring_fd_storage::wait_for_one_cqe: "
+            "Error: Write of %u bytes at offset %zu to \"%s\" (fd %d) failed: %s\n",
+            buf->size_,
+            buf->file_offset_,
+            reopen_path_.c_str(),
+            fd_.get(),
+            std::strerror(-res));
+        return;
     }
 
     const auto nwritten = unsigned(res);
@@ -242,14 +259,9 @@ retry:
 
     if (nwritten != buf->size_) [[unlikely]] // Short write
     {
-        resubmit_buffer(buf, nwritten);
+        resubmit_buffer(buf.release(), nwritten);
         goto retry;
     }
-
-    // Push the reclaimed buffer to the front of free_list_
-    assert(buf != nullptr);
-    buf->next_ = free_list_;
-    free_list_ = buf;
 }
 
 void xtr::io_uring_fd_storage::resubmit_buffer(buffer* buf, unsigned nwritten)
@@ -257,8 +269,6 @@ void xtr::io_uring_fd_storage::resubmit_buffer(buffer* buf, unsigned nwritten)
     buf->size_ -= nwritten;
     buf->offset_ += nwritten;
     buf->file_offset_ += nwritten;
-
-    std::cout << "resubmit, nwritten=" << nwritten << "\n";
 
     assert(io_uring_sq_space_left(&ring_) >= 1);
 
@@ -268,8 +278,6 @@ void xtr::io_uring_fd_storage::resubmit_buffer(buffer* buf, unsigned nwritten)
     io_uring_sqe* sqe = ::io_uring_get_sqe(&ring_);
 
     assert(sqe != nullptr);
-
-    std::cout << "set resubmit to " << buf->size_ << ", off=" << buf->file_offset_ << "\n";
 
     ::io_uring_prep_write_fixed(
         sqe,
@@ -284,4 +292,12 @@ void xtr::io_uring_fd_storage::resubmit_buffer(buffer* buf, unsigned nwritten)
     ++pending_cqe_count_;
 
     ::io_uring_submit(&ring_);
+}
+
+void xtr::io_uring_fd_storage::free_buffer(buffer* buf)
+{
+    // Push the buffer to the front of free_list_
+    assert(buf != nullptr);
+    buf->next_ = free_list_;
+    free_list_ = buf;
 }

@@ -49,8 +49,6 @@ int xtr::detail::fd_storage_base::reopen() noexcept
     if (reopen_path_ == null_reopen_path)
         return ENOENT;
 
-    flush();
-
     const int newfd =
         XTR_TEMP_FAILURE_RETRY(
             ::open(

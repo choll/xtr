@@ -48,22 +48,7 @@ public:
     ~buffer();
 
     template<typename InputIterator>
-    void append(InputIterator first, InputIterator last)
-    {
-        while (first != last)
-        {
-            if (pos_ == end_) [[unlikely]]
-                next_buffer();
-
-            const auto n = std::min(last - first, end_ - pos_);
-
-            // Safe as the input iterator is contiguous
-            std::memcpy(pos_, &*first, std::size_t(n));
-
-            pos_ += n;
-            first += n;
-        }
-    }
+    void append(InputIterator first, InputIterator last);
 
     void flush() noexcept;
 
