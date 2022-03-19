@@ -20,9 +20,7 @@
 
 #include "xtr/config.hpp"
 #include "xtr/io/fd_storage.hpp"
-#if XTR_USE_IO_URING
 #include "xtr/io/io_uring_fd_storage.hpp"
-#endif
 #include "xtr/io/posix_fd_storage.hpp"
 
 #include "xtr/detail/retry.hpp"
@@ -47,7 +45,10 @@ xtr::storage_interface_ptr xtr::make_fd_storage(const char* path)
                 S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH));
 
     if (fd == -1)
-        detail::throw_system_error_fmt(errno, "Failed to open `%s'", path);
+    {
+        detail::throw_system_error_fmt(
+            errno, "xtr::make_fd_storage: Failed to open `%s'", path);
+    }
 
     return make_fd_storage(fd, path);
 }
@@ -55,12 +56,22 @@ xtr::storage_interface_ptr xtr::make_fd_storage(const char* path)
 XTR_FUNC
 xtr::storage_interface_ptr xtr::make_fd_storage(FILE* fp, std::string reopen_path)
 {
-    return make_fd_storage(::dup(::fileno(fp)), std::move(reopen_path));
+    return make_fd_storage(::fileno(fp), std::move(reopen_path));
 }
 
 XTR_FUNC
 xtr::storage_interface_ptr xtr::make_fd_storage(int fd, std::string reopen_path)
 {
+    // The input file descriptor is duplicated so that there is no ambiguity
+    // regarding ownership of the fd---we effectively increment a reference
+    // count that we are responsible for decrementing later, and the user
+    // remains responsible for decrementing their own reference count.
+    if ((fd = ::dup(fd)) == -1)
+    {
+        detail::throw_system_error_fmt(
+            errno, "xtr::make_fd_storage: dup(2) failed", path);
+    }
+
 #if XTR_USE_IO_URING
     errno = 0;
     (void)syscall(__NR_io_uring_setup, 0, nullptr);
