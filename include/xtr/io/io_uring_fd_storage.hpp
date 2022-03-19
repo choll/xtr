@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#if XTR_USE_IO_URING // For single-include compatibility
 #ifndef XTR_IO_IO_URING_FD_STORAGE_HPP
 #define XTR_IO_IO_URING_FD_STORAGE_HPP
 
@@ -107,4 +108,5 @@ private:
     std::unique_ptr<std::byte[]> buffer_storage_;
 };
 
+#endif
 #endif

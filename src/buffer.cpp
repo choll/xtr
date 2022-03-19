@@ -28,6 +28,7 @@
 #include <stdexcept>
 #include <utility>
 
+XTR_FUNC
 xtr::detail::buffer::buffer(storage_interface_ptr storage, log_level_style_t ls)
 :
     lstyle(ls),
@@ -35,11 +36,13 @@ xtr::detail::buffer::buffer(storage_interface_ptr storage, log_level_style_t ls)
 {
 }
 
+XTR_FUNC
 xtr::detail::buffer::~buffer()
 {
     flush();
 }
 
+XTR_FUNC
 void xtr::detail::buffer::flush() noexcept
 {
 #if __cpp_exceptions
@@ -100,12 +103,14 @@ void xtr::detail::buffer::append(InputIterator first, InputIterator last)
 // fixed-sized buffers.
 //
 // TL;DR: Some weirdness is traded for a gain in performance.
+XTR_FUNC
 void xtr::detail::buffer::append_line()
 {
     append(line.begin(), line.end());
     line.clear();
 }
 
+XTR_FUNC
 void xtr::detail::buffer::next_buffer()
 {
     if (pos_ != begin_) [[likely]] // if not the first call to push_back
