@@ -29,6 +29,7 @@
 #include <cstring>
 #include <limits>
 
+XTR_FUNC
 xtr::io_uring_fd_storage::io_uring_fd_storage(
     int fd,
     std::string reopen_path,
@@ -65,6 +66,7 @@ xtr::io_uring_fd_storage::io_uring_fd_storage(
     allocate_buffers(queue_size);
 }
 
+XTR_FUNC
 xtr::io_uring_fd_storage::~io_uring_fd_storage()
 {
     flush();
@@ -72,12 +74,14 @@ xtr::io_uring_fd_storage::~io_uring_fd_storage()
     ::io_uring_queue_exit(&ring_);
 }
 
+XTR_FUNC
 void xtr::io_uring_fd_storage::flush()
 {
     // SQEs may have been prepared but not submitted, due to batching
     ::io_uring_submit(&ring_);
 }
 
+XTR_FUNC
 void xtr::io_uring_fd_storage::sync() noexcept
 {
     while (pending_cqe_count_ > 0)
@@ -85,6 +89,7 @@ void xtr::io_uring_fd_storage::sync() noexcept
     fd_storage_base::sync();
 }
 
+XTR_FUNC
 std::span<char> xtr::io_uring_fd_storage::allocate_buffer()
 {
     while (free_list_ == nullptr)
@@ -100,6 +105,7 @@ std::span<char> xtr::io_uring_fd_storage::allocate_buffer()
     return {buf->data_, buffer_capacity_};
 }
 
+XTR_FUNC
 void xtr::io_uring_fd_storage::submit_buffer(char* data, std::size_t size)
 {
     buffer* buf = buffer::data_to_buffer(data);
@@ -122,6 +128,7 @@ void xtr::io_uring_fd_storage::submit_buffer(char* data, std::size_t size)
         ::io_uring_submit(&ring_);
 }
 
+XTR_FUNC
 void xtr::io_uring_fd_storage::replace_fd(int newfd) noexcept
 {
     // As write events might be in-flight, closing the file descriptor must
@@ -136,6 +143,7 @@ void xtr::io_uring_fd_storage::replace_fd(int newfd) noexcept
     fd_.reset(newfd);
 }
 
+XTR_FUNC
 void xtr::io_uring_fd_storage::allocate_buffers(std::size_t queue_size)
 {
     assert(queue_size > 0);
@@ -166,6 +174,7 @@ void xtr::io_uring_fd_storage::allocate_buffers(std::size_t queue_size)
     ::io_uring_register_buffers(&ring_, &iov[0], unsigned(iov.size()));
 }
 
+XTR_FUNC
 io_uring_sqe* xtr::io_uring_fd_storage::get_sqe()
 {
     io_uring_sqe* sqe;
@@ -183,6 +192,7 @@ io_uring_sqe* xtr::io_uring_fd_storage::get_sqe()
     return sqe;
 }
 
+XTR_FUNC
 void xtr::io_uring_fd_storage::wait_for_one_cqe()
 {
     assert(pending_cqe_count_ > 0);
@@ -267,6 +277,7 @@ retry:
     }
 }
 
+XTR_FUNC
 void xtr::io_uring_fd_storage::resubmit_buffer(buffer* buf, unsigned nwritten)
 {
     buf->size_ -= nwritten;
@@ -297,6 +308,7 @@ void xtr::io_uring_fd_storage::resubmit_buffer(buffer* buf, unsigned nwritten)
     ::io_uring_submit(&ring_);
 }
 
+XTR_FUNC
 void xtr::io_uring_fd_storage::free_buffer(buffer* buf)
 {
     // Push the buffer to the front of free_list_

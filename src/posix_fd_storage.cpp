@@ -26,6 +26,7 @@
 #include <memory>
 #include <utility>
 
+XTR_FUNC
 xtr::posix_fd_storage::posix_fd_storage(
     int fd,
     std::string reopen_path,
@@ -37,11 +38,13 @@ xtr::posix_fd_storage::posix_fd_storage(
 {
 }
 
+XTR_FUNC
 std::span<char> xtr::posix_fd_storage::allocate_buffer()
 {
     return {buf_.get(), buffer_capacity_};
 }
 
+XTR_FUNC
 void xtr::posix_fd_storage::submit_buffer(char* buf, std::size_t size)
 {
     while (size > 0)
