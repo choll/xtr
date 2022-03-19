@@ -36,8 +36,6 @@ class xtr::detail::fd_storage_base : public storage_interface
 public:
     fd_storage_base(int fd, std::string reopen_path);
 
-    ~fd_storage_base();
-
     void sync() noexcept override;
 
     int reopen() noexcept override;
