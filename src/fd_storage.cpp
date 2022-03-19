@@ -25,23 +25,49 @@
 #endif
 #include "xtr/io/posix_fd_storage.hpp"
 
+#include "xtr/detail/retry.hpp"
+#include "xtr/detail/throw.hpp"
+
 #include <cerrno>
 #include <memory>
+#include <utility>
 
+#include <fcntl.h>
 #include <unistd.h>
 #include <sys/syscall.h>
 
-xtr::storage_interface_ptr xtr::make_fd_storage(
-    int outfd,
-    std::string reopen_path)
+XTR_FUNC
+xtr::storage_interface_ptr xtr::make_fd_storage(const char* path)
+{
+    const int fd =
+        XTR_TEMP_FAILURE_RETRY(
+            ::open(
+                path,
+                O_CREAT|O_APPEND|O_WRONLY,
+                S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH));
+
+    if (fd == -1)
+        detail::throw_system_error_fmt(errno, "Failed to open `%s'", path);
+
+    return make_fd_storage(fd, path);
+}
+
+XTR_FUNC
+xtr::storage_interface_ptr xtr::make_fd_storage(FILE* fp, std::string reopen_path)
+{
+    return make_fd_storage(::dup(::fileno(fp)), std::move(reopen_path));
+}
+
+XTR_FUNC
+xtr::storage_interface_ptr xtr::make_fd_storage(int fd, std::string reopen_path)
 {
 #if XTR_USE_IO_URING
     errno = 0;
     (void)syscall(__NR_io_uring_setup, 0, nullptr);
 
     if (errno != ENOSYS)
-        return std::make_unique<io_uring_fd_storage>(outfd, std::move(reopen_path));
+        return std::make_unique<io_uring_fd_storage>(fd, std::move(reopen_path));
     else
 #endif
-        return std::make_unique<posix_fd_storage>(outfd, std::move(reopen_path));
+        return std::make_unique<posix_fd_storage>(fd, std::move(reopen_path));
 }

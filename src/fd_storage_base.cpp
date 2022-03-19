@@ -26,6 +26,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+XTR_FUNC
 xtr::detail::fd_storage_base::fd_storage_base(int fd, std::string reopen_path)
 :
     reopen_path_(std::move(reopen_path)),
@@ -33,17 +34,20 @@ xtr::detail::fd_storage_base::fd_storage_base(int fd, std::string reopen_path)
 {
 }
 
+XTR_FUNC
 xtr::detail::fd_storage_base::~fd_storage_base()
 {
     if (reopen_path_ == null_reopen_path)
         fd_.release();
 }
 
+XTR_FUNC
 void xtr::detail::fd_storage_base::sync() noexcept
 {
     ::fsync(fd_.get());
 }
 
+XTR_FUNC
 int xtr::detail::fd_storage_base::reopen() noexcept
 {
     if (reopen_path_ == null_reopen_path)
@@ -64,6 +68,7 @@ int xtr::detail::fd_storage_base::reopen() noexcept
     return 0;
 }
 
+XTR_FUNC
 void xtr::detail::fd_storage_base::replace_fd(int newfd) noexcept
 {
     fd_.reset(newfd);

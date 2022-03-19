@@ -28,8 +28,14 @@
 
 namespace xtr
 {
+    storage_interface_ptr make_fd_storage(const char* path);
+
     storage_interface_ptr make_fd_storage(
-        int outfd,
+        FILE* fp,
+        std::string reopen_path = null_reopen_path);
+
+    storage_interface_ptr make_fd_storage(
+        int fd,
         std::string reopen_path = null_reopen_path);
 }
 

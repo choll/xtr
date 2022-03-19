@@ -26,12 +26,10 @@
 #include "io/storage_interface.hpp"
 #include "detail/consumer.hpp"
 #include "detail/string_ref.hpp"
-#include "detail/throw.hpp"
 #include "log_macros.hpp"
 #include "log_level.hpp"
 #include "sink.hpp"
 
-#include <cerrno>
 #include <chrono>
 #include <cstdio>
 #include <ctime>
@@ -42,7 +40,7 @@
 #include <type_traits>
 #include <utility>
 
-#include <stdio.h> // XXX fileno, which is a bug because you should call fclose! need to dup the fd, then close the FILE, if taking ownership (filename passed)
+#include <stdio.h>
 
 namespace xtr
 {
@@ -65,17 +63,6 @@ namespace xtr
     inline auto nocopy(const T& arg)
     {
         return detail::string_ref(arg);
-    }
-}
-
-namespace xtr::detail
-{
-    inline FILE* open_path(const char* path)
-    {
-        FILE* const fp = std::fopen(path, "a");
-        if (fp == nullptr)
-            detail::throw_system_error_fmt(errno, "Failed to open `%s'", path);
-        return fp;
     }
 }
 
@@ -146,8 +133,7 @@ public:
         log_level_style_t level_style = default_log_level_style)
     :
         logger(
-            path,
-            detail::open_path(path),
+            make_fd_storage(path),
             std::forward<Clock>(clock),
             std::move(command_path),
             level_style)
@@ -190,8 +176,7 @@ public:
         log_level_style_t level_style = default_log_level_style)
     :
         logger(
-            null_reopen_path,
-            stream,
+            make_fd_storage(stream, null_reopen_path),
             std::forward<Clock>(clock),
             std::move(command_path),
             level_style)
@@ -231,8 +216,7 @@ public:
         log_level_style_t level_style = default_log_level_style)
     :
         logger(
-            make_fd_storage(
-                ::fileno(stream), std::move(reopen_path)),
+            make_fd_storage(stream, std::move(reopen_path)),
             std::forward<Clock>(clock),
             std::move(command_path),
             level_style)
