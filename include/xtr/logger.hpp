@@ -152,9 +152,6 @@ public:
      * <a href="xtrctl.html#reopening-log-files">reopening log files</a> command
      * for details.
      *
-     * @note The logger will not take ownership of the stream\---i.e. it will
-     *       not be closed when the logger destructs.
-     *
      * @note Reopening the log file via the
      *       <a href="xtrctl.html#rotating-log-files">xtrctl</a> tool is *not*
      *       supported if this constructor is used.
@@ -187,9 +184,6 @@ public:
      * @anchor stream-with-reopen
      *
      * Stream constructor with reopen path.
-     *
-     * @note The logger will take ownership of
-     *       the stream, closing it when the logger destructs.
      *
      * @note Reopening the log file via the
      *       <a href="xtrctl.html#rotating-log-files">xtrctl</a> tool is supported,
