@@ -62,4 +62,3 @@ void xtr::posix_fd_storage::submit_buffer(char* buf, std::size_t size)
         buf += std::size_t(nwritten);
     }
 }
-
