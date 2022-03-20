@@ -47,7 +47,9 @@ xtr::storage_interface_ptr xtr::make_fd_storage(const char* path)
     if (fd == -1)
     {
         detail::throw_system_error_fmt(
-            errno, "xtr::make_fd_storage: Failed to open `%s'", path);
+            errno,
+            "xtr::make_fd_storage: Failed to open `%s'",
+            path);
     }
 
     return make_fd_storage(fd, path);
@@ -69,7 +71,9 @@ xtr::storage_interface_ptr xtr::make_fd_storage(int fd, std::string reopen_path)
     if ((fd = ::dup(fd)) == -1)
     {
         detail::throw_system_error_fmt(
-            errno, "xtr::make_fd_storage: dup(2) failed", path);
+            errno,
+            "xtr::make_fd_storage: dup(2) failed",
+            path);
     }
 
 #if XTR_USE_IO_URING
