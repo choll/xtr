@@ -20,6 +20,7 @@
 
 #include "xtr/io/detail/fd_storage_base.hpp"
 #include "xtr/detail/retry.hpp"
+#include "xtr/detail/throw.hpp"
 
 #include <utility>
 
@@ -30,8 +31,18 @@ XTR_FUNC
 xtr::detail::fd_storage_base::fd_storage_base(int fd, std::string reopen_path)
 :
     reopen_path_(std::move(reopen_path)),
-    fd_(fd)
+    // The input file descriptor is duplicated so that there is no ambiguity
+    // regarding ownership of the fd---we effectively increment a reference
+    // count that we are responsible for decrementing later, and the user
+    // remains responsible for decrementing their own reference count.
+    fd_(::dup(fd))
 {
+    if (!fd_)
+    {
+        detail::throw_system_error_fmt(
+            errno,
+            "xtr::detail::fd_storage_base::fd_storage_base: dup(2) failed");
+    }
 }
 
 XTR_FUNC

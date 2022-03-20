@@ -59,13 +59,6 @@ xtr::storage_interface_ptr xtr::make_fd_storage(FILE* fp, std::string reopen_pat
 XTR_FUNC
 xtr::storage_interface_ptr xtr::make_fd_storage(int fd, std::string reopen_path)
 {
-    // The input file descriptor is duplicated so that there is no ambiguity
-    // regarding ownership of the fd---we effectively increment a reference
-    // count that we are responsible for decrementing later, and the user
-    // remains responsible for decrementing their own reference count.
-    if ((fd = ::dup(fd)) == -1)
-        detail::throw_system_error_fmt(errno, "xtr::make_fd_storage: dup(2) failed");
-
 #if XTR_USE_IO_URING
     errno = 0;
     (void)syscall(__NR_io_uring_setup, 0, nullptr);
