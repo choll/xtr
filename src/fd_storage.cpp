@@ -45,12 +45,7 @@ xtr::storage_interface_ptr xtr::make_fd_storage(const char* path)
                 S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH));
 
     if (fd == -1)
-    {
-        detail::throw_system_error_fmt(
-            errno,
-            "xtr::make_fd_storage: Failed to open `%s'",
-            path);
-    }
+        detail::throw_system_error_fmt(errno, "Failed to open `%s'", path);
 
     return make_fd_storage(fd, path);
 }
@@ -69,12 +64,7 @@ xtr::storage_interface_ptr xtr::make_fd_storage(int fd, std::string reopen_path)
     // count that we are responsible for decrementing later, and the user
     // remains responsible for decrementing their own reference count.
     if ((fd = ::dup(fd)) == -1)
-    {
-        detail::throw_system_error_fmt(
-            errno,
-            "xtr::make_fd_storage: dup(2) failed",
-            path);
-    }
+        detail::throw_system_error_fmt(errno, "xtr::make_fd_storage: dup(2) failed");
 
 #if XTR_USE_IO_URING
     errno = 0;
