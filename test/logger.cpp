@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#include "xtr/config.hpp"
 #include "xtr/logger.hpp"
 #include "xtr/formatters.hpp"
 
@@ -28,6 +29,8 @@
 #include "xtr/detail/config.hpp"
 #include "xtr/detail/file_descriptor.hpp"
 #include "xtr/io/fd_storage.hpp"
+#include "xtr/io/io_uring_fd_storage.hpp"
+#include "xtr/io/posix_fd_storage.hpp"
 #include "xtr/io/storage_interface.hpp"
 
 #include "command_client.hpp"
@@ -261,8 +264,15 @@ private:
 
     struct file_fixture_base
     {
+        ~file_fixture_base()
+        {
+            outbuf_.fd_.release(); // fclose will close the fd
+            std::fclose(fp_);
+        }
+
     protected:
         file_buf outbuf_;
+        FILE* fp_ = ::fdopen(outbuf_.fd_.get(), "w");
     };
 
     struct file_fixture : file_fixture_base, fixture
@@ -270,7 +280,26 @@ private:
         file_fixture()
         :
             fixture(
-                xtr::make_fd_storage(outbuf_.fd_.get()),
+                fp_,
+                test_clock{&clock_nanos_},
+                xtr::null_command_path)
+        {
+        }
+
+        void sync() override
+        {
+            fixture::sync();
+            outbuf_.push_lines(lines_);
+        }
+    };
+
+    template<typename StorageType>
+    struct template_file_fixture : file_fixture_base, fixture
+    {
+        template_file_fixture()
+        :
+            fixture(
+                std::make_unique<StorageType>(outbuf_.fd_.get()),
                 test_clock{&clock_nanos_},
                 xtr::null_command_path)
         {
@@ -285,8 +314,13 @@ private:
 
     struct path_fixture
     {
+        ~path_fixture()
+        {
+            std::fclose(fp_);
+        }
+
         temp_file tmp_;
-        FILE* fp_ = ::fdopen(tmp_.fd_.release(), "w");
+        FILE* fp_ = ::fdopen(tmp_.fd_.release(), "w"); // fclose will close the fd
         std::atomic<std::int64_t> clock_nanos_{946688523123456789L};
         xtr::logger log_{
             tmp_.path_.c_str(),
@@ -518,22 +552,33 @@ TEST_CASE_METHOD(fixture, "logger mixed types test", "[logger]")
     REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42.0 42 42.0 42", line_));
 }
 
-TEST_CASE_METHOD(file_fixture, "logger file test", "[logger]")
-{
-    XTR_LOG(s_, "Test"), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
+#if XTR_USE_IO_URING
+#define FD_STORAGE_TYPES xtr::io_uring_fd_storage, xtr::posix_fd_storage
+#else
+#define FD_STORAGE_TYPES xtr::posix_fd_storage
+#endif
 
-    XTR_LOG(s_, "Test {}", 42), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42", line_));
+TEMPLATE_TEST_CASE_METHOD(
+    template_file_fixture,
+    "logger file test", "[logger][template]",
+    FD_STORAGE_TYPES)
+{
+    XTR_LOG(this->s_, "Test"), this->line_ = __LINE__;
+    REQUIRE(this->last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", this->line_));
+
+    XTR_LOG(this->s_, "Test {}", 42), this->line_ = __LINE__;
+    REQUIRE(this->last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42", this->line_));
 
     const char*s = "Hello world";
-    XTR_LOG(s_, "Test {}", s), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test Hello world", line_));
+    XTR_LOG(this->s_, "Test {}", s), this->line_ = __LINE__;
+    REQUIRE(this->last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test Hello world", this->line_));
 
     const std::string_view sv{"Hello world"};
-    XTR_LOG(s_, "Test {}", sv), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test Hello world", line_));
+    XTR_LOG(this->s_, "Test {}", sv), this->line_ = __LINE__;
+    REQUIRE(this->last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test Hello world", this->line_));
 }
+
+#undef FD_STORAGE_TYPES
 
 TEST_CASE_METHOD(fixture, "logger string copy test", "[logger]")
 {
@@ -1140,7 +1185,17 @@ TEST_CASE_METHOD(fixture, "logger non-blocking drop test", "[logger]")
 // Calling these tests `soak' tests is stretching things but I can't think
 // of a better name.
 
-TEMPLATE_TEST_CASE("logger soak test", "[logger]", fixture, file_fixture)
+#if XTR_USE_IO_URING
+#define SOAK_TEST_FIXTURES \
+    fixture, \
+    template_file_fixture<xtr::io_uring_fd_storage>, \
+    template_file_fixture<xtr::posix_fd_storage>
+#else
+#define SOAK_TEST_FIXTURES \
+    fixture, template_file_fixture<xtr::posix_fd_storage>
+#endif
+
+TEMPLATE_TEST_CASE("logger soak test", "[logger]", SOAK_TEST_FIXTURES)
 {
     constexpr std::size_t n = 100000;
 
@@ -1162,7 +1217,7 @@ TEMPLATE_TEST_CASE("logger soak test", "[logger]", fixture, file_fixture)
     }
 }
 
-TEMPLATE_TEST_CASE("logger multiple sink soak test", "[logger]", fixture, file_fixture)
+TEMPLATE_TEST_CASE("logger multiple sink soak test", "[logger]", SOAK_TEST_FIXTURES)
 {
     constexpr std::size_t n = 100000;
     constexpr std::size_t n_sinks = 1024;
@@ -1193,6 +1248,8 @@ TEMPLATE_TEST_CASE("logger multiple sink soak test", "[logger]", fixture, file_f
     for (std::size_t i = 0; i < n; ++i)
         REQUIRE(f.lines_[i] == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", f.line_));
 }
+
+#undef SOAK_TEST_FIXTURES
 
 TEST_CASE_METHOD(fixture, "logger string soak test", "[logger]")
 {

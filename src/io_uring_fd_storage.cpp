@@ -140,7 +140,7 @@ void xtr::io_uring_fd_storage::replace_fd(int newfd) noexcept
     ++pending_cqe_count_;
     ::io_uring_submit(&ring_);
 
-    fd_.reset(newfd);
+    fd_storage_base::replace_fd(newfd);
 }
 
 XTR_FUNC
