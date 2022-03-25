@@ -3696,14 +3696,14 @@ inline void xtr::detail::file_descriptor::reset(int fd) noexcept
     fd_ = fd;
 }
 
-#include <liburing.h>
-
 #include <cassert>
 #include <cstdio>
 #include <cstring>
 #include <limits>
 
 #if XTR_USE_IO_URING // For single-include compatibility
+#include <liburing.h>
+
 inline xtr::io_uring_fd_storage::io_uring_fd_storage(
     int fd,
     std::string reopen_path,
