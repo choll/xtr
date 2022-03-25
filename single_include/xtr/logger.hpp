@@ -1019,15 +1019,15 @@ namespace xtr
 
 struct xtr::storage_interface
 {
-    virtual void sync() noexcept = 0;
-
-    virtual void flush() = 0;
-
-    virtual int reopen() noexcept = 0;
-
     virtual std::span<char> allocate_buffer() = 0;
 
     virtual void submit_buffer(char* buf, std::size_t size) = 0;
+
+    virtual void flush() = 0;
+
+    virtual void sync() noexcept = 0;
+
+    virtual int reopen() noexcept = 0;
 
     virtual ~storage_interface() = default;
 };
@@ -2615,8 +2615,6 @@ private:
     std::size_t buffer_capacity_;
 };
 
-#if XTR_USE_IO_URING // For single-include compatibility
-
 #include <liburing.h>
 
 #include <cstddef>
@@ -2625,6 +2623,7 @@ private:
 #include <string>
 #include <vector>
 
+#if XTR_USE_IO_URING // For single-include compatibility
 namespace xtr
 {
     class io_uring_fd_storage;
@@ -2828,7 +2827,7 @@ public:
      * It is expected that this constructor will be used with streams such as
      * stdout or stderr. If a stream that has been opened by the user is to
      * be passed to the logger then the
-     * @ref stream-with-reopen "stream constructor with reopen path"
+     * @ref stream-with-reopen-ctor "stream constructor with reopen path"
      * constructor is recommended instead, as this will mean that the log file
      * can be rotated\---please refer to the xtrctl documentation for the
      * <a href="xtrctl.html#reopening-log-files">reopening log files</a> command
@@ -2862,7 +2861,7 @@ public:
     }
 
     /**
-     * @anchor stream-with-reopen
+     * @anchor stream-with-reopen-ctor
      *
      * Stream constructor with reopen path.
      *
@@ -2898,6 +2897,8 @@ public:
     }
 
     /**
+     * @anchor back-end-ctor
+     *
      * Custom back-end constructor (please refer to the
      * <a href="guide.html#custom-back-ends">custom back-ends</a> section of
      * the user guide for further details on implementing a custom back-end).
@@ -3580,8 +3581,14 @@ inline void xtr::detail::consumer::reopen_handler(
 inline xtr::detail::fd_storage_base::fd_storage_base(
     int fd, std::string reopen_path) :
     reopen_path_(std::move(reopen_path)),
-    fd_(fd)
+    fd_(::dup(fd))
 {
+    if (!fd_)
+    {
+        detail::throw_system_error_fmt(
+            errno,
+            "xtr::detail::fd_storage_base::fd_storage_base: dup(2) failed");
+    }
 }
 
 inline void xtr::detail::fd_storage_base::sync() noexcept
@@ -3628,12 +3635,7 @@ inline xtr::storage_interface_ptr xtr::make_fd_storage(const char* path)
         S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH));
 
     if (fd == -1)
-    {
-        detail::throw_system_error_fmt(
-            errno,
-            "xtr::make_fd_storage: Failed to open `%s'",
-            path);
-    }
+        detail::throw_system_error_fmt(errno, "Failed to open `%s'", path);
 
     return make_fd_storage(fd, path);
 }
@@ -3647,14 +3649,6 @@ inline xtr::storage_interface_ptr xtr::make_fd_storage(
 inline xtr::storage_interface_ptr xtr::make_fd_storage(
     int fd, std::string reopen_path)
 {
-    if ((fd = ::dup(fd)) == -1)
-    {
-        detail::throw_system_error_fmt(
-            errno,
-            "xtr::make_fd_storage: dup(2) failed",
-            path);
-    }
-
 #if XTR_USE_IO_URING
     errno = 0;
     (void)syscall(__NR_io_uring_setup, 0, nullptr);
@@ -3702,8 +3696,6 @@ inline void xtr::detail::file_descriptor::reset(int fd) noexcept
     fd_ = fd;
 }
 
-#if XTR_USE_IO_URING // For single-include compatibility
-
 #include <liburing.h>
 
 #include <cassert>
@@ -3711,6 +3703,7 @@ inline void xtr::detail::file_descriptor::reset(int fd) noexcept
 #include <cstring>
 #include <limits>
 
+#if XTR_USE_IO_URING // For single-include compatibility
 inline xtr::io_uring_fd_storage::io_uring_fd_storage(
     int fd,
     std::string reopen_path,
@@ -3813,7 +3806,7 @@ inline void xtr::io_uring_fd_storage::replace_fd(int newfd) noexcept
     ++pending_cqe_count_;
     ::io_uring_submit(&ring_);
 
-    fd_.reset(newfd);
+    fd_storage_base::replace_fd(newfd);
 }
 
 inline void xtr::io_uring_fd_storage::allocate_buffers(std::size_t queue_size)
