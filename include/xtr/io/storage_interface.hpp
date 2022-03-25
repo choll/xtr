@@ -37,15 +37,15 @@ namespace xtr
 
 struct xtr::storage_interface
 {
-    virtual void sync() noexcept = 0;
-
-    virtual void flush() = 0;
-
-    virtual int reopen() noexcept = 0;
-
     virtual std::span<char> allocate_buffer() = 0;
 
     virtual void submit_buffer(char* buf, std::size_t size) = 0;
+
+    virtual void flush() = 0;
+
+    virtual void sync() noexcept = 0;
+
+    virtual int reopen() noexcept = 0;
 
     virtual ~storage_interface() = default;
 };

@@ -146,7 +146,7 @@ public:
      * It is expected that this constructor will be used with streams such as
      * stdout or stderr. If a stream that has been opened by the user is to
      * be passed to the logger then the
-     * @ref stream-with-reopen "stream constructor with reopen path"
+     * @ref stream-with-reopen-ctor "stream constructor with reopen path"
      * constructor is recommended instead, as this will mean that the log file
      * can be rotated\---please refer to the xtrctl documentation for the
      * <a href="xtrctl.html#reopening-log-files">reopening log files</a> command
@@ -181,7 +181,7 @@ public:
     }
 
     /**
-     * @anchor stream-with-reopen
+     * @anchor stream-with-reopen-ctor
      *
      * Stream constructor with reopen path.
      *
@@ -218,6 +218,8 @@ public:
     }
 
     /**
+     * @anchor back-end-ctor
+     *
      * Custom back-end constructor (please refer to the
      * <a href="guide.html#custom-back-ends">custom back-ends</a> section of
      * the user guide for further details on implementing a custom back-end).
