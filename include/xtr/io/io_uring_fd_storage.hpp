@@ -21,6 +21,7 @@
 #ifndef XTR_IO_IO_URING_FD_STORAGE_HPP
 #define XTR_IO_IO_URING_FD_STORAGE_HPP
 
+#if XTR_USE_IO_URING // For single-include compatibility
 #include "detail/fd_storage_base.hpp"
 #include "xtr/config.hpp"
 #include "xtr/detail/align.hpp"
@@ -33,7 +34,6 @@
 #include <string>
 #include <vector>
 
-#if XTR_USE_IO_URING // For single-include compatibility
 namespace xtr
 {
     class io_uring_fd_storage;
