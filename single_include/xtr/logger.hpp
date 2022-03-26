@@ -2615,6 +2615,8 @@ private:
     std::size_t buffer_capacity_;
 };
 
+#if XTR_USE_IO_URING // For single-include compatibility
+
 #include <liburing.h>
 
 #include <cstddef>
@@ -2623,7 +2625,6 @@ private:
 #include <string>
 #include <vector>
 
-#if XTR_USE_IO_URING // For single-include compatibility
 namespace xtr
 {
     class io_uring_fd_storage;
@@ -3696,13 +3697,14 @@ inline void xtr::detail::file_descriptor::reset(int fd) noexcept
     fd_ = fd;
 }
 
+#if XTR_USE_IO_URING // For single-include compatibility
+
+#include <liburing.h>
+
 #include <cassert>
 #include <cstdio>
 #include <cstring>
 #include <limits>
-
-#if XTR_USE_IO_URING // For single-include compatibility
-#include <liburing.h>
 
 inline xtr::io_uring_fd_storage::io_uring_fd_storage(
     int fd,
