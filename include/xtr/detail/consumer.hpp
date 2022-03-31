@@ -21,7 +21,7 @@
 #ifndef XTR_DETAIL_CONSUMER_HPP
 #define XTR_DETAIL_CONSUMER_HPP
 
-#include "xtr/log_level.hpp"
+#include "buffer.hpp"
 #include "commands/command_dispatcher_fwd.hpp"
 #include "commands/requests_fwd.hpp"
 
@@ -63,43 +63,17 @@ public:
     void run(std::function<std::timespec()>&& clock) noexcept;
     void set_command_path(std::string path) noexcept;
 
-    template<
-        typename OutputFunction,
-        typename ErrorFunction,
-        typename FlushFunction,
-        typename SyncFunction,
-        typename ReopenFunction,
-        typename CloseFunction>
-    consumer(
-        OutputFunction&& of,
-        ErrorFunction&& ef,
-        FlushFunction&& ff,
-        SyncFunction&& sf,
-        ReopenFunction&& rf,
-        CloseFunction&& cf,
-        log_level_style_t ls,
-        sink* control)
+    consumer(buffer&& bf, sink* control, std::string command_path)
     :
-        out(std::forward<OutputFunction>(of)),
-        err(std::forward<ErrorFunction>(ef)),
-        flush(std::forward<FlushFunction>(ff)),
-        sync(std::forward<SyncFunction>(sf)),
-        reopen(std::forward<ReopenFunction>(rf)),
-        close(std::forward<CloseFunction>(cf)),
-        lstyle(ls),
+        buf(std::move(bf)),
         sinks_({{control, "control", 0}})
     {
+        set_command_path(std::move(command_path));
     }
 
     void add_sink(sink& s, const std::string& name);
 
-    std::function<::ssize_t(log_level_t level, const char* buf, std::size_t size)> out;
-    std::function<void(const char* buf, std::size_t size)> err;
-    std::function<void()> flush;
-    std::function<void()> sync;
-    std::function<bool()> reopen;
-    std::function<void()> close;
-    log_level_style_t lstyle;
+    buffer buf;
     bool destroy = false;
 
 private:

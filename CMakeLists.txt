@@ -11,12 +11,14 @@ option(ENABLE_LTO "Enable link-time optimisation" ON)
 
 find_package(Threads REQUIRED)
 find_package(fmt REQUIRED)
+find_package(liburing)
 
 file(GLOB_RECURSE HEADER_FILES include/*.hpp)
 
 add_library(${PROJECT_NAME} src/command_dispatcher.cpp
                             src/command_path.cpp
                             src/consumer.cpp
+                            src/fd_storage.cpp
                             src/file_descriptor.cpp
                             src/logger.cpp
                             src/log_level.cpp
@@ -29,7 +31,7 @@ add_library(${PROJECT_NAME} src/command_dispatcher.cpp
                             src/throw.cpp
                             src/tsc.cpp
                             src/wildcard_matcher.cpp)
-target_link_libraries(${PROJECT_NAME} fmt::fmt Threads::Threads)
+target_link_libraries(${PROJECT_NAME} fmt::fmt Threads::Threads liburing::liburing)
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
 set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "${HEADER_FILES}")
 target_include_directories(${PROJECT_NAME} PUBLIC include)

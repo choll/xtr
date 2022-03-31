@@ -6,7 +6,7 @@ import os
 
 class XtrConan(ConanFile):
     requires = "fmt/[>=6.0.0 < 8.0.0 || > 8.0.0]"
-    build_requires = "benchmark/1.5.0", "catch2/2.13.0"
+    build_requires = "benchmark/1.6.0", "catch2/2.13.8"
     name = "xtr"
     license = "MIT"
     author = "Chris Holloway (c.holloway@gmail.com)"
@@ -43,6 +43,12 @@ class XtrConan(ConanFile):
             raise ConanInvalidConfiguration(
                 "%s requires %s version %d or later"
                 % (self.name, compiler, minimum_version[compiler]))
+
+    def requirements(self):
+        # Require liburing on any Linux system as a run-time check will be
+        # done to detect if the host kernel supports io_uring.
+        if self.settings.os == "Linux":
+            self.requires("liburing/2.1")
 
     def build(self):
         autotools = AutoToolsBuildEnvironment(self)

@@ -1,4 +1,4 @@
-// Copyright 2021 Chris E. Holloway
+// Copyright 2022 Chris E. Holloway
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,19 +18,57 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "command_client.hpp"
-#include "xtr/detail/commands/connect.hpp"
-#include "xtr/detail/throw.hpp"
+#ifndef XTR_DETAIL_BUFFER_HPP
+#define XTR_DETAIL_BUFFER_HPP
 
-void xtr::detail::command_client::connect(const std::string& path)
+#include "xtr/io/storage_interface.hpp"
+#include "xtr/log_level.hpp"
+
+#include <fmt/core.h>
+
+#include <algorithm>
+#include <cstddef>
+#include <cstring>
+#include <iterator>
+
+namespace xtr::detail
 {
-    fd_ = command_connect(path);
-    if (!fd_)
-        throw_system_error_fmt(errno, "Failed to connect to `%s'", path.c_str());
-    cmd_path_ = path;
+    class buffer;
 }
 
-void xtr::detail::command_client::reconnect()
+class xtr::detail::buffer
 {
-    connect(cmd_path_);
-}
+public:
+    using value_type = char;
+
+    explicit buffer(storage_interface_ptr storage, log_level_style_t ls);
+
+    buffer(buffer&&) = default;
+
+    ~buffer();
+
+    template<typename InputIterator>
+    void append(InputIterator first, InputIterator last);
+
+    void flush() noexcept;
+
+    storage_interface& storage() noexcept
+    {
+        return *storage_;
+    }
+
+    void append_line();
+
+    std::string line;
+    log_level_style_t lstyle;
+
+private:
+    void next_buffer();
+
+    storage_interface_ptr storage_;
+    char* pos_ = nullptr;
+    char* begin_ = nullptr;
+    char* end_ = nullptr;
+};
+
+#endif

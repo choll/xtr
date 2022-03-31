@@ -27,6 +27,7 @@
 #include "xtr/detail/file_descriptor.hpp"
 #include "xtr/detail/throw.hpp"
 
+#include <cerrno>
 #include <string>
 #include <vector>
 
@@ -45,7 +46,7 @@ namespace xtr::detail
         {
             const ::ssize_t nwritten = command_send(fd_.get(), &frame, sizeof(frame));
             if (nwritten != sizeof(frame))
-                throw_system_error_fmt("Error writing to socket");
+                throw_system_error(errno, "Error writing to socket");
         }
 
         template<typename Reply>
@@ -67,7 +68,7 @@ namespace xtr::detail
             }
 
             if (nread < 0)
-                throw_system_error_fmt("Error reading from socket");
+                throw_system_error(errno, "Error reading from socket");
 
             if (nread != 0)
             {

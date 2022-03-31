@@ -62,7 +62,7 @@ void xtr::sink::close()
 {
     if (open_)
     {
-        sync(/*destroy=*/true);
+        sync_post([](detail::consumer& c) { c.destroy = true; });
         open_ = false;
         // clear() is called here in case the sink is registered with the
         // logger again, e.g. via assignment. This is because when the
@@ -82,19 +82,27 @@ bool xtr::sink::is_open() const noexcept
 }
 
 XTR_FUNC
-void xtr::sink::sync(bool destroy)
+void xtr::sink::sync()
+{
+    sync_post(
+        [](detail::consumer& c)
+        {
+            c.buf.flush();
+            c.buf.storage().sync();
+        });
+}
+
+template<typename Func>
+void xtr::sink::sync_post(Func&& func)
 {
     std::condition_variable cv;
     std::mutex m;
     bool notified = false; // protected by m
 
     post(
-        [&cv, &m, &notified, destroy](detail::consumer& c, auto&)
+        [&cv, &m, &notified, &func](detail::consumer& c, auto&)
         {
-            c.destroy = destroy;
-
-            c.flush();
-            c.sync();
+            func(c);
 
             std::scoped_lock lock{m};
             notified = true;
@@ -136,7 +144,6 @@ void xtr::sink::set_name(std::string name)
         {
             oldname = std::move(name);
         });
-    sync();
 }
 
 XTR_FUNC

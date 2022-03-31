@@ -24,13 +24,12 @@
 #include "config.hpp"
 #include "detail/align.hpp"
 #include "detail/is_c_string.hpp"
+#include "detail/buffer.hpp"
 #include "detail/print.hpp"
 #include "detail/string_table.hpp"
 #include "detail/synchronized_ring_buffer.hpp"
 #include "detail/trampolines.hpp"
 #include "log_level.hpp"
-
-#include <fmt/format.h>
 
 #include <atomic>
 #include <cassert>
@@ -86,8 +85,8 @@ private:
     // trampoline0, trampolineN or trampolineS (see detail/trampolines.hpp)
     using fptr_t =
         std::byte* (*)(
-            fmt::memory_buffer& mbuf,
-            std::byte* buf, // pointer to log record
+            detail::buffer& buf, // output buffer
+            std::byte* record, // pointer to log record
             detail::consumer&,
             const char* timestamp,
             std::string& name) noexcept;
@@ -133,19 +132,16 @@ public:
     bool is_open() const noexcept;
 
     /**
-     *  Synchronizes all log calls previously made by this sink to back-end
-     *  storage.
+     *  Synchronizes all log calls previously made by this sink with the
+     *  background thread and syncs all data to back-end storage.
      *
-     *  @post All entries in the sink's queue have been delivered to the
-     *        back-end, and the flush() and sync() functions associated
-     *        with the back-end have been called. For the default (disk)
-     *        back-end this means fflush(3) and fsync(2) (if available)
-     *        have been called.
+     *  @post All entries in the sink's queue have been processed by the
+     *        background thread, buffers have been flushed and the sync()
+     *        function on the storage interface has been called. For the
+     *        default (disk) storage this means fsync(2) (if available) has
+     *        been called.
      */
-    void sync()
-    {
-        sync(/*destroy=*/false);
-    }
+    void sync();
 
     /**
      *  Sets the sink's name to the specified value.
@@ -213,11 +209,12 @@ private:
     void post_with_str_table(Args&&... args)
         noexcept((XTR_NOTHROW_INGESTIBLE(Args, args) && ...));
 
+    template<typename Func>
+    void sync_post(Func&& func);
+
     template<typename Tags, typename... Args>
     auto make_lambda(Args&&... args)
         noexcept((XTR_NOTHROW_INGESTIBLE(Args, args) && ...));
-
-    void sync(bool destroy);
 
     using ring_buffer = detail::synchronized_ring_buffer<XTR_SINK_CAPACITY>;
 
@@ -331,7 +328,7 @@ void xtr::sink::copy(std::byte* pos, T&& value)
     // This can be removed when libc++ supports assume_aligned
     pos = static_cast<std::byte*>(__builtin_assume_aligned(pos, alignof(T)));
 #endif
-    new (pos) std::remove_reference_t<T>(std::forward<T>(value));
+    ::new (pos) std::remove_reference_t<T>(std::forward<T>(value));
 }
 
 template<auto Format, auto Level, typename Tags, typename Func>
@@ -374,11 +371,8 @@ auto xtr::sink::make_lambda(Args&&... args)
     // if the lambda is not mutable.
     return
         [... args = std::forward<Args>(args)](
-            fmt::memory_buffer& mbuf,
-            std::byte*& buf,
-            const auto& out,
-            const auto& err,
-            log_level_style_t lstyle,
+            detail::buffer& buf,
+            std::byte*& record,
             std::string_view fmt,
             log_level_t level,
             [[maybe_unused]] const char* ts,
@@ -390,27 +384,21 @@ auto xtr::sink::make_lambda(Args&&... args)
             if constexpr (detail::is_timestamp_v<Tags>)
             {
                 detail::print_ts(
-                    mbuf,
-                    out,
-                    err,
-                    lstyle,
+                    buf,
                     fmt,
                     level,
                     name,
-                    detail::transform_string_table_entry(buf, args)...);
+                    detail::transform_string_table_entry(record, args)...);
             }
             else
             {
                 detail::print(
-                    mbuf,
-                    out,
-                    err,
-                    lstyle,
+                    buf,
                     fmt,
                     level,
                     ts,
                     name,
-                    detail::transform_string_table_entry(buf, args)...);
+                    detail::transform_string_table_entry(record, args)...);
             }
         };
 }

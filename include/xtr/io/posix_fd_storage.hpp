@@ -1,4 +1,4 @@
-// Copyright 2021 Chris E. Holloway
+// Copyright 2022 Chris E. Holloway
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,19 +18,40 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "command_client.hpp"
-#include "xtr/detail/commands/connect.hpp"
-#include "xtr/detail/throw.hpp"
+#ifndef XTR_IO_POSIX_FD_STORAGE_HPP
+#define XTR_IO_POSIX_FD_STORAGE_HPP
 
-void xtr::detail::command_client::connect(const std::string& path)
+#include "detail/fd_storage_base.hpp"
+
+#include <cstddef>
+#include <string>
+
+namespace xtr
 {
-    fd_ = command_connect(path);
-    if (!fd_)
-        throw_system_error_fmt(errno, "Failed to connect to `%s'", path.c_str());
-    cmd_path_ = path;
+    class posix_fd_storage;
 }
 
-void xtr::detail::command_client::reconnect()
+class xtr::posix_fd_storage : public detail::fd_storage_base
 {
-    connect(cmd_path_);
-}
+public:
+    static constexpr std::size_t default_buffer_capacity = 64 * 1024;
+
+    explicit posix_fd_storage(
+        int fd,
+        std::string reopen_path = null_reopen_path,
+        std::size_t buffer_capacity = default_buffer_capacity);
+
+    std::span<char> allocate_buffer() override final;
+
+    void submit_buffer(char* buf, std::size_t size) override final;
+
+    void flush() override final
+    {
+    }
+
+private:
+    std::unique_ptr<char[]> buf_;
+    std::size_t buffer_capacity_;
+};
+
+#endif

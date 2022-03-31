@@ -25,6 +25,37 @@ SOFTWARE.
 #ifndef XTR_LOGGER_HPP
 #define XTR_LOGGER_HPP
 
+/**
+ * Sets the capacity (in bytes) of the queue that sinks use to send log data
+ * to the background thread. Each sink will have an individual queue of this
+ * size. Users are permitted to define this variable in order to set a custom
+ * capacity. User provided capacities may be rounded up\---to obtain the
+ * actual capacity invoke @ref xtr::sink::capacity.
+ */
+#if !defined(XTR_SINK_CAPACITY)
+#define XTR_SINK_CAPACITY (256 * 1024)
+#endif
+
+/**
+ */
+#if !defined(XTR_FORCE_TSC_CALIBRATION)
+#define XTR_FORCE_TSC_CALIBRATION 0
+#endif
+
+/**
+ */
+#if !defined(XTR_USE_IO_URING)
+#define XTR_USE_IO_URING __has_include(<liburing.h>)
+#endif
+
+#define XTR_IO_URING_POLL 0
+
+/**
+ */
+#if !defined(XTR_IO_URING_POLL)
+#define XTR_IO_URING_POLL 1
+#endif
+
 #include <ctime>
 
 #include <fmt/chrono.h>
@@ -74,12 +105,14 @@ namespace xtr::detail
     [[noreturn, gnu::cold, gnu::format(printf, 1, 2)]] void throw_runtime_error_fmt(
         const char* format, ...);
 
-    [[noreturn, gnu::cold]] void throw_system_error(const char* what);
+    [[noreturn, gnu::cold]] void throw_system_error(int errnum, const char* what);
 
-    [[noreturn, gnu::cold, gnu::format(printf, 1, 2)]] void throw_system_error_fmt(
-        const char* format, ...);
+    [[noreturn, gnu::cold, gnu::format(printf, 2, 3)]] void throw_system_error_fmt(
+        int errnum, const char* format, ...);
 
     [[noreturn, gnu::cold]] void throw_invalid_argument(const char* what);
+
+    [[noreturn, gnu::cold]] void throw_bad_alloc();
 }
 
 #include <cerrno>
@@ -1001,109 +1034,143 @@ namespace xtr
     const char* systemd_log_level_style(log_level_t level);
 }
 
+#include <cstddef>
+#include <memory>
+#include <span>
+#include <string_view>
+
+namespace xtr
+{
+    struct storage_interface;
+
+    using storage_interface_ptr = std::unique_ptr<storage_interface>;
+
+    inline constexpr auto null_reopen_path = "";
+}
+
+struct xtr::storage_interface
+{
+    virtual std::span<char> allocate_buffer() = 0;
+
+    virtual void submit_buffer(char* buf, std::size_t size) = 0;
+
+    virtual void flush() = 0;
+
+    virtual void sync() noexcept = 0;
+
+    virtual int reopen() noexcept = 0;
+
+    virtual ~storage_interface() = default;
+};
+
+#include <fmt/core.h>
+
+#include <algorithm>
+#include <cstddef>
+#include <cstring>
+#include <iterator>
+
+namespace xtr::detail
+{
+    class buffer;
+}
+
+class xtr::detail::buffer
+{
+public:
+    using value_type = char;
+
+    explicit buffer(storage_interface_ptr storage, log_level_style_t ls);
+
+    buffer(buffer&&) = default;
+
+    ~buffer();
+
+    template<typename InputIterator>
+    void append(InputIterator first, InputIterator last);
+
+    void flush() noexcept;
+
+    storage_interface& storage() noexcept
+    {
+        return *storage_;
+    }
+
+    void append_line();
+
+    std::string line;
+    log_level_style_t lstyle;
+
+private:
+    void next_buffer();
+
+    storage_interface_ptr storage_;
+    char* pos_ = nullptr;
+    char* begin_ = nullptr;
+    char* end_ = nullptr;
+};
+
 #include <fmt/format.h>
 
-#include <cstddef>
 #include <iterator>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 
 namespace xtr::detail
 {
-    template<typename ErrorFunction, typename Timestamp>
-    [[gnu::cold, gnu::noinline]] void report_error(
-        fmt::memory_buffer& mbuf,
-        const ErrorFunction& err,
-        log_level_style_t lstyle,
-        Timestamp ts,
-        const std::string& name,
-        const char* reason)
-    {
-        using namespace std::literals::string_view_literals;
-        mbuf.clear();
-#if FMT_VERSION >= 80000
-        fmt::format_to(
-            std::back_inserter(mbuf),
-            "{}{} {}: Error: {}\n"sv,
-            lstyle(log_level_t::error),
-            ts,
-            name,
-            reason);
-#else
-        fmt::format_to(
-            mbuf,
-            "{}{} {}: Error: {}\n"sv,
-            lstyle(log_level_t::error),
-            ts,
-            name,
-            reason);
-#endif
-        err(mbuf.data(), mbuf.size());
-    }
-
-    template<
-        typename OutputFunction,
-        typename ErrorFunction,
-        typename Timestamp,
-        typename... Args>
+    template<typename Timestamp, typename... Args>
     void print(
-        fmt::memory_buffer& mbuf,
-        const OutputFunction& out,
-        [[maybe_unused]] const ErrorFunction& err,
-        log_level_style_t lstyle,
+        buffer& buf,
         std::string_view fmt,
         log_level_t level,
         Timestamp ts,
         const std::string& name,
-        const Args&... args)
+        const Args&... args) noexcept
     {
 #if __cpp_exceptions
         try
         {
 #endif
-            mbuf.clear();
-#if FMT_VERSION >= 80000
             fmt::format_to(
-                std::back_inserter(mbuf),
+                std::back_inserter(buf.line),
+#if FMT_VERSION >= 80000
                 fmt::runtime(fmt),
-                lstyle(level),
+#else
+            fmt,
+#endif
+                buf.lstyle(level),
                 ts,
                 name,
                 args...);
-#else
-        fmt::format_to(mbuf, fmt, lstyle(level), ts, name, args...);
-#endif
-            const auto result = out(level, mbuf.data(), mbuf.size());
-            if (result == -1)
-                return report_error(mbuf, err, lstyle, ts, name, "Write error");
-            if (std::size_t(result) != mbuf.size())
-                return report_error(mbuf, err, lstyle, ts, name, "Short write");
+
+            buf.append_line();
 #if __cpp_exceptions
         }
         catch (const std::exception& e)
         {
-            report_error(mbuf, err, lstyle, ts, name, e.what());
+            using namespace std::literals::string_view_literals;
+            fmt::print(
+                stderr,
+                "{}{}: Error writing log: {}\n"sv,
+                buf.lstyle(log_level_t::error),
+                ts,
+                e.what());
+            buf.line.clear();
         }
 #endif
     }
 
-    template<
-        typename OutputFunction,
-        typename ErrorFunction,
-        typename Timestamp,
-        typename... Args>
+    template<typename Timestamp, typename... Args>
     void print_ts(
-        fmt::memory_buffer& mbuf,
-        const OutputFunction& out,
-        const ErrorFunction& err,
-        log_level_style_t lstyle,
+        buffer& buf,
         std::string_view fmt,
         log_level_t level,
         const std::string& name,
         Timestamp ts,
-        const Args&... args)
+        const Args&... args) noexcept
     {
-        print(mbuf, out, err, lstyle, fmt, level, ts, name, args...);
+        print(buf, fmt, level, ts, name, args...);
     }
 }
 
@@ -1298,13 +1365,11 @@ namespace xtr::detail
                     }
                     end = s.end();
                 }
-            new (pos++) char(*str++);
+            ::new (pos++) char(*str++);
         }
         return string_table_entry(std::size_t(pos - begin));
     }
 }
-
-#include <fmt/format.h>
 
 #include <cassert>
 #include <cstddef>
@@ -1315,27 +1380,27 @@ namespace xtr::detail
 {
     template<auto Format, auto Level, typename State>
     std::byte* trampoline0(
-        fmt::memory_buffer& mbuf,
-        std::byte* buf,
-        State& st,
+        buffer& buf,
+        std::byte* record,
+        State&,
         const char* timestamp,
         std::string& name) noexcept
     {
-        print(mbuf, st.out, st.err, st.lstyle, *Format, Level, timestamp, name);
-        return buf + sizeof(void (*)());
+        print(buf, *Format, Level, timestamp, name);
+        return record + sizeof(void (*)());
     }
 
     template<auto Format, auto Level, typename State, typename Func>
     std::byte* trampolineN(
-        fmt::memory_buffer& mbuf,
-        std::byte* buf,
+        buffer& buf,
+        std::byte* record,
         State& st,
         [[maybe_unused]] const char* timestamp,
         std::string& name) noexcept
     {
         typedef void (*fptr_t)();
 
-        auto func_pos = buf + sizeof(fptr_t);
+        auto func_pos = record + sizeof(fptr_t);
         if constexpr (alignof(Func) > alignof(fptr_t))
             func_pos = align<alignof(Func)>(func_pos);
 
@@ -1345,16 +1410,7 @@ namespace xtr::detail
         if constexpr (std::is_same_v<decltype(Format), std::nullptr_t>)
             func(st, name);
         else
-            func(
-                mbuf,
-                buf,
-                st.out,
-                st.err,
-                st.lstyle,
-                *Format,
-                Level,
-                timestamp,
-                name);
+            func(buf, record, *Format, Level, timestamp, name);
 
         static_assert(noexcept(func.~Func()));
         std::destroy_at(std::addressof(func));
@@ -1364,27 +1420,27 @@ namespace xtr::detail
 
     template<auto Format, auto Level, typename State, typename Func>
     std::byte* trampolineS(
-        fmt::memory_buffer& mbuf,
-        std::byte* buf,
-        State& st,
+        buffer& buf,
+        std::byte* record,
+        State&,
         const char* timestamp,
         std::string& name) noexcept
     {
         typedef void (*fptr_t)();
 
-        auto func_pos = buf + sizeof(fptr_t);
+        auto func_pos = record + sizeof(fptr_t);
         if constexpr (alignof(Func) > alignof(fptr_t))
             func_pos = align<alignof(Func)>(func_pos);
         assert(std::uintptr_t(func_pos) % alignof(Func) == 0);
 
         auto& func = *reinterpret_cast<Func*>(func_pos);
-        buf = func_pos + sizeof(Func);
-        func(mbuf, buf, st.out, st.err, st.lstyle, *Format, Level, timestamp, name);
+        record = func_pos + sizeof(Func);
+        func(buf, record, *Format, Level, timestamp, name);
 
         static_assert(noexcept(func.~Func()));
         std::destroy_at(std::addressof(func));
 
-        return align<alignof(fptr_t)>(buf);
+        return align<alignof(fptr_t)>(record);
     }
 }
 
@@ -1402,19 +1458,6 @@ namespace xtr::detail
         dst[n] = '\0';
     }
 }
-
-/**
- * Sets the capacity (in bytes) of the queue that sinks use to send log data
- * to the background thread. Each sink will have an individual queue of this
- * size. Users are permitted to define this variable in order to set a custom
- * capacity. User provided capacities may be rounded up\---to obtain the
- * actual capacity invoke @ref xtr::sink::capacity.
- */
-#if !defined(XTR_SINK_CAPACITY)
-#define XTR_SINK_CAPACITY (256 * 1024)
-#endif
-
-#include <fmt/format.h>
 
 #include <atomic>
 #include <cassert>
@@ -1461,8 +1504,8 @@ class xtr::sink
 private:
     using fptr_t =
         std::byte* (*)(
-            fmt::memory_buffer& mbuf,
-            std::byte* buf, // pointer to log record
+            detail::buffer& buf, // output buffer
+            std::byte* record, // pointer to log record
             detail::consumer&,
             const char* timestamp,
             std::string& name) noexcept;
@@ -1508,19 +1551,16 @@ public:
     bool is_open() const noexcept;
 
     /**
-     *  Synchronizes all log calls previously made by this sink to back-end
-     *  storage.
+     *  Synchronizes all log calls previously made by this sink with the
+     *  background thread and syncs all data to back-end storage.
      *
-     *  @post All entries in the sink's queue have been delivered to the
-     *        back-end, and the flush() and sync() functions associated
-     *        with the back-end have been called. For the default (disk)
-     *        back-end this means fflush(3) and fsync(2) (if available)
-     *        have been called.
+     *  @post All entries in the sink's queue have been processed by the
+     *        background thread, buffers have been flushed and the sync()
+     *        function on the storage interface has been called. For the
+     *        default (disk) storage this means fsync(2) (if available) has
+     *        been called.
      */
-    void sync()
-    {
-        sync(/*destroy=*/false);
-    }
+    void sync();
 
     /**
      *  Sets the sink's name to the specified value.
@@ -1585,11 +1625,12 @@ private:
     void post_with_str_table(Args&&... args) noexcept(
         (XTR_NOTHROW_INGESTIBLE(Args, args) && ...));
 
+    template<typename Func>
+    void sync_post(Func&& func);
+
     template<typename Tags, typename... Args>
     auto make_lambda(Args&&... args) noexcept(
         (XTR_NOTHROW_INGESTIBLE(Args, args) && ...));
-
-    void sync(bool destroy);
 
     using ring_buffer = detail::synchronized_ring_buffer<XTR_SINK_CAPACITY>;
 
@@ -1695,7 +1736,7 @@ void xtr::sink::copy(std::byte* pos, T&& value) noexcept(
 #else
     pos = static_cast<std::byte*>(__builtin_assume_aligned(pos, alignof(T)));
 #endif
-    new (pos) std::remove_reference_t<T>(std::forward<T>(value));
+    ::new (pos) std::remove_reference_t<T>(std::forward<T>(value));
 }
 
 template<auto Format, auto Level, typename Tags, typename Func>
@@ -1727,11 +1768,8 @@ auto xtr::sink::make_lambda(Args&&... args) noexcept(
     (XTR_NOTHROW_INGESTIBLE(Args, args) && ...))
 {
     return [... args = std::forward<Args>(args)](
-               fmt::memory_buffer& mbuf,
-               std::byte*& buf,
-               const auto& out,
-               const auto& err,
-               log_level_style_t lstyle,
+               detail::buffer& buf,
+               std::byte*& record,
                std::string_view fmt,
                log_level_t level,
                [[maybe_unused]] const char* ts,
@@ -1740,27 +1778,21 @@ auto xtr::sink::make_lambda(Args&&... args) noexcept(
         if constexpr (detail::is_timestamp_v<Tags>)
         {
             detail::print_ts(
-                mbuf,
-                out,
-                err,
-                lstyle,
+                buf,
                 fmt,
                 level,
                 name,
-                detail::transform_string_table_entry(buf, args)...);
+                detail::transform_string_table_entry(record, args)...);
         }
         else
         {
             detail::print(
-                mbuf,
-                out,
-                err,
-                lstyle,
+                buf,
                 fmt,
                 level,
                 ts,
                 name,
-                detail::transform_string_table_entry(buf, args)...);
+                detail::transform_string_table_entry(record, args)...);
         }
     };
 }
@@ -1993,7 +2025,7 @@ namespace xtr::detail
 
     struct command_dispatcher_deleter
     {
-        void operator()(command_dispatcher*);
+        void operator()(command_dispatcher*) const;
     };
 }
 
@@ -2209,43 +2241,16 @@ public:
     void run(std::function<std::timespec()>&& clock) noexcept;
     void set_command_path(std::string path) noexcept;
 
-    template<
-        typename OutputFunction,
-        typename ErrorFunction,
-        typename FlushFunction,
-        typename SyncFunction,
-        typename ReopenFunction,
-        typename CloseFunction>
-    consumer(
-        OutputFunction&& of,
-        ErrorFunction&& ef,
-        FlushFunction&& ff,
-        SyncFunction&& sf,
-        ReopenFunction&& rf,
-        CloseFunction&& cf,
-        log_level_style_t ls,
-        sink* control) :
-        out(std::forward<OutputFunction>(of)),
-        err(std::forward<ErrorFunction>(ef)),
-        flush(std::forward<FlushFunction>(ff)),
-        sync(std::forward<SyncFunction>(sf)),
-        reopen(std::forward<ReopenFunction>(rf)),
-        close(std::forward<CloseFunction>(cf)),
-        lstyle(ls),
+    consumer(buffer&& bf, sink* control, std::string command_path) :
+        buf(std::move(bf)),
         sinks_({{control, "control", 0}})
     {
+        set_command_path(std::move(command_path));
     }
 
     void add_sink(sink& s, const std::string& name);
 
-    std::function<::ssize_t(log_level_t level, const char* buf, std::size_t size)>
-        out;
-    std::function<void(const char* buf, std::size_t size)> err;
-    std::function<void()> flush;
-    std::function<void()> sync;
-    std::function<bool()> reopen;
-    std::function<void()> close;
-    log_level_style_t lstyle;
+    buffer buf;
     bool destroy = false;
 
 private:
@@ -2542,31 +2547,186 @@ namespace xtr
 #define XTR_LOG_TAGS(TAGS, LEVEL, SINK, ...) \
     (__extension__({ XTR_LOG_TAGS_IMPL(TAGS, LEVEL, SINK, __VA_ARGS__); }))
 
-#define XTR_LOG_TAGS_IMPL(TAGS, LEVEL, SINK, FORMAT, ...)                  \
-    (__extension__(                                                        \
-        {                                                                  \
-            static constexpr auto xtr_fmt =                                \
-                xtr::detail::string{"{}{} {} "} +                          \
-                xtr::detail::rcut<xtr::detail::rindex(__FILE__, '/') + 1>( \
-                    __FILE__) +                                            \
-                xtr::detail::string{":"} +                                 \
-                xtr::detail::string{XTR_XSTR(__LINE__) ": " FORMAT "\n"};  \
-            using xtr::nocopy;                                             \
-            (SINK).log<&xtr_fmt, xtr::log_level_t::LEVEL, void(TAGS)>(     \
-                __VA_ARGS__);                                              \
+#define XTR_LOG_TAGS_IMPL(TAGS, LEVEL, SINK, FORMAT, ...)                       \
+    (__extension__(                                                             \
+        {                                                                       \
+            static constexpr auto xtr_fmt =                                     \
+                xtr::detail::string{"{}{} {} "} +                               \
+                xtr::detail::rcut<xtr::detail::rindex(__FILE__, '/') + 1>(      \
+                    __FILE__) +                                                 \
+                xtr::detail::string{":"} +                                      \
+                xtr::detail::string{XTR_XSTR(__LINE__) ": " FORMAT "\n"};       \
+            using xtr::nocopy;                                                  \
+            (SINK).template log<&xtr_fmt, xtr::log_level_t::LEVEL, void(TAGS)>( \
+                __VA_ARGS__);                                                   \
         }))
+
+#include <string>
+
+namespace xtr::detail
+{
+    class fd_storage_base;
+}
+
+class xtr::detail::fd_storage_base : public storage_interface
+{
+public:
+    fd_storage_base(int fd, std::string reopen_path);
+
+    void sync() noexcept override;
+
+    int reopen() noexcept override;
+
+protected:
+    virtual void replace_fd(int newfd) noexcept;
+
+    std::string reopen_path_;
+    detail::file_descriptor fd_;
+};
+
+#include <cstddef>
+#include <string>
+
+namespace xtr
+{
+    class posix_fd_storage;
+}
+
+class xtr::posix_fd_storage : public detail::fd_storage_base
+{
+public:
+    static constexpr std::size_t default_buffer_capacity = 64 * 1024;
+
+    explicit posix_fd_storage(
+        int fd,
+        std::string reopen_path = null_reopen_path,
+        std::size_t buffer_capacity = default_buffer_capacity);
+
+    std::span<char> allocate_buffer() override final;
+
+    void submit_buffer(char* buf, std::size_t size) override final;
+
+    void flush() override final
+    {
+    }
+
+private:
+    std::unique_ptr<char[]> buf_;
+    std::size_t buffer_capacity_;
+};
+
+#if XTR_USE_IO_URING // For single-include compatibility
+
+#include <liburing.h>
+
+#include <cstddef>
+#include <memory>
+#include <span>
+#include <string>
+#include <vector>
+
+namespace xtr
+{
+    class io_uring_fd_storage;
+}
+
+class xtr::io_uring_fd_storage : public detail::fd_storage_base
+{
+public:
+    static constexpr std::size_t default_buffer_capacity = 64 * 1024;
+    static constexpr std::size_t default_queue_size = 1024;
+    static constexpr std::size_t default_batch_size = 32;
+
+private:
+    struct buffer
+    {
+        int index_;     // io_uring_prep_write_fixed accepts indexes as int
+        unsigned size_; // io_uring_cqe::res is an unsigned int
+        std::size_t offset_;
+        std::size_t file_offset_;
+        buffer* next_;
+        __extension__ char data_[];
+
+        static std::size_t size(std::size_t n)
+        {
+            return detail::align(offsetof(buffer, data_) + n, alignof(buffer));
+        }
+
+        static buffer* data_to_buffer(char* data)
+        {
+            return reinterpret_cast<buffer*>(data - offsetof(buffer, data_));
+        }
+    };
+
+public:
+    explicit io_uring_fd_storage(
+        int fd,
+        std::string reopen_path = null_reopen_path,
+        std::size_t buffer_capacity = default_buffer_capacity,
+        std::size_t queue_size = default_queue_size,
+        std::size_t batch_size = default_batch_size);
+
+    ~io_uring_fd_storage();
+
+    void sync() noexcept override final;
+
+    void flush() override final;
+
+    std::span<char> allocate_buffer() override final;
+
+    void submit_buffer(char* data, std::size_t size) override final;
+
+protected:
+    void replace_fd(int newfd) noexcept override final;
+
+private:
+    void allocate_buffers(std::size_t queue_size);
+
+    io_uring_sqe* get_sqe();
+
+    void wait_for_one_cqe();
+
+    void resubmit_buffer(buffer* buf, unsigned nwritten);
+
+    void free_buffer(buffer* buf);
+
+    io_uring ring_;
+    std::size_t buffer_capacity_;
+    std::size_t batch_size_;
+    std::size_t batch_index_ = 0;
+    std::size_t pending_cqe_count_ = 0;
+    std::size_t offset_ = 0;
+    buffer* free_list_;
+    std::unique_ptr<std::byte[]> buffer_storage_;
+};
+
+#endif
+
+#include <cstddef>
+#include <string>
+
+namespace xtr
+{
+    storage_interface_ptr make_fd_storage(const char* path);
+
+    storage_interface_ptr make_fd_storage(
+        FILE* fp, std::string reopen_path = null_reopen_path);
+
+    storage_interface_ptr make_fd_storage(
+        int fd, std::string reopen_path = null_reopen_path);
+}
 
 #include <chrono>
 #include <cstdio>
 #include <ctime>
-#include <functional>
+#include <memory>
 #include <mutex>
 #include <string>
 #include <thread>
 #include <type_traits>
 #include <utility>
 
-#include <unistd.h>
+#include <stdio.h>
 
 namespace xtr
 {
@@ -2588,63 +2748,6 @@ namespace xtr
     {
         return detail::string_ref(arg);
     }
-}
-
-namespace xtr::detail
-{
-    inline auto make_output_func(FILE* stream)
-    {
-        return [stream](log_level_t, const char* buf, std::size_t size)
-        { return std::fwrite(buf, 1, size, stream); };
-    }
-
-    inline auto make_error_func(FILE* stream)
-    {
-        return [stream](const char* buf, std::size_t size)
-        { (void)std::fwrite(buf, 1, size, stream); };
-    }
-
-    inline auto make_flush_func(FILE* stream, FILE* err_stream)
-    {
-        return [stream, err_stream]()
-        {
-            std::fflush(stream);
-            std::fflush(err_stream);
-        };
-    }
-
-    inline auto make_sync_func(FILE* stream, FILE* err_stream)
-    {
-        return [stream, err_stream]()
-        {
-            ::fsync(::fileno(stream));
-            ::fsync(::fileno(err_stream));
-        };
-    }
-
-    inline auto make_reopen_func(std::string path, FILE* stream)
-    {
-        return [path = std::move(path), stream]()
-        { return std::freopen(path.c_str(), "a", stream) != nullptr; };
-    }
-
-    inline FILE* open_path(const char* path)
-    {
-        FILE* const fp = std::fopen(path, "a");
-        if (fp == nullptr)
-            detail::throw_system_error_fmt("Failed to open `%s'", path);
-        return fp;
-    }
-
-#if defined(__cpp_lib_invocable)
-    using invocable = std::invocable;
-#else
-    template<typename F, typename... Args>
-    concept invocable = requires(F&& f, Args&&... args)
-    {
-        std::invoke(std::forward<F>(f), std::forward<Args>(args)...);
-    };
-#endif
 }
 
 /**
@@ -2712,9 +2815,7 @@ public:
         std::string command_path = default_command_path(),
         log_level_style_t level_style = default_log_level_style) :
         logger(
-            path,
-            detail::open_path(path),
-            stderr,
+            make_fd_storage(path),
             std::forward<Clock>(clock),
             std::move(command_path),
             level_style)
@@ -2727,18 +2828,17 @@ public:
      * It is expected that this constructor will be used with streams such as
      * stdout or stderr. If a stream that has been opened by the user is to
      * be passed to the logger then the
-     * @ref stream-with-reopen "stream constructor with reopen path"
-     * constructor is recommended instead.
-     *
-     * @note The logger will not take ownership of the stream\---i.e. it will
-     *       not be closed when the logger destructs.
+     * @ref stream-with-reopen-ctor "stream constructor with reopen path"
+     * constructor is recommended instead, as this will mean that the log file
+     * can be rotated\---please refer to the xtrctl documentation for the
+     * <a href="xtrctl.html#reopening-log-files">reopening log files</a> command
+     * for details.
      *
      * @note Reopening the log file via the
      *       <a href="xtrctl.html#rotating-log-files">xtrctl</a> tool is *not*
      *       supported if this constructor is used.
      *
      * @arg stream: The stream to write log statements to.
-     * @arg err_stream: A stream to write error messages to.
      * @arg clock: Please refer to the @ref clock_arg "description"
      *             above.
      * @arg command_path: Please refer to the @ref command_path_arg
@@ -2750,17 +2850,11 @@ public:
     template<typename Clock = std::chrono::system_clock>
     logger(
         FILE* stream = stderr,
-        FILE* err_stream = stderr,
         Clock&& clock = Clock(),
         std::string command_path = default_command_path(),
         log_level_style_t level_style = default_log_level_style) :
         logger(
-            detail::make_output_func(stream),
-            detail::make_error_func(err_stream),
-            detail::make_flush_func(stream, err_stream),
-            detail::make_sync_func(stream, err_stream),
-            []() { return true; }, // reopen
-            []() {},               // close
+            make_fd_storage(stream, null_reopen_path),
             std::forward<Clock>(clock),
             std::move(command_path),
             level_style)
@@ -2768,12 +2862,9 @@ public:
     }
 
     /**
-     * @anchor stream-with-reopen
+     * @anchor stream-with-reopen-ctor
      *
      * Stream constructor with reopen path.
-     *
-     * @note The logger will take ownership of
-     *       the stream, closing it when the logger destructs.
      *
      * @note Reopening the log file via the
      *       <a href="xtrctl.html#rotating-log-files">xtrctl</a> tool is supported,
@@ -2783,7 +2874,6 @@ public:
      *                   This path will be used to reopen the stream if requested via
      *                   the <a href="xtrctl.html#rotating-log-files">xtrctl</a> tool.
      * @arg stream: The stream to write log statements to.
-     * @arg err_stream: A stream to write error messages to.
      * @arg clock: Please refer to the @ref clock_arg "description"
      *             above.
      * @arg command_path: Please refer to the @ref command_path_arg
@@ -2794,19 +2884,13 @@ public:
      */
     template<typename Clock = std::chrono::system_clock>
     logger(
-        const char* reopen_path,
+        std::string reopen_path,
         FILE* stream,
-        FILE* err_stream = stderr,
         Clock&& clock = Clock(),
         std::string command_path = default_command_path(),
         log_level_style_t level_style = default_log_level_style) :
         logger(
-            detail::make_output_func(stream),
-            detail::make_error_func(err_stream),
-            detail::make_flush_func(stream, err_stream),
-            detail::make_sync_func(stream, err_stream),
-            detail::make_reopen_func(reopen_path, stream),
-            [stream]() { std::fclose(stream); }, // close
+            make_fd_storage(stream, std::move(reopen_path)),
             std::forward<Clock>(clock),
             std::move(command_path),
             level_style)
@@ -2814,88 +2898,18 @@ public:
     }
 
     /**
-     * Basic custom back-end constructor (please refer to the
-     * <a href="guide.html#custom-back-ends">custom back-ends</a> section of
-     * the user guide for further details on implementing a custom back-end).
+     * @anchor back-end-ctor
      *
-     * @arg out: @anchor out_arg
-     *           A function accepting a @ref xtr::log_level_t, const char* buffer
-     *           of formatted log data and a std::size_t argument specifying the
-     *           length of the buffer in bytes. The logger will invoke this function
-     *           from the background thread in order to output log data, invoking
-     *           the function once per log line. The return type should be ssize_t
-     *           and return value should be -1 if an error occurred, otherwise the
-     *           number of bytes successfully written should be returned. Note that
-     *           returning anything less than the number of bytes given by the
-     *           length argument is considered an error, resulting in the 'err'
-     *           function being invoked with a "Short write" error string.
-     * @arg err: @anchor err_arg
-     *           A function accepting a const char* buffer of formatted log
-     *           data and a std::size_t argument specifying the length of the
-     *           buffer in bytes. The logger will invoke this function from the
-     *           background thread if an error occurs. The return type should
-     *           be void.
-     * @arg clock: Please refer to the @ref clock_arg "description"
-     *             above.
-     * @arg command_path: Please refer to the @ref command_path_arg
-     *                    "description" above.
-     * @arg level_style: The log level style that will be used to prefix each log
-     *                   statement\---please refer to the @ref log_level_style_t
-     *                   documentation for details.
-     */
-    template<
-        typename OutputFunction,
-        typename ErrorFunction,
-        typename Clock = std::chrono::system_clock>
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
-    requires detail::invocable<OutputFunction, log_level_t, const char*, std::size_t> &&
-        detail::invocable<ErrorFunction, const char*, std::size_t>
-#endif
-        logger(
-            OutputFunction&& out,
-            ErrorFunction&& err,
-            Clock&& clock = Clock(),
-            std::string command_path = default_command_path(),
-            log_level_style_t level_style = default_log_level_style) :
-        logger(
-            std::forward<OutputFunction>(out),
-            std::forward<ErrorFunction>(err),
-            []() {},               // flush
-            []() {},               // sync
-            []() { return true; }, // reopen
-            []() {},               // close
-            std::forward<Clock>(clock),
-            std::move(command_path),
-            level_style)
-    {
-    }
-
-    /**
      * Custom back-end constructor (please refer to the
      * <a href="guide.html#custom-back-ends">custom back-ends</a> section of
      * the user guide for further details on implementing a custom back-end).
      *
-     * @arg out: Please refer to the @ref out_arg "description" above.
-     * @arg err: Please refer to the @ref err_arg "description" above.
-     * @arg flush: @anchor flush_arg
-     *             A function that the logger will invoke from
-     *             the background thread to indicate that the back-end
-     *             should write any buffered data to its associated
-     *             backing store.
-     * @arg sync: @anchor sync_arg
-     *            A function that the logger will invoke from
-     *            the background thread to indicate that the back-end
-     *            should ensure that all data written to the associated
-     *            backing store has reached permanent storage.
-     * @arg reopen: @anchor reopen_arg
-     *              A function that the logger will invoke from
-     *              the background thread to indicate that if the back-end
-     *              has a file opened for writing log data then the
-     *              file should be reopened (in order to rotate it).
-     * @arg close: @anchor close_arg
-     *             A function that the logger will invoke from
-     *             the background thread to indicate that the back-end
-     *             should close any associated backing store.
+     * @arg storage: Unique pointer to an object implementing the
+     *               @ref storage_interface interface. The logger will invoke
+     *               methods on this object from the background thread in
+     *               order to write log data to whatever underlying storage
+     *               medium is implemented by the object, such as disk,
+     *               network, dot-matrix printer etc.
      * @arg clock: Please refer to the @ref clock_arg "description"
      *             above.
      * @arg command_path: Please refer to the @ref command_path_arg
@@ -2904,45 +2918,21 @@ public:
      *                   statement\---please refer to the @ref log_level_style_t
      *                   documentation for details.
      */
-    template<
-        typename OutputFunction,
-        typename ErrorFunction,
-        typename FlushFunction,
-        typename SyncFunction,
-        typename ReopenFunction,
-        typename CloseFunction,
-        typename Clock = std::chrono::system_clock>
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
-    requires detail::invocable<OutputFunction, log_level_t, const char*, std::size_t> &&
-        detail::invocable<ErrorFunction, const char*, std::size_t> &&
-        detail::invocable<FlushFunction> && detail::invocable<SyncFunction> &&
-        detail::invocable<ReopenFunction> && detail::invocable<CloseFunction>
-#endif
-        logger(
-            OutputFunction&& out,
-            ErrorFunction&& err,
-            FlushFunction&& flush,
-            SyncFunction&& sync,
-            ReopenFunction&& reopen,
-            CloseFunction&& close,
-            Clock&& clock = Clock(),
-            std::string command_path = default_command_path(),
-            log_level_style_t level_style = default_log_level_style)
+    template<typename Clock = std::chrono::system_clock>
+    logger(
+        storage_interface_ptr storage,
+        Clock&& clock = Clock(),
+        std::string command_path = default_command_path(),
+        log_level_style_t level_style = default_log_level_style)
     {
         consumer_ = jthread(
             &detail::consumer::run,
             detail::consumer(
-                std::forward<OutputFunction>(out),
-                std::forward<ErrorFunction>(err),
-                std::forward<FlushFunction>(flush),
-                std::forward<SyncFunction>(sync),
-                std::forward<ReopenFunction>(reopen),
-                std::forward<CloseFunction>(close),
-                level_style,
-                &control_),
+                detail::buffer(std::move(storage), level_style),
+                &control_,
+                std::move(command_path)),
             make_clock(std::forward<Clock>(clock)));
         control_.open_ = true;
-        set_command_path(std::move(command_path));
     }
 
     /**
@@ -2951,7 +2941,7 @@ public:
      * will not terminate until the sinks disconnect, i.e. the destructor
      * will block until all connected sinks disconnect from the logger.
      */
-    ~logger();
+    ~logger() = default;
 
     /**
      *  Returns the native handle for the logger's consumer thread. This
@@ -2982,116 +2972,6 @@ public:
      *  @pre The sink must be closed.
      */
     void register_sink(sink& s, std::string name) noexcept;
-
-    /**
-     * Sets the logger output to the specified stream. The existing output
-     * will be flushed and closed.
-     */
-    void set_output_stream(FILE* stream) noexcept;
-
-    /**
-     * Sets the logger error output to the specified stream.
-     */
-    void set_error_stream(FILE* stream) noexcept;
-
-    /**
-     * Sets the logger output to the specified function. The existing output
-     * will be flushed and closed. Please refer to the 'out' argument @ref
-     * out_arg "description" above for details.
-     */
-    template<typename Func>
-    void set_output_function(Func&& f) noexcept
-    {
-        static_assert(
-            std::is_convertible_v<
-                std::invoke_result_t<Func, log_level_t, const char*, std::size_t>,
-                ::ssize_t>,
-            "Output function type must be of type ssize_t(const char*, size_t) "
-            "(returning the number of bytes written or -1 on error)");
-        post(
-            [f = std::forward<Func>(f)](auto& c, auto&)
-            {
-                c.flush();
-                c.close();
-                c.out = std::move(f);
-            });
-        control_.sync();
-    }
-
-    /**
-     * Sets the logger error output to the specified function. Please refer to
-     * the 'err' argument @ref err_arg "description" above for details.
-     */
-    template<typename Func>
-    void set_error_function(Func&& f) noexcept
-    {
-        static_assert(
-            std::is_same_v<std::invoke_result_t<Func, const char*, std::size_t>, void>,
-            "Error function must be of type void(const char*, size_t)");
-        post([f = std::forward<Func>(f)](detail::consumer& c, auto&)
-             { c.err = std::move(f); });
-        control_.sync();
-    }
-
-    /**
-     * Sets the logger flush function\---please refer to the 'flush' argument
-     * @ref flush_arg "description" above for details.
-     */
-    template<typename Func>
-    void set_flush_function(Func&& f) noexcept
-    {
-        static_assert(
-            std::is_same_v<std::invoke_result_t<Func>, void>,
-            "Flush function must be of type void()");
-        post([f = std::forward<Func>(f)](detail::consumer& c, auto&)
-             { c.flush = std::move(f); });
-        control_.sync();
-    }
-
-    /**
-     * Sets the logger sync function\---please refer to the 'sync' argument
-     * @ref sync_arg "description" above for details.
-     */
-    template<typename Func>
-    void set_sync_function(Func&& f) noexcept
-    {
-        static_assert(
-            std::is_same_v<std::invoke_result_t<Func>, void>,
-            "Sync function must be of type void()");
-        post([f = std::forward<Func>(f)](detail::consumer& c, auto&)
-             { c.sync = std::move(f); });
-        control_.sync();
-    }
-
-    /**
-     * Sets the logger reopen function\---please refer to the 'reopen' argument
-     * @ref reopen_arg "description" above for details.
-     */
-    template<typename Func>
-    void set_reopen_function(Func&& f) noexcept
-    {
-        static_assert(
-            std::is_same_v<std::invoke_result_t<Func>, bool>,
-            "Reopen function must be of type bool()");
-        post([f = std::forward<Func>(f)](detail::consumer& c, auto&)
-             { c.reopen = std::move(f); });
-        control_.sync();
-    }
-
-    /**
-     * Sets the logger close function\---please refer to the 'close' argument
-     * @ref close_arg "description" above for details.
-     */
-    template<typename Func>
-    void set_close_function(Func&& f) noexcept
-    {
-        static_assert(
-            std::is_same_v<std::invoke_result_t<Func>, void>,
-            "Close function must be of type void()");
-        post([f = std::forward<Func>(f)](detail::consumer& c, auto&)
-             { c.close = std::move(f); });
-        control_.close();
-    }
 
     /**
      * Sets the logger command path\---please refer to the 'command_path' argument
@@ -3129,12 +3009,91 @@ private:
         };
     }
 
-    sink control_; // aligned to cache line so first to avoid extra padding
     jthread consumer_;
+    sink control_;
     std::mutex control_mutex_;
 
     friend sink;
 };
+
+#include <fmt/format.h>
+
+#include <span>
+#include <stdexcept>
+#include <utility>
+
+inline xtr::detail::buffer::buffer(
+    storage_interface_ptr storage, log_level_style_t ls) :
+    lstyle(ls),
+    storage_(std::move(storage))
+{
+}
+
+inline xtr::detail::buffer::~buffer()
+{
+    flush();
+}
+
+inline void xtr::detail::buffer::flush() noexcept
+{
+#if __cpp_exceptions
+    try
+    {
+#endif
+        if (pos_ != begin_)
+        {
+            storage_->submit_buffer(begin_, std::size_t(pos_ - begin_));
+            pos_ = begin_ = end_ = nullptr;
+        }
+        if (storage_)
+            storage_->flush();
+#if __cpp_exceptions
+    }
+    catch (const std::exception& e)
+    {
+        using namespace std::literals::string_view_literals;
+        fmt::print(
+            stderr,
+            "{}{}: Error flushing log: {}\n"sv,
+            lstyle(log_level_t::error),
+            detail::get_time<XTR_CLOCK_WALL>(),
+            e.what());
+    }
+#endif
+}
+
+template<typename InputIterator>
+void xtr::detail::buffer::append(InputIterator first, InputIterator last)
+{
+    while (first != last)
+    {
+        if (pos_ == end_) [[unlikely]]
+            next_buffer();
+
+        const auto n = std::min(last - first, end_ - pos_);
+
+        std::memcpy(pos_, &*first, std::size_t(n));
+
+        pos_ += n;
+        first += n;
+    }
+}
+
+inline void xtr::detail::buffer::append_line()
+{
+    append(line.begin(), line.end());
+    line.clear();
+}
+
+inline void xtr::detail::buffer::next_buffer()
+{
+    if (pos_ != begin_) [[likely]] // if not the first call to push_back
+        storage_->submit_buffer(begin_, std::size_t(pos_ - begin_));
+    const std::span<char> s = storage_->allocate_buffer();
+    begin_ = s.data();
+    end_ = begin_ + s.size();
+    pos_ = begin_;
+}
 
 #include <cassert>
 #include <cerrno>
@@ -3360,7 +3319,7 @@ inline void xtr::detail::command_dispatcher::send_error(
 }
 
 inline void xtr::detail::command_dispatcher_deleter::operator()(
-    command_dispatcher* d)
+    command_dispatcher* d) const
 {
     delete d;
 }
@@ -3410,9 +3369,11 @@ inline std::string xtr::default_command_path()
 }
 
 #include <fmt/chrono.h>
+#include <fmt/format.h>
 
 #include <algorithm>
 #include <climits>
+#include <cstdio>
 #include <cstring>
 #include <version>
 
@@ -3421,7 +3382,6 @@ inline void xtr::detail::consumer::run(std::function<::timespec()>&& clock) noex
     char ts[32] = {};
     bool ts_stale = true;
     std::size_t flush_count = 0;
-    fmt::memory_buffer mbuf;
 
     for (std::size_t i = 0; !sinks_.empty(); ++i)
     {
@@ -3438,7 +3398,7 @@ inline void xtr::detail::consumer::run(std::function<::timespec()>&& clock) noex
         if ((span = sinks_[n]->buf_.read_span()).empty())
         {
             if (flush_count != 0 && flush_count-- == 1)
-                flush();
+                buf.flush();
             continue;
         }
 
@@ -3458,7 +3418,7 @@ inline void xtr::detail::consumer::run(std::function<::timespec()>&& clock) noex
             assert(!destroy);
             const sink::fptr_t fptr =
                 *reinterpret_cast<const sink::fptr_t*>(pos);
-            pos = fptr(mbuf, pos, *this, ts, sinks_[n].name);
+            pos = fptr(buf, pos, *this, ts, sinks_[n].name);
         } while (pos < end);
 
         if (destroy)
@@ -3477,10 +3437,7 @@ inline void xtr::detail::consumer::run(std::function<::timespec()>&& clock) noex
             (n_dropped = sinks_[n]->buf_.dropped_count()) > 0)
         {
             detail::print(
-                mbuf,
-                out,
-                err,
-                lstyle,
+                buf,
                 "{}{} {}: {} messages dropped\n",
                 log_level_t::warning,
                 ts,
@@ -3491,8 +3448,6 @@ inline void xtr::detail::consumer::run(std::function<::timespec()>&& clock) noex
 
         flush_count = sinks_.size();
     }
-
-    close();
 }
 
 inline void xtr::detail::consumer::add_sink(sink& s, const std::string& name)
@@ -3612,10 +3567,98 @@ inline void xtr::detail::consumer::set_level_handler(int fd, detail::set_level& 
 inline void xtr::detail::consumer::reopen_handler(
     int fd, detail::reopen& /* unused */)
 {
-    if (!reopen())
-        cmds_->send_error(fd, std::strerror(errno));
+    buf.flush();
+    if (const int errnum = buf.storage().reopen())
+        cmds_->send_error(fd, std::strerror(errnum));
     else
         cmds_->send(fd, detail::frame<detail::success>());
+}
+
+#include <utility>
+
+#include <fcntl.h>
+#include <unistd.h>
+
+inline xtr::detail::fd_storage_base::fd_storage_base(
+    int fd, std::string reopen_path) :
+    reopen_path_(std::move(reopen_path)),
+    fd_(::dup(fd))
+{
+    if (!fd_)
+    {
+        detail::throw_system_error_fmt(
+            errno,
+            "xtr::detail::fd_storage_base::fd_storage_base: dup(2) failed");
+    }
+}
+
+inline void xtr::detail::fd_storage_base::sync() noexcept
+{
+    ::fsync(fd_.get());
+}
+
+inline int xtr::detail::fd_storage_base::reopen() noexcept
+{
+    if (reopen_path_ == null_reopen_path)
+        return ENOENT;
+
+    const int newfd = XTR_TEMP_FAILURE_RETRY(::open(
+        reopen_path_.c_str(),
+        O_CREAT | O_APPEND | O_WRONLY,
+        S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH));
+
+    if (newfd == -1)
+        return errno;
+
+    replace_fd(newfd);
+
+    return 0;
+}
+
+inline void xtr::detail::fd_storage_base::replace_fd(int newfd) noexcept
+{
+    fd_.reset(newfd);
+}
+
+#include <cerrno>
+#include <memory>
+#include <utility>
+
+#include <fcntl.h>
+#include <sys/syscall.h>
+#include <unistd.h>
+
+inline xtr::storage_interface_ptr xtr::make_fd_storage(const char* path)
+{
+    const int fd = XTR_TEMP_FAILURE_RETRY(::open(
+        path,
+        O_CREAT | O_APPEND | O_WRONLY,
+        S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH));
+
+    if (fd == -1)
+        detail::throw_system_error_fmt(errno, "Failed to open `%s'", path);
+
+    return make_fd_storage(fd, path);
+}
+
+inline xtr::storage_interface_ptr xtr::make_fd_storage(
+    FILE* fp, std::string reopen_path)
+{
+    return make_fd_storage(::fileno(fp), std::move(reopen_path));
+}
+
+inline xtr::storage_interface_ptr xtr::make_fd_storage(
+    int fd, std::string reopen_path)
+{
+#if XTR_USE_IO_URING
+    errno = 0;
+    (void)syscall(__NR_io_uring_setup, 0, nullptr);
+
+    if (errno != ENOSYS)
+        return std::make_unique<io_uring_fd_storage>(fd, std::move(reopen_path));
+    else
+#endif
+        return std::make_unique<posix_fd_storage>(fd, std::move(reopen_path));
 }
 
 #include <fcntl.h>
@@ -3628,6 +3671,7 @@ inline xtr::detail::file_descriptor::file_descriptor(
     if (fd_ == -1)
     {
         throw_system_error_fmt(
+            errno,
             "xtr::detail::file_descriptor::file_descriptor: "
             "Failed to open `%s'",
             path);
@@ -3653,12 +3697,285 @@ inline void xtr::detail::file_descriptor::reset(int fd) noexcept
     fd_ = fd;
 }
 
-#include <cassert>
+#if XTR_USE_IO_URING // For single-include compatibility
 
-inline xtr::logger::~logger()
+#include <liburing.h>
+
+#include <cassert>
+#include <cstdio>
+#include <cstring>
+#include <limits>
+
+inline xtr::io_uring_fd_storage::io_uring_fd_storage(
+    int fd,
+    std::string reopen_path,
+    std::size_t buffer_capacity,
+    std::size_t queue_size,
+    std::size_t batch_size) :
+    fd_storage_base(fd, std::move(reopen_path)),
+    buffer_capacity_(buffer_capacity),
+    batch_size_(batch_size)
 {
-    control_.close();
+    if (buffer_capacity >
+        std::numeric_limits<decltype(io_uring_cqe::res)>::max())
+        detail::throw_invalid_argument("buffer_capacity too large");
+
+    if (queue_size > std::numeric_limits<decltype(buffer::index_)>::max())
+        detail::throw_invalid_argument("queue_size too large");
+
+    const int flags =
+#if XTR_IO_URING_POLL
+        IORING_SETUP_SQPOLL;
+#else
+        0;
+#endif
+
+    if (const int errnum =
+            ::io_uring_queue_init(unsigned(queue_size), &ring_, flags))
+    {
+        detail::throw_system_error_fmt(
+            errnum,
+            "xtr::io_uring_fd_storage::io_uring_fd_storage: "
+            "io_uring_queue_init failed");
+    }
+
+    allocate_buffers(queue_size);
 }
+
+inline xtr::io_uring_fd_storage::~io_uring_fd_storage()
+{
+    flush();
+    sync();
+    ::io_uring_queue_exit(&ring_);
+}
+
+inline void xtr::io_uring_fd_storage::flush()
+{
+    ::io_uring_submit(&ring_);
+}
+
+inline void xtr::io_uring_fd_storage::sync() noexcept
+{
+    while (pending_cqe_count_ > 0)
+        wait_for_one_cqe();
+    fd_storage_base::sync();
+}
+
+inline std::span<char> xtr::io_uring_fd_storage::allocate_buffer()
+{
+    while (free_list_ == nullptr)
+        wait_for_one_cqe();
+
+    buffer* buf = free_list_;
+    free_list_ = free_list_->next_;
+
+    buf->size_ = 0;
+    buf->offset_ = 0;
+    buf->file_offset_ = offset_;
+
+    return {buf->data_, buffer_capacity_};
+}
+
+inline void xtr::io_uring_fd_storage::submit_buffer(char* data, std::size_t size)
+{
+    buffer* buf = buffer::data_to_buffer(data);
+    buf->size_ = unsigned(size);
+
+    io_uring_sqe* sqe = get_sqe();
+
+    ::io_uring_prep_write_fixed(
+        sqe,
+        fd_.get(),
+        buf->data_,
+        buf->size_,
+        buf->file_offset_,
+        buf->index_);
+
+    ::io_uring_sqe_set_data(sqe, buf);
+
+    offset_ += size;
+    ++pending_cqe_count_;
+
+    if (++batch_index_ % batch_size_ == 0)
+        ::io_uring_submit(&ring_);
+}
+
+inline void xtr::io_uring_fd_storage::replace_fd(int newfd) noexcept
+{
+    io_uring_sqe* sqe = get_sqe();
+    ::io_uring_prep_close(sqe, fd_.release());
+    sqe->flags |= IOSQE_IO_DRAIN;
+    ++pending_cqe_count_;
+    ::io_uring_submit(&ring_);
+
+    fd_storage_base::replace_fd(newfd);
+}
+
+inline void xtr::io_uring_fd_storage::allocate_buffers(std::size_t queue_size)
+{
+    assert(queue_size > 0);
+
+    std::vector<::iovec> iov;
+    iov.reserve(queue_size);
+
+    buffer** next = &free_list_;
+
+    buffer_storage_.reset(
+        new std::byte[buffer::size(buffer_capacity_) * queue_size]);
+
+    for (std::size_t i = 0; i < queue_size; ++i)
+    {
+        std::byte* storage =
+            buffer_storage_.get() + buffer::size(buffer_capacity_) * i;
+        buffer* buf = ::new (storage) buffer;
+        buf->index_ = int(i);
+        iov.push_back({buf->data_, buffer_capacity_});
+        *next = buf;
+        next = &buf->next_;
+    }
+
+    *next = nullptr;
+    assert(free_list_ != nullptr);
+
+    ::io_uring_register_buffers(&ring_, &iov[0], unsigned(iov.size()));
+}
+
+inline io_uring_sqe* xtr::io_uring_fd_storage::get_sqe()
+{
+    io_uring_sqe* sqe;
+
+    while ((sqe = ::io_uring_get_sqe(&ring_)) == nullptr)
+    {
+#if XTR_IO_URING_POLL
+        ::io_uring_sqring_wait(&ring_);
+#else
+        wait_for_one_cqe();
+#endif
+    }
+
+    return sqe;
+}
+
+inline void xtr::io_uring_fd_storage::wait_for_one_cqe()
+{
+    assert(pending_cqe_count_ > 0);
+
+    struct io_uring_cqe* cqe = nullptr;
+    int errnum;
+
+retry:
+#if XTR_IO_URING_POLL
+    while ((errnum = io_uring_peek_cqe(&ring_, &cqe)) == -EAGAIN)
+        ;
+#else
+    errnum = ::io_uring_wait_cqe(&ring_, &cqe);
+#endif
+
+    if (errnum != 0) [[unlikely]]
+    {
+        std::fprintf(
+            stderr,
+            "xtr::io_uring_fd_storage::wait_for_one_cqe: "
+            "io_uring_peek_cqe/io_uring_wait_cqe failed: %s\n",
+            std::strerror(-errnum));
+        return;
+    }
+
+    --pending_cqe_count_;
+
+    const int res = cqe->res;
+
+    auto deleter = [this](buffer* ptr) { free_buffer(ptr); };
+
+    std::unique_ptr<buffer, decltype(deleter)> buf(
+        static_cast<buffer*>(::io_uring_cqe_get_data(cqe)),
+        std::move(deleter));
+
+    ::io_uring_cqe_seen(&ring_, cqe);
+
+    if (!buf) // close operation queued by replace_fd()
+    {
+        if (res < 0)
+        {
+            std::fprintf(
+                stderr,
+                "xtr::io_uring_fd_storage::wait_for_one_cqe: "
+                "Error: close(2) failed during reopen: %s\n",
+                std::strerror(-res));
+        }
+        return;
+    }
+
+    if (res == -EAGAIN) [[unlikely]]
+    {
+        resubmit_buffer(buf.release(), 0);
+        goto retry;
+    }
+
+    if (res < 0) [[unlikely]]
+    {
+        std::fprintf(
+            stderr,
+            "xtr::io_uring_fd_storage::wait_for_one_cqe: "
+            "Error: Write of %u bytes at offset %zu to \"%s\" (fd %d) failed: "
+            "%s\n",
+            buf->size_,
+            buf->file_offset_,
+            reopen_path_.c_str(),
+            fd_.get(),
+            std::strerror(-res));
+        return;
+    }
+
+    const auto nwritten = unsigned(res);
+
+    assert(nwritten <= buf->size_);
+
+    if (nwritten != buf->size_) [[unlikely]] // Short write
+    {
+        resubmit_buffer(buf.release(), nwritten);
+        goto retry;
+    }
+}
+
+inline void xtr::io_uring_fd_storage::resubmit_buffer(
+    buffer* buf, unsigned nwritten)
+{
+    buf->size_ -= nwritten;
+    buf->offset_ += nwritten;
+    buf->file_offset_ += nwritten;
+
+    assert(io_uring_sq_space_left(&ring_) >= 1);
+
+    io_uring_sqe* sqe = ::io_uring_get_sqe(&ring_);
+
+    assert(sqe != nullptr);
+
+    ::io_uring_prep_write_fixed(
+        sqe,
+        fd_.get(),
+        buf->data_ + buf->offset_,
+        buf->size_,
+        buf->file_offset_,
+        buf->index_);
+
+    ::io_uring_sqe_set_data(sqe, buf);
+
+    ++pending_cqe_count_;
+
+    ::io_uring_submit(&ring_);
+}
+
+inline void xtr::io_uring_fd_storage::free_buffer(buffer* buf)
+{
+    assert(buf != nullptr);
+    buf->next_ = free_list_;
+    free_list_ = buf;
+}
+
+#endif
+
+#include <cassert>
 
 inline xtr::sink xtr::logger::get_sink(std::string name)
 {
@@ -3673,16 +3990,6 @@ inline void xtr::logger::register_sink(sink& s, std::string name) noexcept
     s.open_ = true;
 }
 
-inline void xtr::logger::set_output_stream(FILE* stream) noexcept
-{
-    set_output_function(detail::make_output_func(stream));
-}
-
-inline void xtr::logger::set_error_stream(FILE* stream) noexcept
-{
-    set_error_function(detail::make_error_func(stream));
-}
-
 inline void xtr::logger::set_command_path(std::string path) noexcept
 {
     post([s = std::move(path)](detail::consumer& c, auto&) mutable
@@ -3692,7 +3999,7 @@ inline void xtr::logger::set_command_path(std::string path) noexcept
 
 inline void xtr::logger::set_log_level_style(log_level_style_t level_style) noexcept
 {
-    post([=](detail::consumer& c, auto&) { c.lstyle = level_style; });
+    post([=](detail::consumer& c, auto&) { c.buf.lstyle = level_style; });
     control_.sync();
 }
 
@@ -3752,6 +4059,7 @@ inline std::unique_ptr<xtr::detail::matcher> xtr::detail::make_matcher(
 }
 
 #include <cassert>
+#include <cerrno>
 
 inline xtr::detail::memory_mapping::memory_mapping(
     void* addr,
@@ -3766,6 +4074,7 @@ inline xtr::detail::memory_mapping::memory_mapping(
     if (mem_ == MAP_FAILED)
     {
         throw_system_error(
+            errno,
             "xtr::detail::memory_mapping::memory_mapping: mmap failed");
     }
 }
@@ -3806,6 +4115,7 @@ inline void xtr::detail::memory_mapping::reset(
 }
 
 #include <cassert>
+#include <cerrno>
 #include <cstdlib>
 #include <random>
 
@@ -3896,6 +4206,7 @@ inline xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping(
         if (!m_)
         {
             throw_system_error(
+                errno,
                 "xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping:"
                 " "
                 "mremap failed");
@@ -3908,6 +4219,7 @@ inline xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping(
         if (!(temp_fd = shm_open_anon(O_RDWR, S_IRUSR | S_IWUSR)))
         {
             throw_system_error(
+                errno,
                 "xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping:"
                 " "
                 "Failed to shm_open backing file");
@@ -3918,6 +4230,7 @@ inline xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping(
         if (::ftruncate(fd, ::off_t(length)) == -1)
         {
             throw_system_error(
+                errno,
                 "xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping:"
                 " "
                 "Failed to ftruncate backing file");
@@ -3952,14 +4265,51 @@ inline xtr::detail::mirrored_memory_mapping::~mirrored_memory_mapping()
     }
 }
 
+#include <cerrno>
+
 #include <unistd.h>
 
 inline std::size_t xtr::detail::align_to_page_size(std::size_t length)
 {
     static const long pagesize(::sysconf(_SC_PAGESIZE));
     if (pagesize == -1)
-        throw_system_error("sysconf(_SC_PAGESIZE) failed");
+        throw_system_error(errno, "sysconf(_SC_PAGESIZE) failed");
     return align(length, std::size_t(pagesize));
+}
+
+#include <cerrno>
+#include <memory>
+#include <utility>
+
+inline xtr::posix_fd_storage::posix_fd_storage(
+    int fd, std::string reopen_path, std::size_t buffer_capacity) :
+    fd_storage_base(fd, std::move(reopen_path)),
+    buf_(new char[buffer_capacity]),
+    buffer_capacity_(buffer_capacity)
+{
+}
+
+inline std::span<char> xtr::posix_fd_storage::allocate_buffer()
+{
+    return {buf_.get(), buffer_capacity_};
+}
+
+inline void xtr::posix_fd_storage::submit_buffer(char* buf, std::size_t size)
+{
+    while (size > 0)
+    {
+        const ::ssize_t nwritten =
+            XTR_TEMP_FAILURE_RETRY(::write(fd_.get(), buf, size));
+        if (nwritten == -1)
+        {
+            detail::throw_system_error_fmt(
+                errno,
+                "xtr::posix_fd_storage::submit_buffer: write failed");
+            return;
+        }
+        size -= std::size_t(nwritten);
+        buf += std::size_t(nwritten);
+    }
 }
 
 #include <cassert>
@@ -4032,7 +4382,7 @@ inline void xtr::sink::close()
 {
     if (open_)
     {
-        sync(/*destroy=*/true);
+        sync_post([](detail::consumer& c) { c.destroy = true; });
         open_ = false;
         buf_.clear();
     }
@@ -4043,19 +4393,27 @@ inline bool xtr::sink::is_open() const noexcept
     return open_;
 }
 
-inline void xtr::sink::sync(bool destroy)
+inline void xtr::sink::sync()
+{
+    sync_post(
+        [](detail::consumer& c)
+        {
+            c.buf.flush();
+            c.buf.storage().sync();
+        });
+}
+
+template<typename Func>
+void xtr::sink::sync_post(Func&& func)
 {
     std::condition_variable cv;
     std::mutex m;
     bool notified = false; // protected by m
 
     post(
-        [&cv, &m, &notified, destroy](detail::consumer& c, auto&)
+        [&cv, &m, &notified, &func](detail::consumer& c, auto&)
         {
-            c.destroy = destroy;
-
-            c.flush();
-            c.sync();
+            func(c);
 
             std::scoped_lock lock{m};
             notified = true;
@@ -4071,7 +4429,6 @@ inline void xtr::sink::set_name(std::string name)
 {
     post([name = std::move(name)](auto&, auto& oldname) mutable
          { oldname = std::move(name); });
-    sync();
 }
 
 inline xtr::sink::~sink()
@@ -4079,11 +4436,11 @@ inline xtr::sink::~sink()
     close();
 }
 
-#include <cerrno>
 #include <cstdarg>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <new>
 #include <stdexcept>
 #include <system_error>
 
@@ -4113,21 +4470,21 @@ inline void xtr::detail::throw_runtime_error_fmt(const char* format, ...)
 #endif
 }
 
-inline void xtr::detail::throw_system_error(const char* what)
+inline void xtr::detail::throw_system_error(int errnum, const char* what)
 {
 #if __cpp_exceptions
     throw std::system_error(
-        std::error_code(errno, std::generic_category()),
+        std::error_code(errnum, std::system_category()),
         what);
 #else
-    std::fprintf(stderr, "system error: %s: %s\n", what, std::strerror(errno));
+    std::fprintf(stderr, "system error: %s: %s\n", what, std::strerror(errnum));
     std::abort();
 #endif
 }
 
-inline void xtr::detail::throw_system_error_fmt(const char* format, ...)
+inline void xtr::detail::throw_system_error_fmt(
+    int errnum, const char* format, ...)
 {
-    const int errnum = errno; // in case vsnprintf modifies errno
     va_list args;
     va_start(args, format);
     ;
@@ -4135,9 +4492,7 @@ inline void xtr::detail::throw_system_error_fmt(const char* format, ...)
     std::vsnprintf(buf, sizeof(buf), format, args);
     va_end(args);
 #if __cpp_exceptions
-    throw std::system_error(
-        std::error_code(errnum, std::generic_category()),
-        buf);
+    throw std::system_error(std::error_code(errnum, std::system_category()), buf);
 #else
     std::fprintf(stderr, "system error: %s: %s\n", buf, std::strerror(errnum));
     std::abort();
@@ -4150,6 +4505,16 @@ inline void xtr::detail::throw_invalid_argument(const char* what)
     throw std::invalid_argument(what);
 #else
     std::fprintf(stderr, "invalid argument: %s\n", what);
+    std::abort();
+#endif
+}
+
+inline void xtr::detail::throw_bad_alloc()
+{
+#if __cpp_exceptions
+    throw std::bad_alloc();
+#else
+    std::fprintf(stderr, "bad alloc\n");
     std::abort();
 #endif
 }

@@ -42,49 +42,13 @@ namespace
     }
 }
 
-#define LOG_BENCH_DISCARD(NAME, X, MSGSIZE)                             \
-    void NAME ## _discard(benchmark::State& state)                      \
-    {                                                                   \
-        xtr::logger log{                                                \
-            [](xtr::log_level_t, const char*, std::size_t size)         \
-            {                                                           \
-                return size;                                            \
-            },                                                          \
-            [](const char*, std::size_t)                                \
-            {                                                           \
-            }};                                                         \
-                                                                        \
-        if (const int cpu = getenv_int("PRODUCER_CPU"); cpu != -1)      \
-            set_thread_attrs(::pthread_self(), cpu);                    \
-                                                                        \
-        if (const int cpu = getenv_int("CONSUMER_CPU"); cpu != -1)      \
-            set_thread_attrs(log.consumer_thread_native_handle(), cpu); \
-                                                                        \
-        xtr::sink p = log.get_sink("Name");                             \
-        std::size_t n = 0;                                              \
-        constexpr std::size_t sync_every = (64 * 1024) / (MSGSIZE);     \
-        for (auto _ : state)                                            \
-        {                                                               \
-            asm volatile("# LLVM-MCA-BEGIN " #NAME);                    \
-            X;                                                          \
-            asm volatile("# LLVM-MCA-END");                             \
-            if (++n % sync_every == 0)                                  \
-            {                                                           \
-                state.PauseTiming();                                    \
-                p.sync();                                               \
-                state.ResumeTiming();                                   \
-            }                                                           \
-        }                                                               \
-    }                                                                   \
-    BENCHMARK(NAME ## _discard);
-
 // The logger has a 64kb ring buffer, msgsize is to ensure that
 // the test isn't bottlenecked on I/O to the log file.
-#define LOG_BENCH_DEV_NULL(NAME, X, MSGSIZE)                            \
-    void NAME ## _devnull(benchmark::State& state)                      \
+#define LOG_BENCH(NAME, X, MSGSIZE)                                     \
+    void NAME(benchmark::State& state)                                  \
     {                                                                   \
         FILE* fp = ::fopen("/dev/null", "w");                           \
-        xtr::logger log{fp, fp};                                        \
+        xtr::logger log{fp};                                            \
                                                                         \
         if (const int cpu = getenv_int("PRODUCER_CPU"); cpu != -1)      \
             set_thread_attrs(::pthread_self(), cpu);                    \
@@ -106,11 +70,7 @@ namespace
             }                                                           \
         }                                                               \
     }                                                                   \
-    BENCHMARK(NAME ## _devnull);
-
-#define LOG_BENCH(NAME, X, MSGSIZE) \
-    LOG_BENCH_DISCARD(NAME, X, MSGSIZE) \
-    LOG_BENCH_DEV_NULL(NAME, X, MSGSIZE)
+    BENCHMARK(NAME);
 
 const std::string s{"Hello"};
 

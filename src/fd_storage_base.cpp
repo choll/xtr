@@ -1,4 +1,4 @@
-// Copyright 2014, 2015, 2019, 2020 Chris E. Holloway
+// Copyright 2022 Chris E. Holloway
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,56 +18,62 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "xtr/detail/file_descriptor.hpp"
+#include "xtr/io/detail/fd_storage_base.hpp"
 #include "xtr/detail/retry.hpp"
 #include "xtr/detail/throw.hpp"
+
+#include <utility>
 
 #include <fcntl.h>
 #include <unistd.h>
 
 XTR_FUNC
-xtr::detail::file_descriptor::file_descriptor(
-    const char* path,
-    int flags,
-    int mode)
+xtr::detail::fd_storage_base::fd_storage_base(int fd, std::string reopen_path)
 :
-    fd_(XTR_TEMP_FAILURE_RETRY(::open(path, flags, mode)))
+    reopen_path_(std::move(reopen_path)),
+    // The input file descriptor is duplicated so that there is no ambiguity
+    // regarding ownership of the fd---we effectively increment a reference
+    // count that we are responsible for decrementing later, and the user
+    // remains responsible for decrementing their own reference count.
+    fd_(::dup(fd))
 {
-    if (fd_ == -1)
+    if (!fd_)
     {
-        throw_system_error_fmt(
+        detail::throw_system_error_fmt(
             errno,
-            "xtr::detail::file_descriptor::file_descriptor: "
-            "Failed to open `%s'", path);
+            "xtr::detail::fd_storage_base::fd_storage_base: dup(2) failed");
     }
 }
 
 XTR_FUNC
-xtr::detail::file_descriptor& xtr::detail::file_descriptor::operator=(
-    xtr::detail::file_descriptor&& other) noexcept
+void xtr::detail::fd_storage_base::sync() noexcept
 {
-    swap(*this, other);
-    return *this;
+    ::fsync(fd_.get());
 }
 
 XTR_FUNC
-xtr::detail::file_descriptor::~file_descriptor()
+int xtr::detail::fd_storage_base::reopen() noexcept
 {
-    reset();
+    if (reopen_path_ == null_reopen_path)
+        return ENOENT;
+
+    const int newfd =
+        XTR_TEMP_FAILURE_RETRY(
+            ::open(
+                reopen_path_.c_str(),
+                O_CREAT|O_APPEND|O_WRONLY,
+                S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH));
+
+    if (newfd == -1)
+        return errno;
+
+    replace_fd(newfd);
+
+    return 0;
 }
 
 XTR_FUNC
-void xtr::detail::file_descriptor::reset(int fd) noexcept
+void xtr::detail::fd_storage_base::replace_fd(int newfd) noexcept
 {
-    // Note that although close() can fail due to EINTR we do not retry. This
-    // is because the state of the file descriptor is unspecified (according to
-    // POSIX) which makes retrying dangerous because if the file descriptor is
-    // closed then a race condition exists---the file descriptor could have
-    // been reused by another thread calling open(), so would be incorrectly
-    // closed if close() is retried. For Linux, the file descriptor is always
-    // closed.
-    if (is_open())
-        (void)::close(fd_);
-    fd_ = fd;
+    fd_.reset(newfd);
 }
-

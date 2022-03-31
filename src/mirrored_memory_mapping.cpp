@@ -25,6 +25,7 @@
 #include "xtr/detail/throw.hpp"
 
 #include <cassert>
+#include <cerrno>
 #include <cstdlib>
 #include <random>
 
@@ -139,6 +140,7 @@ xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping(
         if (!m_)
         {
             throw_system_error(
+                errno,
                 "xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping: "
                 "mremap failed");
         }
@@ -150,6 +152,7 @@ xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping(
         if (!(temp_fd = shm_open_anon(O_RDWR, S_IRUSR|S_IWUSR)))
         {
             throw_system_error(
+                errno,
                 "xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping: "
                 "Failed to shm_open backing file");
         }
@@ -159,6 +162,7 @@ xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping(
         if (::ftruncate(fd, ::off_t(length)) == -1)
         {
             throw_system_error(
+                errno,
                 "xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping: "
                 "Failed to ftruncate backing file");
         }
@@ -192,4 +196,3 @@ xtr::detail::mirrored_memory_mapping::~mirrored_memory_mapping()
             m_.length());
     }
 }
-

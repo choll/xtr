@@ -171,4 +171,3 @@ std::timespec xtr::detail::tsc::to_timespec(tsc ts)
 
     return result;
 }
-

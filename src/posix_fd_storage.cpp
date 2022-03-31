@@ -1,4 +1,4 @@
-// Copyright 2021 Chris E. Holloway
+// Copyright 2022 Chris E. Holloway
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,19 +18,47 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "command_client.hpp"
-#include "xtr/detail/commands/connect.hpp"
+#include "xtr/io/posix_fd_storage.hpp"
+#include "xtr/detail/retry.hpp"
 #include "xtr/detail/throw.hpp"
 
-void xtr::detail::command_client::connect(const std::string& path)
+#include <cerrno>
+#include <memory>
+#include <utility>
+
+XTR_FUNC
+xtr::posix_fd_storage::posix_fd_storage(
+    int fd,
+    std::string reopen_path,
+    std::size_t buffer_capacity)
+:
+    fd_storage_base(fd, std::move(reopen_path)),
+    buf_(new char[buffer_capacity]),
+    buffer_capacity_(buffer_capacity)
 {
-    fd_ = command_connect(path);
-    if (!fd_)
-        throw_system_error_fmt(errno, "Failed to connect to `%s'", path.c_str());
-    cmd_path_ = path;
 }
 
-void xtr::detail::command_client::reconnect()
+XTR_FUNC
+std::span<char> xtr::posix_fd_storage::allocate_buffer()
 {
-    connect(cmd_path_);
+    return {buf_.get(), buffer_capacity_};
+}
+
+XTR_FUNC
+void xtr::posix_fd_storage::submit_buffer(char* buf, std::size_t size)
+{
+    while (size > 0)
+    {
+        const ::ssize_t nwritten =
+            XTR_TEMP_FAILURE_RETRY(::write(fd_.get(), buf, size));
+        if (nwritten == -1)
+        {
+            detail::throw_system_error_fmt(
+                errno,
+                "xtr::posix_fd_storage::submit_buffer: write failed");
+            return;
+        }
+        size -= std::size_t(nwritten);
+        buf += std::size_t(nwritten);
+    }
 }

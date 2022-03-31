@@ -30,10 +30,11 @@ CXXFLAGS += \
 	-pedantic -pipe -pthread
 CPPFLAGS += -MMD -MP -I include $(FMT_CPPFLAGS) -DXTR_FUNC=
 LDFLAGS += -fuse-ld=gold
-LDLIBS += -lxtr
+LDLIBS += -lxtr $(addprefix -l, $(CONAN_LIBS_LIBURING))
 
 TEST_CPPFLAGS = $(CATCH2_CPPFLAGS) 
 TEST_LDFLAGS = -L $(BUILD_DIR) $(FMT_LDFLAGS)
+TEST_LDLIBS = -ldl
 
 BENCH_CPPFLAGS = $(GOOGLE_BENCH_CPPFLAGS)
 BENCH_LDFLAGS = -L $(BUILD_DIR) $(GOOGLE_BENCH_LDFLAGS) $(FMT_LDFLAGS)
@@ -43,11 +44,14 @@ XTRCTL_LDFLAGS = -L $(BUILD_DIR) $(FMT_LDFLAGS)
 
 COVERAGE_CXXFLAGS = --coverage -DNDEBUG
 
-# Use the libfmt submodule if it is present and no include directory for
-# libfmt has been configured (including via Conan).
 ifeq ($(FMT_CPPFLAGS),)
+	# Use the libfmt submodule if it is present and no include directory for
+	# libfmt has been configured (including via Conan).
 	ifneq ($(wildcard third_party/fmt/include),)
 		SUBMODULES_FLAG := 1
+	endif
+	ifneq (,$(wildcard /usr/lib/x86_64-linux-gnu/liburing.a))
+		LDLIBS += -luring
 	endif
 endif
 
@@ -113,18 +117,21 @@ endif
 TARGET = $(BUILD_DIR)/libxtr.a
 SRCS := \
 	src/command_dispatcher.cpp src/command_path.cpp src/consumer.cpp \
-	src/file_descriptor.cpp src/logger.cpp src/log_level.cpp \
-	src/matcher.cpp src/memory_mapping.cpp src/mirrored_memory_mapping.cpp \
-	src/pagesize.cpp src/regex_matcher.cpp src/sink.cpp \
-	src/throw.cpp src/tsc.cpp src/wildcard_matcher.cpp
+	src/buffer.cpp src/fd_storage.cpp src/fd_storage_base.cpp \
+	src/file_descriptor.cpp src/io_uring_fd_storage.cpp src/logger.cpp \
+	src/log_level.cpp src/matcher.cpp src/memory_mapping.cpp \
+	src/mirrored_memory_mapping.cpp src/pagesize.cpp src/posix_fd_storage.cpp \
+	src/regex_matcher.cpp src/sink.cpp src/throw.cpp \
+	src/tsc.cpp src/wildcard_matcher.cpp
+
 OBJS = $(SRCS:%=$(BUILD_DIR)/%.o)
 
 TEST_TARGET = $(BUILD_DIR)/test/test
 TEST_SRCS := \
 	test/align.cpp test/command_client.cpp test/command_dispatcher.cpp \
-	test/file_descriptor.cpp test/logger.cpp test/main.cpp \
-	test/memory_mapping.cpp test/mirrored_memory_mapping.cpp test/pagesize.cpp \
-	test/synchronized_ring_buffer.cpp test/throw.cpp
+	test/fd_storage.cpp test/file_descriptor.cpp test/logger.cpp \
+	test/main.cpp test/memory_mapping.cpp test/mirrored_memory_mapping.cpp \
+	test/pagesize.cpp test/synchronized_ring_buffer.cpp test/throw.cpp
 TEST_OBJS = $(TEST_SRCS:%=$(BUILD_DIR)/%.o)
 
 BENCH_TARGET = $(BUILD_DIR)/benchmark/benchmark
@@ -152,14 +159,16 @@ DEPS = $(OBJS:.o=.d) $(TEST_OBJS:.o=.d) $(BENCH_OBJS:.o=.d) $(XTRCTL_OBJS:.o=.d)
 INCLUDES = \
 	$(wildcard include/xtr/*.hpp) \
 	$(wildcard include/xtr/detail/*.hpp) \
-	$(wildcard include/xtr/detail/commands/*.hpp)
+	$(wildcard include/xtr/detail/commands/*.hpp \
+	$(wildcard include/xtr/io/*.hpp) \
+	$(wildcard include/xtr/io/detail/*.hpp))
 
 $(TARGET): $(OBJS)
 	$(AR) rc $@ $^
 	$(RANLIB) $@
 
 $(TEST_TARGET): $(TARGET) $(TEST_OBJS)
-	$(LINK.cc) -o $@ $(TEST_LDFLAGS) $(TEST_OBJS) $(LDLIBS)
+	$(LINK.cc) -o $@ $(TEST_LDFLAGS) $(TEST_OBJS) $(LDLIBS) $(TEST_LDLIBS)
 
 $(BENCH_TARGET): $(TARGET) $(BENCH_OBJS)
 	$(LINK.cc) -o $@ $(BENCH_LDFLAGS) $(BENCH_OBJS) $(LDLIBS) $(BENCH_LDLIBS)
@@ -241,7 +250,7 @@ ifeq ($(COVERAGE), 0)
 endif
 	$<
 	@mkdir -p $(@D)
-	gcovr --exclude test --exclude third_party --html-detail $@ -r .
+	gcovr --exclude test --exclude third_party --html-details $@ -r .
 
 -include $(DEPS)
 
