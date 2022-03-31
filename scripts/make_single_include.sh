@@ -9,6 +9,7 @@ echo '\n#ifndef XTR_LOGGER_HPP' >> $target
 echo '#define XTR_LOGGER_HPP\n' >> $target
 
 for file in \
+    include/xtr/config.hpp \
     include/xtr/timespec.hpp \
     include/xtr/tags.hpp \
     include/xtr/detail/throw.hpp \
@@ -36,7 +37,6 @@ for file in \
     include/xtr/detail/string_table.hpp \
     include/xtr/detail/trampolines.hpp \
     include/xtr/detail/strzcpy.hpp \
-    include/xtr/config.hpp \
     include/xtr/sink.hpp \
     include/xtr/detail/commands/frame.hpp \
     include/xtr/detail/commands/pattern.hpp \
