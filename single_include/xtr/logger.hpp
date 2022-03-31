@@ -4281,6 +4281,8 @@ inline std::size_t xtr::detail::align_to_page_size(std::size_t length)
 #include <memory>
 #include <utility>
 
+#include <unistd.h>
+
 inline xtr::posix_fd_storage::posix_fd_storage(
     int fd, std::string reopen_path, std::size_t buffer_capacity) :
     fd_storage_base(fd, std::move(reopen_path)),
