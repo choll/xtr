@@ -26,6 +26,8 @@
 #include <memory>
 #include <utility>
 
+#include <unistd.h>
+
 XTR_FUNC
 xtr::posix_fd_storage::posix_fd_storage(
     int fd,
