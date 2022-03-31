@@ -23,9 +23,6 @@ ifeq ($(CXXFLAGS),)
 	DEBUG_CPPFLAGS = -DXTR_ENABLE_TEST_STATIC_ASSERTIONS
 	OPT_CXXFLAGS = -O3 -march=native
 	OPT_CPPFLAGS = -DNDEBUG
-ifneq (,$(wildcard /usr/lib/x86_64-linux-gnu/liburing.a))
-	LDLIBS += -luring
-endif
 endif
 
 CXXFLAGS += \
@@ -47,11 +44,14 @@ XTRCTL_LDFLAGS = -L $(BUILD_DIR) $(FMT_LDFLAGS)
 
 COVERAGE_CXXFLAGS = --coverage -DNDEBUG
 
-# Use the libfmt submodule if it is present and no include directory for
-# libfmt has been configured (including via Conan).
 ifeq ($(FMT_CPPFLAGS),)
+	# Use the libfmt submodule if it is present and no include directory for
+	# libfmt has been configured (including via Conan).
 	ifneq ($(wildcard third_party/fmt/include),)
 		SUBMODULES_FLAG := 1
+	endif
+	ifneq (,$(wildcard /usr/lib/x86_64-linux-gnu/liburing.a))
+		LDLIBS += -luring
 	endif
 endif
 
