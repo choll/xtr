@@ -1,72 +1,33 @@
-
-
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" />
-  
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  
   <title>xtrctl &mdash; XTR Documentation</title>
-  
-
-  
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-
-  
-  
-
-  
-  
-
-  
-
-  
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-    
-      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
         <script src="_static/doctools.js"></script>
-    
-    <script type="text/javascript" src="_static/js/theme.js"></script>
-
-    
+    <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="prev" title="API Reference" href="api.html" /> 
 </head>
 
-<body class="wy-body-for-nav">
-
-   
+<body class="wy-body-for-nav"> 
   <div class="wy-grid-for-nav">
-    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-          
-
-          
             <a href="index.html" class="icon icon-home"> xtr
-          
-
-          
           </a>
-
-          
-            
-            
-          
-
-          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -74,19 +35,8 @@
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-
-          
-        </div>
-
-        
-        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-          
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
     
-            
-            
-              
-            
-            
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quick-Start Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guide.html">User Guide</a></li>
@@ -109,89 +59,48 @@
 </li>
 </ul>
 
-            
-          
     <a href="genindex.html">Index</a>
   
         </div>
-        
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-
-      
-      <nav class="wy-nav-top" aria-label="top navigation">
-        
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="index.html">xtr</a>
-        
       </nav>
 
-
       <div class="wy-nav-content">
-        
         <div class="rst-content">
-        
-          
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div role="navigation" aria-label="breadcrumbs navigation">
-
+          <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-    
       <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
-        
       <li>xtrctl</li>
-    
-    
       <li class="wy-breadcrumbs-aside">
-        
-          
             <a href="_sources/xtrctl.rst.txt" rel="nofollow"> View page source</a>
-          
-        
       </li>
-    
   </ul>
-
-  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-            
-  <div class="section" id="xtrctl">
-<span id="id1"></span><h1>xtrctl<a class="headerlink" href="#xtrctl" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="synopsis">
-<h2>Synopsis<a class="headerlink" href="#synopsis" title="Permalink to this headline">¶</a></h2>
+             
+  <section id="xtrctl">
+<span id="id1"></span><h1>xtrctl<a class="headerlink" href="#xtrctl" title="Permalink to this headline"></a></h1>
+<section id="synopsis">
+<h2>Synopsis<a class="headerlink" href="#synopsis" title="Permalink to this headline"></a></h2>
 <p>xtrctl [–help] &lt;command&gt; [&lt;args&gt;] &lt;socket path&gt;</p>
-</div>
-<div class="section" id="description">
-<h2>Description<a class="headerlink" href="#description" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="description">
+<h2>Description<a class="headerlink" href="#description" title="Permalink to this headline"></a></h2>
 <p>xtrctl is a command line tool that can be used to query the status of log
 sinks, modify log levels and reopen log files (for rotation) for the xtr
 logger.</p>
-</div>
-<div class="section" id="commands">
-<h2>Commands<a class="headerlink" href="#commands" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="querying-sink-status">
-<h3>Querying Sink Status<a class="headerlink" href="#querying-sink-status" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="commands">
+<h2>Commands<a class="headerlink" href="#commands" title="Permalink to this headline"></a></h2>
+<section id="querying-sink-status">
+<h3>Querying Sink Status<a class="headerlink" href="#querying-sink-status" title="Permalink to this headline"></a></h3>
 <p>xtrctl status [options] [pattern] &lt;socket path&gt;</p>
 <p>The status command displays status information for sinks matching the given
 pattern, or for all sinks if no pattern is specified. The sink name, current
@@ -202,17 +111,17 @@ log messages are displayed. For example:</p>
 </div>
 <p>For an explanation of <em>pattern</em> and <em>options</em> please refer to the
 see <a class="reference internal" href="#patterns"><span class="std std-ref">PATTERNS</span></a> and see <a class="reference internal" href="#options"><span class="std std-ref">OPTIONS</span></a> sections.</p>
-</div>
-<div class="section" id="setting-log-levels">
-<h3>Setting Log Levels<a class="headerlink" href="#setting-log-levels" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="setting-log-levels">
+<h3>Setting Log Levels<a class="headerlink" href="#setting-log-levels" title="Permalink to this headline"></a></h3>
 <p>xtrctl level &lt;level&gt; [options] [pattern] &lt;socket path&gt;</p>
 <p>The level command sets the log level to <em>level</em> for sinks matching the given
 pattern, or for all sinks if no pattern is specified. Valid values for <em>level</em>
 are ‘none’, ‘fatal’, ‘error’, ‘warning’, ‘info’ or ‘debug’ (please refer to the
 <a class="reference internal" href="api.html#log-levels"><span class="std std-ref">log levels</span></a> section of the API reference or <strong>libxtr</strong>(3)).</p>
-</div>
-<div class="section" id="reopening-log-files">
-<span id="id2"></span><h3>Reopening Log Files<a class="headerlink" href="#reopening-log-files" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="reopening-log-files">
+<span id="id2"></span><h3>Reopening Log Files<a class="headerlink" href="#reopening-log-files" title="Permalink to this headline"></a></h3>
 <p>xtrctl reopen &lt;socket path&gt;</p>
 <p>The reopen command simply reopens the log file (if a file is being logged to).
 This command exists to support log file rotation by integrating with existing
@@ -227,19 +136,19 @@ the <em>postrotate</em> script defined in logrotate’s configuration file:</p>
 <span class="p">}</span>
 </pre></div>
 </div>
-</div>
-</div>
-<div class="section" id="patterns">
-<span id="id3"></span><h2>Patterns<a class="headerlink" href="#patterns" title="Permalink to this headline">¶</a></h2>
+</section>
+</section>
+<section id="patterns">
+<span id="id3"></span><h2>Patterns<a class="headerlink" href="#patterns" title="Permalink to this headline"></a></h2>
 <p>In the status and level commands <em>pattern</em> is a regular expression or wildcard
 that may be used to selectively apply the command to sinks with names matching
 the given pattern. If no pattern is specified then the command applies to all
 sinks. By default the pattern is interpreted as a basic regular expression,
 to use an extended regular expression or wildcard please refer to the
 <a class="reference internal" href="#options"><span class="std std-ref">OPTIONS</span></a> section.</p>
-</div>
-<div class="section" id="options">
-<span id="id4"></span><h2>Options<a class="headerlink" href="#options" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="options">
+<span id="id4"></span><h2>Options<a class="headerlink" href="#options" title="Permalink to this headline"></a></h2>
 <p>The <em>status</em> and <em>level</em> commands support the following options:</p>
 <dl class="simple">
 <dt><strong>-E, –extended-regexp</strong></dt><dd><p>Interpret <em>pattern</em> as extended regular expressions (see <strong>regex</strong>(7)).</p>
@@ -249,20 +158,20 @@ to use an extended regular expression or wildcard please refer to the
 <dt><strong>-W, –wildcard</strong></dt><dd><p>Interpret <em>pattern</em> options as shell wildcard patterns (see <strong>glob</strong>(7)).</p>
 </dd>
 </dl>
-</div>
-<div class="section" id="socket-paths">
-<span id="id5"></span><h2>Socket Paths<a class="headerlink" href="#socket-paths" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="socket-paths">
+<span id="id5"></span><h2>Socket Paths<a class="headerlink" href="#socket-paths" title="Permalink to this headline"></a></h2>
 <p>Please refer to the documentation for <a class="reference internal" href="api.html#_CPPv4N3xtr20default_command_pathEv" title="xtr::default_command_path"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">xtr::default_command_path()</span></code></a> in
 the API reference or <strong>libxtr</strong>(3) for an explanation of how the default
 socket path is constructed. Custom command paths may be specified either by
 passing an argument to <a class="reference internal" href="api.html#_CPPv4I0EN3xtr6logger6loggerEPKcRR5ClockNSt6stringE17log_level_style_t" title="xtr::logger::logger"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">xtr::logger::logger()</span></code></a> or by calling
 <a class="reference internal" href="api.html#_CPPv4N3xtr6logger16set_command_pathENSt6stringE" title="xtr::logger::set_command_path"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">xtr::logger::set_command_path()</span></code></a>, the documentation for both may also
 be found in the API reference or <strong>libxtr</strong>(3).</p>
-</div>
-<div class="section" id="examples">
-<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline"></a></h2>
 <p>Querying the status of all sinks:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">xtrctl</span> <span class="n">status</span> <span class="o">/</span><span class="n">run</span><span class="o">/</span><span class="n">user</span><span class="o">/</span><span class="mi">1000</span><span class="o">/</span><span class="n">xtrctl</span><span class="mf">.7852.0</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">xtrctl</span> <span class="n">status</span> <span class="o">/</span><span class="n">run</span><span class="o">/</span><span class="n">user</span><span class="o">/</span><span class="mi">1000</span><span class="o">/</span><span class="n">xtrctl</span><span class="o">.</span><span class="mf">7852.0</span>
 <span class="n">Test0</span> <span class="p">(</span><span class="n">info</span><span class="p">)</span> <span class="mi">64</span><span class="n">K</span> <span class="n">capacity</span><span class="p">,</span> <span class="mi">0</span><span class="n">K</span> <span class="n">used</span><span class="p">,</span> <span class="mi">0</span> <span class="n">dropped</span>
 <span class="n">Test1</span> <span class="p">(</span><span class="n">info</span><span class="p">)</span> <span class="mi">64</span><span class="n">K</span> <span class="n">capacity</span><span class="p">,</span> <span class="mi">0</span><span class="n">K</span> <span class="n">used</span><span class="p">,</span> <span class="mi">0</span> <span class="n">dropped</span>
 <span class="n">Test2</span> <span class="p">(</span><span class="n">info</span><span class="p">)</span> <span class="mi">64</span><span class="n">K</span> <span class="n">capacity</span><span class="p">,</span> <span class="mi">0</span><span class="n">K</span> <span class="n">used</span><span class="p">,</span> <span class="mi">0</span> <span class="n">dropped</span>
@@ -271,81 +180,64 @@ be found in the API reference or <strong>libxtr</strong>(3).</p>
 </pre></div>
 </div>
 <p>Setting the level of all sinks to ‘error’:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">xtrctl</span> <span class="n">level</span> <span class="n">error</span> <span class="o">/</span><span class="n">run</span><span class="o">/</span><span class="n">user</span><span class="o">/</span><span class="mi">1000</span><span class="o">/</span><span class="n">xtrctl</span><span class="mf">.7852.0</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">xtrctl</span> <span class="n">level</span> <span class="n">error</span> <span class="o">/</span><span class="n">run</span><span class="o">/</span><span class="n">user</span><span class="o">/</span><span class="mi">1000</span><span class="o">/</span><span class="n">xtrctl</span><span class="o">.</span><span class="mf">7852.0</span>
 <span class="n">Success</span>
 </pre></div>
 </div>
 <p>Setting the level of sinks matching a pattern to ‘warning’:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">xtrctl</span> <span class="n">level</span> <span class="n">warning</span> <span class="s1">&#39;Test[0-2]&#39;</span> <span class="o">/</span><span class="n">run</span><span class="o">/</span><span class="n">user</span><span class="o">/</span><span class="mi">1000</span><span class="o">/</span><span class="n">xtrctl</span><span class="mf">.7852.0</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">xtrctl</span> <span class="n">level</span> <span class="n">warning</span> <span class="s1">&#39;Test[0-2]&#39;</span> <span class="o">/</span><span class="n">run</span><span class="o">/</span><span class="n">user</span><span class="o">/</span><span class="mi">1000</span><span class="o">/</span><span class="n">xtrctl</span><span class="o">.</span><span class="mf">7852.0</span>
 <span class="n">Success</span>
 </pre></div>
 </div>
 <p>Querying the status of sinks matching a pattern:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">xtrctl</span> <span class="n">status</span> <span class="s1">&#39;Test[0-2]&#39;</span> <span class="o">/</span><span class="n">run</span><span class="o">/</span><span class="n">user</span><span class="o">/</span><span class="mi">1000</span><span class="o">/</span><span class="n">xtrctl</span><span class="mf">.7852.0</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">xtrctl</span> <span class="n">status</span> <span class="s1">&#39;Test[0-2]&#39;</span> <span class="o">/</span><span class="n">run</span><span class="o">/</span><span class="n">user</span><span class="o">/</span><span class="mi">1000</span><span class="o">/</span><span class="n">xtrctl</span><span class="o">.</span><span class="mf">7852.0</span>
 <span class="n">Test0</span> <span class="p">(</span><span class="n">warning</span><span class="p">)</span> <span class="mi">64</span><span class="n">K</span> <span class="n">capacity</span><span class="p">,</span> <span class="mi">0</span><span class="n">K</span> <span class="n">used</span><span class="p">,</span> <span class="mi">0</span> <span class="n">dropped</span>
 <span class="n">Test1</span> <span class="p">(</span><span class="n">warning</span><span class="p">)</span> <span class="mi">64</span><span class="n">K</span> <span class="n">capacity</span><span class="p">,</span> <span class="mi">0</span><span class="n">K</span> <span class="n">used</span><span class="p">,</span> <span class="mi">0</span> <span class="n">dropped</span>
 <span class="n">Test2</span> <span class="p">(</span><span class="n">warning</span><span class="p">)</span> <span class="mi">64</span><span class="n">K</span> <span class="n">capacity</span><span class="p">,</span> <span class="mi">0</span><span class="n">K</span> <span class="n">used</span><span class="p">,</span> <span class="mi">0</span> <span class="n">dropped</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="accessing-xtrctl-via-conan">
-<h2>Accessing xtrctl via Conan<a class="headerlink" href="#accessing-xtrctl-via-conan" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="accessing-xtrctl-via-conan">
+<h2>Accessing xtrctl via Conan<a class="headerlink" href="#accessing-xtrctl-via-conan" title="Permalink to this headline"></a></h2>
 <p>Add a <cite>virtualenv</cite> generator, for example if using conanfile.txt:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">generators</span><span class="p">]</span><span class="w"></span>
-<span class="n">virtualenv</span><span class="w"></span>
-<span class="p">...</span><span class="n">etc</span><span class="p">..</span><span class="w"></span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">generators</span><span class="p">]</span>
+<span class="n">virtualenv</span>
+<span class="p">...</span><span class="n">etc</span><span class="p">..</span>
 </pre></div>
 </div>
 <p>After running <code class="code docutils literal notranslate"><span class="pre">conan</span> <span class="pre">install</span></code> run <code class="code docutils literal notranslate"><span class="pre">source</span> <span class="pre">activate.sh</span></code> and xtrctl
 should be in your $PATH.</p>
-</div>
-</div>
+</section>
+</section>
 
 
            </div>
-           
           </div>
-          <footer>
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="api.html" class="btn btn-neutral float-left" title="API Reference" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>
-        &#169; Copyright 2021, Chris E. Holloway.
-
-    </p>
+    <p>&#169; Copyright 2021, Chris E. Holloway.</p>
   </div>
-    
-    
-    
-    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
-    
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    
-    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
 
 </footer>
         </div>
       </div>
-
     </section>
-
   </div>
-  
-
-  <script type="text/javascript">
+  <script>
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-
-  
-  
-    
-   
+  </script> 
 
 </body>
 </html>
