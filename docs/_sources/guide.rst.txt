@@ -542,138 +542,119 @@ the :ref:`xtrctl <xtrctl>` guide.
 Custom Back-ends
 ----------------
 
-The logger allows custom back-ends to be used. This is done by constructing the logger
-with functions that implement the back-end functionality, which are listed below:
+The logger allows custom back-ends to be used. This is done by implementing the
+:cpp:class:`xtr::storage_interface` abstract class:
 
-+----------+-------------------------------------------------------------------------------------+
-| Function | Signature                                                                           |
-+==========+=====================================================================================+
-| Output   | :cpp:func:`::ssize_t out(xtr::log_level_t level, const char* buf, std::size_t size)`|
-+----------+-------------------------------------------------------------------------------------+
-| Error    | :cpp:func:`void err(const char* buf, std::size_t size)`                             |
-+----------+-------------------------------------------------------------------------------------+
-| Flush    | :cpp:func:`void flush()`                                                            |
-+----------+-------------------------------------------------------------------------------------+
-| Sync     | :cpp:func:`void sync()`                                                             |
-+----------+-------------------------------------------------------------------------------------+
-| Reopen   | :cpp:func:`void reopen()`                                                           |
-+----------+-------------------------------------------------------------------------------------+
-| Close    | :cpp:func:`void close()`                                                            |
-+----------+-------------------------------------------------------------------------------------+
+.. code-block:: c++
 
-The constructors to pass these functions to are the
-`basic custom back-end constructor <api.html#_CPPv4I000EN3xtr6logger6loggerERR14OutputFunctionRR13ErrorFunctionRR5ClockNSt6stringE17log_level_style_t>`__
-and the
-`custom back-end constructor <api.html#_CPPv4I0000000EN3xtr6logger6loggerERR14OutputFunctionRR13ErrorFunctionRR13FlushFunctionRR12SyncFunctionRR14ReopenFunctionRR13CloseFunctionRR5ClockNSt6stringE17log_level_style_t>`__.
-The basic constructor only accepts an *output* and *error* function.
+    struct xtr::storage_interface
+    {
+        virtual std::span<char> allocate_buffer() = 0;
+
+        virtual void submit_buffer(char* buf, std::size_t size) = 0;
+
+        virtual void flush() = 0;
+
+        virtual void sync() noexcept = 0;
+
+        virtual int reopen() noexcept = 0;
+
+        virtual ~storage_interface() = default;
+    };
+
+    using storage_interface_ptr = std::unique_ptr<storage_interface>;
+
+Storage interface objects are then passed to the :cpp:type:`xtr::storage_interface_ptr`
+argument of the `custom back-end constructor <api.html#_CPPv4I0EN3xtr6logger6loggerE21storage_interface_ptrRR5ClockNSt6stringE17log_level_style_t>`__.
 
 .. NOTE::
-   All back-end functions are invoked from the logger's background consumer thread.
+   All back-end functions are invoked from the logger's background thread.
 
-:output:
-    The output function is invoked when a log line is produced.
-    The first argument *level* is the log level associated with the
-    statement, the second argument *buf* is a pointer to the formatted
-    statement (including log level, timestamp and sink name), and
-    the third argument *size* is the length in bytes of the formatted
-    statement. This function should return the number of bytes
-    accepted by the back-end, or -1 if an error occurred. Note
-    that it is currently considered an error for a back-end to
-    return anything less than the number of bytes given by the
-    length argument, resulting in the 'error' function being
-    invoked with a "Short write" error string. This requirement
-    may be relaxed in the future.
+:allocate_buffer and submit_buffer:
+    The *allocate_buffer* function is called by the logger to obtain a buffer
+    where formatted log data will be written to. When the logger has finished
+    writing to the buffer it is passed back to the back-end by calling
+    *submit_buffer*.
 
-    .. ATTENTION::
-       The string data pointed to by the *buf* argument is only valid while
-       the output function is being invoked. It must not be accessed after
-       the output function returns.
-
-    .. ATTENTION::
-       The string data pointed to by *buf* is not nul terminated.
-
-:error:
-    The error function is invoked when an error occurs, for example if the
-    output function fails. The first argument *buf* is a pointer to
-    an error description string, the second argument *size* is the length of the
-    string in bytes.
-
-    .. ATTENTION::
-       The string data pointed to by the *buf* argument is only valid while
-       the output function is being invoked. It must not be accessed after
-       the error function returns.
-
-    .. ATTENTION::
-       The string data pointed to by *buf* is not nul terminated.
+    * The logger will not allocate a buffer without first submitting the previous
+      buffer, if one exists.
+    * Only the pointer returned by :cpp:expr:`std::span::data()` will be passed
+      to the *buf* argument of submit_buffer.
+    * Partial buffers may be submitted, i.e. the *size* argument passed to
+      submit_buffer may be smaller than the span returned by allocate_buffer.
+      After a partial buffer is submitted, the logger will allocate a new buffer.
 
 :flush:
-    The flush function is invoked to indicate that the back-end should write
+    The *flush* function is invoked to indicate that the back-end should write
     any buffered data to its associated backing store.
 
 :sync:
-    The sync function is invoked to indicate that the back-end should ensure
+    The *sync* function is invoked to indicate that the back-end should ensure
     that all data written to the associated backing store has reached permanent
     storage.
 
 :reopen:
-    The reopen function is invoked to indicate that if the back-end has a regular
+    The *reopen* function is invoked to indicate that if the back-end has a regular
     file opened for writing log data then the file should be reopened. This is
     intended to be used to implement log rotation via tool such as
     `logrotate(8) <https://www.man7.org/linux/man-pages/man8/logrotate.8.html>`__.
     Please refer to the :ref:`Reopening Log Files <reopening-log-files>` section
     of the :ref:`xtrctl <xtrctl>` documentation for further details.
 
-:close:
-    The close function is invoked to indicate that the back-end should close any
+    The return value should be either zero on success or an
+    `errno(3) <https://www.man7.org/linux/man-pages/man3/errno.3.html>`__
+    compatible error number on failure.
+
+:destructor:
+    Upon destruction the back-end should flush any buffered data and close the
     associated backing store.
 
 Examples
 ~~~~~~~~
 
-Using the
-`basic custom back-end constructor <api.html#_CPPv4I000EN3xtr6logger6loggerERR14OutputFunctionRR13ErrorFunctionRR5ClockNSt6stringE17log_level_style_t>`__
-to send log statements to `syslog(3) <https://www.man7.org/linux/man-pages/man3/syslog.3.html>`__:
+Using the `custom back-end constructor <api.html#_CPPv4I0EN3xtr6logger6loggerE21storage_interface_ptrRR5ClockNSt6stringE17log_level_style_t>`__
+to create a logger with a storage back-end that discards all input:
 
 .. code-block:: c++
 
-    #include <syslog.h>
+    #include <xtr/logger.hpp>
+
+    #include <span>
+    #include <cstddef>
 
     namespace
     {
-        int xtr_to_syslog(xtr::log_level_t level)
+        struct discard_storage : xtr::storage_interface
         {
-            switch (level)
+            std::span<char> allocate_buffer()
             {
-                case xtr::log_level_t::fatal:
-                    return LOG_CRIT;
-                case xtr::log_level_t::error:
-                    return LOG_ERR;
-                case xtr::log_level_t::warning:
-                    return LOG_WARNING;
-                case xtr::log_level_t::info:
-                    return LOG_INFO;
-                case xtr::log_level_t::debug:
-                    return LOG_DEBUG;
+                return buf;
             }
-            __builtin_unreachable();
-        }
+
+            void submit_buffer(char* buf, std::size_t size)
+            {
+            }
+
+            void flush()
+            {
+            }
+
+            void sync() noexcept
+            {
+            }
+
+            int reopen() noexcept
+            {
+                return 0;
+            }
+
+            char buf[1024];
+        };
     }
 
     int main()
     {
-        ::openlog("Example", LOG_PERROR, LOG_USER);
-
-        xtr::logger log(
-            [&](xtr::log_level_t level, const char* buf, std::size_t size)
-            {
-                ::syslog(xtr_to_syslog(level), "%.*s", int(size), buf);
-                return size;
-            },
-            [](const char* buf, std::size_t size)
-            {
-                ::syslog(LOG_ERR, "%.*s", int(size), buf);
-            }
-        );
+        xtr::logger log(std::make_unique<discard_storage>());
 
         xtr::sink s = log.get_sink("Main");
 
@@ -682,7 +663,7 @@ to send log statements to `syslog(3) <https://www.man7.org/linux/man-pages/man3/
         return 0;
     }
 
-View this example on `Compiler Explorer <https://godbolt.org/z/TbPMs49db>`__.
+View this example on `Compiler Explorer <https://godbolt.org/z/W4YE7YqPr>`__.
 
 Custom Log Level Styles
 -----------------------

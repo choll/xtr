@@ -262,7 +262,7 @@ be found in the API reference or <strong>libxtr</strong>(3).</p>
 <div class="section" id="examples">
 <h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h2>
 <p>Querying the status of all sinks:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">xtrctl</span> <span class="n">status</span> <span class="o">/</span><span class="n">run</span><span class="o">/</span><span class="n">user</span><span class="o">/</span><span class="mi">1000</span><span class="o">/</span><span class="n">xtrctl</span><span class="o">.</span><span class="mf">7852.0</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">xtrctl</span> <span class="n">status</span> <span class="o">/</span><span class="n">run</span><span class="o">/</span><span class="n">user</span><span class="o">/</span><span class="mi">1000</span><span class="o">/</span><span class="n">xtrctl</span><span class="mf">.7852.0</span>
 <span class="n">Test0</span> <span class="p">(</span><span class="n">info</span><span class="p">)</span> <span class="mi">64</span><span class="n">K</span> <span class="n">capacity</span><span class="p">,</span> <span class="mi">0</span><span class="n">K</span> <span class="n">used</span><span class="p">,</span> <span class="mi">0</span> <span class="n">dropped</span>
 <span class="n">Test1</span> <span class="p">(</span><span class="n">info</span><span class="p">)</span> <span class="mi">64</span><span class="n">K</span> <span class="n">capacity</span><span class="p">,</span> <span class="mi">0</span><span class="n">K</span> <span class="n">used</span><span class="p">,</span> <span class="mi">0</span> <span class="n">dropped</span>
 <span class="n">Test2</span> <span class="p">(</span><span class="n">info</span><span class="p">)</span> <span class="mi">64</span><span class="n">K</span> <span class="n">capacity</span><span class="p">,</span> <span class="mi">0</span><span class="n">K</span> <span class="n">used</span><span class="p">,</span> <span class="mi">0</span> <span class="n">dropped</span>
@@ -271,17 +271,17 @@ be found in the API reference or <strong>libxtr</strong>(3).</p>
 </pre></div>
 </div>
 <p>Setting the level of all sinks to ‘error’:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">xtrctl</span> <span class="n">level</span> <span class="n">error</span> <span class="o">/</span><span class="n">run</span><span class="o">/</span><span class="n">user</span><span class="o">/</span><span class="mi">1000</span><span class="o">/</span><span class="n">xtrctl</span><span class="o">.</span><span class="mf">7852.0</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">xtrctl</span> <span class="n">level</span> <span class="n">error</span> <span class="o">/</span><span class="n">run</span><span class="o">/</span><span class="n">user</span><span class="o">/</span><span class="mi">1000</span><span class="o">/</span><span class="n">xtrctl</span><span class="mf">.7852.0</span>
 <span class="n">Success</span>
 </pre></div>
 </div>
 <p>Setting the level of sinks matching a pattern to ‘warning’:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">xtrctl</span> <span class="n">level</span> <span class="n">warning</span> <span class="s1">&#39;Test[0-2]&#39;</span> <span class="o">/</span><span class="n">run</span><span class="o">/</span><span class="n">user</span><span class="o">/</span><span class="mi">1000</span><span class="o">/</span><span class="n">xtrctl</span><span class="o">.</span><span class="mf">7852.0</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">xtrctl</span> <span class="n">level</span> <span class="n">warning</span> <span class="s1">&#39;Test[0-2]&#39;</span> <span class="o">/</span><span class="n">run</span><span class="o">/</span><span class="n">user</span><span class="o">/</span><span class="mi">1000</span><span class="o">/</span><span class="n">xtrctl</span><span class="mf">.7852.0</span>
 <span class="n">Success</span>
 </pre></div>
 </div>
 <p>Querying the status of sinks matching a pattern:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">xtrctl</span> <span class="n">status</span> <span class="s1">&#39;Test[0-2]&#39;</span> <span class="o">/</span><span class="n">run</span><span class="o">/</span><span class="n">user</span><span class="o">/</span><span class="mi">1000</span><span class="o">/</span><span class="n">xtrctl</span><span class="o">.</span><span class="mf">7852.0</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">xtrctl</span> <span class="n">status</span> <span class="s1">&#39;Test[0-2]&#39;</span> <span class="o">/</span><span class="n">run</span><span class="o">/</span><span class="n">user</span><span class="o">/</span><span class="mi">1000</span><span class="o">/</span><span class="n">xtrctl</span><span class="mf">.7852.0</span>
 <span class="n">Test0</span> <span class="p">(</span><span class="n">warning</span><span class="p">)</span> <span class="mi">64</span><span class="n">K</span> <span class="n">capacity</span><span class="p">,</span> <span class="mi">0</span><span class="n">K</span> <span class="n">used</span><span class="p">,</span> <span class="mi">0</span> <span class="n">dropped</span>
 <span class="n">Test1</span> <span class="p">(</span><span class="n">warning</span><span class="p">)</span> <span class="mi">64</span><span class="n">K</span> <span class="n">capacity</span><span class="p">,</span> <span class="mi">0</span><span class="n">K</span> <span class="n">used</span><span class="p">,</span> <span class="mi">0</span> <span class="n">dropped</span>
 <span class="n">Test2</span> <span class="p">(</span><span class="n">warning</span><span class="p">)</span> <span class="mi">64</span><span class="n">K</span> <span class="n">capacity</span><span class="p">,</span> <span class="mi">0</span><span class="n">K</span> <span class="n">used</span><span class="p">,</span> <span class="mi">0</span> <span class="n">dropped</span>
@@ -291,9 +291,9 @@ be found in the API reference or <strong>libxtr</strong>(3).</p>
 <div class="section" id="accessing-xtrctl-via-conan">
 <h2>Accessing xtrctl via Conan<a class="headerlink" href="#accessing-xtrctl-via-conan" title="Permalink to this headline">¶</a></h2>
 <p>Add a <cite>virtualenv</cite> generator, for example if using conanfile.txt:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">generators</span><span class="p">]</span>
-<span class="n">virtualenv</span>
-<span class="p">...</span><span class="n">etc</span><span class="p">..</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">generators</span><span class="p">]</span><span class="w"></span>
+<span class="n">virtualenv</span><span class="w"></span>
+<span class="p">...</span><span class="n">etc</span><span class="p">..</span><span class="w"></span>
 </pre></div>
 </div>
 <p>After running <code class="code docutils literal notranslate"><span class="pre">conan</span> <span class="pre">install</span></code> run <code class="code docutils literal notranslate"><span class="pre">source</span> <span class="pre">activate.sh</span></code> and xtrctl
