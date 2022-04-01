@@ -101,6 +101,8 @@ Name                       | Description | Required by targets
 `CATCH2_INCLUDE_DIR`       | Path to the Catch2 include directory | `test`, `run_test`, `coverage_html`
 `GOOGLE_BENCH_INCLUDE_DIR` | Path to the Google Benchmark include directory | `benchmark`, `run_benchmark`
 `GOOGLE_BENCH_LIB_DIR`     | Path to the Google Benchmark lib directory | `benchmark`, `run_benchmark`
+`LIBURING_INCLUDE_DIR` | Path to the liburing include directory | All targets, optional
+`LIBURING_LIB_DIR`     | Path to the liburing lib directory | All targets, optional
 
 ### Building with CMake
 

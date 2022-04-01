@@ -13,6 +13,8 @@ GOOGLE_BENCH_LDFLAGS = $(addprefix -L, $(CONAN_LIB_DIRS_BENCHMARK) $(GOOGLE_BENC
 CATCH2_CPPFLAGS = $(addprefix -isystem, $(CONAN_INCLUDE_DIRS_CATCH2) $(CATCH2_INCLUDE_DIR))
 FMT_CPPFLAGS = $(addprefix -isystem, $(CONAN_INCLUDE_DIRS_FMT) $(FMT_INCLUDE_DIR))
 FMT_LDFLAGS = $(addprefix -L, $(CONAN_LIB_DIRS_FMT) $(FMT_LIB_DIR))
+LIBURING_CPPFLAGS = $(addprefix -isystem, $(CONAN_INCLUDE_DIRS_LIBURING) $(LIBURING_INCLUDE_DIR))
+LIBURING_LDFLAGS = $(addprefix -L, $(CONAN_LIB_DIRS_LIBURING) $(LIBURING_LIB_DIR))
 
 BUILD_DIR := build/$(notdir $(CXX))
 
@@ -28,8 +30,8 @@ endif
 CXXFLAGS += \
 	-std=c++20 -Wall -Wextra -Wconversion -Wshadow -Wcast-qual -Wformat=2 \
 	-pedantic -pipe -pthread
-CPPFLAGS += -MMD -MP -I include $(FMT_CPPFLAGS) -DXTR_FUNC=
-LDFLAGS += -fuse-ld=gold
+CPPFLAGS += -MMD -MP -I include $(FMT_CPPFLAGS) $(LIBURING_CPPFLAGS) -DXTR_FUNC=
+LDFLAGS += -fuse-ld=gold $(LIBURING_LDFLAGS)
 LDLIBS += -lxtr $(addprefix -l, $(CONAN_LIBS_LIBURING))
 
 TEST_CPPFLAGS = $(CATCH2_CPPFLAGS) 
@@ -174,7 +176,7 @@ $(BENCH_TARGET): $(TARGET) $(BENCH_OBJS)
 	$(LINK.cc) -o $@ $(BENCH_LDFLAGS) $(BENCH_OBJS) $(LDLIBS) $(BENCH_LDLIBS)
 
 $(XTRCTL_TARGET): $(TARGET) $(XTRCTL_OBJS)
-	$(LINK.cc) -o $@ $(XTRCTL_LDFLAGS) $(XTRCTL_OBJS) -lxtr
+	$(LINK.cc) -o $@ $(XTRCTL_LDFLAGS) $(XTRCTL_OBJS) $(LDLIBS)
 
 $(OBJS): $(BUILD_DIR)/%.cpp.o: %.cpp
 	@mkdir -p $(@D)
