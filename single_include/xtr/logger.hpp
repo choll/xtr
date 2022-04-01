@@ -3625,6 +3625,7 @@ inline void xtr::detail::fd_storage_base::replace_fd(int newfd) noexcept
 #include <utility>
 
 #include <fcntl.h>
+#include <sys/stat.h>
 #include <sys/syscall.h>
 #include <unistd.h>
 
@@ -4281,7 +4282,6 @@ inline std::size_t xtr::detail::align_to_page_size(std::size_t length)
 #include <memory>
 #include <utility>
 
-#include <sys/stat.h>
 #include <unistd.h>
 
 inline xtr::posix_fd_storage::posix_fd_storage(
