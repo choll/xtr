@@ -174,7 +174,7 @@ $(BENCH_TARGET): $(TARGET) $(BENCH_OBJS)
 	$(LINK.cc) -o $@ $(BENCH_LDFLAGS) $(BENCH_OBJS) $(LDLIBS) $(BENCH_LDLIBS)
 
 $(XTRCTL_TARGET): $(TARGET) $(XTRCTL_OBJS)
-	$(LINK.cc) -o $@ $(XTRCTL_LDFLAGS) $(XTRCTL_OBJS) $(LDLIBS)
+	$(LINK.cc) -o $@ $(XTRCTL_LDFLAGS) $(XTRCTL_OBJS) -lxtr
 
 $(OBJS): $(BUILD_DIR)/%.cpp.o: %.cpp
 	@mkdir -p $(@D)
