@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#if XTR_USE_IO_URING
-
 #include "xtr/config.hpp"
+
+#if XTR_USE_IO_URING
 #include "xtr/io/fd_storage.hpp"
 #include "xtr/io/io_uring_fd_storage.hpp"
 
