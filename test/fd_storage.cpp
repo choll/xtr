@@ -36,6 +36,12 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#if __cpp_exceptions
+#define XTR_REQUIRE_NOERROR(X)  REQUIRE_NOTHROW(X)
+#else
+#define XTR_REQUIRE_NOERROR(X)  X
+#endif
+
 namespace
 {
     const auto submit_next =
@@ -124,8 +130,8 @@ TEST_CASE_METHOD(fixture, "write test", "[fd_storage]")
     for (std::size_t i = 0; i < n; ++i)
     {
         std::span<char> span;
-        REQUIRE_NOTHROW(span = storage_->allocate_buffer());
-        REQUIRE_NOTHROW(storage_->submit_buffer(span.data(), span.size()));
+        XTR_REQUIRE_NOERROR(span = storage_->allocate_buffer());
+        XTR_REQUIRE_NOERROR(storage_->submit_buffer(span.data(), span.size()));
     }
 
     flush_and_sync();
@@ -150,8 +156,8 @@ TEST_CASE_METHOD(fixture, "write more than queue size test", "[fd_storage]")
     for (std::size_t i = 0; i < n; ++i)
     {
         std::span<char> span;
-        REQUIRE_NOTHROW(span = storage_->allocate_buffer());
-        REQUIRE_NOTHROW(storage_->submit_buffer(span.data(), span.size()));
+        XTR_REQUIRE_NOERROR(span = storage_->allocate_buffer());
+        XTR_REQUIRE_NOERROR(storage_->submit_buffer(span.data(), span.size()));
     }
 
     flush_and_sync();
@@ -188,7 +194,7 @@ TEST_CASE_METHOD(fixture, "reopen with writes queued", "[fd_storage]")
     for (std::size_t i = 0; i < xtr::io_uring_fd_storage::default_queue_size; ++i)
     {
         std::span<char> span;
-        REQUIRE_NOTHROW(span = storage_->allocate_buffer());
+        XTR_REQUIRE_NOERROR(span = storage_->allocate_buffer());
         storage_->submit_buffer(span.data(), span.size());
     }
 }

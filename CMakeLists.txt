@@ -15,17 +15,21 @@ find_package(liburing)
 
 file(GLOB_RECURSE HEADER_FILES include/*.hpp)
 
-add_library(${PROJECT_NAME} src/command_dispatcher.cpp
+add_library(${PROJECT_NAME} src/buffer.cpp
+                            src/command_dispatcher.cpp
                             src/command_path.cpp
                             src/consumer.cpp
+                            src/fd_storage_base.cpp
                             src/fd_storage.cpp
                             src/file_descriptor.cpp
+                            src/io_uring_fd_storage.cpp
                             src/logger.cpp
                             src/log_level.cpp
                             src/matcher.cpp
                             src/memory_mapping.cpp
                             src/mirrored_memory_mapping.cpp
                             src/pagesize.cpp
+                            src/posix_fd_storage.cpp
                             src/regex_matcher.cpp
                             src/sink.cpp
                             src/throw.cpp
