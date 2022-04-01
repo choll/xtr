@@ -3577,6 +3577,7 @@ inline void xtr::detail::consumer::reopen_handler(
 #include <utility>
 
 #include <fcntl.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 inline xtr::detail::fd_storage_base::fd_storage_base(
