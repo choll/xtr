@@ -32,6 +32,7 @@
 
 #include <fcntl.h>
 #include <unistd.h>
+#include <sys/stat.h>
 #include <sys/syscall.h>
 
 XTR_FUNC
