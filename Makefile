@@ -30,17 +30,22 @@ endif
 CXXFLAGS += \
 	-std=c++20 -Wall -Wextra -Wconversion -Wshadow -Wcast-qual -Wformat=2 \
 	-pedantic -pipe -pthread
-CPPFLAGS += -MMD -MP -I include $(FMT_CPPFLAGS) $(LIBURING_CPPFLAGS) -DXTR_FUNC=
-LDFLAGS += -fuse-ld=gold $(LIBURING_LDFLAGS)
-LDLIBS += -lxtr $(addprefix -l, $(CONAN_LIBS_LIBURING))
+CPPFLAGS += -MMD -MP -I include $(FMT_CPPFLAGS) -DXTR_FUNC=
+LDFLAGS += -fuse-ld=gold
+LDLIBS += -lxtr
 
 TEST_CPPFLAGS = $(CATCH2_CPPFLAGS) 
 TEST_LDFLAGS = -L $(BUILD_DIR) $(FMT_LDFLAGS)
 TEST_LDLIBS = -ldl
 
-BENCH_CPPFLAGS = $(GOOGLE_BENCH_CPPFLAGS)
-BENCH_LDFLAGS = -L $(BUILD_DIR) $(GOOGLE_BENCH_LDFLAGS) $(FMT_LDFLAGS)
-BENCH_LDLIBS = -lbenchmark
+# Always use the system shared library for unit-tests to allow interposing
+ifneq (,$(wildcard /usr/lib/x86_64-linux-gnu/liburing.so))
+	LDLIBS += -luring
+endif
+
+BENCH_CPPFLAGS = $(GOOGLE_BENCH_CPPFLAGS) $(LIBURING_CPPFLAGS)
+BENCH_LDFLAGS = -L $(BUILD_DIR) $(GOOGLE_BENCH_LDFLAGS) $(FMT_LDFLAGS) $(LIBURING_LDFLAGS)
+BENCH_LDLIBS = -lbenchmark $(addprefix -l, $(CONAN_LIBS_LIBURING))
 
 XTRCTL_LDFLAGS = -L $(BUILD_DIR) $(FMT_LDFLAGS)
 
@@ -52,7 +57,7 @@ ifeq ($(FMT_CPPFLAGS),)
 	ifneq ($(wildcard third_party/fmt/include),)
 		SUBMODULES_FLAG := 1
 	endif
-	ifneq (,$(wildcard /usr/lib/x86_64-linux-gnu/liburing.a))
+	ifneq (,$(wildcard /usr/lib/x86_64-linux-gnu/liburing.so))
 		LDLIBS += -luring
 	endif
 endif
