@@ -166,7 +166,7 @@ public:
      *                   documentation for details.
      */
     template<typename Clock = std::chrono::system_clock>
-    logger(
+    explicit logger(
         FILE* stream = stderr,
         Clock&& clock = Clock(),
         std::string command_path = default_command_path(),
@@ -239,7 +239,7 @@ public:
      *                   documentation for details.
      */
     template<typename Clock = std::chrono::system_clock>
-    logger(
+    explicit logger(
         storage_interface_ptr storage,
         Clock&& clock = Clock(),
         std::string command_path = default_command_path(),
