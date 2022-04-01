@@ -18,6 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#if XTR_USE_IO_URING
+
 #include "xtr/config.hpp"
 #include "xtr/io/fd_storage.hpp"
 #include "xtr/io/io_uring_fd_storage.hpp"
@@ -33,7 +35,6 @@
 #include <dlfcn.h>
 #include <unistd.h>
 
-#if XTR_USE_IO_URING
 namespace
 {
     const auto submit_next =
