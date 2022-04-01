@@ -31,9 +31,9 @@
 #include <utility>
 
 #include <fcntl.h>
-#include <unistd.h>
 #include <sys/stat.h>
 #include <sys/syscall.h>
+#include <unistd.h>
 
 XTR_FUNC
 xtr::storage_interface_ptr xtr::make_fd_storage(const char* path)
