@@ -26,6 +26,7 @@
 #include <memory>
 #include <utility>
 
+#include <sys/stat.h>
 #include <unistd.h>
 
 XTR_FUNC
