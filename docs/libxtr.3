@@ -256,7 +256,7 @@ level_style: The log level style that will be used to prefix each log statement\
 .UNINDENT
 .INDENT 7.0
 .TP
-.B template<typename  Clock  =  std::chrono::system_clock> inline  logger(FILE  *stream  =  stderr, \fI\%Clock\fP  &&clock  =  \fI\%Clock\fP(), std::string  command_path  =  \fI\%default_command_path\fP(), \fI\%log_level_style_t\fP  level_style  =  \fI\%default_log_level_style\fP) 
+.B template<typename  Clock  =  std::chrono::system_clock> inline  explicit  logger(FILE  *stream  =  stderr, \fI\%Clock\fP  &&clock  =  \fI\%Clock\fP(), std::string  command_path  =  \fI\%default_command_path\fP(), \fI\%log_level_style_t\fP  level_style  =  \fI\%default_log_level_style\fP) 
 Stream constructor.
 .sp
 It is expected that this constructor will be used with streams such as stdout or stderr. If a stream that has been opened by the user is to be passed to the logger then the \fI\%stream constructor with reopen path\fP constructor is recommended instead, as this will mean that the log file can be rotated\-\-\-please refer to the xtrctl documentation for the \fI\%reopening log files\fP command for details.
@@ -308,7 +308,7 @@ Reopening the log file via the \fI\%xtrctl\fP tool is supported, with the reopen
 .UNINDENT
 .INDENT 7.0
 .TP
-.B template<typename  Clock  =  std::chrono::system_clock> inline  logger(storage_interface_ptr  storage, \fI\%Clock\fP  &&clock  =  \fI\%Clock\fP(), std::string  command_path  =  \fI\%default_command_path\fP(), \fI\%log_level_style_t\fP  level_style  =  \fI\%default_log_level_style\fP) 
+.B template<typename  Clock  =  std::chrono::system_clock> inline  explicit  logger(storage_interface_ptr  storage, \fI\%Clock\fP  &&clock  =  \fI\%Clock\fP(), std::string  command_path  =  \fI\%default_command_path\fP(), \fI\%log_level_style_t\fP  level_style  =  \fI\%default_log_level_style\fP) 
  Custom back\-end constructor (please refer to the \fI\%custom back\-ends\fP section of the user guide for further details on implementing a custom back\-end).
 .sp
 .INDENT 7.0
