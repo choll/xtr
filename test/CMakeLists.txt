@@ -6,6 +6,7 @@ find_package(Catch2 REQUIRED)
 add_executable(${PROJECT_NAME}  align.cpp
                                 command_client.cpp
                                 command_dispatcher.cpp
+                                fd_storage.cpp
                                 file_descriptor.cpp
                                 logger.cpp
                                 main.cpp
@@ -15,6 +16,10 @@ add_executable(${PROJECT_NAME}  align.cpp
                                 synchronized_ring_buffer.cpp
                                 throw.cpp)
 set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 20)
-target_link_libraries(${PROJECT_NAME} ${CMAKE_PROJECT_NAME} Catch2::Catch2)
+target_link_libraries(${PROJECT_NAME} ${CMAKE_PROJECT_NAME} Catch2::Catch2 dl)
+
+if (EXISTS /usr/lib/x86_64-linux-gnu/liburing.so)
+    target_link_libraries(${PROJECT_NAME} ${CMAKE_PROJECT_NAME} uring)
+endif()
 
 add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME})
