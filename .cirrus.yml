@@ -16,7 +16,7 @@ task:
     - pkg install -y git gmake cmake gcc conan llvm-devel
     - ln -s /usr/local/bin/clang-format12 /usr/bin/clang-format
   script:
-    - ls -l /usr/local/bin/clang-format12 /usr/bin/clang-format
+    - ls -l /usr/local/bin/clang-format* /usr/bin/clang-format*
     - export CC=gcc CXX=g++ RANLIB=gcc-ranlib10 AR=gcc-ar10
     - conan install . --build missing -s compiler.libcxx=libstdc++11
     - gmake all
