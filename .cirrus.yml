@@ -35,7 +35,7 @@ task:
   freebsd_instance:
     image_family: freebsd-14-0-snap
   install_script:
-    - pkg install -y git gmake cmake conan llvm13
+    - pkg install -y git gmake cmake conan llvm13 binutils
     - ln -s /usr/local/bin/clang-format13 /usr/bin/clang-format
   script:
     - export CC=clang13 CXX=clang++13 RANLIB=llvm-ranlib13 AR=llvm-ar13
