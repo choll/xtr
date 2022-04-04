@@ -12,7 +12,7 @@ task:
   name: freebsd-14-gcc-conan
   freebsd_instance:
     image_family: freebsd-14-0-snap
-  install_script: pkg install -y git gmake gcc conan
+  install_script: pkg install -y git gmake cmake gcc conan
   submodules_script:
     - git submodule init
     - git submodule update
