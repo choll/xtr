@@ -35,13 +35,13 @@ task:
   freebsd_instance:
     image_family: freebsd-14-0-snap
   install_script:
-    - pkg install -y git gmake cmake conan llvm12
-    - ln -s /usr/local/bin/clang-format12 /usr/bin/clang-format
+    - pkg install -y git gmake cmake conan llvm13
+    - ln -s /usr/local/bin/clang-format13 /usr/bin/clang-format
   script:
-    - export CC=clang CXX=clang++12 RANLIB=llvm-ranlib12 AR=llvm-ar12
+    - export CC=clang CXX=clang++13 RANLIB=llvm-ranlib13 AR=llvm-ar13
     - conan install . --build missing -s compiler=clang -s compiler.libcxx=libstdc++11
     - gmake all
-  tests_script: CXX=clang++12 RANLIB=llvm-ranlib12 AR=llvm-ar12 gmake check
+  tests_script: CXX=clang++13 RANLIB=llvm-ranlib13 AR=llvm-ar13 gmake check
 task:
   name: freebsd-13-gcc
   freebsd_instance:
