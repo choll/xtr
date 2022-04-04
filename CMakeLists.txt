@@ -11,7 +11,9 @@ option(ENABLE_LTO "Enable link-time optimisation" ON)
 
 find_package(Threads REQUIRED)
 find_package(fmt REQUIRED)
-find_package(liburing)
+if (LINUX)
+    find_package(liburing)
+endif()
 
 file(GLOB_RECURSE HEADER_FILES include/*.hpp)
 
@@ -50,6 +52,9 @@ if (NOT ENABLE_EXCEPTIONS)
 endif()
 
 if (ENABLE_LTO)
+    # CMake's INTERPROCEDURAL_OPTIMIZATION feature isn't used as it does not
+    # use gcc-ranlib and gcc-ar (as recommended by
+    # https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html).
     target_compile_options(${PROJECT_NAME} PRIVATE -flto)
     if (CMAKE_CXX_COMPILER_ID MATCHES ".*GNU")
         find_program(GCC_AR gcc-ar)

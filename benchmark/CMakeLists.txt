@@ -6,4 +6,7 @@ find_package(benchmark REQUIRED)
 add_executable(${PROJECT_NAME}  logger.cpp
                                 main.cpp)
 set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 20)
-target_link_libraries(${PROJECT_NAME} ${CMAKE_PROJECT_NAME} benchmark::benchmark liburing::liburing)
+target_link_libraries(${PROJECT_NAME} ${CMAKE_PROJECT_NAME} benchmark::benchmark)
+if (LINUX)
+    target_link_libraries(${PROJECT_NAME} ${CMAKE_PROJECT_NAME} liburing::liburing)
+endif()
