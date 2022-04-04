@@ -37,7 +37,7 @@ task:
   install_script:
     - pkg install -y git gmake cmake conan llvm13 binutils
   script:
-    - export CC=clang CXX=clang++
+    - export CC=clang13 CXX=clang++13 RANLIB=llvm-ranlib13 AR=llvm-ar13
     - conan install . --build missing
     - gmake all
   tests_script: CXX=clang++13 RANLIB=llvm-ranlib13 AR=llvm-ar13 gmake check
