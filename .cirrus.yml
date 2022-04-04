@@ -19,6 +19,7 @@ task:
   script:
     - export CC=gcc CXX=g++ RANLIB=gcc-ranlib10 AR=gcc-ar10
     - conan install . --build missing -s compiler.libcxx=libstdc++11
+    - alias clang-format=clang-format12
     - gmake all
   tests_script: CXX=g++ RANLIB=gcc-ranlib10 AR=gcc-ar10 gmake check
 task:
