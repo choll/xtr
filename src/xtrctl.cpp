@@ -34,6 +34,7 @@
 #include <map>
 #include <stdexcept>
 #include <string_view>
+#include <vector>
 
 #include <getopt.h>
 
