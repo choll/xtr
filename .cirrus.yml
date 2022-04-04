@@ -38,7 +38,7 @@ task:
     - pkg install -y git gmake cmake conan llvm13
     - ln -s /usr/local/bin/clang-format13 /usr/bin/clang-format
   script:
-    - export CC=clang CXX=clang++13 RANLIB=llvm-ranlib13 AR=llvm-ar13
+    - export CC=clang13 CXX=clang++13 RANLIB=llvm-ranlib13 AR=llvm-ar13
     - conan install . --build missing -s compiler=clang -s compiler.libcxx=libstdc++11
     - gmake all
   tests_script: CXX=clang++13 RANLIB=llvm-ranlib13 AR=llvm-ar13 gmake check
