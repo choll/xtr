@@ -17,7 +17,7 @@ task:
     - git submodule init
     - git submodule update
   script:
-    - export CXX=g++ RANLIB=gcc-ranlib10 AR=gcc-ar10
+    - export CC=gcc CXX=g++ RANLIB=gcc-ranlib10 AR=gcc-ar10
     - conan install .
     - gmake all
   tests_script: CXX=g++ RANLIB=gcc-ranlib10 AR=gcc-ar10 gmake check
