@@ -29,7 +29,7 @@ jobs:
       run: |
         mkdir build && cd build
         conan install .. -g cmake_find_package --build missing -s compiler.libcxx=libstdc++11
-        cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MODULE_PATH=${PWD} -DBUILD_TESTING=ON -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INSTALL_PREFIX=/tmp/install
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_MODULE_PATH=${PWD} -DBUILD_TESTING=ON -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INSTALL_PREFIX=/tmp/install
         cmake --build .
     - name: test
       run: cd build/ && cmake --build . --target test
