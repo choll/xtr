@@ -39,7 +39,7 @@ task:
     - ln -s /usr/local/bin/clang-format13 /usr/bin/clang-format
   script:
     - export CC=clang13 CXX=clang++13 RANLIB=llvm-ranlib13 AR=llvm-ar13
-    - conan install . --build missing -s compiler=clang -s compiler.libcxx=libstdc++11
+    - conan install . --build missing
     - gmake all
   tests_script: CXX=clang++13 RANLIB=llvm-ranlib13 AR=llvm-ar13 gmake check
 task:
