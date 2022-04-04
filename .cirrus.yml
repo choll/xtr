@@ -13,7 +13,7 @@ task:
   freebsd_instance:
     image_family: freebsd-14-0-snap
   install_script:
-    - pkg install -y git gmake cmake gcc conan llvm-devel
+    - pkg install -y git gmake cmake gcc conan llvm12
     - ln -s /usr/local/bin/clang-format12 /usr/bin/clang-format
   script:
     - ls -l /usr/local/bin/clang-format* /usr/bin/clang-format*
