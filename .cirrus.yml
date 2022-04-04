@@ -31,7 +31,7 @@ task:
     - export CC=gcc CXX=g++ RANLIB=gcc-ranlib10 AR=gcc-ar10
     - mkdir build && cd build
     - conan install .. -g cmake_find_package --build missing -s compiler.libcxx=libstdc++11
-    - cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_MODULE_PATH=${PWD} -DBUILD_TESTING=ON -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INSTALL_PREFIX=/tmp/install
+    - cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_MODULE_PATH=${PWD} -DBUILD_TESTING=ON -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INSTALL_PREFIX=/tmp/install -DCMAKE_AR=`which $AR` -DCMAKE_RANLIB=`which $RANLIB`
     - cmake --build .
     - cmake --build . --target install
   tests_script: cmake --build . --target test
