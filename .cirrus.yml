@@ -34,7 +34,7 @@ task:
     - cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_MODULE_PATH=${PWD} -DBUILD_TESTING=ON -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INSTALL_PREFIX=/tmp/install -DCMAKE_AR=`which $AR` -DCMAKE_RANLIB=`which $RANLIB`
     - cmake --build .
     - cmake --build . --target install
-  tests_script: cmake --build . --target test
+  tests_script: cd build && cmake --build . --target test
 task:
   name: freebsd-14-clang
   freebsd_instance:
