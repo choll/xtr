@@ -42,34 +42,34 @@ namespace
     }
 }
 
-// The logger has a 64kb ring buffer, msgsize is to ensure that
+// The logger has a fixed size ring buffer, msgsize is to ensure that
 // the test isn't bottlenecked on I/O to the log file.
-#define LOG_BENCH(NAME, X, MSGSIZE)                                     \
-    void NAME(benchmark::State& state)                                  \
-    {                                                                   \
-        FILE* fp = ::fopen("/dev/null", "w");                           \
-        xtr::logger log{fp};                                            \
-                                                                        \
-        if (const int cpu = getenv_int("PRODUCER_CPU"); cpu != -1)      \
-            set_thread_attrs(::pthread_self(), cpu);                    \
-                                                                        \
-        if (const int cpu = getenv_int("CONSUMER_CPU"); cpu != -1)      \
-            set_thread_attrs(log.consumer_thread_native_handle(), cpu); \
-                                                                        \
-        xtr::sink p = log.get_sink("Name");                             \
-        std::size_t n = 0;                                              \
-        constexpr std::size_t sync_every = (64 * 1024) / (MSGSIZE);     \
-        for (auto _ : state)                                            \
-        {                                                               \
-            X;                                                          \
-            if (++n % sync_every == 0)                                  \
-            {                                                           \
-                state.PauseTiming();                                    \
-                p.sync();                                               \
-                state.ResumeTiming();                                   \
-            }                                                           \
-        }                                                               \
-    }                                                                   \
+#define LOG_BENCH(NAME, X, MSGSIZE)                                         \
+    void NAME(benchmark::State& state)                                      \
+    {                                                                       \
+        FILE* fp = ::fopen("/dev/null", "w");                               \
+        xtr::logger log{fp};                                                \
+                                                                            \
+        if (const int cpu = getenv_int("PRODUCER_CPU"); cpu != -1)          \
+            set_thread_attrs(::pthread_self(), cpu);                        \
+                                                                            \
+        if (const int cpu = getenv_int("CONSUMER_CPU"); cpu != -1)          \
+            set_thread_attrs(log.consumer_thread_native_handle(), cpu);     \
+                                                                            \
+        xtr::sink p = log.get_sink("Name");                                 \
+        std::size_t n = 0;                                                  \
+        constexpr std::size_t sync_every = XTR_SINK_CAPACITY / (MSGSIZE);   \
+        for (auto _ : state)                                                \
+        {                                                                   \
+            X;                                                              \
+            if (++n % sync_every == 0)                                      \
+            {                                                               \
+                state.PauseTiming();                                        \
+                p.sync();                                                   \
+                state.ResumeTiming();                                       \
+            }                                                               \
+        }                                                                   \
+    }                                                                       \
     BENCHMARK(NAME);
 
 const std::string s{"Hello"};
