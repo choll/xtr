@@ -22,7 +22,6 @@ jobs:
           --install /usr/bin/clang clang /usr/bin/clang-12 100
         sudo update-alternatives \
           --install /usr/bin/clang++ clang++ /usr/bin/clang++-12 100
-        export CC=clang++ CXX=clang++
 
     - name: install conan
       run: sudo pip install conan
@@ -30,8 +29,8 @@ jobs:
     - name: build with cmake
       run: |
         mkdir build && cd build/
-        conan install .. -g cmake_find_package --build missing -s compiler=clang -s compiler.version=12 -s compiler.libcxx=libstdc++11
-        cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MODULE_PATH=${PWD} -DBUILD_TESTING=ON -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INSTALL_PREFIX=/tmp/install
+        CC=clang++ CXX=clang++ conan install .. -g cmake_find_package --build missing -s compiler=clang -s compiler.version=12 -s compiler.libcxx=libstdc++11
+        CC=clang++ CXX=clang++ cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MODULE_PATH=${PWD} -DBUILD_TESTING=ON -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INSTALL_PREFIX=/tmp/install
         cmake --build .
     - name: test
       run: cd build/ && cmake --build . --target test
