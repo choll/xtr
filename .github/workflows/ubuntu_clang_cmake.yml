@@ -1,0 +1,38 @@
+name: Ubuntu-Clang-CMake
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: setup clang
+      run: |
+        sudo update-alternatives \
+          --install /usr/lib/llvm llvm /usr/lib/llvm-12 100 \
+          --slave /usr/bin/llvm-ar llvm-ar /usr/bin/llvm-ar-12 \
+          --slave /usr/bin/llvm-ranlib llvm-ranlib /usr/bin/llvm-ranlib-12
+        sudo update-alternatives \
+          --install /usr/bin/clang clang /usr/bin/clang-12 100
+        sudo update-alternatives \
+          --install /usr/bin/clang++ clang++ /usr/bin/clang++-12 100
+
+    - name: install conan
+      run: sudo pip install conan
+
+    - name: build with cmake
+      run: |
+        mkdir build && cd build/
+        conan install .. -g cmake_find_package --build missing -s compiler.libcxx=libstdc++11
+        CXX=clang++ cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MODULE_PATH=${PWD} -DBUILD_TESTING=ON -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INSTALL_PREFIX=/tmp/install
+        cmake --build .
+    - name: test
+      run: cd build/ && cmake --build . --target test
+    - name: install
+      run: cd build/ && cmake --build . --target install
