@@ -12,13 +12,20 @@
 #include <string_view>
 
 #include <pthread.h>
+#if __has_include(<pthread_np.h>)
+#include <pthread_np.h>
+#endif
 #include <sched.h>
 
 namespace
 {
     void set_thread_attrs(pthread_t thread, int cpu)
     {
+#if defined(__FreeBSD__)
+        cpuset_t cpus;
+#else
         cpu_set_t cpus;
+#endif
         CPU_ZERO(&cpus);
         CPU_SET(cpu, &cpus);
         if (::pthread_setaffinity_np(thread, sizeof(cpus), &cpus) != 0)
