@@ -28,9 +28,13 @@ jobs:
 
     - name: build with cmake
       run: |
-        mkdir build && cd build/
-        CC=clang-12 CXX=clang++-12 conan install .. -g cmake_find_package --build missing -s compiler=clang -s compiler.version=12 -s compiler.libcxx=libstdc++11
-        CC=clang-12 CXX=clang++-12 cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MODULE_PATH=${PWD} -DBUILD_TESTING=ON -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INSTALL_PREFIX=/tmp/install
+        mkdir build && cd build
+        ls -l $(which clang)
+        ls -l $(which clang++)
+        ls -l $(which llvm-ar)
+        ls -l $(which llvm-ranlib)
+        CC=clang CXX=clang++ conan install .. -g cmake_find_package --build missing -s compiler=clang -s compiler.version=12 -s compiler.libcxx=libstdc++11
+        CC=clang CXX=clang++ cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MODULE_PATH=${PWD} -DBUILD_TESTING=ON -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INSTALL_PREFIX=/tmp/install
         cmake --build .
     - name: test
       run: cd build/ && cmake --build . --target test
