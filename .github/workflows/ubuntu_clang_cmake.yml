@@ -22,6 +22,8 @@ jobs:
           --install /usr/bin/clang clang /usr/bin/clang-12 1000
         sudo update-alternatives \
           --install /usr/bin/clang++ clang++ /usr/bin/clang++-12 1000
+        sudo update-alternatives \
+          --install /usr/bin/clang-format clang-format /usr/bin/clang-format-12 1000
 
     - name: install conan
       run: sudo pip install conan

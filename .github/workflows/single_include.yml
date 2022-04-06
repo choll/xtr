@@ -22,7 +22,6 @@ jobs:
           --slave /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib-10
         sudo update-alternatives \
           --install /usr/bin/clang-format clang-format /usr/bin/clang-format-12 1000
-        sudo update-alternatives --set clang-format /usr/bin/clang-format-12
 
     - name: init submodules
       run: git submodule init
