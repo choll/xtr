@@ -33,6 +33,8 @@ jobs:
         ls -l /etc/alternatives/clang++
         ls -l /etc/alternatives/llvm-ar
         ls -l /etc/alternatives/llvm-ranlib
+        update-alternatives --display clang
+        update-alternatives --display clang++
         clang --version
         clang++ --version
         llvm-ar --version
