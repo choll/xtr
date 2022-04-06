@@ -12,15 +12,15 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: install gcc
+    - name: setup gcc
       run: |
         sudo update-alternatives \
-          --install /usr/bin/gcc gcc /usr/bin/gcc-10 100 \
+          --install /usr/bin/gcc gcc /usr/bin/gcc-10 1000 \
           --slave /usr/bin/g++ g++ /usr/bin/g++-10 \
           --slave /usr/bin/gcc-ar gcc-ar /usr/bin/gcc-ar-10 \
           --slave /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib-10
         sudo update-alternatives \
-          --install /usr/bin/clang-format clang-format /usr/bin/clang-format-12 100
+          --install /usr/bin/clang-format clang-format /usr/bin/clang-format-12 1000
         sudo update-alternatives --set clang-format /usr/bin/clang-format-12
 
     - name: install conan
@@ -28,7 +28,7 @@ jobs:
 
     - name: build with cmake
       run: |
-        mkdir build && cd build/
+        mkdir build && cd build
         conan install .. -g cmake_find_package --build missing -s compiler.libcxx=libstdc++11
         cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MODULE_PATH=${PWD} -DBUILD_TESTING=ON -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INSTALL_PREFIX=/tmp/install
         cmake --build .

@@ -15,13 +15,13 @@ jobs:
     - name: set symlinks
       run: |
         sudo update-alternatives \
-          --install /usr/bin/gcc gcc /usr/bin/gcc-10 100 \
+          --install /usr/bin/gcc gcc /usr/bin/gcc-10 1000 \
           --slave /usr/bin/g++ g++ /usr/bin/g++-10 \
           --slave /usr/bin/gcov gcov /usr/bin/gcov-10 \
           --slave /usr/bin/gcc-ar gcc-ar /usr/bin/gcc-ar-10 \
           --slave /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib-10
         sudo update-alternatives \
-          --install /usr/bin/clang-format clang-format /usr/bin/clang-format-12 100
+          --install /usr/bin/clang-format clang-format /usr/bin/clang-format-12 1000
         sudo update-alternatives --set clang-format /usr/bin/clang-format-12
 
     - name: init submodules

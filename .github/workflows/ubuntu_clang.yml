@@ -17,16 +17,16 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: set symlinks
+    - name: setup clang
       run: |
         sudo update-alternatives \
-          --install /usr/lib/llvm llvm /usr/lib/llvm-12 100 \
+          --install /usr/lib/llvm llvm /usr/lib/llvm-12 1000 \
           --slave /usr/bin/llvm-ar llvm-ar /usr/bin/llvm-ar-12 \
           --slave /usr/bin/llvm-ranlib llvm-ranlib /usr/bin/llvm-ranlib-12
         sudo update-alternatives \
-          --install /usr/bin/clang clang /usr/bin/clang-12 100
+          --install /usr/bin/clang clang /usr/bin/clang-12 1000
         sudo update-alternatives \
-          --install /usr/bin/clang++ clang++ /usr/bin/clang++-12 100
+          --install /usr/bin/clang++ clang++ /usr/bin/clang++-12 1000
 
     - name: init submodules
       run: git submodule init

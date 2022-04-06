@@ -15,13 +15,13 @@ jobs:
     - name: setup clang
       run: |
         sudo update-alternatives \
-          --install /usr/lib/llvm llvm /usr/lib/llvm-12 100 \
+          --install /usr/lib/llvm llvm /usr/lib/llvm-12 1000 \
           --slave /usr/bin/llvm-ar llvm-ar /usr/bin/llvm-ar-12 \
           --slave /usr/bin/llvm-ranlib llvm-ranlib /usr/bin/llvm-ranlib-12
         sudo update-alternatives \
-          --install /usr/bin/clang clang /usr/bin/clang-12 100
+          --install /usr/bin/clang clang /usr/bin/clang-12 1000
         sudo update-alternatives \
-          --install /usr/bin/clang++ clang++ /usr/bin/clang++-12 100
+          --install /usr/bin/clang++ clang++ /usr/bin/clang++-12 1000
 
     - name: install conan
       run: sudo pip install conan
@@ -29,16 +29,6 @@ jobs:
     - name: build with cmake
       run: |
         mkdir build && cd build
-        ls -l /etc/alternatives/clang
-        ls -l /etc/alternatives/clang++
-        ls -l /etc/alternatives/llvm-ar
-        ls -l /etc/alternatives/llvm-ranlib
-        update-alternatives --display clang
-        update-alternatives --display clang++
-        clang --version
-        clang++ --version
-        llvm-ar --version
-        llvm-ranlib --version
         CC=clang CXX=clang++ conan install .. -g cmake_find_package --build missing -s compiler=clang -s compiler.version=12 -s compiler.libcxx=libstdc++11
         CC=clang CXX=clang++ cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MODULE_PATH=${PWD} -DBUILD_TESTING=ON -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INSTALL_PREFIX=/tmp/install
         cmake --build .
