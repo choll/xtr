@@ -56,6 +56,7 @@ if (ENABLE_LTO)
     # use gcc-ranlib and gcc-ar (as recommended by
     # https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html).
     target_compile_options(${PROJECT_NAME} PRIVATE -flto)
+    target_link_options(${PROJECT_NAME} PRIVATE -flto)
     if (CMAKE_CXX_COMPILER_ID MATCHES ".*GNU")
         find_program(GCC_AR gcc-ar)
         if (GCC_AR)
