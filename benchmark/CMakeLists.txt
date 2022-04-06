@@ -7,6 +7,6 @@ add_executable(${PROJECT_NAME}  logger.cpp
                                 main.cpp)
 set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 20)
 target_link_libraries(${PROJECT_NAME} ${CMAKE_PROJECT_NAME} benchmark::benchmark)
-if (LINUX)
+if (CMAKE_SYSTEM MATCHES "Linux")
     target_link_libraries(${PROJECT_NAME} ${CMAKE_PROJECT_NAME} liburing::liburing)
 endif()
