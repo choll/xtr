@@ -1,0 +1,39 @@
+name: Ubuntu-Clang-Conan
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        except: [1, 0]
+        pic: [1, 0]
+        rtti: [1, 0]
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: setup clang
+      run: |
+        sudo update-alternatives \
+          --install /usr/lib/llvm llvm /usr/lib/llvm-12 1000 \
+          --slave /usr/bin/llvm-ar llvm-ar /usr/bin/llvm-ar-12 \
+          --slave /usr/bin/llvm-ranlib llvm-ranlib /usr/bin/llvm-ranlib-12
+        sudo update-alternatives \
+          --install /usr/bin/clang clang /usr/bin/clang-12 1000
+        sudo update-alternatives \
+          --install /usr/bin/clang++ clang++ /usr/bin/clang++-12 1000
+          
+    - name: install conan
+      run: sudo pip install conan
+    - name: install dependencies
+      run: CC=clang CXX=clang++ conan install . --build missing -s compiler=clang -s compiler.libcxx=libstdc++11
+
+    - name: make
+      run: CXX=clang++ make -j2 EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}} RTTI=${{matrix.rtti}} all
+    - name: test
+      run: CXX=clang++ make -j2 EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}} RTTI=${{matrix.rtti}} check
