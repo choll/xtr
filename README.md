@@ -6,7 +6,9 @@
 [![Ubuntu-GCC-CMake](https://github.com/choll/xtr/actions/workflows/ubuntu_gcc_cmake.yml/badge.svg)](https://github.com/choll/xtr/actions/workflows/ubuntu_gcc_cmake.yml)
 
 [![Ubuntu-Clang](https://github.com/choll/xtr/actions/workflows/ubuntu_clang.yml/badge.svg)](https://github.com/choll/xtr/actions/workflows/ubuntu_clang.yml)
+[![Ubuntu-Clang-Conan](https://github.com/choll/xtr/workflows/Ubuntu-Clang-Conan/badge.svg)](https://github.com/choll/xtr/actions?query=workflow%3AUbuntu-Clang-Conan)
 [![Ubuntu-Clang-Sanitizer](https://github.com/choll/xtr/actions/workflows/ubuntu_clang_sanitizer.yml/badge.svg)](https://github.com/choll/xtr/actions/workflows/ubuntu_clang_sanitizer.yml)
+[![Ubuntu-Clang-CMake](https://github.com/choll/xtr/actions/workflows/ubuntu_clang_cmake.yml/badge.svg)](https://github.com/choll/xtr/actions/workflows/ubuntu_clang_cmake.yml)
 
 [![FreeBSD-13-GCC](https://api.cirrus-ci.com/github/choll/xtr.svg?task=freebsd-13-gcc)](https://cirrus-ci.com/github/choll/xtr)
 [![FreeBSD-14-GCC](https://api.cirrus-ci.com/github/choll/xtr.svg?task=freebsd-14-gcc)](https://cirrus-ci.com/github/choll/xtr)
@@ -39,7 +41,7 @@ are made when a log statement is made.
 * Ability to modify log levels via an external command.
 * Non-printable characters are sanitized for safety (to prevent terminal escape sequence injection attacks).
 * Formatting done via fmtlib.
-* Support for custom I/O back-ends (e.g. to log to the network or syslogd).
+* Support for custom I/O back-ends (e.g. to log to the network).
 * Support for logrotate integration.
 * Support for systemd journal integration.
 
