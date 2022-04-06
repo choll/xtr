@@ -29,10 +29,14 @@ jobs:
     - name: build with cmake
       run: |
         mkdir build && cd build
-        ls -l $(which clang)
-        ls -l $(which clang++)
-        ls -l $(which llvm-ar)
-        ls -l $(which llvm-ranlib)
+        ls -l /etc/alternatives/clang
+        ls -l /etc/alternatives/clang++
+        ls -l /etc/alternatives/llvm-ar
+        ls -l /etc/alternatives/llvm-ranlib
+        clang --version
+        clang++ --version
+        llvm-ar --version
+        llvm-ranlib --version
         CC=clang CXX=clang++ conan install .. -g cmake_find_package --build missing -s compiler=clang -s compiler.version=12 -s compiler.libcxx=libstdc++11
         CC=clang CXX=clang++ cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MODULE_PATH=${PWD} -DBUILD_TESTING=ON -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INSTALL_PREFIX=/tmp/install
         cmake --build .
