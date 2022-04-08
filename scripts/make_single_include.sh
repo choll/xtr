@@ -86,6 +86,6 @@ grep -hEv '^ *//|^#include "' \
     src/wildcard_matcher.cpp  >> $target
 echo '#endif' >> $target
 
-sed -isav 's/XTR_FUNC/inline/g' $target
+sed -i.sav 's/XTR_FUNC/inline/g' $target
 
 clang-format -i single_include/xtr/logger.hpp

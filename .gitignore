@@ -40,3 +40,4 @@ conanbuildinfo.mak
 conanbuildinfo.txt
 conaninfo.txt
 graph_info.json
+single_include/xtr/logger.hpp.sav
