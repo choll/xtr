@@ -33,6 +33,13 @@
 // https://github.com/torvalds/linux/blob/master/tools/power/x86/turbostat/turbostat.c
 
 XTR_FUNC
+std::uint64_t xtr::detail::get_tsc_hz() noexcept
+{
+    __extension__ static std::uint64_t tsc_hz = read_tsc_hz() ?: estimate_tsc_hz();
+    return tsc_hz;
+}
+
+XTR_FUNC
 std::uint64_t xtr::detail::read_tsc_hz() noexcept
 {
     constexpr int tsc_leaf = 0x15;

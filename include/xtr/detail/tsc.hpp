@@ -13,15 +13,9 @@ namespace xtr::detail
 {
     struct tsc;
 
+    std::uint64_t get_tsc_hz() noexcept;
     std::uint64_t read_tsc_hz() noexcept;
     std::uint64_t estimate_tsc_hz() noexcept;
-
-    inline std::uint64_t get_tsc_hz() noexcept
-    {
-        __extension__ static std::uint64_t tsc_hz =
-            read_tsc_hz() ?: estimate_tsc_hz();
-        return tsc_hz;
-    }
 }
 
 struct xtr::detail::tsc
