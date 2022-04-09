@@ -905,15 +905,9 @@ namespace xtr::detail
 {
     struct tsc;
 
+    std::uint64_t get_tsc_hz() noexcept;
     std::uint64_t read_tsc_hz() noexcept;
     std::uint64_t estimate_tsc_hz() noexcept;
-
-    inline std::uint64_t get_tsc_hz() noexcept
-    {
-        __extension__ static std::uint64_t tsc_hz =
-            read_tsc_hz() ?: estimate_tsc_hz();
-        return tsc_hz;
-    }
 }
 
 struct xtr::detail::tsc
@@ -2933,6 +2927,7 @@ public:
                 std::move(command_path)),
             make_clock(std::forward<Clock>(clock)));
         control_.open_ = true;
+        (void)detail::get_tsc_hz();
     }
 
     /**
@@ -4529,6 +4524,13 @@ inline void xtr::detail::throw_bad_alloc()
 #include <thread>
 
 #include <time.h>
+
+inline std::uint64_t xtr::detail::get_tsc_hz() noexcept
+{
+    __extension__ static std::uint64_t tsc_hz =
+        read_tsc_hz() ?: estimate_tsc_hz();
+    return tsc_hz;
+}
 
 inline std::uint64_t xtr::detail::read_tsc_hz() noexcept
 {
