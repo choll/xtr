@@ -2,19 +2,24 @@
 
 [![Ubuntu-GCC](https://github.com/choll/xtr/workflows/Ubuntu-GCC/badge.svg)](https://github.com/choll/xtr/actions?query=workflow%3AUbuntu-GCC)
 [![Ubuntu-GCC-Conan](https://github.com/choll/xtr/workflows/Ubuntu-GCC-Conan/badge.svg)](https://github.com/choll/xtr/actions?query=workflow%3AUbuntu-GCC-Conan)
-[![Ubuntu-GCC-Sanitizer](https://github.com/choll/xtr/workflows/Ubuntu-GCC-Sanitizer/badge.svg)](https://github.com/choll/xtr/actions?query=workflow%3AUbuntu-GCC-Sanitizer)
 [![Ubuntu-GCC-CMake](https://github.com/choll/xtr/actions/workflows/ubuntu_gcc_cmake.yml/badge.svg)](https://github.com/choll/xtr/actions/workflows/ubuntu_gcc_cmake.yml)
+[![Ubuntu-GCC-Sanitizer](https://github.com/choll/xtr/workflows/Ubuntu-GCC-Sanitizer/badge.svg)](https://github.com/choll/xtr/actions?query=workflow%3AUbuntu-GCC-Sanitizer)
 
 [![Ubuntu-Clang](https://github.com/choll/xtr/actions/workflows/ubuntu_clang.yml/badge.svg)](https://github.com/choll/xtr/actions/workflows/ubuntu_clang.yml)
 [![Ubuntu-Clang-Conan](https://github.com/choll/xtr/workflows/Ubuntu-Clang-Conan/badge.svg)](https://github.com/choll/xtr/actions?query=workflow%3AUbuntu-Clang-Conan)
-[![Ubuntu-Clang-Sanitizer](https://github.com/choll/xtr/actions/workflows/ubuntu_clang_sanitizer.yml/badge.svg)](https://github.com/choll/xtr/actions/workflows/ubuntu_clang_sanitizer.yml)
 [![Ubuntu-Clang-CMake](https://github.com/choll/xtr/actions/workflows/ubuntu_clang_cmake.yml/badge.svg)](https://github.com/choll/xtr/actions/workflows/ubuntu_clang_cmake.yml)
+[![Ubuntu-Clang-Sanitizer](https://github.com/choll/xtr/actions/workflows/ubuntu_clang_sanitizer.yml/badge.svg)](https://github.com/choll/xtr/actions/workflows/ubuntu_clang_sanitizer.yml)
+
+[![FreeBSD-14-GCC](https://api.cirrus-ci.com/github/choll/xtr.svg?task=freebsd-14-gcc)](https://cirrus-ci.com/github/choll/xtr)
+[![FreeBSD-14-GCC-Conan](https://api.cirrus-ci.com/github/choll/xtr.svg?task=freebsd-14-gcc-conan)](https://cirrus-ci.com/github/choll/xtr)
+[![FreeBSD-14-GCC-CMake](https://api.cirrus-ci.com/github/choll/xtr.svg?task=freebsd-14-gcc-cmake)](https://cirrus-ci.com/github/choll/xtr)
+
+[![FreeBSD-14-Clang](https://api.cirrus-ci.com/github/choll/xtr.svg?task=freebsd-14-clang)](https://cirrus-ci.com/github/choll/xtr)
+[![FreeBSD-14-Clang-Conan](https://api.cirrus-ci.com/github/choll/xtr.svg?task=freebsd-14-clang-conan)](https://cirrus-ci.com/github/choll/xtr)
+[![FreeBSD-14-Clang-CMake](https://api.cirrus-ci.com/github/choll/xtr.svg?task=freebsd-14-clang-cmake)](https://cirrus-ci.com/github/choll/xtr)
 
 [![FreeBSD-13-GCC](https://api.cirrus-ci.com/github/choll/xtr.svg?task=freebsd-13-gcc)](https://cirrus-ci.com/github/choll/xtr)
-[![FreeBSD-14-GCC](https://api.cirrus-ci.com/github/choll/xtr.svg?task=freebsd-14-gcc)](https://cirrus-ci.com/github/choll/xtr)
-
 [![FreeBSD-13-Clang](https://api.cirrus-ci.com/github/choll/xtr.svg?task=freebsd-13-clang)](https://cirrus-ci.com/github/choll/xtr)
-[![FreeBSD-14-Clang](https://api.cirrus-ci.com/github/choll/xtr.svg?task=freebsd-14-clang)](https://cirrus-ci.com/github/choll/xtr)
 
 [![codecov](https://codecov.io/gh/choll/xtr/branch/master/graph/badge.svg?token=FDdI0ZM5tv)](https://codecov.io/gh/choll/xtr)
 [![Documentation](https://github.com/choll/xtr/actions/workflows/docs.yml/badge.svg)](https://choll.github.io/xtr)

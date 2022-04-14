@@ -26,6 +26,7 @@
 #include "io/storage_interface.hpp"
 #include "detail/consumer.hpp"
 #include "detail/string_ref.hpp"
+#include "xtr/detail/tsc.hpp"
 #include "log_macros.hpp"
 #include "log_level.hpp"
 #include "sink.hpp"
@@ -259,6 +260,11 @@ public:
         // Passing control_ to the consumer is equivalent to calling
         // register_sink, so mark it as open.
         control_.open_ = true;
+        // On some CPUs the TSC frequency is obtained by estimation. get_tsc_hz
+        // is called here to force the estimation to run here rather than on
+        // the consumer thread, in order to prevent the consumer thread from
+        // stalling while the estimation runs.
+        (void)detail::get_tsc_hz();
     }
 
     /**
