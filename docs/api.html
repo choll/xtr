@@ -44,12 +44,9 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">API Reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#log-macros">Log Macros</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#basic-macros">Basic Macros</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#timestamped-macros">Timestamped Macros</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#tsc">TSC</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#real-time-clock">Real-Time Clock</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#user-supplied-timestamp">User-Supplied Timestamp</a></li>
-</ul>
-</li>
+<li class="toctree-l3"><a class="reference internal" href="#time-stamp-counter-timestamped-macros">Time-Stamp Counter Timestamped Macros</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#real-time-clock-timestamped-macros">Real-Time Clock Timestamped Macros</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#user-supplied-timestamp-macros">User-Supplied Timestamp Macros</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#logger">Logger</a></li>
@@ -57,6 +54,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#nocopy">Nocopy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#log-levels">Log Levels</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#log-level-styles">Log Level Styles</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#storage-interfaces">Storage Interfaces</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#default-command-path">Default Command Path</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#null-command-path">Null Command Path</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#configuration-variables">Configuration Variables</a></li>
@@ -97,6 +95,10 @@
 <span id="id1"></span><h2>Log Macros<a class="headerlink" href="#log-macros" title="Permalink to this headline"></a></h2>
 <section id="basic-macros">
 <span id="id2"></span><h3>Basic Macros<a class="headerlink" href="#basic-macros" title="Permalink to this headline"></a></h3>
+<p>The following macros log without reading the time of day at the point of
+logging, instead it is read when the log message is received by the background
+thread. Use these macros if a loss of timestamp accuracy is acceptable to gain
+performance.</p>
 <dl class="cpp macro">
 <dt class="sig sig-object cpp" id="c.XTR_LOG">
 <span class="target" id="log__macros_8hpp_1afccfe93e240adc0620c7c82918263fb2"></span><span class="sig-name descname"><span class="n"><span class="pre">XTR_LOG</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">SINK</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XTR_LOG" title="Permalink to this definition"></a><br /></dt>
@@ -138,10 +140,11 @@
 </dd></dl>
 
 </section>
-<section id="timestamped-macros">
-<h3>Timestamped Macros<a class="headerlink" href="#timestamped-macros" title="Permalink to this headline"></a></h3>
-<section id="tsc">
-<span id="tsc-macros"></span><h4>TSC<a class="headerlink" href="#tsc" title="Permalink to this headline"></a></h4>
+<section id="time-stamp-counter-timestamped-macros">
+<span id="tsc-macros"></span><h3>Time-Stamp Counter Timestamped Macros<a class="headerlink" href="#time-stamp-counter-timestamped-macros" title="Permalink to this headline"></a></h3>
+<p>The following macros log and read the time-stamp counter at the point of
+logging. Use these macros if the most accurate timestamps are required. On some
+systems reading rdtsc may be slower than using the real-time clock (see below).</p>
 <dl class="cpp macro">
 <dt class="sig sig-object cpp" id="c.XTR_LOG_TSC">
 <span class="target" id="log__macros_8hpp_1a6ddb487b65cfa3398dd42c5357fe2906"></span><span class="sig-name descname"><span class="n"><span class="pre">XTR_LOG_TSC</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">SINK</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XTR_LOG_TSC" title="Permalink to this definition"></a><br /></dt>
@@ -183,8 +186,10 @@
 </dd></dl>
 
 </section>
-<section id="real-time-clock">
-<span id="rtc-macros"></span><h4>Real-Time Clock<a class="headerlink" href="#real-time-clock" title="Permalink to this headline"></a></h4>
+<section id="real-time-clock-timestamped-macros">
+<span id="rtc-macros"></span><h3>Real-Time Clock Timestamped Macros<a class="headerlink" href="#real-time-clock-timestamped-macros" title="Permalink to this headline"></a></h3>
+<p>The following macros log and read the system real-time clock at the point of
+logging. Use these macros if accurate timestamps are required.</p>
 <dl class="cpp macro">
 <dt class="sig sig-object cpp" id="c.XTR_LOG_RTC">
 <span class="target" id="log__macros_8hpp_1a87d6001cf0ec22748893a3275cb4310a"></span><span class="sig-name descname"><span class="n"><span class="pre">XTR_LOG_RTC</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">SINK</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XTR_LOG_RTC" title="Permalink to this definition"></a><br /></dt>
@@ -226,8 +231,9 @@
 </dd></dl>
 
 </section>
-<section id="user-supplied-timestamp">
-<span id="user-supplied-timestamp-macros"></span><h4>User-Supplied Timestamp<a class="headerlink" href="#user-supplied-timestamp" title="Permalink to this headline"></a></h4>
+<section id="user-supplied-timestamp-macros">
+<span id="id3"></span><h3>User-Supplied Timestamp Macros<a class="headerlink" href="#user-supplied-timestamp-macros" title="Permalink to this headline"></a></h3>
+<p>The following macros log and accept a user-supplied timestamp.</p>
 <dl class="cpp macro">
 <dt class="sig sig-object cpp" id="c.XTR_LOG_TS">
 <span class="target" id="log__macros_8hpp_1a3b6d7cd3d6c5e7106330a354c3edc1e8"></span><span class="sig-name descname"><span class="n"><span class="pre">XTR_LOG_TS</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">SINK</span></span>, <span class="n"><span class="pre">TS</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XTR_LOG_TS" title="Permalink to this definition"></a><br /></dt>
@@ -276,9 +282,8 @@
 
 </section>
 </section>
-</section>
 <section id="logger">
-<span id="id3"></span><h2>Logger<a class="headerlink" href="#logger" title="Permalink to this headline"></a></h2>
+<span id="id4"></span><h2>Logger<a class="headerlink" href="#logger" title="Permalink to this headline"></a></h2>
 <dl class="cpp class">
 <dt class="sig sig-object cpp" id="_CPPv4N3xtr6loggerE">
 <span id="_CPPv3N3xtr6loggerE"></span><span id="_CPPv2N3xtr6loggerE"></span><span id="xtr::logger"></span><span class="target" id="classxtr_1_1logger"></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">xtr</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">logger</span></span></span><a class="headerlink" href="#_CPPv4N3xtr6loggerE" title="Permalink to this definition"></a><br /></dt>
@@ -321,7 +326,7 @@
 <span id="_CPPv3I0EN3xtr6logger6loggerENSt6stringEP4FILERR5ClockNSt6stringE17log_level_style_t"></span><span id="_CPPv2I0EN3xtr6logger6loggerENSt6stringEP4FILERR5ClockNSt6stringE17log_level_style_t"></span><span class="k"><span class="pre">template</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">typename</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Clock</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">chrono</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">system_clock</span></span><span class="p"><span class="pre">&gt;</span></span><br /><span class="target" id="classxtr_1_1logger_1a72c5e9086627d5581f8aa91569ca83c0"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">logger</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">reopen_path</span></span>, <span class="n"><span class="pre">FILE</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n sig-param"><span class="pre">stream</span></span>, <a class="reference internal" href="#_CPPv4I0EN3xtr6logger6loggerENSt6stringEP4FILERR5ClockNSt6stringE17log_level_style_t" title="xtr::logger::logger::Clock"><span class="n"><span class="pre">Clock</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">clock</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I0EN3xtr6logger6loggerENSt6stringEP4FILERR5ClockNSt6stringE17log_level_style_t" title="xtr::logger::logger::Clock"><span class="n"><span class="pre">Clock</span></span></a><span class="p"><span class="pre">(</span></span><span class="p"><span class="pre">)</span></span>, <span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">command_path</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N3xtr20default_command_pathEv" title="xtr::default_command_path"><span class="n"><span class="pre">default_command_path</span></span></a><span class="p"><span class="pre">(</span></span><span class="p"><span class="pre">)</span></span>, <a class="reference internal" href="#_CPPv4N3xtr17log_level_style_tE" title="xtr::log_level_style_t"><span class="n"><span class="pre">log_level_style_t</span></span></a><span class="w"> </span><span class="n sig-param"><span class="pre">level_style</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N3xtr23default_log_level_styleE11log_level_t" title="xtr::default_log_level_style"><span class="n"><span class="pre">default_log_level_style</span></span></a><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4I0EN3xtr6logger6loggerENSt6stringEP4FILERR5ClockNSt6stringE17log_level_style_t" title="Permalink to this definition"></a><br /></dt>
 <dd><p><span class="target" id="classxtr_1_1logger_1stream-with-reopen-ctor"></span> Stream constructor with reopen path.</p>
 <p><ul class="simple">
-<li><p>reopen_path: The path of the file associated with the stream argument. This path will be used to reopen the stream if requested via the <a class="reference external" href="xtrctl.html#rotating-log-files">xtrctl</a> tool. </p></li>
+<li><p>reopen_path: The path of the file associated with the stream argument. This path will be used to reopen the stream if requested via the xtrctl <a class="reference external" href="xtrctl.html#reopening-log-files">reopen command</a>. Pass <a class="reference internal" href="#namespacextr_1a2d114b47712f1720d195475122cfa99d"><span class="std std-ref">null_reopen_path</span></a> if no filename is associated with the stream. </p></li>
 <li><p>stream: The stream to write log statements to. </p></li>
 <li><p>clock: Please refer to the <a class="reference internal" href="#classxtr_1_1logger_1clock_arg"><span class="std std-ref">description</span></a> above. </p></li>
 <li><p>command_path: Please refer to the <a class="reference internal" href="#classxtr_1_1logger_1command_path_arg"><span class="std std-ref">description</span></a> above. </p></li>
@@ -336,10 +341,10 @@
 
 <dl class="cpp function">
 <dt class="sig sig-object cpp" id="_CPPv4I0EN3xtr6logger6loggerE21storage_interface_ptrRR5ClockNSt6stringE17log_level_style_t">
-<span id="_CPPv3I0EN3xtr6logger6loggerE21storage_interface_ptrRR5ClockNSt6stringE17log_level_style_t"></span><span id="_CPPv2I0EN3xtr6logger6loggerE21storage_interface_ptrRR5ClockNSt6stringE17log_level_style_t"></span><span class="k"><span class="pre">template</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">typename</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Clock</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">chrono</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">system_clock</span></span><span class="p"><span class="pre">&gt;</span></span><br /><span class="target" id="classxtr_1_1logger_1adc6456726360fa3357e8f634015b52fc"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="k"><span class="pre">explicit</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">logger</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">storage_interface_ptr</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">storage</span></span>, <a class="reference internal" href="#_CPPv4I0EN3xtr6logger6loggerE21storage_interface_ptrRR5ClockNSt6stringE17log_level_style_t" title="xtr::logger::logger::Clock"><span class="n"><span class="pre">Clock</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">clock</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I0EN3xtr6logger6loggerE21storage_interface_ptrRR5ClockNSt6stringE17log_level_style_t" title="xtr::logger::logger::Clock"><span class="n"><span class="pre">Clock</span></span></a><span class="p"><span class="pre">(</span></span><span class="p"><span class="pre">)</span></span>, <span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">command_path</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N3xtr20default_command_pathEv" title="xtr::default_command_path"><span class="n"><span class="pre">default_command_path</span></span></a><span class="p"><span class="pre">(</span></span><span class="p"><span class="pre">)</span></span>, <a class="reference internal" href="#_CPPv4N3xtr17log_level_style_tE" title="xtr::log_level_style_t"><span class="n"><span class="pre">log_level_style_t</span></span></a><span class="w"> </span><span class="n sig-param"><span class="pre">level_style</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N3xtr23default_log_level_styleE11log_level_t" title="xtr::default_log_level_style"><span class="n"><span class="pre">default_log_level_style</span></span></a><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4I0EN3xtr6logger6loggerE21storage_interface_ptrRR5ClockNSt6stringE17log_level_style_t" title="Permalink to this definition"></a><br /></dt>
+<span id="_CPPv3I0EN3xtr6logger6loggerE21storage_interface_ptrRR5ClockNSt6stringE17log_level_style_t"></span><span id="_CPPv2I0EN3xtr6logger6loggerE21storage_interface_ptrRR5ClockNSt6stringE17log_level_style_t"></span><span class="k"><span class="pre">template</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">typename</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Clock</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">chrono</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">system_clock</span></span><span class="p"><span class="pre">&gt;</span></span><br /><span class="target" id="classxtr_1_1logger_1adc6456726360fa3357e8f634015b52fc"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="k"><span class="pre">explicit</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">logger</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4N3xtr21storage_interface_ptrE" title="xtr::storage_interface_ptr"><span class="n"><span class="pre">storage_interface_ptr</span></span></a><span class="w"> </span><span class="n sig-param"><span class="pre">storage</span></span>, <a class="reference internal" href="#_CPPv4I0EN3xtr6logger6loggerE21storage_interface_ptrRR5ClockNSt6stringE17log_level_style_t" title="xtr::logger::logger::Clock"><span class="n"><span class="pre">Clock</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">clock</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I0EN3xtr6logger6loggerE21storage_interface_ptrRR5ClockNSt6stringE17log_level_style_t" title="xtr::logger::logger::Clock"><span class="n"><span class="pre">Clock</span></span></a><span class="p"><span class="pre">(</span></span><span class="p"><span class="pre">)</span></span>, <span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">command_path</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N3xtr20default_command_pathEv" title="xtr::default_command_path"><span class="n"><span class="pre">default_command_path</span></span></a><span class="p"><span class="pre">(</span></span><span class="p"><span class="pre">)</span></span>, <a class="reference internal" href="#_CPPv4N3xtr17log_level_style_tE" title="xtr::log_level_style_t"><span class="n"><span class="pre">log_level_style_t</span></span></a><span class="w"> </span><span class="n sig-param"><span class="pre">level_style</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N3xtr23default_log_level_styleE11log_level_t" title="xtr::default_log_level_style"><span class="n"><span class="pre">default_log_level_style</span></span></a><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4I0EN3xtr6logger6loggerE21storage_interface_ptrRR5ClockNSt6stringE17log_level_style_t" title="Permalink to this definition"></a><br /></dt>
 <dd><p><span class="target" id="classxtr_1_1logger_1back-end-ctor"></span> Custom back-end constructor (please refer to the <a class="reference external" href="guide.html#custom-back-ends">custom back-ends</a> section of the user guide for further details on implementing a custom back-end).</p>
 <p><ul class="simple">
-<li><p>storage: Unique pointer to an object implementing the storage_interface interface. The logger will invoke methods on this object from the background thread in order to write log data to whatever underlying storage medium is implemented by the object, such as disk, network, dot-matrix printer etc. </p></li>
+<li><p>storage: Unique pointer to an object implementing the <a class="reference internal" href="#structxtr_1_1storage__interface"><span class="std std-ref">storage_interface</span></a> interface. The logger will invoke methods on this object from the background thread in order to write log data to whatever underlying storage medium is implemented by the object, such as disk, network, dot-matrix printer etc. </p></li>
 <li><p>clock: Please refer to the <a class="reference internal" href="#classxtr_1_1logger_1clock_arg"><span class="std std-ref">description</span></a> above. </p></li>
 <li><p>command_path: Please refer to the <a class="reference internal" href="#classxtr_1_1logger_1command_path_arg"><span class="std std-ref">description</span></a> above. </p></li>
 <li><p>level_style: The log level style that will be used to prefix each log statement—please refer to the <a class="reference internal" href="#namespacextr_1adc7f88f1bb8a0b81ac9dfe9822800ddb"><span class="std std-ref">log_level_style_t</span></a> documentation for details. </p></li>
@@ -404,7 +409,7 @@
 
 </section>
 <section id="sink">
-<span id="id4"></span><h2>Sink<a class="headerlink" href="#sink" title="Permalink to this headline"></a></h2>
+<span id="id5"></span><h2>Sink<a class="headerlink" href="#sink" title="Permalink to this headline"></a></h2>
 <dl class="cpp class">
 <dt class="sig sig-object cpp" id="_CPPv4N3xtr4sinkE">
 <span id="_CPPv3N3xtr4sinkE"></span><span id="_CPPv2N3xtr4sinkE"></span><span id="xtr::sink"></span><span class="target" id="classxtr_1_1sink"></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">xtr</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">sink</span></span></span><a class="headerlink" href="#_CPPv4N3xtr4sinkE" title="Permalink to this definition"></a><br /></dt>
@@ -480,7 +485,7 @@
 <dl class="cpp function">
 <dt class="sig sig-object cpp" id="_CPPv4NK3xtr4sink8capacityEv">
 <span id="_CPPv3NK3xtr4sink8capacityEv"></span><span id="_CPPv2NK3xtr4sink8capacityEv"></span><span id="xtr::sink::capacityC"></span><span class="target" id="classxtr_1_1sink_1a007f7528ca83580012569a7ee5f3c6a8"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">capacity</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK3xtr4sink8capacityEv" title="Permalink to this definition"></a><br /></dt>
-<dd><p>Returns the capacity (in bytes) of the queue that the sink uses to send log data to the background thread. </p>
+<dd><p>Returns the capacity (in bytes) of the queue that the sink uses to send log data to the background thread. To override the sink capacity set <a class="reference internal" href="#config_8hpp_1a7832600aca4b47118053ba4fdc5ee017"><span class="std std-ref">XTR_SINK_CAPACITY</span></a> in xtr/config.hpp. </p>
 </dd></dl>
 
 </div>
@@ -497,11 +502,12 @@
 
 </section>
 <section id="log-levels">
-<span id="id5"></span><h2>Log Levels<a class="headerlink" href="#log-levels" title="Permalink to this headline"></a></h2>
+<span id="id6"></span><h2>Log Levels<a class="headerlink" href="#log-levels" title="Permalink to this headline"></a></h2>
 <dl class="cpp enum-class">
 <dt class="sig sig-object cpp" id="_CPPv4N3xtr11log_level_tE">
 <span id="_CPPv3N3xtr11log_level_tE"></span><span id="_CPPv2N3xtr11log_level_tE"></span><span class="target" id="namespacextr_1afb0918f4447c35720ed0eb78fbd054b5"></span><span class="k"><span class="pre">enum</span></span><span class="w"> </span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">xtr</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">log_level_t</span></span></span><a class="headerlink" href="#_CPPv4N3xtr11log_level_tE" title="Permalink to this definition"></a><br /></dt>
-<dd><p><em>Values:</em></p>
+<dd><p>Passed to <a class="reference internal" href="#log__macros_8hpp_1a86a961bfbcd5bf0945b9ef83503c958a"><span class="std std-ref">XTR_LOGL</span></a>, <a class="reference internal" href="#log__macros_8hpp_1a0405f0c4588ff06710d8c36c98b3ade3"><span class="std std-ref">XTR_LOGL_TSC</span></a> etc to indicate the severity of the log message. </p>
+<p><em>Values:</em></p>
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N3xtr11log_level_t4noneE">
 <span id="_CPPv3N3xtr11log_level_t4noneE"></span><span id="_CPPv2N3xtr11log_level_t4noneE"></span><span class="target" id="namespacextr_1afb0918f4447c35720ed0eb78fbd054b5a334c4a4c42fdb79d7ebc3e73b517e6f8"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">none</span></span></span><a class="headerlink" href="#_CPPv4N3xtr11log_level_t4noneE" title="Permalink to this definition"></a><br /></dt>
@@ -559,6 +565,162 @@ disabled. Fatal log statements will still call
 </dd></dl>
 
 </section>
+<section id="storage-interfaces">
+<h2>Storage Interfaces<a class="headerlink" href="#storage-interfaces" title="Permalink to this headline"></a></h2>
+<dl class="cpp struct">
+<dt class="sig sig-object cpp" id="_CPPv4N3xtr17storage_interfaceE">
+<span id="_CPPv3N3xtr17storage_interfaceE"></span><span id="_CPPv2N3xtr17storage_interfaceE"></span><span id="xtr::storage_interface"></span><span class="target" id="structxtr_1_1storage__interface"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">xtr</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">storage_interface</span></span></span><a class="headerlink" href="#_CPPv4N3xtr17storage_interfaceE" title="Permalink to this definition"></a><br /></dt>
+<dd><p>Interface allowing custom back-ends to be implemented. To create a custom back-end, inherit from storage_interfance, implement all pure-virtual functions then pass a <a class="reference internal" href="#namespacextr_1a4c3140022d59ef9afa82f2f7607ef49a"><span class="std std-ref">storage_interface_ptr</span></a> pointing to an instance of the custom back-end to <a class="reference internal" href="#classxtr_1_1logger_1back-end-ctor"><span class="std std-ref">logger::logger</span></a>. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xtr17storage_interface15allocate_bufferEv">
+<span id="_CPPv3N3xtr17storage_interface15allocate_bufferEv"></span><span id="_CPPv2N3xtr17storage_interface15allocate_bufferEv"></span><span id="xtr::storage_interface::allocate_buffer"></span><span class="target" id="structxtr_1_1storage__interface_1aa4ca6b8fa95ffd252c81dbea79b254a9"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">span</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">char</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">allocate_buffer</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N3xtr17storage_interface15allocate_bufferEv" title="Permalink to this definition"></a><br /></dt>
+<dd><p>Allocates a buffer for formatted log data to be written to. Once a buffer has been allocated, allocate_buffer will not be called again until the buffer has been submitted via <a class="reference internal" href="#structxtr_1_1storage__interface_1acf8ac9eceebefd95b4f2389baaa17978"><span class="std std-ref">submit_buffer</span></a>. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xtr17storage_interface13submit_bufferEPcNSt6size_tE">
+<span id="_CPPv3N3xtr17storage_interface13submit_bufferEPcNSt6size_tE"></span><span id="_CPPv2N3xtr17storage_interface13submit_bufferEPcNSt6size_tE"></span><span id="xtr::storage_interface::submit_buffer__cP.std::s"></span><span class="target" id="structxtr_1_1storage__interface_1acf8ac9eceebefd95b4f2389baaa17978"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">submit_buffer</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n sig-param"><span class="pre">buf</span></span>, <span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">size</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N3xtr17storage_interface13submit_bufferEPcNSt6size_tE" title="Permalink to this definition"></a><br /></dt>
+<dd><p>Submits a buffer containing formatted log data to be written. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xtr17storage_interface5flushEv">
+<span id="_CPPv3N3xtr17storage_interface5flushEv"></span><span id="_CPPv2N3xtr17storage_interface5flushEv"></span><span id="xtr::storage_interface::flush"></span><span class="target" id="structxtr_1_1storage__interface_1a50460ecaf83ccd3196dbe1e77efd7cd5"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">flush</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N3xtr17storage_interface5flushEv" title="Permalink to this definition"></a><br /></dt>
+<dd><p>Invoked to indicate that the back-end should write any buffered data to its associated backing store. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xtr17storage_interface4syncEv">
+<span id="_CPPv3N3xtr17storage_interface4syncEv"></span><span id="_CPPv2N3xtr17storage_interface4syncEv"></span><span id="xtr::storage_interface::sync"></span><span class="target" id="structxtr_1_1storage__interface_1af6b7a6ab86907d67949e3090121e1200"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">sync</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">noexcept</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N3xtr17storage_interface4syncEv" title="Permalink to this definition"></a><br /></dt>
+<dd><p>Invoked to indicate that the back-end should ensure that all data written to the associated backing store has reached permanent storage. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xtr17storage_interface6reopenEv">
+<span id="_CPPv3N3xtr17storage_interface6reopenEv"></span><span id="_CPPv2N3xtr17storage_interface6reopenEv"></span><span id="xtr::storage_interface::reopen"></span><span class="target" id="structxtr_1_1storage__interface_1abd521b1f3932fd5173a6569ddd3e9d33"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">reopen</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">noexcept</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N3xtr17storage_interface6reopenEv" title="Permalink to this definition"></a><br /></dt>
+<dd><p>Invoked to indicate that if the back-end has a regular file opened for writing log data then the file should be reopened. </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="cpp type">
+<dt class="sig sig-object cpp" id="_CPPv4N3xtr21storage_interface_ptrE">
+<span id="_CPPv3N3xtr21storage_interface_ptrE"></span><span id="_CPPv2N3xtr21storage_interface_ptrE"></span><span class="target" id="namespacextr_1a4c3140022d59ef9afa82f2f7607ef49a"></span><span class="k"><span class="pre">using</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">xtr</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">storage_interface_ptr</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">unique_ptr</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4N3xtr17storage_interfaceE" title="xtr::storage_interface"><span class="n"><span class="pre">storage_interface</span></span></a><span class="p"><span class="pre">&gt;</span></span><a class="headerlink" href="#_CPPv4N3xtr21storage_interface_ptrE" title="Permalink to this definition"></a><br /></dt>
+<dd><p>Convenience typedef for std::unique_ptr&lt;<a class="reference internal" href="#structxtr_1_1storage__interface"><span class="std std-ref">storage_interface</span></a>&gt; </p>
+</dd></dl>
+
+<dl class="cpp class">
+<dt class="sig sig-object cpp" id="_CPPv4N3xtr19io_uring_fd_storageE">
+<span id="_CPPv3N3xtr19io_uring_fd_storageE"></span><span id="_CPPv2N3xtr19io_uring_fd_storageE"></span><span id="xtr::io_uring_fd_storage"></span><span class="target" id="classxtr_1_1io__uring__fd__storage"></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">xtr</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">io_uring_fd_storage</span></span></span><span class="w"> </span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="k"><span class="pre">public</span></span><span class="w"> </span><span class="n"><span class="pre">fd_storage_base</span></span><a class="headerlink" href="#_CPPv4N3xtr19io_uring_fd_storageE" title="Permalink to this definition"></a><br /></dt>
+<dd><p>An implementation of <a class="reference internal" href="#structxtr_1_1storage__interface"><span class="std std-ref">storage_interface</span></a> that uses <a class="reference external" href="https://www.man7.org/linux/man-pages/man7/io_uring.7.html">io_uring(7)</a> to perform file I/O (Linux only). </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xtr19io_uring_fd_storage19io_uring_fd_storageEiNSt6stringENSt6size_tENSt6size_tENSt6size_tE">
+<span id="_CPPv3N3xtr19io_uring_fd_storage19io_uring_fd_storageEiNSt6stringENSt6size_tENSt6size_tENSt6size_tE"></span><span id="_CPPv2N3xtr19io_uring_fd_storage19io_uring_fd_storageEiNSt6stringENSt6size_tENSt6size_tENSt6size_tE"></span><span id="xtr::io_uring_fd_storage::io_uring_fd_storage__i.ss.std::s.std::s.std::s"></span><span class="target" id="classxtr_1_1io__uring__fd__storage_1a7016e1e7522138f280f9f444b7000b92"></span><span class="k"><span class="pre">explicit</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">io_uring_fd_storage</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">fd</span></span>, <span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">reopen_path</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N3xtr16null_reopen_pathE" title="xtr::null_reopen_path"><span class="n"><span class="pre">null_reopen_path</span></span></a>, <span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">buffer_capacity</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N3xtr19io_uring_fd_storage23default_buffer_capacityE" title="xtr::io_uring_fd_storage::default_buffer_capacity"><span class="n"><span class="pre">default_buffer_capacity</span></span></a>, <span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">queue_size</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N3xtr19io_uring_fd_storage18default_queue_sizeE" title="xtr::io_uring_fd_storage::default_queue_size"><span class="n"><span class="pre">default_queue_size</span></span></a>, <span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">batch_size</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N3xtr19io_uring_fd_storage18default_batch_sizeE" title="xtr::io_uring_fd_storage::default_batch_size"><span class="n"><span class="pre">default_batch_size</span></span></a><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xtr19io_uring_fd_storage19io_uring_fd_storageEiNSt6stringENSt6size_tENSt6size_tENSt6size_tE" title="Permalink to this definition"></a><br /></dt>
+<dd><p>File descriptor constructor.</p>
+<p><ul class="simple">
+<li><p>fd: File descriptor to write to. This will be duplicated via a call to <a class="reference external" href="https://www.man7.org/linux/man-pages/man2/dup.2.html">dup(2)</a>, so callers may close the file descriptor immediately after this constructor returns if desired. </p></li>
+<li><p>reopen_path: The path of the file associated with the fd argument. This path will be used to reopen the file if requested via the xtrctl <a class="reference external" href="xtrctl.html#reopening-log-files">reopen command</a>. Pass <a class="reference internal" href="#namespacextr_1a2d114b47712f1720d195475122cfa99d"><span class="std std-ref">null_reopen_path</span></a> if no filename is associated with the file descriptor. </p></li>
+<li><p>buffer_capacity: The size in bytes of a single io_uring buffer. </p></li>
+<li><p>queue_size: The size of the io_uring submission queue. </p></li>
+<li><p>batch_size: The number of buffers to collect before submitting the buffers to io_uring. If <a class="reference internal" href="#config_8hpp_1a77d07b4b54338fce132a411093d00f49"><span class="std std-ref">XTR_IO_URING_POLL</span></a> is set to 1 in xtr/config.hpp then this parameter has no effect. </p></li>
+</ul>
+</p>
+</dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-static-attributes">Public Static Attributes</p>
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N3xtr19io_uring_fd_storage23default_buffer_capacityE">
+<span id="_CPPv3N3xtr19io_uring_fd_storage23default_buffer_capacityE"></span><span id="_CPPv2N3xtr19io_uring_fd_storage23default_buffer_capacityE"></span><span id="xtr::io_uring_fd_storage::default_buffer_capacity__std::s"></span><span class="target" id="classxtr_1_1io__uring__fd__storage_1a713185a40b7e1f336c5fcd255bd1319e"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">constexpr</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">default_buffer_capacity</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">64</span></span><span class="w"> </span><span class="o"><span class="pre">*</span></span><span class="w"> </span><span class="m"><span class="pre">1024</span></span><a class="headerlink" href="#_CPPv4N3xtr19io_uring_fd_storage23default_buffer_capacityE" title="Permalink to this definition"></a><br /></dt>
+<dd><p>Default value for the buffer_capacity constructor argument. </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N3xtr19io_uring_fd_storage18default_queue_sizeE">
+<span id="_CPPv3N3xtr19io_uring_fd_storage18default_queue_sizeE"></span><span id="_CPPv2N3xtr19io_uring_fd_storage18default_queue_sizeE"></span><span id="xtr::io_uring_fd_storage::default_queue_size__std::s"></span><span class="target" id="classxtr_1_1io__uring__fd__storage_1a60708dc51fa5504248c83dfa8b190822"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">constexpr</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">default_queue_size</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">1024</span></span><a class="headerlink" href="#_CPPv4N3xtr19io_uring_fd_storage18default_queue_sizeE" title="Permalink to this definition"></a><br /></dt>
+<dd><p>Default value for the queue_size constructor argument. </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N3xtr19io_uring_fd_storage18default_batch_sizeE">
+<span id="_CPPv3N3xtr19io_uring_fd_storage18default_batch_sizeE"></span><span id="_CPPv2N3xtr19io_uring_fd_storage18default_batch_sizeE"></span><span id="xtr::io_uring_fd_storage::default_batch_size__std::s"></span><span class="target" id="classxtr_1_1io__uring__fd__storage_1a937345bcb92510ceb952185b3344f88e"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">constexpr</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">default_batch_size</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">32</span></span><a class="headerlink" href="#_CPPv4N3xtr19io_uring_fd_storage18default_batch_sizeE" title="Permalink to this definition"></a><br /></dt>
+<dd><p>Default value for the batch_size constructor argument. </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="cpp class">
+<dt class="sig sig-object cpp" id="_CPPv4N3xtr16posix_fd_storageE">
+<span id="_CPPv3N3xtr16posix_fd_storageE"></span><span id="_CPPv2N3xtr16posix_fd_storageE"></span><span id="xtr::posix_fd_storage"></span><span class="target" id="classxtr_1_1posix__fd__storage"></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">xtr</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">posix_fd_storage</span></span></span><span class="w"> </span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="k"><span class="pre">public</span></span><span class="w"> </span><span class="n"><span class="pre">fd_storage_base</span></span><a class="headerlink" href="#_CPPv4N3xtr16posix_fd_storageE" title="Permalink to this definition"></a><br /></dt>
+<dd><p>An implementation of <a class="reference internal" href="#structxtr_1_1storage__interface"><span class="std std-ref">storage_interface</span></a> that uses standard <a class="reference external" href="https://pubs.opengroup.org/onlinepubs/9699919799/functions/write.html">POSIX</a> functions to perform file I/O. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xtr16posix_fd_storage16posix_fd_storageEiNSt6stringENSt6size_tE">
+<span id="_CPPv3N3xtr16posix_fd_storage16posix_fd_storageEiNSt6stringENSt6size_tE"></span><span id="_CPPv2N3xtr16posix_fd_storage16posix_fd_storageEiNSt6stringENSt6size_tE"></span><span id="xtr::posix_fd_storage::posix_fd_storage__i.ss.std::s"></span><span class="target" id="classxtr_1_1posix__fd__storage_1a5657b279460ea5298e04b476f3d385b7"></span><span class="k"><span class="pre">explicit</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">posix_fd_storage</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">fd</span></span>, <span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">reopen_path</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N3xtr16null_reopen_pathE" title="xtr::null_reopen_path"><span class="n"><span class="pre">null_reopen_path</span></span></a>, <span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">buffer_capacity</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N3xtr16posix_fd_storage23default_buffer_capacityE" title="xtr::posix_fd_storage::default_buffer_capacity"><span class="n"><span class="pre">default_buffer_capacity</span></span></a><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xtr16posix_fd_storage16posix_fd_storageEiNSt6stringENSt6size_tE" title="Permalink to this definition"></a><br /></dt>
+<dd><p>File descriptor constructor.</p>
+<p><ul class="simple">
+<li><p>fd: File descriptor to write to. This will be duplicated via a call to <a class="reference external" href="https://www.man7.org/linux/man-pages/man2/dup.2.html">dup(2)</a>, so callers may close the file descriptor immediately after this constructor returns if desired. </p></li>
+<li><p>reopen_path: The path of the file associated with the fd argument. This path will be used to reopen the file if requested via the xtrctl <a class="reference external" href="xtrctl.html#reopening-log-files">reopen command</a>. Pass <a class="reference internal" href="#namespacextr_1a2d114b47712f1720d195475122cfa99d"><span class="std std-ref">null_reopen_path</span></a> if no filename is associated with the file descriptor. </p></li>
+<li><p>buffer_capacity: The size in bytes of the internal write buffer. </p></li>
+</ul>
+</p>
+</dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-static-attributes">Public Static Attributes</p>
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N3xtr16posix_fd_storage23default_buffer_capacityE">
+<span id="_CPPv3N3xtr16posix_fd_storage23default_buffer_capacityE"></span><span id="_CPPv2N3xtr16posix_fd_storage23default_buffer_capacityE"></span><span id="xtr::posix_fd_storage::default_buffer_capacity__std::s"></span><span class="target" id="classxtr_1_1posix__fd__storage_1adf912ed99e533d604e44896d9b5bf1fb"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">constexpr</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">default_buffer_capacity</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">64</span></span><span class="w"> </span><span class="o"><span class="pre">*</span></span><span class="w"> </span><span class="m"><span class="pre">1024</span></span><a class="headerlink" href="#_CPPv4N3xtr16posix_fd_storage23default_buffer_capacityE" title="Permalink to this definition"></a><br /></dt>
+<dd><p>Default value for the buffer_capacity constructor argument. </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xtr15make_fd_storageEPKc">
+<span id="_CPPv3N3xtr15make_fd_storageEPKc"></span><span id="_CPPv2N3xtr15make_fd_storageEPKc"></span><span id="xtr::make_fd_storage__cCP"></span><span class="target" id="namespacextr_1adf467234be0533ac1bc9c6f25a0f1fb4"></span><a class="reference internal" href="#_CPPv4N3xtr21storage_interface_ptrE" title="xtr::storage_interface_ptr"><span class="n"><span class="pre">storage_interface_ptr</span></span></a><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">xtr</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">make_fd_storage</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n sig-param"><span class="pre">path</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xtr15make_fd_storageEPKc" title="Permalink to this definition"></a><br /></dt>
+<dd><p>Creates a storage interface object from a path. If the host kernel supports <a class="reference external" href="https://www.man7.org/linux/man-pages/man7/io_uring.7.html">io_uring(7)</a> and libxtr was built on a machine with liburing header files available then an instance of <a class="reference internal" href="#classxtr_1_1io__uring__fd__storage"><span class="std std-ref">io_uring_fd_storage</span></a> will be created, otherwise an instance of <a class="reference internal" href="#classxtr_1_1posix__fd__storage"><span class="std std-ref">posix_fd_storage</span></a> will be created. To prevent <a class="reference internal" href="#classxtr_1_1io__uring__fd__storage"><span class="std std-ref">io_uring_fd_storage</span></a> from being used define set XTR_USE_IO_URING to 0 in xtr/config.hpp. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xtr15make_fd_storageEP4FILENSt6stringE">
+<span id="_CPPv3N3xtr15make_fd_storageEP4FILENSt6stringE"></span><span id="_CPPv2N3xtr15make_fd_storageEP4FILENSt6stringE"></span><span id="xtr::make_fd_storage__FILEP.ss"></span><span class="target" id="namespacextr_1ab23f69698b248accae624468b680676d"></span><a class="reference internal" href="#_CPPv4N3xtr21storage_interface_ptrE" title="xtr::storage_interface_ptr"><span class="n"><span class="pre">storage_interface_ptr</span></span></a><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">xtr</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">make_fd_storage</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">FILE</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n sig-param"><span class="pre">fp</span></span>, <span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">reopen_path</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N3xtr16null_reopen_pathE" title="xtr::null_reopen_path"><span class="n"><span class="pre">null_reopen_path</span></span></a><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xtr15make_fd_storageEP4FILENSt6stringE" title="Permalink to this definition"></a><br /></dt>
+<dd><p>Creates a storage interface object from a file descriptor and reopen path. Either an instance of <a class="reference internal" href="#classxtr_1_1io__uring__fd__storage"><span class="std std-ref">io_uring_fd_storage</span></a> or <a class="reference internal" href="#classxtr_1_1posix__fd__storage"><span class="std std-ref">posix_fd_storage</span></a> will be created, refer to <a class="reference internal" href="#namespacextr_1adf467234be0533ac1bc9c6f25a0f1fb4"><span class="std std-ref">make_fd_storage(const char*)</span></a> for details.</p>
+<p><ul class="simple">
+<li><p>fd: File handle to write to. The underlying file descriptor will be duplicated via a call to <a class="reference external" href="https://www.man7.org/linux/man-pages/man2/dup.2.html">dup(2)</a>, so callers may close the file handle immediately after this function returns if desired. </p></li>
+<li><p>reopen_path: The path of the file associated with the fp argument. This path will be used to reopen the file if requested via the xtrctl <a class="reference external" href="xtrctl.html#reopening-log-files">reopen command</a>. Pass <a class="reference internal" href="#namespacextr_1a2d114b47712f1720d195475122cfa99d"><span class="std std-ref">null_reopen_path</span></a> if no filename is associated with the file handle. </p></li>
+</ul>
+</p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xtr15make_fd_storageEiNSt6stringE">
+<span id="_CPPv3N3xtr15make_fd_storageEiNSt6stringE"></span><span id="_CPPv2N3xtr15make_fd_storageEiNSt6stringE"></span><span id="xtr::make_fd_storage__i.ss"></span><span class="target" id="namespacextr_1a65671ea509ff46b96c077b49762fb52a"></span><a class="reference internal" href="#_CPPv4N3xtr21storage_interface_ptrE" title="xtr::storage_interface_ptr"><span class="n"><span class="pre">storage_interface_ptr</span></span></a><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">xtr</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">make_fd_storage</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">fd</span></span>, <span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">reopen_path</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N3xtr16null_reopen_pathE" title="xtr::null_reopen_path"><span class="n"><span class="pre">null_reopen_path</span></span></a><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xtr15make_fd_storageEiNSt6stringE" title="Permalink to this definition"></a><br /></dt>
+<dd><p>Creates a storage interface object from a file descriptor and reopen path. Either an instance of <a class="reference internal" href="#classxtr_1_1io__uring__fd__storage"><span class="std std-ref">io_uring_fd_storage</span></a> or <a class="reference internal" href="#classxtr_1_1posix__fd__storage"><span class="std std-ref">posix_fd_storage</span></a> will be created, refer to <a class="reference internal" href="#namespacextr_1adf467234be0533ac1bc9c6f25a0f1fb4"><span class="std std-ref">make_fd_storage(const char*)</span></a> for details.</p>
+<p><ul class="simple">
+<li><p>fd: File descriptor to write to. This will be duplicated via a call to <a class="reference external" href="https://www.man7.org/linux/man-pages/man2/dup.2.html">dup(2)</a>, so callers may close the file descriptor immediately after this function returns if desired. </p></li>
+<li><p>reopen_path: The path of the file associated with the fd argument. This path will be used to reopen the file if requested via the xtrctl <a class="reference external" href="xtrctl.html#reopening-log-files">reopen command</a>. Pass <a class="reference internal" href="#namespacextr_1a2d114b47712f1720d195475122cfa99d"><span class="std std-ref">null_reopen_path</span></a> if no filename is associated with the file descriptor. </p></li>
+</ul>
+</p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N3xtr16null_reopen_pathE">
+<span id="_CPPv3N3xtr16null_reopen_pathE"></span><span id="_CPPv2N3xtr16null_reopen_pathE"></span><span id="xtr::null_reopen_path__auto"></span><span class="target" id="namespacextr_1a2d114b47712f1720d195475122cfa99d"></span><span class="k"><span class="pre">constexpr</span></span><span class="w"> </span><span class="kt"><span class="pre">auto</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">xtr</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">null_reopen_path</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><s><span class="pre">&quot;&quot;</span></s><a class="headerlink" href="#_CPPv4N3xtr16null_reopen_pathE" title="Permalink to this definition"></a><br /></dt>
+<dd><p>When passed to the reopen_path argument of <a class="reference internal" href="#namespacextr_1adf467234be0533ac1bc9c6f25a0f1fb4"><span class="std std-ref">make_fd_storage</span></a>, <a class="reference internal" href="#classxtr_1_1posix__fd__storage_1a5657b279460ea5298e04b476f3d385b7"><span class="std std-ref">posix_fd_storage::posix_fd_storage</span></a>, <a class="reference internal" href="#classxtr_1_1io__uring__fd__storage"><span class="std std-ref">io_uring_fd_storage</span></a> or <a class="reference internal" href="#classxtr_1_1logger_1stream-with-reopen-ctor"><span class="std std-ref">logger::logger</span></a> indicates that the output file handle has no associated filename and so should not be reopened if requested by the xtrctl <a class="reference external" href="xtrctl.html#reopening-log-files">reopen command</a>. </p>
+</dd></dl>
+
+</section>
 <section id="default-command-path">
 <h2>Default Command Path<a class="headerlink" href="#default-command-path" title="Permalink to this headline"></a></h2>
 <dl class="cpp function">
@@ -580,12 +742,26 @@ disabled. Fatal log statements will still call
 <section id="configuration-variables">
 <h2>Configuration Variables<a class="headerlink" href="#configuration-variables" title="Permalink to this headline"></a></h2>
 <p>The header file <cite>xtr/config.hpp</cite> contains configuration variables that may be
-overridden by users—either by modifying config.hpp, or by defining variables
-prior to including xtr headers.</p>
+overridden by users.</p>
 <dl class="cpp macro">
 <dt class="sig sig-object cpp" id="c.XTR_SINK_CAPACITY">
 <span class="target" id="config_8hpp_1a7832600aca4b47118053ba4fdc5ee017"></span><span class="sig-name descname"><span class="n"><span class="pre">XTR_SINK_CAPACITY</span></span></span><a class="headerlink" href="#c.XTR_SINK_CAPACITY" title="Permalink to this definition"></a><br /></dt>
-<dd><p>Sets the capacity (in bytes) of the queue that sinks use to send log data to the background thread. Each sink will have an individual queue of this size. Users are permitted to define this variable in order to set a custom capacity. User provided capacities may be rounded up—to obtain the actual capacity invoke <a class="reference internal" href="#classxtr_1_1sink_1a007f7528ca83580012569a7ee5f3c6a8"><span class="std std-ref">xtr::sink::capacity</span></a>. </p>
+<dd><p>Sets the capacity (in bytes) of the queue that sinks use to send log data to the background thread. Each sink will have an individual queue of this size. Users are permitted to define this variable in order to set a custom capacity. User provided capacities may be rounded up—to obtain the actual capacity invoke <a class="reference internal" href="#classxtr_1_1sink_1a007f7528ca83580012569a7ee5f3c6a8"><span class="std std-ref">xtr::sink::capacity</span></a>.</p>
+<p>Note that this setting may only be defined in config.hpp and requires rebuilding libxtr if set. </p>
+</dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.XTR_USE_IO_URING">
+<span class="target" id="config_8hpp_1a628cf123cd3a18fc1bea77b1548669b8"></span><span class="sig-name descname"><span class="n"><span class="pre">XTR_USE_IO_URING</span></span></span><a class="headerlink" href="#c.XTR_USE_IO_URING" title="Permalink to this definition"></a><br /></dt>
+<dd><p>Set to 1 to enable io_uring support. If this setting is not manually defined then io_uring support will be automatically detected. If libxtr is built with io_uring support enabled then the library will still function on kernels that do not have io_uring support, as a run-time check will be performed before attempting to use any io_uring system calls.</p>
+<p>Note that this setting may only be defined in config.hpp and requires rebuilding libxtr if set. </p>
+</dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.XTR_IO_URING_POLL">
+<span class="target" id="config_8hpp_1a77d07b4b54338fce132a411093d00f49"></span><span class="sig-name descname"><span class="n"><span class="pre">XTR_IO_URING_POLL</span></span></span><a class="headerlink" href="#c.XTR_IO_URING_POLL" title="Permalink to this definition"></a><br /></dt>
+<dd><p>Set to 1 to enable submission queue polling when using io_uring. If enabled the IORING_SETUP_SQPOLL flag will be passed to io_uring_setup(2).</p>
+<p>Note that this setting may only be defined in config.hpp and requires rebuilding libxtr if set. </p>
 </dd></dl>
 
 </section>
@@ -602,7 +778,7 @@ prior to including xtr headers.</p>
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2021, Chris E. Holloway.</p>
+    <p>&#169; Copyright 2022, Chris E. Holloway.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

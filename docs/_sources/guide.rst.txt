@@ -543,7 +543,7 @@ Custom Back-ends
 ----------------
 
 The logger allows custom back-ends to be used. This is done by implementing the
-:cpp:class:`xtr::storage_interface` abstract class:
+:cpp:class:`xtr::storage_interface` interface:
 
 .. code-block:: c++
 

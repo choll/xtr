@@ -630,7 +630,7 @@ the <a class="reference internal" href="xtrctl.html#xtrctl"><span class="std std
 <section id="custom-back-ends">
 <h2>Custom Back-ends<a class="headerlink" href="#custom-back-ends" title="Permalink to this headline"></a></h2>
 <p>The logger allows custom back-ends to be used. This is done by implementing the
-<code class="xref cpp cpp-class docutils literal notranslate"><span class="pre">xtr::storage_interface</span></code> abstract class:</p>
+<a class="reference internal" href="api.html#_CPPv4N3xtr17storage_interfaceE" title="xtr::storage_interface"><code class="xref cpp cpp-class docutils literal notranslate"><span class="pre">xtr::storage_interface</span></code></a> interface:</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">struct</span> <span class="n">xtr</span><span class="o">::</span><span class="n">storage_interface</span>
 <span class="p">{</span>
     <span class="k">virtual</span> <span class="n">std</span><span class="o">::</span><span class="n">span</span><span class="o">&lt;</span><span class="kt">char</span><span class="o">&gt;</span> <span class="n">allocate_buffer</span><span class="p">()</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
@@ -649,7 +649,7 @@ the <a class="reference internal" href="xtrctl.html#xtrctl"><span class="std std
 <span class="k">using</span> <span class="n">storage_interface_ptr</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">storage_interface</span><span class="o">&gt;</span><span class="p">;</span>
 </pre></div>
 </div>
-<p>Storage interface objects are then passed to the <code class="xref cpp cpp-type docutils literal notranslate"><span class="pre">xtr::storage_interface_ptr</span></code>
+<p>Storage interface objects are then passed to the <a class="reference internal" href="api.html#_CPPv4N3xtr21storage_interface_ptrE" title="xtr::storage_interface_ptr"><code class="xref cpp cpp-type docutils literal notranslate"><span class="pre">xtr::storage_interface_ptr</span></code></a>
 argument of the <a class="reference external" href="api.html#_CPPv4I0EN3xtr6logger6loggerE21storage_interface_ptrRR5ClockNSt6stringE17log_level_style_t">custom back-end constructor</a>.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -806,7 +806,7 @@ a <span class="cpp-expr sig sig-inline cpp"><span class="k">const</span><span cl
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2021, Chris E. Holloway.</p>
+    <p>&#169; Copyright 2022, Chris E. Holloway.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

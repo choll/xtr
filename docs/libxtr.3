@@ -32,6 +32,11 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 libxtr \- C++ logging library API reference
 .SH LOG MACROS
 .SS Basic Macros
+.sp
+The following macros log without reading the time of day at the point of
+logging, instead it is read when the log message is received by the background
+thread. Use these macros if a loss of timestamp accuracy is acceptable to gain
+performance.
 .INDENT 0.0
 .TP
 .B XTR_LOG(SINK, \&...) 
@@ -78,8 +83,11 @@ LEVEL: The unqualified log level name, for example simply "info" or "error".
 .UNINDENT
 
 .UNINDENT
-.SS Timestamped Macros
-.SS TSC
+.SS Time\-Stamp Counter Timestamped Macros
+.sp
+The following macros log and read the time\-stamp counter at the point of
+logging. Use these macros if the most accurate timestamps are required. On some
+systems reading rdtsc may be slower than using the real\-time clock (see below).
 .INDENT 0.0
 .TP
 .B XTR_LOG_TSC(SINK, \&...) 
@@ -126,7 +134,10 @@ LEVEL: The unqualified log level name, for example simply "info" or "error".
 .UNINDENT
 
 .UNINDENT
-.SS Real\-Time Clock
+.SS Real\-Time Clock Timestamped Macros
+.sp
+The following macros log and read the system real\-time clock at the point of
+logging. Use these macros if accurate timestamps are required.
 .INDENT 0.0
 .TP
 .B XTR_LOG_RTC(SINK, \&...) 
@@ -173,7 +184,9 @@ LEVEL: The unqualified log level name, for example simply "info" or "error".
 .UNINDENT
 
 .UNINDENT
-.SS User\-Supplied Timestamp
+.SS User\-Supplied Timestamp Macros
+.sp
+The following macros log and accept a user\-supplied timestamp.
 .INDENT 0.0
 .TP
 .B XTR_LOG_TS(SINK, TS, \&...) 
@@ -287,7 +300,7 @@ Reopening the log file via the \fI\%xtrctl\fP tool is \fInot\fP supported if thi
 .sp
 .INDENT 7.0
 .IP \(bu 2
-reopen_path: The path of the file associated with the stream argument. This path will be used to reopen the stream if requested via the \fI\%xtrctl\fP tool. 
+reopen_path: The path of the file associated with the stream argument. This path will be used to reopen the stream if requested via the xtrctl \fI\%reopen command\fP\&. Pass \fI\%null_reopen_path\fP if no filename is associated with the stream. 
 .IP \(bu 2
 stream: The stream to write log statements to. 
 .IP \(bu 2
@@ -308,12 +321,12 @@ Reopening the log file via the \fI\%xtrctl\fP tool is supported, with the reopen
 .UNINDENT
 .INDENT 7.0
 .TP
-.B template<typename  Clock  =  std::chrono::system_clock> inline  explicit  logger(storage_interface_ptr  storage, \fI\%Clock\fP  &&clock  =  \fI\%Clock\fP(), std::string  command_path  =  \fI\%default_command_path\fP(), \fI\%log_level_style_t\fP  level_style  =  \fI\%default_log_level_style\fP) 
+.B template<typename  Clock  =  std::chrono::system_clock> inline  explicit  logger(\fI\%storage_interface_ptr\fP  storage, \fI\%Clock\fP  &&clock  =  \fI\%Clock\fP(), std::string  command_path  =  \fI\%default_command_path\fP(), \fI\%log_level_style_t\fP  level_style  =  \fI\%default_log_level_style\fP) 
  Custom back\-end constructor (please refer to the \fI\%custom back\-ends\fP section of the user guide for further details on implementing a custom back\-end).
 .sp
 .INDENT 7.0
 .IP \(bu 2
-storage: Unique pointer to an object implementing the storage_interface interface. The logger will invoke methods on this object from the background thread in order to write log data to whatever underlying storage medium is implemented by the object, such as disk, network, dot\-matrix printer etc. 
+storage: Unique pointer to an object implementing the \fI\%storage_interface\fP interface. The logger will invoke methods on this object from the background thread in order to write log data to whatever underlying storage medium is implemented by the object, such as disk, network, dot\-matrix printer etc. 
 .IP \(bu 2
 clock: Please refer to the \fI\%description\fP above. 
 .IP \(bu 2
@@ -439,7 +452,7 @@ Returns the current log level (see \fI\%log_level_t\fP).
 .INDENT 7.0
 .TP
 .B inline  std::size_t  capacity()  const 
-Returns the capacity (in bytes) of the queue that the sink uses to send log data to the background thread. 
+Returns the capacity (in bytes) of the queue that the sink uses to send log data to the background thread. To override the sink capacity set \fI\%XTR_SINK_CAPACITY\fP in xtr/config.hpp\&. 
 .UNINDENT
 .UNINDENT
 .SH NOCOPY
@@ -452,6 +465,8 @@ nocopy is used to specify that a log argument should be passed by reference inst
 .INDENT 0.0
 .TP
 .B enum  class  xtr::log_level_t 
+Passed to \fI\%XTR_LOGL\fP, \fI\%XTR_LOGL_TSC\fP etc to indicate the severity of the log message. 
+.sp
 \fIValues:\fP
 .INDENT 7.0
 .TP
@@ -498,6 +513,152 @@ The default log level style (see \fI\%log_level_style_t\fP). Returns a single up
 .B const  char  *xtr::systemd_log_level_style(\fI\%log_level_t\fP  level) 
 System D log level style (see \fI\%log_level_style_t\fP). Returns strings as described in \fI\%sd\-daemon(3)\fP <\fBhttps://man7.org/linux/man-pages/man3/sd-daemon.3.html\fP>, e.g. "<0>", "<1>", "<2>" etc. 
 .UNINDENT
+.SH STORAGE INTERFACES
+.INDENT 0.0
+.TP
+.B struct  xtr::storage_interface 
+Interface allowing custom back\-ends to be implemented. To create a custom back\-end, inherit from storage_interfance, implement all pure\-virtual functions then pass a \fI\%storage_interface_ptr\fP pointing to an instance of the custom back\-end to \fI\%logger::logger\fP\&. 
+.sp
+Public Functions
+.INDENT 7.0
+.TP
+.B virtual  std::span<char>  allocate_buffer()  =  0 
+Allocates a buffer for formatted log data to be written to. Once a buffer has been allocated, allocate_buffer will not be called again until the buffer has been submitted via \fI\%submit_buffer\fP\&. 
+.UNINDENT
+.INDENT 7.0
+.TP
+.B virtual  void  submit_buffer(char  *buf, std::size_t  size)  =  0 
+Submits a buffer containing formatted log data to be written. 
+.UNINDENT
+.INDENT 7.0
+.TP
+.B virtual  void  flush()  =  0 
+Invoked to indicate that the back\-end should write any buffered data to its associated backing store. 
+.UNINDENT
+.INDENT 7.0
+.TP
+.B virtual  void  sync()  noexcept  =  0 
+Invoked to indicate that the back\-end should ensure that all data written to the associated backing store has reached permanent storage. 
+.UNINDENT
+.INDENT 7.0
+.TP
+.B virtual  int  reopen()  noexcept  =  0 
+Invoked to indicate that if the back\-end has a regular file opened for writing log data then the file should be reopened. 
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.TP
+.B using  xtr::storage_interface_ptr  =  std::unique_ptr<\fI\%storage_interface\fP> 
+Convenience typedef for std::unique_ptr<\fI\%storage_interface\fP> 
+.UNINDENT
+.INDENT 0.0
+.TP
+.B class  xtr::io_uring_fd_storage  :  public  fd_storage_base 
+An implementation of \fI\%storage_interface\fP that uses \fI\%io_uring(7)\fP <\fBhttps://www.man7.org/linux/man-pages/man7/io_uring.7.html\fP> to perform file I/O (Linux only). 
+.sp
+Public Functions
+.INDENT 7.0
+.TP
+.B explicit  io_uring_fd_storage(int  fd, std::string  reopen_path  =  \fI\%null_reopen_path\fP, std::size_t  buffer_capacity  =  \fI\%default_buffer_capacity\fP, std::size_t  queue_size  =  \fI\%default_queue_size\fP, std::size_t  batch_size  =  \fI\%default_batch_size\fP) 
+File descriptor constructor.
+.sp
+.INDENT 7.0
+.IP \(bu 2
+fd: File descriptor to write to. This will be duplicated via a call to \fI\%dup(2)\fP <\fBhttps://www.man7.org/linux/man-pages/man2/dup.2.html\fP>, so callers may close the file descriptor immediately after this constructor returns if desired. 
+.IP \(bu 2
+reopen_path: The path of the file associated with the fd argument. This path will be used to reopen the file if requested via the xtrctl \fI\%reopen command\fP\&. Pass \fI\%null_reopen_path\fP if no filename is associated with the file descriptor. 
+.IP \(bu 2
+buffer_capacity: The size in bytes of a single io_uring buffer. 
+.IP \(bu 2
+queue_size: The size of the io_uring submission queue. 
+.IP \(bu 2
+batch_size: The number of buffers to collect before submitting the buffers to io_uring. If \fI\%XTR_IO_URING_POLL\fP is set to 1 in xtr/config.hpp then this parameter has no effect. 
+.UNINDENT
+
+.UNINDENT
+.sp
+Public Static Attributes
+.INDENT 7.0
+.TP
+.B static  constexpr  std::size_t  default_buffer_capacity  =  64  *  1024 
+Default value for the buffer_capacity constructor argument. 
+.UNINDENT
+.INDENT 7.0
+.TP
+.B static  constexpr  std::size_t  default_queue_size  =  1024 
+Default value for the queue_size constructor argument. 
+.UNINDENT
+.INDENT 7.0
+.TP
+.B static  constexpr  std::size_t  default_batch_size  =  32 
+Default value for the batch_size constructor argument. 
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.TP
+.B class  xtr::posix_fd_storage  :  public  fd_storage_base 
+An implementation of \fI\%storage_interface\fP that uses standard \fI\%POSIX\fP <\fBhttps://pubs.opengroup.org/onlinepubs/9699919799/functions/write.html\fP> functions to perform file I/O. 
+.sp
+Public Functions
+.INDENT 7.0
+.TP
+.B explicit  posix_fd_storage(int  fd, std::string  reopen_path  =  \fI\%null_reopen_path\fP, std::size_t  buffer_capacity  =  \fI\%default_buffer_capacity\fP) 
+File descriptor constructor.
+.sp
+.INDENT 7.0
+.IP \(bu 2
+fd: File descriptor to write to. This will be duplicated via a call to \fI\%dup(2)\fP <\fBhttps://www.man7.org/linux/man-pages/man2/dup.2.html\fP>, so callers may close the file descriptor immediately after this constructor returns if desired. 
+.IP \(bu 2
+reopen_path: The path of the file associated with the fd argument. This path will be used to reopen the file if requested via the xtrctl \fI\%reopen command\fP\&. Pass \fI\%null_reopen_path\fP if no filename is associated with the file descriptor. 
+.IP \(bu 2
+buffer_capacity: The size in bytes of the internal write buffer. 
+.UNINDENT
+
+.UNINDENT
+.sp
+Public Static Attributes
+.INDENT 7.0
+.TP
+.B static  constexpr  std::size_t  default_buffer_capacity  =  64  *  1024 
+Default value for the buffer_capacity constructor argument. 
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \fI\%storage_interface_ptr\fP  xtr::make_fd_storage(const  char  *path) 
+Creates a storage interface object from a path. If the host kernel supports \fI\%io_uring(7)\fP <\fBhttps://www.man7.org/linux/man-pages/man7/io_uring.7.html\fP> and libxtr was built on a machine with liburing header files available then an instance of \fI\%io_uring_fd_storage\fP will be created, otherwise an instance of \fI\%posix_fd_storage\fP will be created. To prevent \fI\%io_uring_fd_storage\fP from being used define set XTR_USE_IO_URING to 0 in xtr/config.hpp\&. 
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \fI\%storage_interface_ptr\fP  xtr::make_fd_storage(FILE  *fp, std::string  reopen_path  =  \fI\%null_reopen_path\fP) 
+Creates a storage interface object from a file descriptor and reopen path. Either an instance of \fI\%io_uring_fd_storage\fP or \fI\%posix_fd_storage\fP will be created, refer to \fI\%make_fd_storage(const char*)\fP for details.
+.sp
+.INDENT 7.0
+.IP \(bu 2
+fd: File handle to write to. The underlying file descriptor will be duplicated via a call to \fI\%dup(2)\fP <\fBhttps://www.man7.org/linux/man-pages/man2/dup.2.html\fP>, so callers may close the file handle immediately after this function returns if desired. 
+.IP \(bu 2
+reopen_path: The path of the file associated with the fp argument. This path will be used to reopen the file if requested via the xtrctl \fI\%reopen command\fP\&. Pass \fI\%null_reopen_path\fP if no filename is associated with the file handle. 
+.UNINDENT
+
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \fI\%storage_interface_ptr\fP  xtr::make_fd_storage(int  fd, std::string  reopen_path  =  \fI\%null_reopen_path\fP) 
+Creates a storage interface object from a file descriptor and reopen path. Either an instance of \fI\%io_uring_fd_storage\fP or \fI\%posix_fd_storage\fP will be created, refer to \fI\%make_fd_storage(const char*)\fP for details.
+.sp
+.INDENT 7.0
+.IP \(bu 2
+fd: File descriptor to write to. This will be duplicated via a call to \fI\%dup(2)\fP <\fBhttps://www.man7.org/linux/man-pages/man2/dup.2.html\fP>, so callers may close the file descriptor immediately after this function returns if desired. 
+.IP \(bu 2
+reopen_path: The path of the file associated with the fd argument. This path will be used to reopen the file if requested via the xtrctl \fI\%reopen command\fP\&. Pass \fI\%null_reopen_path\fP if no filename is associated with the file descriptor. 
+.UNINDENT
+
+.UNINDENT
+.INDENT 0.0
+.TP
+.B constexpr  auto  xtr::null_reopen_path  =  "" 
+When passed to the reopen_path argument of \fI\%make_fd_storage\fP, \fI\%posix_fd_storage::posix_fd_storage\fP, \fI\%io_uring_fd_storage\fP or \fI\%logger::logger\fP indicates that the output file handle has no associated filename and so should not be reopened if requested by the xtrctl \fI\%reopen command\fP\&. 
+.UNINDENT
 .SH DEFAULT COMMAND PATH
 .INDENT 0.0
 .TP
@@ -513,16 +674,31 @@ When passed to the \fI\%command_path\fP argument of \fI\%logger::logger\fP (or o
 .SH CONFIGURATION VARIABLES
 .sp
 The header file \fIxtr/config.hpp\fP contains configuration variables that may be
-overridden by users\-\-\-either by modifying config.hpp, or by defining variables
-prior to including xtr headers.
+overridden by users.
 .INDENT 0.0
 .TP
 .B XTR_SINK_CAPACITY 
-Sets the capacity (in bytes) of the queue that sinks use to send log data to the background thread. Each sink will have an individual queue of this size. Users are permitted to define this variable in order to set a custom capacity. User provided capacities may be rounded up\-\-\-to obtain the actual capacity invoke \fI\%xtr::sink::capacity\fP\&. 
+Sets the capacity (in bytes) of the queue that sinks use to send log data to the background thread. Each sink will have an individual queue of this size. Users are permitted to define this variable in order to set a custom capacity. User provided capacities may be rounded up\-\-\-to obtain the actual capacity invoke \fI\%xtr::sink::capacity\fP\&.
+.sp
+Note that this setting may only be defined in config.hpp and requires rebuilding libxtr if set. 
+.UNINDENT
+.INDENT 0.0
+.TP
+.B XTR_USE_IO_URING 
+Set to 1 to enable io_uring support. If this setting is not manually defined then io_uring support will be automatically detected. If libxtr is built with io_uring support enabled then the library will still function on kernels that do not have io_uring support, as a run\-time check will be performed before attempting to use any io_uring system calls.
+.sp
+Note that this setting may only be defined in config.hpp and requires rebuilding libxtr if set. 
+.UNINDENT
+.INDENT 0.0
+.TP
+.B XTR_IO_URING_POLL 
+Set to 1 to enable submission queue polling when using io_uring. If enabled the IORING_SETUP_SQPOLL flag will be passed to io_uring_setup(2).
+.sp
+Note that this setting may only be defined in config.hpp and requires rebuilding libxtr if set. 
 .UNINDENT
 .SH AUTHOR
 Chris E. Holloway
 .SH COPYRIGHT
-2021, Chris E. Holloway
+2022, Chris E. Holloway
 .\" Generated by docutils manpage writer.
 .
