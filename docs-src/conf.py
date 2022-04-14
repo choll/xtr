@@ -18,7 +18,7 @@
 # -- Project information -----------------------------------------------------
 
 project = "xtr"
-copyright = "2021, Chris E. Holloway"
+copyright = "2022, Chris E. Holloway"
 author = "Chris E. Holloway"
 
 # -- General configuration ---------------------------------------------------

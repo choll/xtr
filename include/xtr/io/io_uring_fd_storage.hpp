@@ -23,7 +23,7 @@
 
 #include "xtr/config.hpp"
 
-#if XTR_USE_IO_URING // For single-include compatibility
+#if XTR_USE_IO_URING
 #include "detail/fd_storage_base.hpp"
 #include "xtr/detail/align.hpp"
 
@@ -40,11 +40,27 @@ namespace xtr
     class io_uring_fd_storage;
 }
 
+/**
+ * An implementation of @ref storage_interface that uses
+ * <a href="https://www.man7.org/linux/man-pages/man7/io_uring.7.html">io_uring(7)</a>
+ * to perform file I/O (Linux only).
+ */
 class xtr::io_uring_fd_storage : public detail::fd_storage_base
 {
 public:
+    /**
+     * Default value for the buffer_capacity constructor argument.
+     */
     static constexpr std::size_t default_buffer_capacity = 64 * 1024;
+
+    /**
+     * Default value for the queue_size constructor argument.
+     */
     static constexpr std::size_t default_queue_size = 1024;
+
+    /**
+     * Default value for the batch_size constructor argument.
+     */
     static constexpr std::size_t default_batch_size = 32;
 
 private:
@@ -69,6 +85,24 @@ private:
     };
 
 public:
+    /**
+     * File descriptor constructor.
+     *
+     * @arg fd: File descriptor to write to. This will be duplicated via a call to
+     *          <a href="https://www.man7.org/linux/man-pages/man2/dup.2.html">dup(2)</a>,
+     *          so callers may close the file descriptor immediately after this
+     *          constructor returns if desired.
+     * @arg reopen_path: The path of the file associated with the fd argument.
+     *                   This path will be used to reopen the file if requested via
+     *                   the xtrctl <a href="xtrctl.html#reopening-log-files">reopen command</a>.
+     *                   Pass @ref null_reopen_path if no filename is associated with the file
+     *                   descriptor.
+     * @arg buffer_capacity: The size in bytes of a single io_uring buffer.
+     * @arg queue_size: The size of the io_uring submission queue.
+     * @arg batch_size: The number of buffers to collect before submitting the
+     *                  buffers to io_uring. If @ref XTR_IO_URING_POLL is set
+     *                  to 1 in xtr/config.hpp then this parameter has no effect.
+     */
     explicit io_uring_fd_storage(
         int fd,
         std::string reopen_path = null_reopen_path,

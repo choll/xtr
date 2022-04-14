@@ -40,10 +40,13 @@ are made when a log statement is made.
 * Log sinks with independent log levels (so that levels for different subsystems may be modified independently).
 * Ability to modify log levels via an external command.
 * Non-printable characters are sanitized for safety (to prevent terminal escape sequence injection attacks).
-* Formatting done via fmtlib.
-* Support for custom I/O back-ends (e.g. to log to the network).
+* Type-safe---formatting is done via fmtlib.
+* io\_uring support.
+* Support for custom I/O back-ends (e.g. to log to the network, write compressed files, etc).
 * Support for logrotate integration.
 * Support for systemd journal integration.
+* CMake and [Conan](https://conan.io/center/xtr) integration supported.
+* Fully [documented](https://choll.github.io/xtr).
 
 ## Supported platforms
 

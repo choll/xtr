@@ -31,11 +31,33 @@ namespace xtr
     class posix_fd_storage;
 }
 
+/**
+ * An implementation of @ref storage_interface that uses standard
+ * <a href="https://pubs.opengroup.org/onlinepubs/9699919799/functions/write.html">POSIX</a>
+ * functions to perform file I/O.
+ */
 class xtr::posix_fd_storage : public detail::fd_storage_base
 {
 public:
+    /**
+     * Default value for the buffer_capacity constructor argument.
+     */
     static constexpr std::size_t default_buffer_capacity = 64 * 1024;
 
+    /**
+     * File descriptor constructor.
+     *
+     * @arg fd: File descriptor to write to. This will be duplicated via a call to
+     *          <a href="https://www.man7.org/linux/man-pages/man2/dup.2.html">dup(2)</a>,
+     *          so callers may close the file descriptor immediately after this
+     *          constructor returns if desired.
+     * @arg reopen_path: The path of the file associated with the fd argument.
+     *                   This path will be used to reopen the file if requested via
+     *                   the xtrctl <a href="xtrctl.html#reopening-log-files">reopen command</a>.
+     *                   Pass @ref null_reopen_path if no filename is associated with the file
+     *                   descriptor.
+     * @arg buffer_capacity: The size in bytes of the internal write buffer.
+     */
     explicit posix_fd_storage(
         int fd,
         std::string reopen_path = null_reopen_path,

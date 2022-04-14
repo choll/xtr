@@ -178,7 +178,8 @@ public:
 
     /**
      * Returns the capacity (in bytes) of the queue that the sink uses to send
-     * log data to the background thread.
+     * log data to the background thread. To override the sink capacity set
+     * @ref XTR_SINK_CAPACITY in xtr/config.hpp.
      */
     std::size_t capacity() const
     {

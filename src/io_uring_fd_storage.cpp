@@ -20,7 +20,7 @@
 
 #include "xtr/config.hpp"
 
-#if XTR_USE_IO_URING // For single-include compatibility
+#if XTR_USE_IO_URING
 #include "xtr/io/io_uring_fd_storage.hpp"
 #include "xtr/detail/throw.hpp"
 

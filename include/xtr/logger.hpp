@@ -191,7 +191,8 @@ public:
      *
      * @arg reopen_path: The path of the file associated with the stream argument.
      *                   This path will be used to reopen the stream if requested via
-     *                   the <a href="xtrctl.html#rotating-log-files">xtrctl</a> tool.
+     *                   the xtrctl <a href="xtrctl.html#reopening-log-files">reopen command</a>.
+     *                   Pass @ref null_reopen_path if no filename is associated with the stream.
      * @arg stream: The stream to write log statements to.
      * @arg clock: Please refer to the @ref clock_arg "description"
      *             above.
