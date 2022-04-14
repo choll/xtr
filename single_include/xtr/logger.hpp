@@ -1,7 +1,7 @@
 /*
 MIT License
 
-Copyright (c) 2021 Chris E. Holloway
+Copyright (c) 2022 Chris E. Holloway
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -31,29 +31,37 @@ SOFTWARE.
  * size. Users are permitted to define this variable in order to set a custom
  * capacity. User provided capacities may be rounded up\---to obtain the
  * actual capacity invoke @ref xtr::sink::capacity.
+ *
+ * Note that this setting may only be defined in config.hpp and requires
+ * rebuilding libxtr if set.
  */
 #if !defined(XTR_SINK_CAPACITY)
 #define XTR_SINK_CAPACITY (256 * 1024)
 #endif
 
 /**
+ * Set to 1 to enable io_uring support. If this setting is not manually defined
+ * then io_uring support will be automatically detected. If libxtr is built with
+ * io_uring support enabled then the library will still function on kernels that
+ * do not have io_uring support, as a run-time check will be performed before
+ * attempting to use any io_uring system calls.
+ *
+ * Note that this setting may only be defined in config.hpp and requires
+ * rebuilding libxtr if set.
  */
-#if !defined(XTR_FORCE_TSC_CALIBRATION)
-#define XTR_FORCE_TSC_CALIBRATION 0
-#endif
-
-/**
- */
-#if !defined(XTR_USE_IO_URING)
+#if !defined(XTR_USE_IO_URING) || defined(DOXYGEN)
 #define XTR_USE_IO_URING __has_include(<liburing.h>)
 #endif
 
-#define XTR_IO_URING_POLL 0
-
 /**
+ * Set to 1 to enable submission queue polling when using io_uring. If enabled
+ * the IORING_SETUP_SQPOLL flag will be passed to io_uring_setup(2).
+ *
+ * Note that this setting may only be defined in config.hpp and requires
+ * rebuilding libxtr if set.
  */
 #if !defined(XTR_IO_URING_POLL)
-#define XTR_IO_URING_POLL 1
+#define XTR_IO_URING_POLL 0
 #endif
 
 #include <ctime>
@@ -988,6 +996,10 @@ namespace xtr::detail
 
 namespace xtr
 {
+    /**
+     * Passed to @ref XTR_LOGL, @ref XTR_LOGL_TSC etc to indicate the severity
+     * of the log message.
+     */
     enum class log_level_t
     {
         none,
@@ -1037,21 +1049,58 @@ namespace xtr
 {
     struct storage_interface;
 
+    /**
+     * Convenience typedef for std::unique_ptr<@ref storage_interface>
+     */
     using storage_interface_ptr = std::unique_ptr<storage_interface>;
 
+    /**
+     * When passed to the reopen_path argument of @ref make_fd_storage,
+     * @ref posix_fd_storage::posix_fd_storage, @ref io_uring_fd_storage or
+     * @ref stream-with-reopen-ctor "logger::logger" indicates that
+     * the output file handle has no associated filename and so should not be
+     * reopened if requested by the
+     * xtrctl <a href="xtrctl.html#reopening-log-files">reopen command</a>.
+     */
     inline constexpr auto null_reopen_path = "";
 }
 
+/**
+ * Interface allowing custom back-ends to be implemented. To create a custom
+ * back-end, inherit from @ref storage_interfance, implement all pure-virtual
+ * functions then pass a @ref storage_interface_ptr pointing to an instance of
+ * the custom back-end to @ref back-end-ctor "logger::logger".
+ */
 struct xtr::storage_interface
 {
+    /**
+     * Allocates a buffer for formatted log data to be written to. Once a
+     * buffer has been allocated, allocate_buffer will not be called again
+     * until the buffer has been submitted via @ref submit_buffer.
+     */
     virtual std::span<char> allocate_buffer() = 0;
 
+    /**
+     * Submits a buffer containing formatted log data to be written.
+     */
     virtual void submit_buffer(char* buf, std::size_t size) = 0;
 
+    /**
+     * Invoked to indicate that the back-end should write any buffered data to
+     * its associated backing store.
+     */
     virtual void flush() = 0;
 
+    /**
+     * Invoked to indicate that the back-end should ensure that all data
+     * written to the associated backing store has reached permanent storage.
+     */
     virtual void sync() noexcept = 0;
 
+    /**
+     * Invoked to indicate that if the back-end has a regular file opened for
+     * writing log data then the file should be reopened.
+     */
     virtual int reopen() noexcept = 0;
 
     virtual ~storage_interface() = default;
@@ -1591,7 +1640,8 @@ public:
 
     /**
      * Returns the capacity (in bytes) of the queue that the sink uses to send
-     * log data to the background thread.
+     * log data to the background thread. To override the sink capacity set
+     * @ref XTR_SINK_CAPACITY in xtr/config.hpp.
      */
     std::size_t capacity() const
     {
@@ -2586,11 +2636,33 @@ namespace xtr
     class posix_fd_storage;
 }
 
+/**
+ * An implementation of @ref storage_interface that uses standard
+ * <a href="https://pubs.opengroup.org/onlinepubs/9699919799/functions/write.html">POSIX</a>
+ * functions to perform file I/O.
+ */
 class xtr::posix_fd_storage : public detail::fd_storage_base
 {
 public:
+    /**
+     * Default value for the buffer_capacity constructor argument.
+     */
     static constexpr std::size_t default_buffer_capacity = 64 * 1024;
 
+    /**
+     * File descriptor constructor.
+     *
+     * @arg fd: File descriptor to write to. This will be duplicated via a call to
+     *          <a href="https://www.man7.org/linux/man-pages/man2/dup.2.html">dup(2)</a>,
+     *          so callers may close the file descriptor immediately after this
+     *          constructor returns if desired.
+     * @arg reopen_path: The path of the file associated with the fd argument.
+     *                   This path will be used to reopen the file if requested via
+     *                   the xtrctl <a href="xtrctl.html#reopening-log-files">reopen command</a>.
+     *                   Pass @ref null_reopen_path if no filename is associated with the file
+     *                   descriptor.
+     * @arg buffer_capacity: The size in bytes of the internal write buffer.
+     */
     explicit posix_fd_storage(
         int fd,
         std::string reopen_path = null_reopen_path,
@@ -2609,7 +2681,7 @@ private:
     std::size_t buffer_capacity_;
 };
 
-#if XTR_USE_IO_URING // For single-include compatibility
+#if XTR_USE_IO_URING
 
 #include <liburing.h>
 
@@ -2624,11 +2696,27 @@ namespace xtr
     class io_uring_fd_storage;
 }
 
+/**
+ * An implementation of @ref storage_interface that uses
+ * <a href="https://www.man7.org/linux/man-pages/man7/io_uring.7.html">io_uring(7)</a>
+ * to perform file I/O (Linux only).
+ */
 class xtr::io_uring_fd_storage : public detail::fd_storage_base
 {
 public:
+    /**
+     * Default value for the buffer_capacity constructor argument.
+     */
     static constexpr std::size_t default_buffer_capacity = 64 * 1024;
+
+    /**
+     * Default value for the queue_size constructor argument.
+     */
     static constexpr std::size_t default_queue_size = 1024;
+
+    /**
+     * Default value for the batch_size constructor argument.
+     */
     static constexpr std::size_t default_batch_size = 32;
 
 private:
@@ -2653,6 +2741,24 @@ private:
     };
 
 public:
+    /**
+     * File descriptor constructor.
+     *
+     * @arg fd: File descriptor to write to. This will be duplicated via a call to
+     *          <a href="https://www.man7.org/linux/man-pages/man2/dup.2.html">dup(2)</a>,
+     *          so callers may close the file descriptor immediately after this
+     *          constructor returns if desired.
+     * @arg reopen_path: The path of the file associated with the fd argument.
+     *                   This path will be used to reopen the file if requested via
+     *                   the xtrctl <a href="xtrctl.html#reopening-log-files">reopen command</a>.
+     *                   Pass @ref null_reopen_path if no filename is associated with the file
+     *                   descriptor.
+     * @arg buffer_capacity: The size in bytes of a single io_uring buffer.
+     * @arg queue_size: The size of the io_uring submission queue.
+     * @arg batch_size: The number of buffers to collect before submitting the
+     *                  buffers to io_uring. If @ref XTR_IO_URING_POLL is set
+     *                  to 1 in xtr/config.hpp then this parameter has no effect.
+     */
     explicit io_uring_fd_storage(
         int fd,
         std::string reopen_path = null_reopen_path,
@@ -2701,11 +2807,50 @@ private:
 
 namespace xtr
 {
+    /**
+     * Creates a storage interface object from a path. If the host kernel supports
+     * <a href="https://www.man7.org/linux/man-pages/man7/io_uring.7.html">io_uring(7)</a>
+     * and libxtr was built on a machine with liburing header files available then
+     * an instance of @ref io_uring_fd_storage will be created, otherwise an instance
+     * of @ref posix_fd_storage will be created. To prevent @ref io_uring_fd_storage
+     * from being used define set XTR_USE_IO_URING to 0 in xtr/config.hpp.
+     */
     storage_interface_ptr make_fd_storage(const char* path);
 
+    /**
+     * Creates a storage interface object from a file descriptor and reopen path.
+     * Either an instance of @ref io_uring_fd_storage or @ref posix_fd_storage
+     * will be created, refer to @ref make_fd_storage(const char*) for details.
+     *
+     * @arg fd: File handle to write to. The underlying file descriptor will be
+     *          duplicated via a call to
+     *          <a href="https://www.man7.org/linux/man-pages/man2/dup.2.html">dup(2)</a>,
+     *          so callers may close the file handle immediately after this
+     *          function returns if desired.
+     * @arg reopen_path: The path of the file associated with the fp argument.
+     *                   This path will be used to reopen the file if requested via
+     *                   the xtrctl <a href="xtrctl.html#reopening-log-files">reopen command</a>.
+     *                   Pass @ref null_reopen_path if no filename is associated with the file
+     *                   handle.
+     */
     storage_interface_ptr make_fd_storage(
         FILE* fp, std::string reopen_path = null_reopen_path);
 
+    /**
+     * Creates a storage interface object from a file descriptor and reopen path.
+     * Either an instance of @ref io_uring_fd_storage or @ref posix_fd_storage
+     * will be created, refer to @ref make_fd_storage(const char*) for details.
+     *
+     * @arg fd: File descriptor to write to. This will be duplicated via a call to
+     *          <a href="https://www.man7.org/linux/man-pages/man2/dup.2.html">dup(2)</a>,
+     *          so callers may close the file descriptor immediately after this
+     *          function returns if desired.
+     * @arg reopen_path: The path of the file associated with the fd argument.
+     *                   This path will be used to reopen the file if requested via
+     *                   the xtrctl <a href="xtrctl.html#reopening-log-files">reopen command</a>.
+     *                   Pass @ref null_reopen_path if no filename is associated with the file
+     *                   descriptor.
+     */
     storage_interface_ptr make_fd_storage(
         int fd, std::string reopen_path = null_reopen_path);
 }
@@ -2866,7 +3011,8 @@ public:
      *
      * @arg reopen_path: The path of the file associated with the stream argument.
      *                   This path will be used to reopen the stream if requested via
-     *                   the <a href="xtrctl.html#rotating-log-files">xtrctl</a> tool.
+     *                   the xtrctl <a href="xtrctl.html#reopening-log-files">reopen command</a>.
+     *                   Pass @ref null_reopen_path if no filename is associated with the stream.
      * @arg stream: The stream to write log statements to.
      * @arg clock: Please refer to the @ref clock_arg "description"
      *             above.
@@ -3694,7 +3840,7 @@ inline void xtr::detail::file_descriptor::reset(int fd) noexcept
     fd_ = fd;
 }
 
-#if XTR_USE_IO_URING // For single-include compatibility
+#if XTR_USE_IO_URING
 
 #include <liburing.h>
 
