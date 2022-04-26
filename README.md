@@ -64,36 +64,37 @@ https://choll.github.io/xtr
 
 ## Benchmarks
 
-Below is the output of `PRODUCER_CPU=2 CONSUMER_CPU=1 make benchmark_cpu` on a stock Ryzen 5950X, with g++ version 11.2.0
+Below is the output of `PRODUCER_CPU=2 CONSUMER_CPU=1 make benchmark_cpu` on a stock Ryzen 5950X with SMT disabled, isolated cores and g++ version 11.2.0
 
 ```
 sudo cpupower --cpu 2,1 frequency-set --governor performance
 Setting cpu: 1
 Setting cpu: 2
 build/g++-lto-release/benchmark/benchmark
-2022-03-20T00:49:10+00:00
+2022-04-26T22:54:43+01:00
 Running build/g++-lto-release/benchmark/benchmark
-Run on (32 X 5083.4 MHz CPU s)
+Run on (16 X 5084 MHz CPU s)
 CPU Caches:
   L1 Data 32 KiB (x16)
   L1 Instruction 32 KiB (x16)
   L2 Unified 512 KiB (x16)
   L3 Unified 32768 KiB (x2)
-Load Average: 2.00, 1.83, 1.62
+Load Average: 3.32, 2.74, 1.99
 ***WARNING*** CPU scaling is enabled, the benchmark real time measurements may be noisy and will incur extra overhead.
 ---------------------------------------------------------------------------------
 Benchmark                                       Time             CPU   Iterations
 ---------------------------------------------------------------------------------
-logger_benchmark                             2.36 ns         2.35 ns    311731007
-logger_benchmark_tsc                         9.57 ns         9.55 ns     73260008
-logger_benchmark_clock_realtime_coarse       8.95 ns         8.92 ns     78251929
-logger_benchmark_int                         3.91 ns         3.90 ns    179545113
-logger_benchmark_long                        3.94 ns         3.92 ns    176191487
-logger_benchmark_double                      3.51 ns         3.49 ns    184301147
-logger_benchmark_c_str                       6.27 ns         6.24 ns    108297092
-logger_benchmark_str_view                    3.80 ns         3.77 ns    186521782
-logger_benchmark_str                         4.81 ns         4.78 ns    139163865
-logger_benchmark_non_blocking                2.33 ns         2.32 ns    299429176
+logger_benchmark                             2.19 ns         2.19 ns    318972090
+logger_benchmark_tsc                         7.81 ns         7.81 ns     89307646
+logger_benchmark_clock_realtime_coarse       8.05 ns         8.05 ns     87732373
+logger_benchmark_int                         3.31 ns         3.31 ns    210259973
+logger_benchmark_long                        3.33 ns         3.33 ns    209935480
+logger_benchmark_double                      3.26 ns         3.26 ns    212240698
+logger_benchmark_c_str                       4.86 ns         4.86 ns    146577914
+logger_benchmark_str_view                    3.12 ns         3.12 ns    224958501
+logger_benchmark_str                         4.36 ns         4.36 ns    158750720
+logger_benchmark_non_blocking                2.01 ns         2.01 ns    349312408
+
 ```
 
 ## Installation notes
