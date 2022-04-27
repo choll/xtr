@@ -747,21 +747,21 @@ overridden by users.</p>
 <dt class="sig sig-object cpp" id="c.XTR_SINK_CAPACITY">
 <span class="target" id="config_8hpp_1a7832600aca4b47118053ba4fdc5ee017"></span><span class="sig-name descname"><span class="n"><span class="pre">XTR_SINK_CAPACITY</span></span></span><a class="headerlink" href="#c.XTR_SINK_CAPACITY" title="Permalink to this definition"></a><br /></dt>
 <dd><p>Sets the capacity (in bytes) of the queue that sinks use to send log data to the background thread. Each sink will have an individual queue of this size. Users are permitted to define this variable in order to set a custom capacity. User provided capacities may be rounded up—to obtain the actual capacity invoke <a class="reference internal" href="#classxtr_1_1sink_1a007f7528ca83580012569a7ee5f3c6a8"><span class="std std-ref">xtr::sink::capacity</span></a>.</p>
-<p>Note that this setting may only be defined in config.hpp and requires rebuilding libxtr if set. </p>
+<p>Note that if the single header include file is not used then this setting may only be defined in either config.hpp or by overriding CXXFLAGS, and requires rebuilding libxtr if set. </p>
 </dd></dl>
 
 <dl class="cpp macro">
 <dt class="sig sig-object cpp" id="c.XTR_USE_IO_URING">
 <span class="target" id="config_8hpp_1a628cf123cd3a18fc1bea77b1548669b8"></span><span class="sig-name descname"><span class="n"><span class="pre">XTR_USE_IO_URING</span></span></span><a class="headerlink" href="#c.XTR_USE_IO_URING" title="Permalink to this definition"></a><br /></dt>
 <dd><p>Set to 1 to enable io_uring support. If this setting is not manually defined then io_uring support will be automatically detected. If libxtr is built with io_uring support enabled then the library will still function on kernels that do not have io_uring support, as a run-time check will be performed before attempting to use any io_uring system calls.</p>
-<p>Note that this setting may only be defined in config.hpp and requires rebuilding libxtr if set. </p>
+<p>Note that if the single header include file is not used then this setting may only be defined in either config.hpp or by overriding CXXFLAGS, and requires rebuilding libxtr if set. </p>
 </dd></dl>
 
 <dl class="cpp macro">
 <dt class="sig sig-object cpp" id="c.XTR_IO_URING_POLL">
 <span class="target" id="config_8hpp_1a77d07b4b54338fce132a411093d00f49"></span><span class="sig-name descname"><span class="n"><span class="pre">XTR_IO_URING_POLL</span></span></span><a class="headerlink" href="#c.XTR_IO_URING_POLL" title="Permalink to this definition"></a><br /></dt>
 <dd><p>Set to 1 to enable submission queue polling when using io_uring. If enabled the IORING_SETUP_SQPOLL flag will be passed to io_uring_setup(2).</p>
-<p>Note that this setting may only be defined in config.hpp and requires rebuilding libxtr if set. </p>
+<p>Note that if the single header include file is not used then this setting may only be defined in either config.hpp or by overriding CXXFLAGS, and requires rebuilding libxtr if set. </p>
 </dd></dl>
 
 </section>
