@@ -121,8 +121,12 @@ TEST_CASE_METHOD(fixture, "write test", "[fd_storage]")
     get_cqe_hook =
         [&](auto ring, auto cqe, auto... args)
         {
-            ++cqe_count;
             const int ret = get_cqe_next(ring, cqe, args...);
+#if XTR_IO_URING_POLL
+            if (*cqe == nullptr)
+                return ret;
+#endif
+            ++cqe_count;
             REQUIRE((*cqe)->res == xtr::io_uring_fd_storage::default_buffer_capacity);
             return ret;
         };
@@ -147,8 +151,12 @@ TEST_CASE_METHOD(fixture, "write more than queue size test", "[fd_storage]")
     get_cqe_hook =
         [&](auto ring, auto cqe, auto... args)
         {
-            ++cqe_count;
             const int ret = get_cqe_next(ring, cqe, args...);
+#if XTR_IO_URING_POLL
+            if (*cqe == nullptr)
+                return ret;
+#endif
+            ++cqe_count;
             REQUIRE((*cqe)->res == xtr::io_uring_fd_storage::default_buffer_capacity);
             return ret;
         };
@@ -199,6 +207,9 @@ TEST_CASE_METHOD(fixture, "reopen with writes queued", "[fd_storage]")
     }
 }
 
+// These tests are disabled because if SQPOLL is enabled then get_cqe isn't
+// called---sqring_wait is called instead (which has no symbol to interpose).
+#if !XTR_IO_URING_POLL
 TEST_CASE_METHOD(fixture, "submission queue full on submit", "[fd_storage]")
 {
     // First send a close operation so that there is a completion event to wait on
@@ -264,6 +275,7 @@ TEST_CASE_METHOD(fixture, "submission queue full on reopen", "[fd_storage]")
 
     REQUIRE(get_cqe_called);
 }
+#endif
 
 TEST_CASE_METHOD(fixture, "short write test", "[fd_storage]")
 {
@@ -283,10 +295,15 @@ TEST_CASE_METHOD(fixture, "short write test", "[fd_storage]")
         };
 
     get_cqe_hook =
-        [&](auto... args)
+        [&](auto ring, auto cqe, auto... args)
         {
+            const int ret = get_cqe_next(ring, cqe, args...);
+#if XTR_IO_URING_POLL
+            if (*cqe == nullptr)
+                return ret;
+#endif
             ++cqe_count;
-            return get_cqe_next(args...);
+            return ret;
         };
 
     submit_hook =
@@ -326,6 +343,10 @@ TEST_CASE_METHOD(fixture, "EAGAIN test", "[fd_storage]")
         [&](auto ring, auto cqe, auto... args)
         {
             const int ret = get_cqe_next(ring, cqe, args...);
+#if XTR_IO_URING_POLL
+            if (*cqe == nullptr)
+                return ret;
+#endif
             if (++cqe_count == 1)
                 (*cqe)->res = -EAGAIN;
             return ret;
@@ -367,8 +388,12 @@ TEST_CASE_METHOD(fixture, "close fail test", "[fd_storage]")
     get_cqe_hook =
         [&](auto ring, auto cqe, auto... args)
         {
-            ++cqe_count;
             const int ret = get_cqe_next(ring, cqe, args...);
+#if XTR_IO_URING_POLL
+            if (*cqe == nullptr)
+                return ret;
+#endif
+            ++cqe_count;
             REQUIRE(::io_uring_cqe_get_data(*cqe) == nullptr);
             (*cqe)->res = -EIO;
             return ret;
@@ -396,6 +421,10 @@ TEST_CASE_METHOD(fixture, "write error test", "[fd_storage]")
         [&](auto ring, auto cqe, auto... args)
         {
             const int ret = get_cqe_next(ring, cqe, args...);
+#if XTR_IO_URING_POLL
+            if (*cqe == nullptr)
+                return ret;
+#endif
             (*cqe)->res = -EIO;
             return ret;
         };
