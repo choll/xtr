@@ -267,8 +267,8 @@ public:
         assert(nbytes <= nread_plus_capacity_.load() - nwritten_.load());
         // This release pairs with the acquire in read_span(). No reads or writes
         // in the current thread can be reordered after this store.
-        nwritten_.fetch_add(nbytes, std::memory_order_release);
         wrnwritten_ += nbytes;
+        nwritten_.store(wrnwritten_, std::memory_order_release);
     }
 
     const_span read_span() const noexcept
