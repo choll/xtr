@@ -808,8 +808,8 @@ public:
     void reduce_writable(size_type nbytes) noexcept
     {
         assert(nbytes <= nread_plus_capacity_.load() - nwritten_.load());
-        nwritten_.fetch_add(nbytes, std::memory_order_release);
         wrnwritten_ += nbytes;
+        nwritten_.store(wrnwritten_, std::memory_order_release);
     }
 
     const_span read_span() const noexcept
