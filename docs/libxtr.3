@@ -27,7 +27,7 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .in \\n[rst2man-indent\\n[rst2man-indent-level]]u
 ..
-.TH "LIBXTR" "3" "June 2022" "" "xtr"
+.TH "LIBXTR" "3" "July 2022" "" "xtr"
 .SH NAME
 libxtr \- C++ logging library API reference
 .SH LOG MACROS
@@ -246,7 +246,7 @@ TS: The timestamp to apply to the log statement.
 .SH LOGGER
 .INDENT 0.0
 .TP
-.B class  xtr::logger 
+.B class  logger 
 The main logger class. When constructed a background thread will be created which is used for formatting log messages and performing I/O. To write to the logger call \fI\%logger::get_sink\fP to create a sink, then pass the sink to a macro such as \fI\%XTR_LOG\fP (see the \fI\%creating and writing to sinks\fP section of the user guide for details). 
 .sp
 Public Functions
@@ -388,7 +388,7 @@ Sets the logger log level style\-\-\-please refer to the \fI\%log_level_style_t\
 .SH SINK
 .INDENT 0.0
 .TP
-.B class  xtr::sink 
+.B class  sink 
 Log sink class. A sink is how log messages are written to a log. Each sink has its own queue which is used to send log messages to the logger. Sink operations are not thread safe, with the exception of \fI\%set_level\fP and \fI\%level\fP\&.
 .sp
 It is expected that an application will have many sinks, such as a sink per thread or sink per component. A sink that is connected to a logger may be created by calling \fI\%logger::get_sink\fP\&. A sink that is not connected to a logger may be created simply by default construction, then the sink may be connected to a logger by calling \fI\%logger::register_sink\fP\&. 
@@ -516,7 +516,7 @@ System D log level style (see \fI\%log_level_style_t\fP). Returns strings as des
 .SH STORAGE INTERFACES
 .INDENT 0.0
 .TP
-.B struct  xtr::storage_interface 
+.B struct  storage_interface 
 Interface allowing custom back\-ends to be implemented. To create a custom back\-end, inherit from storage_interfance, implement all pure\-virtual functions then pass a \fI\%storage_interface_ptr\fP pointing to an instance of the custom back\-end to \fI\%logger::logger\fP\&. 
 .sp
 Public Functions
@@ -553,7 +553,7 @@ Convenience typedef for std::unique_ptr<\fI\%storage_interface\fP>
 .UNINDENT
 .INDENT 0.0
 .TP
-.B class  xtr::io_uring_fd_storage  :  public  fd_storage_base 
+.B class  io_uring_fd_storage  :  public  fd_storage_base 
 An implementation of \fI\%storage_interface\fP that uses \fI\%io_uring(7)\fP <\fBhttps://www.man7.org/linux/man-pages/man7/io_uring.7.html\fP> to perform file I/O (Linux only). 
 .sp
 Public Functions
@@ -596,7 +596,7 @@ Default value for the batch_size constructor argument.
 .UNINDENT
 .INDENT 0.0
 .TP
-.B class  xtr::posix_fd_storage  :  public  fd_storage_base 
+.B class  posix_fd_storage  :  public  fd_storage_base 
 An implementation of \fI\%storage_interface\fP that uses standard \fI\%POSIX\fP <\fBhttps://pubs.opengroup.org/onlinepubs/9699919799/functions/write.html\fP> functions to perform file I/O. 
 .sp
 Public Functions
