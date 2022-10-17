@@ -44,27 +44,61 @@
 
 namespace
 {
-    const auto submit_next =
-        reinterpret_cast<decltype(&io_uring_submit)>(
-            ::dlsym(RTLD_NEXT, "io_uring_submit"));
+    std::function<decltype(io_uring_submit)> submit_hook = io_uring_submit;
+    std::function<decltype(io_uring_get_sqe)> get_sqe_hook = io_uring_get_sqe;
+    std::function<decltype(io_uring_wait_cqe)> wait_cqe_hook = io_uring_wait_cqe;
+    std::function<decltype(io_uring_sqring_wait)> sqring_wait_hook = io_uring_sqring_wait;
+    std::function<decltype(io_uring_peek_cqe)> peek_cqe_hook = io_uring_peek_cqe;
 
-    const auto get_sqe_next =
-        reinterpret_cast<decltype(&io_uring_get_sqe)>(
-            ::dlsym(RTLD_NEXT, "io_uring_get_sqe"));
+    int io_uring_submit_trampoline(io_uring* ring)
+    {
+        return submit_hook(ring);
+    }
 
-    const auto get_cqe_next =
-        reinterpret_cast<decltype(&__io_uring_get_cqe)>(
-            ::dlsym(RTLD_NEXT, "__io_uring_get_cqe"));
+    io_uring_sqe* io_uring_get_sqe_trampoline(io_uring* ring)
+    {
+        return get_sqe_hook(ring);
+    }
 
-    std::function<decltype(io_uring_submit)> submit_hook = submit_next;
-    std::function<decltype(io_uring_get_sqe)> get_sqe_hook = get_sqe_next;
-    std::function<decltype(__io_uring_get_cqe)> get_cqe_hook = get_cqe_next;
+    int io_uring_wait_cqe_trampoline(io_uring* ring, io_uring_cqe** cqe)
+    {
+        return wait_cqe_hook(ring, cqe);
+    }
+
+    int io_uring_sqring_wait_trampoline(io_uring* ring)
+    {
+        return sqring_wait_hook(ring);
+    }
+
+    int io_uring_peek_cqe_trampoline(io_uring* ring, io_uring_cqe** cqe)
+    {
+        return peek_cqe_hook(ring, cqe);
+    }
+
+    struct test_fd_storage : xtr::io_uring_fd_storage
+    {
+        test_fd_storage(int fd, std::string path)
+        :
+            io_uring_fd_storage(
+                fd,
+                std::move(path),
+                io_uring_fd_storage::default_buffer_capacity,
+                io_uring_fd_storage::default_queue_size,
+                io_uring_fd_storage::default_batch_size,
+                io_uring_submit_trampoline,
+                io_uring_get_sqe_trampoline,
+                io_uring_wait_cqe_trampoline,
+                io_uring_sqring_wait_trampoline,
+                io_uring_peek_cqe_trampoline)
+        {
+        }
+    };
 
     struct fixture
     {
         fixture()
         {
-            storage_ = xtr::make_fd_storage(tmp_.fd_.release(), tmp_.path_);
+            storage_ = std::make_unique<test_fd_storage>(tmp_.fd_.release(), tmp_.path_);
         }
 
         ~fixture()
@@ -74,9 +108,11 @@ namespace
 
         void reset_hooks()
         {
-            submit_hook = submit_next;
-            get_sqe_hook = get_sqe_next;
-            get_cqe_hook = get_cqe_next;
+            submit_hook = io_uring_submit;
+            get_sqe_hook = io_uring_get_sqe;
+            wait_cqe_hook = io_uring_wait_cqe;
+            sqring_wait_hook = io_uring_sqring_wait;
+            peek_cqe_hook = io_uring_peek_cqe;
         }
 
         void flush_and_sync()
@@ -90,42 +126,19 @@ namespace
     };
 }
 
-extern "C"
-{
-    int io_uring_submit(io_uring* ring)
-    {
-        return submit_hook(ring);
-    }
-
-    io_uring_sqe* io_uring_get_sqe(io_uring* ring)
-    {
-        return get_sqe_hook(ring);
-    }
-
-    int __io_uring_get_cqe(
-        io_uring* ring,
-        io_uring_cqe** cqe,
-        unsigned submit,
-        unsigned wait_nr,
-        ::sigset_t* sigmask)
-    {
-        return get_cqe_hook(ring, cqe, submit, wait_nr, sigmask);
-    }
-}
-
 TEST_CASE_METHOD(fixture, "write test", "[fd_storage]")
 {
     const std::size_t n = 16;
     std::size_t cqe_count = 0;
 
-    get_cqe_hook =
-        [&](auto ring, auto cqe, auto... args)
-        {
-            const int ret = get_cqe_next(ring, cqe, args...);
 #if XTR_IO_URING_POLL
-            if (*cqe == nullptr)
-                return ret;
+    peek_cqe_hook =
+#else
+    wait_cqe_hook =
 #endif
+        [&](auto ring, auto cqe)
+        {
+            const int ret = io_uring_wait_cqe(ring, cqe);
             ++cqe_count;
             REQUIRE((*cqe)->res == xtr::io_uring_fd_storage::default_buffer_capacity);
             return ret;
@@ -148,14 +161,14 @@ TEST_CASE_METHOD(fixture, "write more than queue size test", "[fd_storage]")
     const std::size_t n = xtr::io_uring_fd_storage::default_queue_size * 2;
     std::size_t cqe_count = 0;
 
-    get_cqe_hook =
-        [&](auto ring, auto cqe, auto... args)
-        {
-            const int ret = get_cqe_next(ring, cqe, args...);
 #if XTR_IO_URING_POLL
-            if (*cqe == nullptr)
-                return ret;
+    peek_cqe_hook =
+#else
+    wait_cqe_hook =
 #endif
+        [&](auto ring, auto cqe)
+        {
+            const int ret = io_uring_wait_cqe(ring, cqe);
             ++cqe_count;
             REQUIRE((*cqe)->res == xtr::io_uring_fd_storage::default_buffer_capacity);
             return ret;
@@ -192,7 +205,7 @@ TEST_CASE_METHOD(fixture, "reopen with writes queued", "[fd_storage]")
         storage_->submit_buffer(span.data(), span.size());
     }
 
-    submit_next(saved_ring); // release all buffers at once
+    io_uring_submit(saved_ring); // release all buffers at once
     REQUIRE(storage_->reopen() == 0);
     reset_hooks();
 
@@ -207,9 +220,6 @@ TEST_CASE_METHOD(fixture, "reopen with writes queued", "[fd_storage]")
     }
 }
 
-// These tests are disabled because if SQPOLL is enabled then get_cqe isn't
-// called---sqring_wait is called instead (which has no symbol to interpose).
-#if !XTR_IO_URING_POLL
 TEST_CASE_METHOD(fixture, "submission queue full on submit", "[fd_storage]")
 {
     // First send a close operation so that there is a completion event to wait on
@@ -224,24 +234,32 @@ TEST_CASE_METHOD(fixture, "submission queue full on submit", "[fd_storage]")
             return nullptr;
         };
 
-    bool get_cqe_called = false;
+    bool wait_cqe_called = false;
 
-    get_cqe_hook =
+#if XTR_IO_URING_POLL
+    sqring_wait_hook =
+#else
+    wait_cqe_hook =
+#endif
         [&](auto... args)
         {
-            if (!get_cqe_called)
+            if (!wait_cqe_called)
             {
-                get_cqe_called = true;
-                get_sqe_hook = get_sqe_next;
+                wait_cqe_called = true;
+                get_sqe_hook = io_uring_get_sqe;
             }
-            return get_cqe_next(args...);
+#if XTR_IO_URING_POLL
+            return io_uring_sqring_wait(args...);
+#else
+            return io_uring_wait_cqe(args...);
+#endif
         };
 
-    // Try to submit a buffer, get_sqe returns null so get_cqe should be called
+    // Try to submit a buffer, get_sqe returns null so wait_cqe should be called
     const auto span = storage_->allocate_buffer();
     storage_->submit_buffer(span.data(), span.size());
 
-    REQUIRE(get_cqe_called);
+    REQUIRE(wait_cqe_called);
 }
 
 TEST_CASE_METHOD(fixture, "submission queue full on reopen", "[fd_storage]")
@@ -257,25 +275,32 @@ TEST_CASE_METHOD(fixture, "submission queue full on reopen", "[fd_storage]")
             return nullptr;
         };
 
-    bool get_cqe_called = false;
+    bool wait_cqe_called = false;
 
-    get_cqe_hook =
+#if XTR_IO_URING_POLL
+    sqring_wait_hook =
+#else
+    wait_cqe_hook =
+#endif
         [&](auto... args)
         {
-            if (!get_cqe_called)
+            if (!wait_cqe_called)
             {
-                get_cqe_called = true;
-                get_sqe_hook = get_sqe_next;
+                wait_cqe_called = true;
+                get_sqe_hook = io_uring_get_sqe;
             }
-            return get_cqe_next(args...);
+#if XTR_IO_URING_POLL
+            return io_uring_sqring_wait(args...);
+#else
+            return io_uring_wait_cqe(args...);
+#endif
         };
 
-    // Try to reopen, get_sqe returns null so get_cqe should be called
+    // Try to reopen, get_sqe returns null so wait_cqe should be called
     REQUIRE(storage_->reopen() == 0);
 
-    REQUIRE(get_cqe_called);
+    REQUIRE(wait_cqe_called);
 }
-#endif
 
 TEST_CASE_METHOD(fixture, "short write test", "[fd_storage]")
 {
@@ -291,17 +316,17 @@ TEST_CASE_METHOD(fixture, "short write test", "[fd_storage]")
         [&](io_uring* ring)
         {
             ++sqe_count;
-            return sqe = get_sqe_next(ring);
+            return sqe = io_uring_get_sqe(ring);
         };
 
-    get_cqe_hook =
-        [&](auto ring, auto cqe, auto... args)
-        {
-            const int ret = get_cqe_next(ring, cqe, args...);
 #if XTR_IO_URING_POLL
-            if (*cqe == nullptr)
-                return ret;
+    peek_cqe_hook =
+#else
+    wait_cqe_hook =
 #endif
+        [&](auto ring, auto cqe)
+        {
+            const int ret = io_uring_wait_cqe(ring, cqe);
             ++cqe_count;
             return ret;
         };
@@ -312,7 +337,7 @@ TEST_CASE_METHOD(fixture, "short write test", "[fd_storage]")
             ++submit_count;
             if (sqe->len == 64 * 1024)
                 sqe->len -= missing_size;
-            return submit_next(ring);
+            return io_uring_submit(ring);
         };
 
     const auto span = storage_->allocate_buffer();
@@ -336,17 +361,17 @@ TEST_CASE_METHOD(fixture, "EAGAIN test", "[fd_storage]")
         [&](io_uring* ring)
         {
             ++sqe_count;
-            return sqe = get_sqe_next(ring);
+            return sqe = io_uring_get_sqe(ring);
         };
 
-    get_cqe_hook =
-        [&](auto ring, auto cqe, auto... args)
-        {
-            const int ret = get_cqe_next(ring, cqe, args...);
 #if XTR_IO_URING_POLL
-            if (*cqe == nullptr)
-                return ret;
+    peek_cqe_hook =
+#else
+    wait_cqe_hook =
 #endif
+        [&](auto ring, auto cqe)
+        {
+            const int ret = io_uring_wait_cqe(ring, cqe);
             if (++cqe_count == 1)
                 (*cqe)->res = -EAGAIN;
             return ret;
@@ -360,7 +385,7 @@ TEST_CASE_METHOD(fixture, "EAGAIN test", "[fd_storage]")
             ++submit_count;
             // Full buffer should be resubmitted
             REQUIRE(sqe->len == span.size());
-            return submit_next(ring);
+            return io_uring_submit(ring);
         };
 
     storage_->submit_buffer(span.data(), span.size());
@@ -382,17 +407,17 @@ TEST_CASE_METHOD(fixture, "close fail test", "[fd_storage]")
         [&](io_uring* ring)
         {
             ++sqe_count;
-            return get_sqe_next(ring);
+            return io_uring_get_sqe(ring);
         };
 
-    get_cqe_hook =
-        [&](auto ring, auto cqe, auto... args)
-        {
-            const int ret = get_cqe_next(ring, cqe, args...);
 #if XTR_IO_URING_POLL
-            if (*cqe == nullptr)
-                return ret;
+    peek_cqe_hook =
+#else
+    wait_cqe_hook =
 #endif
+        [&](auto ring, auto cqe)
+        {
+            const int ret = io_uring_wait_cqe(ring, cqe);
             ++cqe_count;
             REQUIRE(::io_uring_cqe_get_data(*cqe) == nullptr);
             (*cqe)->res = -EIO;
@@ -403,7 +428,7 @@ TEST_CASE_METHOD(fixture, "close fail test", "[fd_storage]")
         [&](io_uring* ring)
         {
             ++submit_count;
-            return submit_next(ring);
+            return io_uring_submit(ring);
         };
 
     REQUIRE(storage_->reopen() == 0);
@@ -417,14 +442,14 @@ TEST_CASE_METHOD(fixture, "close fail test", "[fd_storage]")
 
 TEST_CASE_METHOD(fixture, "write error test", "[fd_storage]")
 {
-    get_cqe_hook =
-        [&](auto ring, auto cqe, auto... args)
-        {
-            const int ret = get_cqe_next(ring, cqe, args...);
 #if XTR_IO_URING_POLL
-            if (*cqe == nullptr)
-                return ret;
+    peek_cqe_hook =
+#else
+    wait_cqe_hook =
 #endif
+        [&](auto ring, auto cqe)
+        {
+            const int ret = io_uring_wait_cqe(ring, cqe);
             (*cqe)->res = -EIO;
             return ret;
         };

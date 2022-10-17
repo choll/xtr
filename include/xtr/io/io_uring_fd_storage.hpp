@@ -84,6 +84,25 @@ private:
         }
     };
 
+protected:
+    using io_uring_submit_func_t = decltype(&io_uring_submit);
+    using io_uring_get_sqe_func_t = decltype(&io_uring_get_sqe);
+    using io_uring_wait_cqe_func_t = decltype(&io_uring_wait_cqe);
+    using io_uring_sqring_wait_func_t = decltype(&io_uring_sqring_wait);
+    using io_uring_peek_cqe_func_t = decltype(&io_uring_peek_cqe);
+
+    io_uring_fd_storage(
+        int fd,
+        std::string reopen_path,
+        std::size_t buffer_capacity,
+        std::size_t queue_size,
+        std::size_t batch_size,
+        io_uring_submit_func_t io_uring_submit_func,
+        io_uring_get_sqe_func_t io_uring_get_sqe_func,
+        io_uring_wait_cqe_func_t io_uring_wait_cqe_func,
+        io_uring_sqring_wait_func_t io_uring_sqring_wait_func,
+        io_uring_peek_cqe_func_t io_uring_peek_cqe_func);
+
 public:
     /**
      * File descriptor constructor.
@@ -142,6 +161,11 @@ private:
     std::size_t offset_ = 0;
     buffer* free_list_;
     std::unique_ptr<std::byte[]> buffer_storage_;
+    io_uring_submit_func_t io_uring_submit_func_;
+    io_uring_get_sqe_func_t io_uring_get_sqe_func_;
+    io_uring_wait_cqe_func_t io_uring_wait_cqe_func_;
+    io_uring_sqring_wait_func_t io_uring_sqring_wait_func_;
+    io_uring_peek_cqe_func_t io_uring_peek_cqe_func_;
 };
 
 #endif

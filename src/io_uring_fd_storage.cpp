@@ -37,11 +37,21 @@ xtr::io_uring_fd_storage::io_uring_fd_storage(
     std::string reopen_path,
     std::size_t buffer_capacity,
     std::size_t queue_size,
-    std::size_t batch_size)
+    std::size_t batch_size,
+    io_uring_submit_func_t io_uring_submit_func,
+    io_uring_get_sqe_func_t io_uring_get_sqe_func,
+    io_uring_wait_cqe_func_t io_uring_wait_cqe_func,
+    io_uring_sqring_wait_func_t io_uring_sqring_wait_func,
+    io_uring_peek_cqe_func_t io_uring_peek_cqe_func)
 :
     fd_storage_base(fd, std::move(reopen_path)),
     buffer_capacity_(buffer_capacity),
-    batch_size_(batch_size)
+    batch_size_(batch_size),
+    io_uring_submit_func_(io_uring_submit_func),
+    io_uring_get_sqe_func_(io_uring_get_sqe_func),
+    io_uring_wait_cqe_func_(io_uring_wait_cqe_func),
+    io_uring_sqring_wait_func_(io_uring_sqring_wait_func),
+    io_uring_peek_cqe_func_(io_uring_peek_cqe_func)
 {
     if (buffer_capacity > std::numeric_limits<decltype(io_uring_cqe::res)>::max())
         detail::throw_invalid_argument("buffer_capacity too large");
@@ -69,6 +79,28 @@ xtr::io_uring_fd_storage::io_uring_fd_storage(
 }
 
 XTR_FUNC
+xtr::io_uring_fd_storage::io_uring_fd_storage(
+    int fd,
+    std::string reopen_path,
+    std::size_t buffer_capacity,
+    std::size_t queue_size,
+    std::size_t batch_size)
+:
+    io_uring_fd_storage(
+        fd,
+        std::move(reopen_path),
+        buffer_capacity,
+        queue_size,
+        batch_size,
+        ::io_uring_submit,
+        ::io_uring_get_sqe,
+        ::io_uring_wait_cqe,
+        ::io_uring_sqring_wait,
+        ::io_uring_peek_cqe)
+{
+}
+
+XTR_FUNC
 xtr::io_uring_fd_storage::~io_uring_fd_storage()
 {
     flush();
@@ -80,7 +112,7 @@ XTR_FUNC
 void xtr::io_uring_fd_storage::flush()
 {
     // SQEs may have been prepared but not submitted, due to batching
-    ::io_uring_submit(&ring_);
+    io_uring_submit_func_(&ring_);
 }
 
 XTR_FUNC
@@ -127,7 +159,7 @@ void xtr::io_uring_fd_storage::submit_buffer(char* data, std::size_t size)
     ++pending_cqe_count_;
 
     if (++batch_index_ % batch_size_ == 0)
-        ::io_uring_submit(&ring_);
+        io_uring_submit_func_(&ring_);
 }
 
 XTR_FUNC
@@ -140,7 +172,7 @@ void xtr::io_uring_fd_storage::replace_fd(int newfd) noexcept
     ::io_uring_prep_close(sqe, fd_.release());
     sqe->flags |= IOSQE_IO_DRAIN;
     ++pending_cqe_count_;
-    ::io_uring_submit(&ring_);
+    io_uring_submit_func_(&ring_);
 
     fd_storage_base::replace_fd(newfd);
 }
@@ -181,10 +213,10 @@ io_uring_sqe* xtr::io_uring_fd_storage::get_sqe()
 {
     io_uring_sqe* sqe;
 
-    while ((sqe = ::io_uring_get_sqe(&ring_)) == nullptr)
+    while ((sqe = io_uring_get_sqe_func_(&ring_)) == nullptr)
     {
 #if XTR_IO_URING_POLL
-        ::io_uring_sqring_wait(&ring_);
+        io_uring_sqring_wait_func_(&ring_);
 #else
         // Waiting for a CQE seems to be the only option here
         wait_for_one_cqe();
@@ -204,10 +236,10 @@ void xtr::io_uring_fd_storage::wait_for_one_cqe()
 
 retry:
 #if XTR_IO_URING_POLL
-    while ((errnum = io_uring_peek_cqe(&ring_, &cqe)) == -EAGAIN)
+    while ((errnum = io_uring_peek_cqe_func_(&ring_, &cqe)) == -EAGAIN)
         ;
 #else
-    errnum = ::io_uring_wait_cqe(&ring_, &cqe);
+    errnum = io_uring_wait_cqe_func_(&ring_, &cqe);
 #endif
 
     if (errnum != 0) [[unlikely]]
@@ -291,7 +323,7 @@ void xtr::io_uring_fd_storage::resubmit_buffer(buffer* buf, unsigned nwritten)
     // Don't call get_sqe() as this function is only called from wait_for_one_cqe,
     // so space in the submission queue must be available (and if this is incorrect,
     // calling get_sqe() might have problems due to it calling wait_for_one_cqe).
-    io_uring_sqe* sqe = ::io_uring_get_sqe(&ring_);
+    io_uring_sqe* sqe = io_uring_get_sqe_func_(&ring_);
 
     assert(sqe != nullptr);
 
@@ -307,7 +339,7 @@ void xtr::io_uring_fd_storage::resubmit_buffer(buffer* buf, unsigned nwritten)
 
     ++pending_cqe_count_;
 
-    ::io_uring_submit(&ring_);
+    io_uring_submit_func_(&ring_);
 }
 
 XTR_FUNC
