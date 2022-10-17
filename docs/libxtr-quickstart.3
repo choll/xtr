@@ -38,14 +38,14 @@ truly impatient there is a single\-include file
 \fI\%here\fP <\fBhttps://github.com/choll/xtr/blob/master/single_include/xtr/logger.hpp\fP>\&.
 .SH OVERVIEW
 .sp
-The logger is split into two main components, the logger class
-and the sink class. The logger takes care of opening and closing the log file,
+The logger is split into two main components, the \fI\%logger\fP class
+and the \fI\%sink\fP class. The logger takes care of opening and closing the log file,
 and is thread\-safe. The sink class is used to write to the log. Sinks are
-created by calling \fBxtr::logger::get_sink()\fP and are not thread
+created by calling \fI\%xtr::logger::get_sink()\fP and are not thread
 safe\-\-\-the idea is that applications have many sinks, so threads should each
 have their own set of separate sinks.
 .sp
-Log messages are written using various macros which accept
+Log messages are written using various \fI\%macros\fP which accept
 a sink as their first argument, followed by a Python
 \fI\%str.format\fP <\fBhttps://docs.python.org/3/library/string.html#formatstrings\fP>
 style format string. The \fI\%{fmt}\fP <\fBhttps://fmt.dev\fP> library is used for
@@ -137,7 +137,7 @@ XTR_LOGL(info, s, "Hello world");
 .sp
 Set the log level of the sink \(aqs\(aq to \(aqerror\(aq, causing messages with importance
 lower than \(aqerror\(aq to be dropped. Available log levels are debug, info, warning,
-error and fatal\-\-\-see \fBxtr::log_level_t\fP\&.
+error and fatal\-\-\-see \fI\%xtr::log_level_t\fP\&.
 .INDENT 0.0
 .INDENT 3.5
 .sp
@@ -182,7 +182,7 @@ XTR_LOG("{} {}", str1, str2);
 .UNINDENT
 .UNINDENT
 .sp
-To avoid copying, wrap arguments in a call to \fBxtr::nocopy()\fP:
+To avoid copying, wrap arguments in a call to \fI\%xtr::nocopy()\fP:
 .INDENT 0.0
 .INDENT 3.5
 .sp
@@ -213,7 +213,7 @@ the background thread reads the event from the sink. This is
 less accurate, but faster than reading the time at the log
 call\-site. If reading the time at the call\-site is preferred,
 use XTR_LOG_TSC or XTR_LOG_RTC. See the
-time sources section of the user guide
+\fI\%time sources\fP section of the user guide
 for further information.
 .SH AUTHOR
 Chris E. Holloway

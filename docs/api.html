@@ -14,7 +14,9 @@
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -90,11 +92,11 @@
            <div itemprop="articleBody">
              
   <section id="api-reference">
-<h1>API Reference<a class="headerlink" href="#api-reference" title="Permalink to this headline"></a></h1>
+<h1>API Reference<a class="headerlink" href="#api-reference" title="Permalink to this heading"></a></h1>
 <section id="log-macros">
-<span id="id1"></span><h2>Log Macros<a class="headerlink" href="#log-macros" title="Permalink to this headline"></a></h2>
+<span id="id1"></span><h2>Log Macros<a class="headerlink" href="#log-macros" title="Permalink to this heading"></a></h2>
 <section id="basic-macros">
-<span id="id2"></span><h3>Basic Macros<a class="headerlink" href="#basic-macros" title="Permalink to this headline"></a></h3>
+<span id="id2"></span><h3>Basic Macros<a class="headerlink" href="#basic-macros" title="Permalink to this heading"></a></h3>
 <p>The following macros log without reading the time of day at the point of
 logging, instead it is read when the log message is received by the background
 thread. Use these macros if a loss of timestamp accuracy is acceptable to gain
@@ -141,7 +143,7 @@ performance.</p>
 
 </section>
 <section id="time-stamp-counter-timestamped-macros">
-<span id="tsc-macros"></span><h3>Time-Stamp Counter Timestamped Macros<a class="headerlink" href="#time-stamp-counter-timestamped-macros" title="Permalink to this headline"></a></h3>
+<span id="tsc-macros"></span><h3>Time-Stamp Counter Timestamped Macros<a class="headerlink" href="#time-stamp-counter-timestamped-macros" title="Permalink to this heading"></a></h3>
 <p>The following macros log and read the time-stamp counter at the point of
 logging. Use these macros if the most accurate timestamps are required. On some
 systems reading rdtsc may be slower than using the real-time clock (see below).</p>
@@ -187,7 +189,7 @@ systems reading rdtsc may be slower than using the real-time clock (see below).<
 
 </section>
 <section id="real-time-clock-timestamped-macros">
-<span id="rtc-macros"></span><h3>Real-Time Clock Timestamped Macros<a class="headerlink" href="#real-time-clock-timestamped-macros" title="Permalink to this headline"></a></h3>
+<span id="rtc-macros"></span><h3>Real-Time Clock Timestamped Macros<a class="headerlink" href="#real-time-clock-timestamped-macros" title="Permalink to this heading"></a></h3>
 <p>The following macros log and read the system real-time clock at the point of
 logging. Use these macros if accurate timestamps are required.</p>
 <dl class="cpp macro">
@@ -232,7 +234,7 @@ logging. Use these macros if accurate timestamps are required.</p>
 
 </section>
 <section id="user-supplied-timestamp-macros">
-<span id="id3"></span><h3>User-Supplied Timestamp Macros<a class="headerlink" href="#user-supplied-timestamp-macros" title="Permalink to this headline"></a></h3>
+<span id="id3"></span><h3>User-Supplied Timestamp Macros<a class="headerlink" href="#user-supplied-timestamp-macros" title="Permalink to this heading"></a></h3>
 <p>The following macros log and accept a user-supplied timestamp.</p>
 <dl class="cpp macro">
 <dt class="sig sig-object cpp" id="c.XTR_LOG_TS">
@@ -283,7 +285,7 @@ logging. Use these macros if accurate timestamps are required.</p>
 </section>
 </section>
 <section id="logger">
-<span id="id4"></span><h2>Logger<a class="headerlink" href="#logger" title="Permalink to this headline"></a></h2>
+<span id="id4"></span><h2>Logger<a class="headerlink" href="#logger" title="Permalink to this heading"></a></h2>
 <dl class="cpp class">
 <dt class="sig sig-object cpp" id="_CPPv4N3xtr6loggerE">
 <span id="_CPPv3N3xtr6loggerE"></span><span id="_CPPv2N3xtr6loggerE"></span><span id="xtr::logger"></span><span class="target" id="classxtr_1_1logger"></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">logger</span></span></span><a class="headerlink" href="#_CPPv4N3xtr6loggerE" title="Permalink to this definition"></a><br /></dt>
@@ -409,7 +411,7 @@ logging. Use these macros if accurate timestamps are required.</p>
 
 </section>
 <section id="sink">
-<span id="id5"></span><h2>Sink<a class="headerlink" href="#sink" title="Permalink to this headline"></a></h2>
+<span id="id5"></span><h2>Sink<a class="headerlink" href="#sink" title="Permalink to this heading"></a></h2>
 <dl class="cpp class">
 <dt class="sig sig-object cpp" id="_CPPv4N3xtr4sinkE">
 <span id="_CPPv3N3xtr4sinkE"></span><span id="_CPPv2N3xtr4sinkE"></span><span id="xtr::sink"></span><span class="target" id="classxtr_1_1sink"></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">sink</span></span></span><a class="headerlink" href="#_CPPv4N3xtr4sinkE" title="Permalink to this definition"></a><br /></dt>
@@ -493,7 +495,7 @@ logging. Use these macros if accurate timestamps are required.</p>
 
 </section>
 <section id="nocopy">
-<h2>Nocopy<a class="headerlink" href="#nocopy" title="Permalink to this headline"></a></h2>
+<h2>Nocopy<a class="headerlink" href="#nocopy" title="Permalink to this heading"></a></h2>
 <dl class="cpp function">
 <dt class="sig sig-object cpp" id="_CPPv4I0EN3xtr6nocopyEDaRK1T">
 <span id="_CPPv3I0EN3xtr6nocopyERK1T"></span><span id="_CPPv2I0EN3xtr6nocopyERK1T"></span><span class="k"><span class="pre">template</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">typename</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">T</span></span></span><span class="p"><span class="pre">&gt;</span></span><br /><span class="target" id="namespacextr_1a586a8fc82d54c0295630bd9cdacbb006"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">auto</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">xtr</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">nocopy</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I0EN3xtr6nocopyEDaRK1T" title="xtr::nocopy::T"><span class="n"><span class="pre">T</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">arg</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4I0EN3xtr6nocopyEDaRK1T" title="Permalink to this definition"></a><br /></dt>
@@ -502,7 +504,7 @@ logging. Use these macros if accurate timestamps are required.</p>
 
 </section>
 <section id="log-levels">
-<span id="id6"></span><h2>Log Levels<a class="headerlink" href="#log-levels" title="Permalink to this headline"></a></h2>
+<span id="id6"></span><h2>Log Levels<a class="headerlink" href="#log-levels" title="Permalink to this heading"></a></h2>
 <dl class="cpp enum-class">
 <dt class="sig sig-object cpp" id="_CPPv4N3xtr11log_level_tE">
 <span id="_CPPv3N3xtr11log_level_tE"></span><span id="_CPPv2N3xtr11log_level_tE"></span><span class="target" id="namespacextr_1afb0918f4447c35720ed0eb78fbd054b5"></span><span class="k"><span class="pre">enum</span></span><span class="w"> </span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">xtr</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">log_level_t</span></span></span><a class="headerlink" href="#_CPPv4N3xtr11log_level_tE" title="Permalink to this definition"></a><br /></dt>
@@ -545,7 +547,7 @@ disabled. Fatal log statements will still call
 <a class="reference external" href="https://www.man7.org/linux/man-pages/man3/abort.3.html">abort(3)</a>, however.</p>
 </section>
 <section id="log-level-styles">
-<h2>Log Level Styles<a class="headerlink" href="#log-level-styles" title="Permalink to this headline"></a></h2>
+<h2>Log Level Styles<a class="headerlink" href="#log-level-styles" title="Permalink to this heading"></a></h2>
 <dl class="cpp type">
 <dt class="sig sig-object cpp" id="_CPPv4N3xtr17log_level_style_tE">
 <span id="_CPPv3N3xtr17log_level_style_tE"></span><span id="_CPPv2N3xtr17log_level_style_tE"></span><span class="target" id="namespacextr_1adc7f88f1bb8a0b81ac9dfe9822800ddb"></span><span class="k"><span class="pre">using</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">xtr</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">log_level_style_t</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="p"><span class="pre">(</span></span><span class="p"><span class="pre">*</span></span><span class="p"><span class="pre">)</span></span><span class="p"><span class="pre">(</span></span><a class="reference internal" href="#_CPPv4N3xtr11log_level_tE" title="xtr::log_level_t"><span class="n"><span class="pre">log_level_t</span></span></a><span class="p"><span class="pre">)</span></span><a class="headerlink" href="#_CPPv4N3xtr17log_level_style_tE" title="Permalink to this definition"></a><br /></dt>
@@ -566,7 +568,7 @@ disabled. Fatal log statements will still call
 
 </section>
 <section id="storage-interfaces">
-<h2>Storage Interfaces<a class="headerlink" href="#storage-interfaces" title="Permalink to this headline"></a></h2>
+<h2>Storage Interfaces<a class="headerlink" href="#storage-interfaces" title="Permalink to this heading"></a></h2>
 <dl class="cpp struct">
 <dt class="sig sig-object cpp" id="_CPPv4N3xtr17storage_interfaceE">
 <span id="_CPPv3N3xtr17storage_interfaceE"></span><span id="_CPPv2N3xtr17storage_interfaceE"></span><span id="xtr::storage_interface"></span><span class="target" id="structxtr_1_1storage__interface"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">storage_interface</span></span></span><a class="headerlink" href="#_CPPv4N3xtr17storage_interfaceE" title="Permalink to this definition"></a><br /></dt>
@@ -716,13 +718,13 @@ disabled. Fatal log statements will still call
 
 <dl class="cpp var">
 <dt class="sig sig-object cpp" id="_CPPv4N3xtr16null_reopen_pathE">
-<span id="_CPPv3N3xtr16null_reopen_pathE"></span><span id="_CPPv2N3xtr16null_reopen_pathE"></span><span id="xtr::null_reopen_path__auto"></span><span class="target" id="namespacextr_1a2d114b47712f1720d195475122cfa99d"></span><span class="k"><span class="pre">constexpr</span></span><span class="w"> </span><span class="kt"><span class="pre">auto</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">xtr</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">null_reopen_path</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><s><span class="pre">&quot;&quot;</span></s><a class="headerlink" href="#_CPPv4N3xtr16null_reopen_pathE" title="Permalink to this definition"></a><br /></dt>
+<span id="_CPPv3N3xtr16null_reopen_pathE"></span><span id="_CPPv2N3xtr16null_reopen_pathE"></span><span id="xtr::null_reopen_path__auto"></span><span class="target" id="namespacextr_1a2d114b47712f1720d195475122cfa99d"></span><span class="k"><span class="pre">constexpr</span></span><span class="w"> </span><span class="kt"><span class="pre">auto</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">xtr</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">null_reopen_path</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="s"><span class="pre">&quot;&quot;</span></span><a class="headerlink" href="#_CPPv4N3xtr16null_reopen_pathE" title="Permalink to this definition"></a><br /></dt>
 <dd><p>When passed to the reopen_path argument of <a class="reference internal" href="#namespacextr_1adf467234be0533ac1bc9c6f25a0f1fb4"><span class="std std-ref">make_fd_storage</span></a>, <a class="reference internal" href="#classxtr_1_1posix__fd__storage_1a5657b279460ea5298e04b476f3d385b7"><span class="std std-ref">posix_fd_storage::posix_fd_storage</span></a>, <a class="reference internal" href="#classxtr_1_1io__uring__fd__storage"><span class="std std-ref">io_uring_fd_storage</span></a> or <a class="reference internal" href="#classxtr_1_1logger_1stream-with-reopen-ctor"><span class="std std-ref">logger::logger</span></a> indicates that the output file handle has no associated filename and so should not be reopened if requested by the xtrctl <a class="reference external" href="xtrctl.html#reopening-log-files">reopen command</a>. </p>
 </dd></dl>
 
 </section>
 <section id="default-command-path">
-<h2>Default Command Path<a class="headerlink" href="#default-command-path" title="Permalink to this headline"></a></h2>
+<h2>Default Command Path<a class="headerlink" href="#default-command-path" title="Permalink to this heading"></a></h2>
 <dl class="cpp function">
 <dt class="sig sig-object cpp" id="_CPPv4N3xtr20default_command_pathEv">
 <span id="_CPPv3N3xtr20default_command_pathEv"></span><span id="_CPPv2N3xtr20default_command_pathEv"></span><span id="xtr::default_command_path"></span><span class="target" id="namespacextr_1aa3b454efeb9ce06b9847840199b4848b"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">xtr</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">default_command_path</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xtr20default_command_pathEv" title="Permalink to this definition"></a><br /></dt>
@@ -731,16 +733,16 @@ disabled. Fatal log statements will still call
 
 </section>
 <section id="null-command-path">
-<h2>Null Command Path<a class="headerlink" href="#null-command-path" title="Permalink to this headline"></a></h2>
+<h2>Null Command Path<a class="headerlink" href="#null-command-path" title="Permalink to this heading"></a></h2>
 <dl class="cpp var">
 <dt class="sig sig-object cpp" id="_CPPv4N3xtr17null_command_pathE">
-<span id="_CPPv3N3xtr17null_command_pathE"></span><span id="_CPPv2N3xtr17null_command_pathE"></span><span id="xtr::null_command_path__auto"></span><span class="target" id="namespacextr_1a87617320edefd34c134af57b4c4f1704"></span><span class="k"><span class="pre">constexpr</span></span><span class="w"> </span><span class="kt"><span class="pre">auto</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">xtr</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">null_command_path</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><s><span class="pre">&quot;&quot;</span></s><a class="headerlink" href="#_CPPv4N3xtr17null_command_pathE" title="Permalink to this definition"></a><br /></dt>
+<span id="_CPPv3N3xtr17null_command_pathE"></span><span id="_CPPv2N3xtr17null_command_pathE"></span><span id="xtr::null_command_path__auto"></span><span class="target" id="namespacextr_1a87617320edefd34c134af57b4c4f1704"></span><span class="k"><span class="pre">constexpr</span></span><span class="w"> </span><span class="kt"><span class="pre">auto</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">xtr</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">null_command_path</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="s"><span class="pre">&quot;&quot;</span></span><a class="headerlink" href="#_CPPv4N3xtr17null_command_pathE" title="Permalink to this definition"></a><br /></dt>
 <dd><p>When passed to the <a class="reference internal" href="#classxtr_1_1logger_1command_path_arg"><span class="std std-ref">command_path</span></a> argument of <a class="reference internal" href="#classxtr_1_1logger_1a6a1f023ec9af2389a0ac41f66c98534a"><span class="std std-ref">logger::logger</span></a> (or other logger constructors) indicates that no command socket should be created. </p>
 </dd></dl>
 
 </section>
 <section id="configuration-variables">
-<h2>Configuration Variables<a class="headerlink" href="#configuration-variables" title="Permalink to this headline"></a></h2>
+<h2>Configuration Variables<a class="headerlink" href="#configuration-variables" title="Permalink to this heading"></a></h2>
 <p>The header file <cite>xtr/config.hpp</cite> contains configuration variables that may be
 overridden by users.</p>
 <dl class="cpp macro">
