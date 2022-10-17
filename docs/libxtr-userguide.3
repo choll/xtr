@@ -32,8 +32,8 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 libxtr-userguide \- C++ logging library user guide
 .SH OVERVIEW
 .sp
-The XTR API contains two classes; \fBxtr::logger\fP and
-\fBxtr::sink\fP\&. Sinks each contain a queue [1], and
+The XTR API contains two classes; \fI\%xtr::logger\fP and
+\fI\%xtr::sink\fP\&. Sinks each contain a queue [1], and
 pass log messages to the associated logger via these queues. Each logger
 has a background consumer thread which reads from the sinks that were created from the
 logger. The background thread then formats the log message and either writes it
@@ -64,15 +64,15 @@ sink per component. To support this sinks have a name associated with them which
 is included in the output log message. Sink names do not need to be unique.
 .SH CREATING AND WRITING TO SINKS
 .sp
-Sinks are created either by calling \fBxtr::logger::get_sink()\fP, via normal
-construction followed by a call to \fBxtr::logger::register_sink()\fP, or by
+Sinks are created either by calling \fI\%xtr::logger::get_sink()\fP, via normal
+construction followed by a call to \fI\%xtr::logger::register_sink()\fP, or by
 copying another sink. Copied sinks are registered to the same logger and have the
-same name as the source sink. Sinks may be renamed by calling \fBxtr::sink::set_name()\fP\&.
+same name as the source sink. Sinks may be renamed by calling \fI\%xtr::sink::set_name()\fP\&.
 Once a sink has been created or registered, it may be written to using one of several
-log macros which are described in the log macros section.
+log macros which are described in the \fI\%log macros\fP section.
 .SS Examples
 .sp
-Sink creation via \fBxtr::logger::get_sink()\fP:
+Sink creation via \fI\%xtr::logger::get_sink()\fP:
 .INDENT 0.0
 .INDENT 3.5
 .sp
@@ -92,7 +92,7 @@ XTR_LOG(s, "Hello world");
 .sp
 View this example on \fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/1GWbEPq8T\fP>\&.
 .sp
-Sink creation via \fBxtr::logger::register_sink()\fP:
+Sink creation via \fI\%xtr::logger::register_sink()\fP:
 .INDENT 0.0
 .INDENT 3.5
 .sp
@@ -168,7 +168,7 @@ View this example on \fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/zxs7WTh
 The default behaviour of the logger is to copy format arguments into the
 specified sink by value. Note that no allocations are be performed by the
 logger when this is done. If copying is undesirable then arguments may be
-passed by reference by wrapping them in a call to \fBxtr::nocopy()\fP\&.
+passed by reference by wrapping them in a call to \fI\%xtr::nocopy()\fP\&.
 .SS Examples
 .INDENT 0.0
 .INDENT 3.5
@@ -217,7 +217,7 @@ to not allocate\-\-\-i.e. even if std::string is passed, the
 std::string copy constructor is not invoked and no allocation occurs.
 String data is copied in order to provide safe default behaviour regarding the
 lifetime of the string data. If copying the string data is undesirable then
-string arguments may be wrapped in a call to \fBxtr::nocopy()\fP:
+string arguments may be wrapped in a call to \fI\%xtr::nocopy()\fP:
 .INDENT 0.0
 .INDENT 3.5
 .sp
@@ -237,15 +237,15 @@ object itself does not need to remain valid, just the data it references.
 .SH LOG LEVELS
 .sp
 The logger supports debug, info, warning, error and fatal log levels, which
-are enumerated in the \fBxtr::log_level_t\fP enum. Log statements with
-these levels may be produced using the \fBXTR_LOGL\fP macro, along with
-additional macros that are described in the log macros
+are enumerated in the \fI\%xtr::log_level_t\fP enum. Log statements with
+these levels may be produced using the \fI\%XTR_LOGL\fP macro, along with
+additional macros that are described in the \fI\%log macros\fP
 section of the API reference, all of which follow the convention of containing
 "LOGL" in the macro name.
 .sp
 Each sink has its own log level, which can be programmatically set or queried
-via \fBxtr::sink::set_level()\fP and \fBxtr::sink::level()\fP, and can
-be set or queried from the command line using the xtrctl tool.
+via \fI\%xtr::sink::set_level()\fP and \fI\%xtr::sink::level()\fP, and can
+be set or queried from the command line using the \fI\%xtrctl\fP tool.
 .sp
 Each log level has an order of importance. The listing of levels above is in
 the order of increasing importance\-\-\-so the least important level is \(aqdebug\(aq
@@ -278,17 +278,17 @@ View this example on \fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/ss36qzo
 Debug log statements can be disabled by defining XTR_NDEBUG.
 .SS Fatal Log Statements
 .sp
-Fatal log statements will additionally call \fBxtr::sink::sync()\fP followed
+Fatal log statements will additionally call \fI\%xtr::sink::sync()\fP followed
 by \fI\%abort(3)\fP <\fBhttps://www.man7.org/linux/man-pages/man3/abort.3.html\fP>\&.
 .SH THREAD SAFETY
 .INDENT 0.0
 .INDENT 3.5
 .INDENT 0.0
 .IP \(bu 2
-All functions in \fBxtr::logger\fP are thread\-safe.
+All functions in \fI\%xtr::logger\fP are thread\-safe.
 .IP \(bu 2
-No functions in \fBxtr::sink\fP are thread\-safe other than
-\fBxtr::sink::level()\fP and \fBxtr::sink::set_level()\fP\&.
+No functions in \fI\%xtr::sink\fP are thread\-safe other than
+\fI\%xtr::sink::level()\fP and \fI\%xtr::sink::set_level()\fP\&.
 This is because each thread is expected to have its own sink(s).
 .UNINDENT
 .UNINDENT
@@ -473,8 +473,8 @@ The performance of the TSC source is listed as either low or medium as it depend
 on the particular CPU.
 .SS Basic
 .sp
-The \fBXTR_LOG\fP macro and it\(aqs variants listed under the
-basic macros section of the API reference all use the basic
+The \fI\%XTR_LOG\fP macro and it\(aqs variants listed under the
+\fI\%basic macros\fP section of the API reference all use the basic
 time source. In these macros no timestamp is read when the log message is written
 to the sink\(aqs queue, instead the logger\(aqs background thread reads the timestamp when
 the log message is read from the queue. This is of course not accurate, but it is
@@ -482,27 +482,27 @@ fast.
 .sp
 \fBstd::chrono::system_clock()\fP is used to read the current time, this can
 be customised by passing an arbitrary function to the \(aqclock\(aq parameter when
-constructing the logger (see \fBxtr::logger::logger()\fP). In these macros
+constructing the logger (see \fI\%xtr::logger::logger()\fP). In these macros
 .SS Real\-time Clock
 .sp
-The \fBXTR_LOG_RTC\fP macro and it\(aqs variants listed under the
-real\-time clock macros section of the API reference all use the
+The \fI\%XTR_LOG_RTC\fP macro and it\(aqs variants listed under the
+\fI\%real\-time clock macros\fP section of the API reference all use the
 real\-time clock source. In these macros the timestamp is read using
 \fI\%clock_gettime(3)\fP <\fBhttps://www.man7.org/linux/man-pages/man3/clock_gettime.3.html\fP>
 with a clock source of either CLOCK_REALTIME_COARSE on Linux or CLOCK_REALTIME_FAST
 on FreeBSD.
 .SS TSC
 .sp
-The \fBXTR_LOG_TSC\fP macro and it\(aqs variants listed under the
-TSC macros section of the API reference all use the TSC
+The \fI\%XTR_LOG_TSC\fP macro and it\(aqs variants listed under the
+\fI\%TSC macros\fP section of the API reference all use the TSC
 clock source. In these macros the timestamp is read from the CPU timestamp
 counter via the RDTSC instruction. The TSC time source is is listed in the
 table above as either low or medium performance as the cost of the RDTSC
 instruction varies depending upon the host CPU microarchitecture.
 .SS User\-Supplied Timestamp
 .sp
-The \fBXTR_LOG_TS\fP macro and it\(aqs variants listed under the
-user\-supplied timestamp macros section of the
+The \fI\%XTR_LOG_TS\fP macro and it\(aqs variants listed under the
+\fI\%user\-supplied timestamp macros\fP section of the
 API reference all allow passing a user\-supplied timestamp to the logger as the second
 argument. Any type may be passed as long as it has a formatter defined
 (see \fI\%custom formatters\fP).
@@ -567,7 +567,7 @@ unless they are explicitly disconnected by closing the sink.
 .SS CPU Affinity
 .sp
 To bind the background thread to a specific CPU
-\fBxtr::logger::consumer_thread_native_handle()\fP can be used to obtain
+\fI\%xtr::logger::consumer_thread_native_handle()\fP can be used to obtain
 the consumer thread\(aqs platform specific thread handle. The handle can then be
 used with whatever platform specific functionality is available for setting
 thread affinities\-\-\-for example
@@ -630,12 +630,12 @@ posted to the full\-disclosure mailing list for a more thorough explanation of t
 escape sequence attacks.
 .SH LOG ROTATION
 .sp
-Please refer to the reopening log files section of
-the xtrctl guide.
+Please refer to the \fI\%reopening log files\fP section of
+the \fI\%xtrctl\fP guide.
 .SH CUSTOM BACK-ENDS
 .sp
 The logger allows custom back\-ends to be used. This is done by implementing the
-\fBxtr::storage_interface\fP interface:
+\fI\%xtr::storage_interface\fP interface:
 .INDENT 0.0
 .INDENT 3.5
 .sp
@@ -662,7 +662,7 @@ using storage_interface_ptr = std::unique_ptr<storage_interface>;
 .UNINDENT
 .UNINDENT
 .sp
-Storage interface objects are then passed to the \fBxtr::storage_interface_ptr\fP
+Storage interface objects are then passed to the \fI\%xtr::storage_interface_ptr\fP
 argument of the \fI\%custom back\-end constructor\fP\&.
 .sp
 \fBNOTE:\fP
@@ -705,8 +705,8 @@ The \fIreopen\fP function is invoked to indicate that if the back\-end has a reg
 file opened for writing log data then the file should be reopened. This is
 intended to be used to implement log rotation via tool such as
 \fI\%logrotate(8)\fP <\fBhttps://www.man7.org/linux/man-pages/man8/logrotate.8.html\fP>\&.
-Please refer to the Reopening Log Files section
-of the xtrctl documentation for further details.
+Please refer to the \fI\%Reopening Log Files\fP section
+of the \fI\%xtrctl\fP documentation for further details.
 .sp
 The return value should be either zero on success or an
 \fI\%errno(3)\fP <\fBhttps://www.man7.org/linux/man-pages/man3/errno.3.html\fP>
@@ -779,10 +779,10 @@ View this example on \fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/W4YE7Yq
 .SH CUSTOM LOG LEVEL STYLES
 .sp
 The text at the beginning of each log statement representing the log level of
-the statement can be customised via \fBxtr::logger::set_log_level_style()\fP,
+the statement can be customised via \fI\%xtr::logger::set_log_level_style()\fP,
 which accepts a function pointer of type
-\fBxtr::log_level_style_t\fP\&. The passed function should accept
-a single argument of type \fBxtr::log_level_t\fP and should return
+\fI\%xtr::log_level_style_t\fP\&. The passed function should accept
+a single argument of type \fI\%xtr::log_level_t\fP and should return
 a const  char* string literal.
 .SS Examples
 .sp
