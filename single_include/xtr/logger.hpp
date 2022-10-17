@@ -2743,6 +2743,25 @@ private:
         }
     };
 
+protected:
+    using io_uring_submit_func_t = decltype(&io_uring_submit);
+    using io_uring_get_sqe_func_t = decltype(&io_uring_get_sqe);
+    using io_uring_wait_cqe_func_t = decltype(&io_uring_wait_cqe);
+    using io_uring_sqring_wait_func_t = decltype(&io_uring_sqring_wait);
+    using io_uring_peek_cqe_func_t = decltype(&io_uring_peek_cqe);
+
+    io_uring_fd_storage(
+        int fd,
+        std::string reopen_path,
+        std::size_t buffer_capacity,
+        std::size_t queue_size,
+        std::size_t batch_size,
+        io_uring_submit_func_t io_uring_submit_func,
+        io_uring_get_sqe_func_t io_uring_get_sqe_func,
+        io_uring_wait_cqe_func_t io_uring_wait_cqe_func,
+        io_uring_sqring_wait_func_t io_uring_sqring_wait_func,
+        io_uring_peek_cqe_func_t io_uring_peek_cqe_func);
+
 public:
     /**
      * File descriptor constructor.
@@ -2801,6 +2820,11 @@ private:
     std::size_t offset_ = 0;
     buffer* free_list_;
     std::unique_ptr<std::byte[]> buffer_storage_;
+    io_uring_submit_func_t io_uring_submit_func_;
+    io_uring_get_sqe_func_t io_uring_get_sqe_func_;
+    io_uring_wait_cqe_func_t io_uring_wait_cqe_func_;
+    io_uring_sqring_wait_func_t io_uring_sqring_wait_func_;
+    io_uring_peek_cqe_func_t io_uring_peek_cqe_func_;
 };
 
 #endif
@@ -3857,10 +3881,20 @@ inline xtr::io_uring_fd_storage::io_uring_fd_storage(
     std::string reopen_path,
     std::size_t buffer_capacity,
     std::size_t queue_size,
-    std::size_t batch_size) :
+    std::size_t batch_size,
+    io_uring_submit_func_t io_uring_submit_func,
+    io_uring_get_sqe_func_t io_uring_get_sqe_func,
+    io_uring_wait_cqe_func_t io_uring_wait_cqe_func,
+    io_uring_sqring_wait_func_t io_uring_sqring_wait_func,
+    io_uring_peek_cqe_func_t io_uring_peek_cqe_func) :
     fd_storage_base(fd, std::move(reopen_path)),
     buffer_capacity_(buffer_capacity),
-    batch_size_(batch_size)
+    batch_size_(batch_size),
+    io_uring_submit_func_(io_uring_submit_func),
+    io_uring_get_sqe_func_(io_uring_get_sqe_func),
+    io_uring_wait_cqe_func_(io_uring_wait_cqe_func),
+    io_uring_sqring_wait_func_(io_uring_sqring_wait_func),
+    io_uring_peek_cqe_func_(io_uring_peek_cqe_func)
 {
     if (buffer_capacity >
         std::numeric_limits<decltype(io_uring_cqe::res)>::max())
@@ -3888,6 +3922,26 @@ inline xtr::io_uring_fd_storage::io_uring_fd_storage(
     allocate_buffers(queue_size);
 }
 
+inline xtr::io_uring_fd_storage::io_uring_fd_storage(
+    int fd,
+    std::string reopen_path,
+    std::size_t buffer_capacity,
+    std::size_t queue_size,
+    std::size_t batch_size) :
+    io_uring_fd_storage(
+        fd,
+        std::move(reopen_path),
+        buffer_capacity,
+        queue_size,
+        batch_size,
+        ::io_uring_submit,
+        ::io_uring_get_sqe,
+        ::io_uring_wait_cqe,
+        ::io_uring_sqring_wait,
+        ::io_uring_peek_cqe)
+{
+}
+
 inline xtr::io_uring_fd_storage::~io_uring_fd_storage()
 {
     flush();
@@ -3897,7 +3951,7 @@ inline xtr::io_uring_fd_storage::~io_uring_fd_storage()
 
 inline void xtr::io_uring_fd_storage::flush()
 {
-    ::io_uring_submit(&ring_);
+    io_uring_submit_func_(&ring_);
 }
 
 inline void xtr::io_uring_fd_storage::sync() noexcept
@@ -3943,7 +3997,7 @@ inline void xtr::io_uring_fd_storage::submit_buffer(char* data, std::size_t size
     ++pending_cqe_count_;
 
     if (++batch_index_ % batch_size_ == 0)
-        ::io_uring_submit(&ring_);
+        io_uring_submit_func_(&ring_);
 }
 
 inline void xtr::io_uring_fd_storage::replace_fd(int newfd) noexcept
@@ -3952,7 +4006,7 @@ inline void xtr::io_uring_fd_storage::replace_fd(int newfd) noexcept
     ::io_uring_prep_close(sqe, fd_.release());
     sqe->flags |= IOSQE_IO_DRAIN;
     ++pending_cqe_count_;
-    ::io_uring_submit(&ring_);
+    io_uring_submit_func_(&ring_);
 
     fd_storage_base::replace_fd(newfd);
 }
@@ -3990,10 +4044,10 @@ inline io_uring_sqe* xtr::io_uring_fd_storage::get_sqe()
 {
     io_uring_sqe* sqe;
 
-    while ((sqe = ::io_uring_get_sqe(&ring_)) == nullptr)
+    while ((sqe = io_uring_get_sqe_func_(&ring_)) == nullptr)
     {
 #if XTR_IO_URING_POLL
-        ::io_uring_sqring_wait(&ring_);
+        io_uring_sqring_wait_func_(&ring_);
 #else
         wait_for_one_cqe();
 #endif
@@ -4011,10 +4065,10 @@ inline void xtr::io_uring_fd_storage::wait_for_one_cqe()
 
 retry:
 #if XTR_IO_URING_POLL
-    while ((errnum = io_uring_peek_cqe(&ring_, &cqe)) == -EAGAIN)
+    while ((errnum = io_uring_peek_cqe_func_(&ring_, &cqe)) == -EAGAIN)
         ;
 #else
-    errnum = ::io_uring_wait_cqe(&ring_, &cqe);
+    errnum = io_uring_wait_cqe_func_(&ring_, &cqe);
 #endif
 
     if (errnum != 0) [[unlikely]]
@@ -4093,7 +4147,7 @@ inline void xtr::io_uring_fd_storage::resubmit_buffer(
 
     assert(io_uring_sq_space_left(&ring_) >= 1);
 
-    io_uring_sqe* sqe = ::io_uring_get_sqe(&ring_);
+    io_uring_sqe* sqe = io_uring_get_sqe_func_(&ring_);
 
     assert(sqe != nullptr);
 
@@ -4109,7 +4163,7 @@ inline void xtr::io_uring_fd_storage::resubmit_buffer(
 
     ++pending_cqe_count_;
 
-    ::io_uring_submit(&ring_);
+    io_uring_submit_func_(&ring_);
 }
 
 inline void xtr::io_uring_fd_storage::free_buffer(buffer* buf)
