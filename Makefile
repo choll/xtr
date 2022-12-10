@@ -29,7 +29,7 @@ endif
 
 CXXFLAGS += \
 	-std=c++20 -Wall -Wextra -Wconversion -Wshadow -Wcast-qual -Wformat=2 \
-	-pedantic -pipe -pthread -Wno-interference-size
+	-pedantic -pipe -pthread
 CPPFLAGS += -MMD -MP -I include $(FMT_CPPFLAGS) -DXTR_FUNC=
 LDFLAGS += -fuse-ld=gold
 LDLIBS += -lxtr
@@ -77,6 +77,7 @@ ifneq (,$(findstring clang,$(CXX)))
 else
 	RANLIB ?= gcc-ranlib
 	AR ?= gcc-ar
+	CXXFLAGS += -Wno-interference-size
 endif
 
 ifeq ($(PIC), 1)
@@ -113,6 +114,7 @@ endif
 
 ifneq ($(SANITIZER),)
 	CXXFLAGS += -fno-omit-frame-pointer -fsanitize=$(SANITIZER)
+	LDFLAGS += -fsanitize=$(SANITIZER)
 	BUILD_DIR := $(BUILD_DIR)-$(SANITIZER)-sanitizer
 endif
 
