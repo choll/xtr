@@ -317,6 +317,12 @@ public:
      */
     void set_log_level_style(log_level_style_t level_style) noexcept;
 
+    /**
+     * Sets the default log level. Sinks created via future calls to @ref get_sink
+     * will be created with the given log level.
+     */
+    void set_default_log_level(log_level_t level);
+
 private:
     template<typename Func>
     void post(Func&& f)
@@ -348,6 +354,7 @@ private:
     jthread consumer_;
     sink control_;
     std::mutex control_mutex_;
+    log_level_t default_log_level_ = log_level_t::info;
 
     friend sink;
 };

@@ -26,6 +26,13 @@
 #include <mutex>
 
 XTR_FUNC
+xtr::sink::sink(log_level_t level)
+:
+    level_(level)
+{
+}
+
+XTR_FUNC
 xtr::sink::sink(const sink& other)
 {
     *this = other;
@@ -52,7 +59,9 @@ xtr::sink& xtr::sink::operator=(const sink& other)
 }
 
 XTR_FUNC
-xtr::sink::sink(logger& owner, std::string name)
+xtr::sink::sink(logger& owner, std::string name, log_level_t level)
+:
+    level_(level)
 {
     owner.register_sink(*this, std::move(name));
 }

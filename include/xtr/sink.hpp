@@ -92,7 +92,7 @@ private:
             std::string& name) noexcept;
 
 public:
-    sink() = default;
+    explicit sink(log_level_t level = log_level_t::info);
 
     /**
      * Sink copy constructor. When a sink is copied it is automatically
@@ -163,9 +163,9 @@ public:
      *  current level will be dropped\---please see the <a href="guide.html#log-levels">
      *  log levels</a> section of the user guide for details.
      */
-    void set_level(log_level_t l)
+    void set_level(log_level_t level)
     {
-        level_.store(l, std::memory_order_relaxed);
+        level_.store(level, std::memory_order_relaxed);
     }
 
     /**
@@ -187,7 +187,7 @@ public:
     }
 
 private:
-    sink(logger& owner, std::string name);
+    sink(logger& owner, std::string name, log_level_t level);
 
     template<auto Format, auto Level, typename Tags = void()>
     void log_impl() noexcept;
@@ -225,7 +225,7 @@ private:
         "XTR_SINK_CAPACITY is too large");
 
     ring_buffer buf_;
-    std::atomic<log_level_t> level_{log_level_t::info};
+    std::atomic<log_level_t> level_;
     bool open_ = false;
 
     friend detail::consumer;

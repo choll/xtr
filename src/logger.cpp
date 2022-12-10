@@ -25,7 +25,7 @@
 XTR_FUNC
 xtr::sink xtr::logger::get_sink(std::string name)
 {
-    return sink(*this, std::move(name));
+    return sink(*this, std::move(name), default_log_level_);
 }
 
 XTR_FUNC
@@ -60,4 +60,11 @@ void xtr::logger::set_log_level_style(log_level_style_t level_style) noexcept
             c.buf.lstyle = level_style;
         });
     control_.sync();
+}
+
+
+XTR_FUNC
+void xtr::logger::set_default_log_level(log_level_t level)
+{
+    default_log_level_ = level;
 }

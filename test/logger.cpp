@@ -2532,3 +2532,17 @@ TEST_CASE_METHOD(fixture, "logger embedded nul test", "[logger]")
     XTR_LOG(s_, "{}", sv), line_ = __LINE__;
     REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: abc\\x00def", line_));
 }
+
+TEST_CASE_METHOD(fixture, "logger default log level test", "[logger]")
+{
+    log_.set_default_log_level(xtr::log_level_t::debug);
+    CHECK(log_.get_sink("Name").level() == xtr::log_level_t::debug);
+}
+
+TEST_CASE_METHOD(fixture, "logger sink log level constructor test", "[logger]")
+{
+    xtr::sink sink(xtr::log_level_t::debug);
+    // The sink is registered to verify that register_sink doesn't overwrite the log level
+    log_.register_sink(sink, "Name");
+    CHECK(sink.level() == xtr::log_level_t::debug);
+}
