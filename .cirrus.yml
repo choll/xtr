@@ -7,7 +7,7 @@ task:
     - git submodule init
     - git submodule update
   script: CXX=g++ RANLIB=gcc-ranlib11 AR=gcc-ar11 gmake
-  tests_script: CXX=g++ RANLIB=gcc-ranlib11 AR=gcc-ar11 gmake check
+  tests_script: CXX=g++ RANLIB=gcc-ranlib12 AR=gcc-ar12 gmake check
 task:
   name: freebsd-14-gcc-conan
   freebsd_instance:
@@ -19,7 +19,7 @@ task:
     - export CC=gcc CXX=g++ RANLIB=gcc-ranlib11 AR=gcc-ar11
     - conan install . --build missing -s compiler.libcxx=libstdc++11
     - gmake all
-  tests_script: CXX=g++ RANLIB=gcc-ranlib11 AR=gcc-ar11 gmake check
+  tests_script: CXX=g++ RANLIB=gcc-ranlib12 AR=gcc-ar12 gmake check
 task:
   name: freebsd-14-gcc-cmake
   freebsd_instance:
@@ -28,7 +28,7 @@ task:
     - pkg install -y git gmake cmake gcc conan llvm13
     - ln -s /usr/local/bin/clang-format13 /usr/local/bin/clang-format
   script:
-    - export CC=gcc CXX=g++ RANLIB=gcc-ranlib11 AR=gcc-ar11
+    - export CC=gcc CXX=g++ RANLIB=gcc-ranlib12 AR=gcc-ar12
     - mkdir build && cd build
     - conan install .. -g cmake_find_package --build missing -s compiler.libcxx=libstdc++11
     - cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_MODULE_PATH=${PWD} -DBUILD_TESTING=ON -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INSTALL_PREFIX=/tmp/install -DCMAKE_AR=`which $AR` -DCMAKE_RANLIB=`which $RANLIB`
