@@ -142,7 +142,7 @@ XTR uses \fI\%{fmt}\fP <\fBhttps://fmt.dev\fP> for formatting, so format strings
 same Python \fI\%str.format\fP <\fBhttps://docs.python.org/3/library/string.html#formatstrings\fP>
 style formatting as found in {fmt}. The {fmt} format string documentation can be found
 \fI\%here\fP <\fBhttps://fmt.dev/latest/syntax.html\fP>\&.
-.SS Examples
+.SS Example
 .INDENT 0.0
 .INDENT 3.5
 .sp
@@ -169,7 +169,7 @@ The default behaviour of the logger is to copy format arguments into the
 specified sink by value. Note that no allocations are be performed by the
 logger when this is done. If copying is undesirable then arguments may be
 passed by reference by wrapping them in a call to \fI\%xtr::nocopy()\fP\&.
-.SS Examples
+.SS Example
 .INDENT 0.0
 .INDENT 3.5
 .sp
@@ -506,7 +506,7 @@ The \fI\%XTR_LOG_TS\fP macro and it\(aqs variants listed under the
 API reference all allow passing a user\-supplied timestamp to the logger as the second
 argument. Any type may be passed as long as it has a formatter defined
 (see \fI\%custom formatters\fP).
-.SS Examples
+.SS Example
 .INDENT 0.0
 .INDENT 3.5
 .sp
@@ -573,7 +573,7 @@ used with whatever platform specific functionality is available for setting
 thread affinities\-\-\-for example
 \fI\%pthread_setaffinity_np(3)\fP <\fBhttps://www.man7.org/linux/man-pages/man3/pthread_setaffinity_np.3.html\fP>
 on Linux.
-.SS Examples
+.SS Example
 .INDENT 0.0
 .INDENT 3.5
 .sp
@@ -716,7 +716,7 @@ compatible error number on failure.
 Upon destruction the back\-end should flush any buffered data and close the
 associated backing store.
 .UNINDENT
-.SS Examples
+.SS Example
 .sp
 Using the \fI\%custom back\-end constructor\fP
 to create a logger with a storage back\-end that discards all input:
@@ -783,8 +783,10 @@ the statement can be customised via \fI\%xtr::logger::set_log_level_style()\fP,
 which accepts a function pointer of type
 \fI\%xtr::log_level_style_t\fP\&. The passed function should accept
 a single argument of type \fI\%xtr::log_level_t\fP and should return
-a const  char* string literal.
-.SS Examples
+a const  char* string literal to be used as the log level prefix.
+Please refer to the \fI\%xtr::log_level_style_t\fP documentation for
+further details.
+.SS Example
 .sp
 The following example will output:
 .INDENT 0.0
@@ -826,6 +828,91 @@ XTR_LOGL(error, s, "Hello world");
 .UNINDENT
 .sp
 View this example on \fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/ohcW6ndoz\fP>\&.
+.SH LOGGING TO THE SYSTEMD JOURNAL
+.sp
+To support logging to systemd, log level prefixes suitable for logging to the
+systemd journal can be enabled by passing the
+\fI\%xtr::systemd_log_level_style()\fP to
+\fI\%xtr::logger::set_log_level_style()\fP\&. Please refer to the
+\fI\%xtr::log_level_style_t\fP documentation for further details on log
+level styles.
+.SS Example
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+#include <xtr/logger.hpp>
+
+xtr::logger log;
+
+log.set_log_level_style(xtr::systemd_log_level_style);
+
+// If the systemd journal is to be used then it is advisable to set the log
+// level to debug and use journalctl to filter by log level instead.
+log.set_default_log_level(xtr::log_level_t::debug);
+
+xtr::sink s = log.get_sink("Main");
+
+XTR_LOGL(debug, s, "Debug");
+XTR_LOGL(info, s, "Info");
+XTR_LOGL(warning, s, "Warning");
+XTR_LOGL(error, s, "Error");
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+View this example on \fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/zvsjech4a\fP>\&.
+.sp
+The output of the above example will be something like:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+<7>2022\-12\-18 16:01:16.205253 Main xtrdemo.cpp:12: Debug
+<6>2022\-12\-18 16:01:16.205259 Main xtrdemo.cpp:13: Info
+<4>2022\-12\-18 16:01:16.205259 Main xtrdemo.cpp:14: Warning
+<3>2022\-12\-18 16:01:16.205259 Main xtrdemo.cpp:15: Error
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+If the example is run under systemd via e.g. \fBsystemd\-run \-\-quiet \-\-user \-\-wait ./xtrdemo\fP then
+the messages logged to the journal can be viewed via e.g.
+\fBjournalctl \-\-quiet \-\-no\-hostname \-\-identifier xtrdemo\fP:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+Dec 18 16:01:16 xtrdemo[1008402]: 2022\-12\-18 16:01:16.205253 Main xtrdemo.cpp:13: Debug
+Dec 18 16:01:16 xtrdemo[1008402]: 2022\-12\-18 16:01:16.205259 Main xtrdemo.cpp:14: Info
+Dec 18 16:01:16 xtrdemo[1008402]: 2022\-12\-18 16:01:16.205259 Main xtrdemo.cpp:15: Warning
+Dec 18 16:01:16 xtrdemo[1008402]: 2022\-12\-18 16:01:16.205259 Main xtrdemo.cpp:16: Error
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SH DISABLING EXCEPTIONS
+.sp
+Exceptions may be disabled by building XTR with the appropriate option:
+.INDENT 0.0
+.IP \(bu 2
+\fBEXCEPTIONS=0\fP if using Make.
+.IP \(bu 2
+\fBENABLE_EXCEPTIONS=OFF\fP if using CMake.
+.IP \(bu 2
+\fBxtr:enable_exceptions=False\fP if using Conan.
+.UNINDENT
+.sp
+This will cause XTR to be built with the \fB\-fno\-exceptions\fP flag.
+.sp
+If exceptions are disabled then when an error occurs that would have thrown an
+exception, an error message is instead printed to \fIstderr\fP and the program
+terminates via  \fI\%abort(3)\fP <\fBhttps://www.man7.org/linux/man-pages/man3/abort.3.html\fP>\&.
 .SH FOOTNOTES
 .IP [1] 5
 Specifically the queue is a single\-producer/single\-consumer ring buffer.

@@ -101,8 +101,8 @@ same Python `str.format <https://docs.python.org/3/library/string.html#formatstr
 style formatting as found in {fmt}. The {fmt} format string documentation can be found
 `here <https://fmt.dev/latest/syntax.html>`__.
 
-Examples
-~~~~~~~~
+Example
+~~~~~~~
 
 .. code-block:: c++
 
@@ -128,8 +128,8 @@ specified sink by value. Note that no allocations are be performed by the
 logger when this is done. If copying is undesirable then arguments may be
 passed by reference by wrapping them in a call to :cpp:func:`xtr::nocopy`.
 
-Examples
-~~~~~~~~
+Example
+~~~~~~~
 
 .. code-block:: c++
 
@@ -411,8 +411,8 @@ API reference all allow passing a user-supplied timestamp to the logger as the s
 argument. Any type may be passed as long as it has a formatter defined
 (see :ref:`custom formatters <custom-formatters>`).
 
-Examples
-^^^^^^^^
+Example
+^^^^^^^
 
 .. code-block:: c++
 
@@ -480,8 +480,8 @@ thread affinities---for example
 `pthread_setaffinity_np(3) <https://www.man7.org/linux/man-pages/man3/pthread_setaffinity_np.3.html>`__
 on Linux.
 
-Examples
-^^^^^^^^
+Example
+^^^^^^^
 
 .. code-block:: c++
 
@@ -609,8 +609,8 @@ argument of the `custom back-end constructor <api.html#_CPPv4I0EN3xtr6logger6log
     Upon destruction the back-end should flush any buffered data and close the
     associated backing store.
 
-Examples
-~~~~~~~~
+Example
+~~~~~~~
 
 Using the `custom back-end constructor <api.html#_CPPv4I0EN3xtr6logger6loggerE21storage_interface_ptrRR5ClockNSt6stringE17log_level_style_t>`__
 to create a logger with a storage back-end that discards all input:
@@ -665,6 +665,8 @@ to create a logger with a storage back-end that discards all input:
 
 View this example on `Compiler Explorer <https://godbolt.org/z/W4YE7YqPr>`__.
 
+.. _custom-log-level-styles:
+
 Custom Log Level Styles
 -----------------------
 
@@ -673,10 +675,12 @@ the statement can be customised via :cpp:func:`xtr::logger::set_log_level_style`
 which accepts a function pointer of type
 :cpp:type:`xtr::log_level_style_t`. The passed function should accept
 a single argument of type :cpp:enum:`xtr::log_level_t` and should return
-a :cpp:expr:`const char*` string literal.
+a :cpp:expr:`const char*` string literal to be used as the log level prefix.
+Please refer to the :cpp:type:`xtr::log_level_style_t` documentation for
+further details.
 
-Examples
-~~~~~~~~
+Example
+~~~~~~~
 
 The following example will output::
 
@@ -705,6 +709,70 @@ The following example will output::
 
 View this example on `Compiler Explorer <https://godbolt.org/z/ohcW6ndoz>`__.
 
+Logging to the Systemd Journal
+------------------------------
+
+To support logging to systemd, log level prefixes suitable for logging to the 
+systemd journal can be enabled by passing the
+:cpp:func:`xtr::systemd_log_level_style` to
+:cpp:func:`xtr::logger::set_log_level_style`. Please refer to the
+:cpp:type:`xtr::log_level_style_t` documentation for further details on log
+level styles.
+
+Example
+~~~~~~~
+
+.. code-block:: c++
+
+    #include <xtr/logger.hpp>
+
+    xtr::logger log;
+
+    log.set_log_level_style(xtr::systemd_log_level_style);
+
+    // If the systemd journal is to be used then it is advisable to set the log
+    // level to debug and use journalctl to filter by log level instead.
+    log.set_default_log_level(xtr::log_level_t::debug);
+
+    xtr::sink s = log.get_sink("Main");
+
+    XTR_LOGL(debug, s, "Debug");
+    XTR_LOGL(info, s, "Info");
+    XTR_LOGL(warning, s, "Warning");
+    XTR_LOGL(error, s, "Error");
+
+View this example on `Compiler Explorer <https://godbolt.org/z/zvsjech4a>`__.
+
+The output of the above example will be something like::
+
+    <7>2022-12-18 16:01:16.205253 Main xtrdemo.cpp:12: Debug
+    <6>2022-12-18 16:01:16.205259 Main xtrdemo.cpp:13: Info
+    <4>2022-12-18 16:01:16.205259 Main xtrdemo.cpp:14: Warning
+    <3>2022-12-18 16:01:16.205259 Main xtrdemo.cpp:15: Error
+
+If the example is run under systemd via e.g. ``systemd-run --quiet --user --wait ./xtrdemo`` then
+the messages logged to the journal can be viewed via e.g.
+``journalctl --quiet --no-hostname --identifier xtrdemo``::
+
+    Dec 18 16:01:16 xtrdemo[1008402]: 2022-12-18 16:01:16.205253 Main xtrdemo.cpp:13: Debug
+    Dec 18 16:01:16 xtrdemo[1008402]: 2022-12-18 16:01:16.205259 Main xtrdemo.cpp:14: Info
+    Dec 18 16:01:16 xtrdemo[1008402]: 2022-12-18 16:01:16.205259 Main xtrdemo.cpp:15: Warning
+    Dec 18 16:01:16 xtrdemo[1008402]: 2022-12-18 16:01:16.205259 Main xtrdemo.cpp:16: Error
+
+Disabling Exceptions
+--------------------
+
+Exceptions may be disabled by building XTR with the appropriate option:
+
+* ``EXCEPTIONS=0`` if using Make.
+* ``ENABLE_EXCEPTIONS=OFF`` if using CMake.
+* ``xtr:enable_exceptions=False`` if using Conan.
+
+This will cause XTR to be built with the ``-fno-exceptions`` flag.
+
+If exceptions are disabled then when an error occurs that would have thrown an
+exception, an error message is instead printed to `stderr` and the program
+terminates via  `abort(3) <https://www.man7.org/linux/man-pages/man3/abort.3.html>`__.
 
 .. rubric:: Footnotes
 

@@ -502,11 +502,16 @@ Passed to \fI\%XTR_LOGL\fP, \fI\%XTR_LOGL_TSC\fP etc to indicate the severity of
 If the \fInone\fP level is applied to a sink then all log statements will be
 disabled. Fatal log statements will still call
 \fI\%abort(3)\fP <\fBhttps://www.man7.org/linux/man-pages/man3/abort.3.html\fP>, however.
+.INDENT 0.0
+.TP
+.B \fI\%log_level_t\fP  xtr::log_level_from_string(std::string_view  str) 
+Converts a string containing a log level name to the corresponding \fI\%log_level_t\fP enum value. Throws std::invalid_argument if the given string does not correspond to any log level. 
+.UNINDENT
 .SH LOG LEVEL STYLES
 .INDENT 0.0
 .TP
 .B using  xtr::log_level_style_t  =  const  char  *(*)(\fI\%log_level_t\fP) 
-Log level styles are used to customise the formatting used when prefixing log statements with their associated log level (see \fI\%log_level_t\fP). Styles are simply function pointers\-\-\-to provide a custom style, define a function returning a string literal and accepting a single argument of type \fI\%log_level_t\fP and pass the function to \fI\%logger::logger\fP or \fI\%logger::set_log_level_style\fP\&. The values returned by the function will be prefixed to log statements produced by the logger. Two formatters are provided, the default formatter \fI\%default_log_level_style\fP and a System D compatible style \fI\%systemd_log_level_style\fP\&. 
+Log level styles are used to customise the formatting used when prefixing log statements with their associated log level (see \fI\%log_level_t\fP). Styles are simply function pointers\-\-\-to provide a custom style, define a function returning a string literal and accepting a single argument of type \fI\%log_level_t\fP and pass the function to \fI\%logger::logger\fP or \fI\%logger::set_log_level_style\fP\&. The values returned by the function will be prefixed to log statements produced by the logger. Two formatters are provided, the default formatter \fI\%default_log_level_style\fP and a Systemd compatible style \fI\%systemd_log_level_style\fP\&. 
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -516,7 +521,7 @@ The default log level style (see \fI\%log_level_style_t\fP). Returns a single up
 .INDENT 0.0
 .TP
 .B const  char  *xtr::systemd_log_level_style(\fI\%log_level_t\fP  level) 
-System D log level style (see \fI\%log_level_style_t\fP). Returns strings as described in \fI\%sd\-daemon(3)\fP <\fBhttps://man7.org/linux/man-pages/man3/sd-daemon.3.html\fP>, e.g. "<0>", "<1>", "<2>" etc. 
+Systemd log level style (see \fI\%log_level_style_t\fP). Returns strings as described in \fI\%sd\-daemon(3)\fP <\fBhttps://man7.org/linux/man-pages/man3/sd-daemon.3.html\fP>, e.g. "<0>", "<1>", "<2>" etc. 
 .UNINDENT
 .SH STORAGE INTERFACES
 .INDENT 0.0

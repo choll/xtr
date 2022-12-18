@@ -94,6 +94,8 @@ If the *none* level is applied to a sink then all log statements will be
 disabled. Fatal log statements will still call
 `abort(3) <https://www.man7.org/linux/man-pages/man3/abort.3.html>`__, however.
 
+.. doxygenfunction:: xtr::log_level_from_string
+
 Log Level Styles
 ----------------
 
