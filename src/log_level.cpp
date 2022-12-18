@@ -19,6 +19,26 @@
 // SOFTWARE.
 
 #include "xtr/log_level.hpp"
+#include "xtr/detail/throw.hpp"
+
+#define XTR_LOG_LEVELS  \
+    X(none)             \
+    X(fatal)            \
+    X(error)            \
+    X(warning)          \
+    X(info)             \
+    X(debug)
+
+XTR_FUNC
+xtr::log_level_t xtr::log_level_from_string(std::string_view str)
+{
+#define X(LEVEL)        \
+    if (str == #LEVEL)  \
+        return log_level_t::LEVEL;
+    XTR_LOG_LEVELS
+#undef X
+    detail::throw_invalid_argument("Invalid log level");
+}
 
 XTR_FUNC
 const char* xtr::default_log_level_style(log_level_t level)
