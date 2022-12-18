@@ -2546,3 +2546,16 @@ TEST_CASE_METHOD(fixture, "logger sink log level constructor test", "[logger]")
     log_.register_sink(sink, "Name");
     CHECK(sink.level() == xtr::log_level_t::debug);
 }
+
+TEST_CASE_METHOD(fixture, "logger log_level_from_string test", "[logger]")
+{
+    CHECK(xtr::log_level_from_string("none") == xtr::log_level_t::none);
+    CHECK(xtr::log_level_from_string("fatal") == xtr::log_level_t::fatal);
+    CHECK(xtr::log_level_from_string("error") == xtr::log_level_t::error);
+    CHECK(xtr::log_level_from_string("warning") == xtr::log_level_t::warning);
+    CHECK(xtr::log_level_from_string("info") == xtr::log_level_t::info);
+    CHECK(xtr::log_level_from_string("debug") == xtr::log_level_t::debug);
+#if __cpp_exceptions
+    CHECK_THROWS_WITH(xtr::log_level_from_string("xyz"), "Invalid log level");
+#endif
+}
