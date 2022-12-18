@@ -997,6 +997,8 @@ namespace xtr::detail
     }
 }
 
+#include <string_view>
+
 namespace xtr
 {
     /**
@@ -1014,6 +1016,13 @@ namespace xtr
     };
 
     /**
+     * Converts a string containing a log level name to the corresponding
+     * @ref log_level_t enum value. Throws std::invalid_argument if the given
+     * string does not correspond to any log level.
+     */
+    log_level_t log_level_from_string(std::string_view str);
+
+    /**
      * Log level styles are used to customise the formatting used when prefixing
      * log statements with their associated log level (see @ref log_level_t).
      * Styles are simply function pointers\---to provide a custom style, define
@@ -1022,7 +1031,7 @@ namespace xtr
      * logger::set_log_level_style. The values returned by the function will be
      * prefixed to log statements produced by the logger. Two formatters are
      * provided, the default formatter @ref default_log_level_style and a
-     * System D compatible style @ref systemd_log_level_style.
+     * Systemd compatible style @ref systemd_log_level_style.
      */
     using log_level_style_t = const char* (*)(log_level_t);
 
@@ -1035,7 +1044,7 @@ namespace xtr
     const char* default_log_level_style(log_level_t level);
 
     /**
-     * System D log level style (see @ref log_level_style_t). Returns strings as
+     * Systemd log level style (see @ref log_level_style_t). Returns strings as
      * described in
      * <a href="https://man7.org/linux/man-pages/man3/sd-daemon.3.html">sd-daemon(3)</a>,
      * e.g. "<0>", "<1>", "<2>" etc.
@@ -4213,6 +4222,24 @@ inline void xtr::logger::set_log_level_style(log_level_style_t level_style) noex
 inline void xtr::logger::set_default_log_level(log_level_t level)
 {
     default_log_level_ = level;
+}
+
+#define XTR_LOG_LEVELS \
+    X(none)            \
+    X(fatal)           \
+    X(error)           \
+    X(warning)         \
+    X(info)            \
+    X(debug)
+
+inline xtr::log_level_t xtr::log_level_from_string(std::string_view str)
+{
+#define X(LEVEL)       \
+    if (str == #LEVEL) \
+        return log_level_t::LEVEL;
+    XTR_LOG_LEVELS
+#undef X
+    detail::throw_invalid_argument("Invalid log level");
 }
 
 inline const char* xtr::default_log_level_style(log_level_t level)
