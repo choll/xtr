@@ -619,12 +619,7 @@ namespace xtr::detail
     template<std::size_t N>
     using least_uint_t = typename least_uint<N>::type;
 
-#if defined(__cpp_lib_hardware_interference_size)
-    inline constexpr std::size_t cacheline_size =
-        std::hardware_destructive_interference_size;
-#else
     inline constexpr std::size_t cacheline_size = 64;
-#endif
 
 #if defined(XTR_ENABLE_TEST_STATIC_ASSERTIONS)
     static_assert(std::is_same<std::uint8_t, least_uint_t<0UL>>::value);
