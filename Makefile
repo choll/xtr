@@ -36,12 +36,7 @@ LDLIBS += -lxtr
 
 TEST_CPPFLAGS = $(CATCH2_CPPFLAGS) 
 TEST_LDFLAGS = -L $(BUILD_DIR) $(FMT_LDFLAGS)
-TEST_LDLIBS = -ldl
-
-# Always use the system shared library for unit-tests to allow interposing
-ifneq (,$(wildcard /usr/lib/x86_64-linux-gnu/liburing.so))
-	LDLIBS += -luring
-endif
+TEST_LDLIBS = -ldl $(addprefix -l, $(CONAN_LIBS_LIBURING))
 
 BENCH_CPPFLAGS = $(GOOGLE_BENCH_CPPFLAGS) $(LIBURING_CPPFLAGS)
 BENCH_LDFLAGS = -L $(BUILD_DIR) $(GOOGLE_BENCH_LDFLAGS) $(FMT_LDFLAGS) $(LIBURING_LDFLAGS)
