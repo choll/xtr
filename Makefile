@@ -77,7 +77,6 @@ ifneq (,$(findstring clang,$(CXX)))
 else
 	RANLIB ?= gcc-ranlib
 	AR ?= gcc-ar
-	CXXFLAGS += -Wno-interference-size
 endif
 
 ifeq ($(PIC), 1)
