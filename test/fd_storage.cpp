@@ -139,6 +139,7 @@ TEST_CASE_METHOD(fixture, "write test", "[fd_storage]")
         [&](auto ring, auto cqe)
         {
             const int ret = io_uring_wait_cqe(ring, cqe);
+            REQUIRE(ret == 0);
             ++cqe_count;
             REQUIRE((*cqe)->res == xtr::io_uring_fd_storage::default_buffer_capacity);
             return ret;
