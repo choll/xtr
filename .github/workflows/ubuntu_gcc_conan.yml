@@ -35,6 +35,4 @@ jobs:
     - name: make
       run: make -j2 EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}} RTTI=${{matrix.rtti}} all
     - name: test
-      run: |
-        sudo ulimit -l 8224536 \
-        make -j2 EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}} RTTI=${{matrix.rtti}} check
+      run: make -j2 EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}} RTTI=${{matrix.rtti}} check
