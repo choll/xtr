@@ -70,7 +70,7 @@ xtr::io_uring_fd_storage::io_uring_fd_storage(
         ::io_uring_queue_init(unsigned(queue_size), &ring_, flags))
     {
         detail::throw_system_error_fmt(
-            errnum,
+            -errnum,
             "xtr::io_uring_fd_storage::io_uring_fd_storage: "
             "io_uring_queue_init failed");
     }
@@ -205,7 +205,14 @@ void xtr::io_uring_fd_storage::allocate_buffers(std::size_t queue_size)
     *next = nullptr;
     assert(free_list_ != nullptr);
 
-    ::io_uring_register_buffers(&ring_, &iov[0], unsigned(iov.size()));
+    if (const int errnum =
+        ::io_uring_register_buffers(&ring_, &iov[0], unsigned(iov.size())))
+    {
+        detail::throw_system_error_fmt(
+            -errnum,
+            "xtr::io_uring_fd_storage::allocate_buffers: "
+            "io_uring_register_buffers failed");
+    }
 }
 
 XTR_FUNC
