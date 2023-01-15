@@ -171,40 +171,40 @@ log macros which are described in the <a class="reference internal" href="api.ht
 <section id="examples">
 <h3>Examples<a class="headerlink" href="#examples" title="Permalink to this heading"></a></h3>
 <p>Sink creation via <a class="reference internal" href="api.html#_CPPv4N3xtr6logger8get_sinkENSt6stringE" title="xtr::logger::get_sink"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">xtr::logger::get_sink()</span></code></a>:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;xtr/logger.hpp&gt;</span><span class="cp"></span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;xtr/logger.hpp&gt;</span>
 
-<span class="n">xtr</span><span class="o">::</span><span class="n">logger</span><span class="w"> </span><span class="n">log</span><span class="p">;</span><span class="w"></span>
+<span class="n">xtr</span><span class="o">::</span><span class="n">logger</span><span class="w"> </span><span class="n">log</span><span class="p">;</span>
 
-<span class="n">xtr</span><span class="o">::</span><span class="n">sink</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">log</span><span class="p">.</span><span class="n">get_sink</span><span class="p">(</span><span class="s">&quot;Main&quot;</span><span class="p">);</span><span class="w"></span>
+<span class="n">xtr</span><span class="o">::</span><span class="n">sink</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">log</span><span class="p">.</span><span class="n">get_sink</span><span class="p">(</span><span class="s">&quot;Main&quot;</span><span class="p">);</span>
 
-<span class="n">XTR_LOG</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Hello world&quot;</span><span class="p">);</span><span class="w"></span>
+<span class="n">XTR_LOG</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Hello world&quot;</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>View this example on <a class="reference external" href="https://godbolt.org/z/1GWbEPq8T">Compiler Explorer</a>.</p>
 <p>Sink creation via <a class="reference internal" href="api.html#_CPPv4N3xtr6logger13register_sinkER4sinkNSt6stringE" title="xtr::logger::register_sink"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">xtr::logger::register_sink()</span></code></a>:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;xtr/logger.hpp&gt;</span><span class="cp"></span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;xtr/logger.hpp&gt;</span>
 
-<span class="n">xtr</span><span class="o">::</span><span class="n">logger</span><span class="w"> </span><span class="n">log</span><span class="p">;</span><span class="w"></span>
-<span class="n">xtr</span><span class="o">::</span><span class="n">sink</span><span class="w"> </span><span class="n">s</span><span class="p">;</span><span class="w"></span>
+<span class="n">xtr</span><span class="o">::</span><span class="n">logger</span><span class="w"> </span><span class="n">log</span><span class="p">;</span>
+<span class="n">xtr</span><span class="o">::</span><span class="n">sink</span><span class="w"> </span><span class="n">s</span><span class="p">;</span>
 
-<span class="n">log</span><span class="p">.</span><span class="n">register_sink</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Main&quot;</span><span class="p">);</span><span class="w"></span>
+<span class="n">log</span><span class="p">.</span><span class="n">register_sink</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Main&quot;</span><span class="p">);</span>
 
-<span class="n">XTR_LOG</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Hello world&quot;</span><span class="p">);</span><span class="w"></span>
+<span class="n">XTR_LOG</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Hello world&quot;</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>View this example on <a class="reference external" href="https://godbolt.org/z/cobj4n3Gx">Compiler Explorer</a>.</p>
 <p>Sink creation via copying:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;xtr/logger.hpp&gt;</span><span class="cp"></span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;xtr/logger.hpp&gt;</span>
 
-<span class="n">xtr</span><span class="o">::</span><span class="n">logger</span><span class="w"> </span><span class="n">log</span><span class="p">;</span><span class="w"></span>
+<span class="n">xtr</span><span class="o">::</span><span class="n">logger</span><span class="w"> </span><span class="n">log</span><span class="p">;</span>
 
-<span class="n">xtr</span><span class="o">::</span><span class="n">sink</span><span class="w"> </span><span class="n">s1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">log</span><span class="p">.</span><span class="n">get_sink</span><span class="p">(</span><span class="s">&quot;Main&quot;</span><span class="p">);</span><span class="w"></span>
-<span class="n">xtr</span><span class="o">::</span><span class="n">sink</span><span class="w"> </span><span class="n">s2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">s1</span><span class="p">;</span><span class="w"></span>
+<span class="n">xtr</span><span class="o">::</span><span class="n">sink</span><span class="w"> </span><span class="n">s1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">log</span><span class="p">.</span><span class="n">get_sink</span><span class="p">(</span><span class="s">&quot;Main&quot;</span><span class="p">);</span>
+<span class="n">xtr</span><span class="o">::</span><span class="n">sink</span><span class="w"> </span><span class="n">s2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">s1</span><span class="p">;</span>
 
-<span class="n">s2</span><span class="p">.</span><span class="n">set_name</span><span class="p">(</span><span class="s">&quot;Copy&quot;</span><span class="p">);</span><span class="w"></span>
+<span class="n">s2</span><span class="p">.</span><span class="n">set_name</span><span class="p">(</span><span class="s">&quot;Copy&quot;</span><span class="p">);</span>
 
-<span class="n">XTR_LOG</span><span class="p">(</span><span class="n">s1</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Hello world&quot;</span><span class="p">);</span><span class="w"></span>
-<span class="n">XTR_LOG</span><span class="p">(</span><span class="n">s2</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Hello world&quot;</span><span class="p">);</span><span class="w"></span>
+<span class="n">XTR_LOG</span><span class="p">(</span><span class="n">s1</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Hello world&quot;</span><span class="p">);</span>
+<span class="n">XTR_LOG</span><span class="p">(</span><span class="n">s2</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Hello world&quot;</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>View this example on <a class="reference external" href="https://godbolt.org/z/9bGTG38ez">Compiler Explorer</a>.</p>
@@ -218,11 +218,11 @@ style formatting as found in {fmt}. The {fmt} format string documentation can be
 <a class="reference external" href="https://fmt.dev/latest/syntax.html">here</a>.</p>
 <section id="example">
 <h3>Example<a class="headerlink" href="#example" title="Permalink to this heading"></a></h3>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;xtr/logger.hpp&gt;</span><span class="cp"></span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;xtr/logger.hpp&gt;</span>
 
-<span class="n">xtr</span><span class="o">::</span><span class="n">logger</span><span class="w"> </span><span class="n">log</span><span class="p">;</span><span class="w"></span>
+<span class="n">xtr</span><span class="o">::</span><span class="n">logger</span><span class="w"> </span><span class="n">log</span><span class="p">;</span>
 
-<span class="n">xtr</span><span class="o">::</span><span class="n">sink</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">log</span><span class="p">.</span><span class="n">get_sink</span><span class="p">(</span><span class="s">&quot;Main&quot;</span><span class="p">);</span><span class="w"></span>
+<span class="n">xtr</span><span class="o">::</span><span class="n">sink</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">log</span><span class="p">.</span><span class="n">get_sink</span><span class="p">(</span><span class="s">&quot;Main&quot;</span><span class="p">);</span>
 
 <span class="n">XTR_LOG</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Hello {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">123</span><span class="p">);</span><span class="w"> </span><span class="c1">// Hello 123</span>
 <span class="n">XTR_LOG</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Hello {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="mf">123.456</span><span class="p">);</span><span class="w"> </span><span class="c1">// Hello 123.456</span>
@@ -240,19 +240,19 @@ logger when this is done. If copying is undesirable then arguments may be
 passed by reference by wrapping them in a call to <a class="reference internal" href="api.html#_CPPv4I0EN3xtr6nocopyEDaRK1T" title="xtr::nocopy"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">xtr::nocopy()</span></code></a>.</p>
 <section id="id2">
 <h3>Example<a class="headerlink" href="#id2" title="Permalink to this heading"></a></h3>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;xtr/logger.hpp&gt;</span><span class="cp"></span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;xtr/logger.hpp&gt;</span>
 
-<span class="n">xtr</span><span class="o">::</span><span class="n">logger</span><span class="w"> </span><span class="n">log</span><span class="p">;</span><span class="w"></span>
+<span class="n">xtr</span><span class="o">::</span><span class="n">logger</span><span class="w"> </span><span class="n">log</span><span class="p">;</span>
 
-<span class="n">xtr</span><span class="o">::</span><span class="n">sink</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">log</span><span class="p">.</span><span class="n">get_sink</span><span class="p">(</span><span class="s">&quot;Main&quot;</span><span class="p">);</span><span class="w"></span>
+<span class="n">xtr</span><span class="o">::</span><span class="n">sink</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">log</span><span class="p">.</span><span class="n">get_sink</span><span class="p">(</span><span class="s">&quot;Main&quot;</span><span class="p">);</span>
 
-<span class="k">static</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">arg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;world&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="k">static</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">arg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;world&quot;</span><span class="p">;</span>
 
 <span class="c1">// Here &#39;arg&#39; is passed by reference:</span>
-<span class="n">XTR_LOG</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Hello {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">nocopy</span><span class="p">(</span><span class="n">arg</span><span class="p">));</span><span class="w"></span>
+<span class="n">XTR_LOG</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Hello {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">nocopy</span><span class="p">(</span><span class="n">arg</span><span class="p">));</span>
 
 <span class="c1">// Here &#39;arg&#39; is passed by value:</span>
-<span class="n">XTR_LOG</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Hello {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">arg</span><span class="p">);</span><span class="w"></span>
+<span class="n">XTR_LOG</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Hello {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">arg</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>View this example on <a class="reference external" href="https://godbolt.org/z/j5ebhWfdT">Compiler Explorer</a>.</p>
@@ -263,7 +263,7 @@ passed by reference by wrapping them in a call to <a class="reference internal" 
 <p>Passing strings to the logger is guaranteed to not allocate memory, and does
 not assume anything about the lifetime of the string data. i.e. for the
 following log statement:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">XTR_LOG</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;{}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">str</span><span class="p">);</span><span class="w"></span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">XTR_LOG</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;{}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">str</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>If <cite>str</cite> is a <span class="cpp-expr sig sig-inline cpp"><span class="n">std</span><span class="p">::</span><span class="n">string</span></span>, <span class="cpp-expr sig sig-inline cpp"><span class="n">std</span><span class="p">::</span><span class="n">string_view</span></span>,
@@ -274,7 +274,7 @@ to not allocate—i.e. even if <span class="cpp-expr sig sig-inline cpp"><span c
 String data is copied in order to provide safe default behaviour regarding the
 lifetime of the string data. If copying the string data is undesirable then
 string arguments may be wrapped in a call to <a class="reference internal" href="api.html#_CPPv4I0EN3xtr6nocopyEDaRK1T" title="xtr::nocopy"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">xtr::nocopy()</span></code></a>:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">XTR_LOG</span><span class="p">(</span><span class="n">sink</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;{}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">nocopy</span><span class="p">(</span><span class="n">str</span><span class="p">));</span><span class="w"></span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">XTR_LOG</span><span class="p">(</span><span class="n">sink</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;{}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">nocopy</span><span class="p">(</span><span class="n">str</span><span class="p">));</span>
 </pre></div>
 </div>
 <p>If this is done then only a pointer to the string data contained in <cite>str</cite> is
@@ -300,15 +300,15 @@ and the most important level is ‘fatal’. If a log statement is made with a
 level that is lower than the current level of the sink then the log statement
 is discarded. Note that this includes any calls made as arguments to the log,
 so in the following example the function <code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">foo()</span></code> is not called:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;xtr/logger.hpp&gt;</span><span class="cp"></span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;xtr/logger.hpp&gt;</span>
 
-<span class="n">xtr</span><span class="o">::</span><span class="n">logger</span><span class="w"> </span><span class="n">log</span><span class="p">;</span><span class="w"></span>
+<span class="n">xtr</span><span class="o">::</span><span class="n">logger</span><span class="w"> </span><span class="n">log</span><span class="p">;</span>
 
-<span class="n">xtr</span><span class="o">::</span><span class="n">sink</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">log</span><span class="p">.</span><span class="n">get_sink</span><span class="p">(</span><span class="s">&quot;Main&quot;</span><span class="p">);</span><span class="w"></span>
+<span class="n">xtr</span><span class="o">::</span><span class="n">sink</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">log</span><span class="p">.</span><span class="n">get_sink</span><span class="p">(</span><span class="s">&quot;Main&quot;</span><span class="p">);</span>
 
-<span class="n">s</span><span class="p">.</span><span class="n">set_level</span><span class="p">(</span><span class="n">xtr</span><span class="o">::</span><span class="n">log_level_t</span><span class="o">::</span><span class="n">error</span><span class="p">);</span><span class="w"></span>
+<span class="n">s</span><span class="p">.</span><span class="n">set_level</span><span class="p">(</span><span class="n">xtr</span><span class="o">::</span><span class="n">log_level_t</span><span class="o">::</span><span class="n">error</span><span class="p">);</span>
 
-<span class="n">XTR_LOGL</span><span class="p">(</span><span class="n">info</span><span class="p">,</span><span class="w"> </span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Hello {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">foo</span><span class="p">());</span><span class="w"></span>
+<span class="n">XTR_LOGL</span><span class="p">(</span><span class="n">info</span><span class="p">,</span><span class="w"> </span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Hello {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">foo</span><span class="p">());</span>
 </pre></div>
 </div>
 <p>View this example on <a class="reference external" href="https://godbolt.org/z/ss36qzo1c">Compiler Explorer</a>.</p>
@@ -347,69 +347,69 @@ that fmt/ostream.h must be included.</p></li>
 <section id="id4">
 <h3>Examples<a class="headerlink" href="#id4" title="Permalink to this heading"></a></h3>
 <p>Formatting a custom type via operator&lt;&lt;:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;xtr/logger.hpp&gt;</span><span class="cp"></span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;xtr/logger.hpp&gt;</span>
 
-<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;fmt/ostream.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;fmt/ostream.h&gt;</span>
 
-<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;ostream&gt;</span><span class="cp"></span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;ostream&gt;</span>
 
-<span class="k">namespace</span><span class="w"></span>
-<span class="p">{</span><span class="w"></span>
-<span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">custom</span><span class="w"> </span><span class="p">{};</span><span class="w"></span>
+<span class="k">namespace</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">custom</span><span class="w"> </span><span class="p">{};</span>
 
-<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">ostream</span><span class="o">&amp;</span><span class="w"> </span><span class="k">operator</span><span class="o">&lt;&lt;</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">ostream</span><span class="o">&amp;</span><span class="w"> </span><span class="n">os</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">custom</span><span class="o">&amp;</span><span class="p">)</span><span class="w"></span>
-<span class="w">    </span><span class="p">{</span><span class="w"></span>
-<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">os</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;custom&quot;</span><span class="p">;</span><span class="w"></span>
-<span class="w">    </span><span class="p">}</span><span class="w"></span>
-<span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">ostream</span><span class="o">&amp;</span><span class="w"> </span><span class="k">operator</span><span class="o">&lt;&lt;</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">ostream</span><span class="o">&amp;</span><span class="w"> </span><span class="n">os</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">custom</span><span class="o">&amp;</span><span class="p">)</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">os</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;custom&quot;</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
 
-<span class="kt">int</span><span class="w"> </span><span class="n">main</span><span class="p">()</span><span class="w"></span>
-<span class="p">{</span><span class="w"></span>
-<span class="w">    </span><span class="n">xtr</span><span class="o">::</span><span class="n">logger</span><span class="w"> </span><span class="n">log</span><span class="p">;</span><span class="w"></span>
+<span class="kt">int</span><span class="w"> </span><span class="n">main</span><span class="p">()</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="n">xtr</span><span class="o">::</span><span class="n">logger</span><span class="w"> </span><span class="n">log</span><span class="p">;</span>
 
-<span class="w">    </span><span class="n">xtr</span><span class="o">::</span><span class="n">sink</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">log</span><span class="p">.</span><span class="n">get_sink</span><span class="p">(</span><span class="s">&quot;Main&quot;</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="n">xtr</span><span class="o">::</span><span class="n">sink</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">log</span><span class="p">.</span><span class="n">get_sink</span><span class="p">(</span><span class="s">&quot;Main&quot;</span><span class="p">);</span>
 
-<span class="w">    </span><span class="n">XTR_LOG</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Hello {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">custom</span><span class="p">());</span><span class="w"></span>
+<span class="w">    </span><span class="n">XTR_LOG</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Hello {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">custom</span><span class="p">());</span>
 
-<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"></span>
-<span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
 </pre></div>
 </div>
 <p>View this example on <a class="reference external" href="https://godbolt.org/z/cK14z5Kr6">Compiler Explorer</a>.</p>
 <p>Formatting a custom type via fmt::formatter:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;xtr/logger.hpp&gt;</span><span class="cp"></span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;xtr/logger.hpp&gt;</span>
 
-<span class="k">namespace</span><span class="w"></span>
-<span class="p">{</span><span class="w"></span>
-<span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">custom</span><span class="w"> </span><span class="p">{};</span><span class="w"></span>
-<span class="p">}</span><span class="w"></span>
+<span class="k">namespace</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">custom</span><span class="w"> </span><span class="p">{};</span>
+<span class="p">}</span>
 
-<span class="k">template</span><span class="o">&lt;&gt;</span><span class="w"></span>
-<span class="k">struct</span><span class="w"> </span><span class="nc">fmt</span><span class="o">::</span><span class="n">formatter</span><span class="o">&lt;</span><span class="n">custom</span><span class="o">&gt;</span><span class="w"></span>
-<span class="p">{</span><span class="w"></span>
-<span class="w">    </span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">ParseContext</span><span class="o">&gt;</span><span class="w"></span>
-<span class="w">    </span><span class="k">constexpr</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">parse</span><span class="p">(</span><span class="n">ParseContext</span><span class="o">&amp;</span><span class="w"> </span><span class="n">ctx</span><span class="p">)</span><span class="w"></span>
-<span class="w">    </span><span class="p">{</span><span class="w"></span>
-<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">ctx</span><span class="p">.</span><span class="n">begin</span><span class="p">();</span><span class="w"></span>
-<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="k">template</span><span class="o">&lt;&gt;</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">fmt</span><span class="o">::</span><span class="n">formatter</span><span class="o">&lt;</span><span class="n">custom</span><span class="o">&gt;</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">ParseContext</span><span class="o">&gt;</span>
+<span class="w">    </span><span class="k">constexpr</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">parse</span><span class="p">(</span><span class="n">ParseContext</span><span class="o">&amp;</span><span class="w"> </span><span class="n">ctx</span><span class="p">)</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">ctx</span><span class="p">.</span><span class="n">begin</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
 
-<span class="w">    </span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">FormatContext</span><span class="o">&gt;</span><span class="w"></span>
-<span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="n">format</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">custom</span><span class="o">&amp;</span><span class="p">,</span><span class="w"> </span><span class="n">FormatContext</span><span class="o">&amp;</span><span class="w"> </span><span class="n">ctx</span><span class="p">)</span><span class="w"></span>
-<span class="w">    </span><span class="p">{</span><span class="w"></span>
-<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">format_to</span><span class="p">(</span><span class="n">ctx</span><span class="p">.</span><span class="n">out</span><span class="p">(),</span><span class="w"> </span><span class="s">&quot;custom&quot;</span><span class="p">);</span><span class="w"></span>
-<span class="w">    </span><span class="p">}</span><span class="w"></span>
-<span class="p">};</span><span class="w"></span>
+<span class="w">    </span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">FormatContext</span><span class="o">&gt;</span>
+<span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="n">format</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">custom</span><span class="o">&amp;</span><span class="p">,</span><span class="w"> </span><span class="n">FormatContext</span><span class="o">&amp;</span><span class="w"> </span><span class="n">ctx</span><span class="p">)</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">format_to</span><span class="p">(</span><span class="n">ctx</span><span class="p">.</span><span class="n">out</span><span class="p">(),</span><span class="w"> </span><span class="s">&quot;custom&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">};</span>
 
-<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"></span>
-<span class="p">{</span><span class="w"></span>
-<span class="w">    </span><span class="n">xtr</span><span class="o">::</span><span class="n">logger</span><span class="w"> </span><span class="n">log</span><span class="p">;</span><span class="w"></span>
+<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="n">xtr</span><span class="o">::</span><span class="n">logger</span><span class="w"> </span><span class="n">log</span><span class="p">;</span>
 
-<span class="w">    </span><span class="n">xtr</span><span class="o">::</span><span class="n">sink</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">log</span><span class="p">.</span><span class="n">get_sink</span><span class="p">(</span><span class="s">&quot;Main&quot;</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="n">xtr</span><span class="o">::</span><span class="n">sink</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">log</span><span class="p">.</span><span class="n">get_sink</span><span class="p">(</span><span class="s">&quot;Main&quot;</span><span class="p">);</span>
 
-<span class="w">    </span><span class="n">XTR_LOG</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Hello {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">custom</span><span class="p">());</span><span class="w"></span>
+<span class="w">    </span><span class="n">XTR_LOG</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Hello {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">custom</span><span class="p">());</span>
 
-<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"></span>
-<span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
 </pre></div>
 </div>
 <p>View this example on <a class="reference external" href="https://godbolt.org/z/W56zdWEh1">Compiler Explorer</a>.</p>
@@ -516,34 +516,34 @@ argument. Any type may be passed as long as it has a formatter defined
 (see <a class="reference internal" href="#custom-formatters"><span class="std std-ref">custom formatters</span></a>).</p>
 <section id="id6">
 <h4>Example<a class="headerlink" href="#id6" title="Permalink to this heading"></a></h4>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;xtr/logger.hpp&gt;</span><span class="cp"></span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;xtr/logger.hpp&gt;</span>
 
-<span class="w">    </span><span class="k">template</span><span class="o">&lt;&gt;</span><span class="w"></span>
-<span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">fmt</span><span class="o">::</span><span class="n">formatter</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">timespec</span><span class="o">&gt;</span><span class="w"></span>
-<span class="w">    </span><span class="p">{</span><span class="w"></span>
-<span class="w">            </span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">ParseContext</span><span class="o">&gt;</span><span class="w"></span>
-<span class="w">            </span><span class="k">constexpr</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">parse</span><span class="p">(</span><span class="n">ParseContext</span><span class="w"> </span><span class="o">&amp;</span><span class="n">ctx</span><span class="p">)</span><span class="w"></span>
-<span class="w">            </span><span class="p">{</span><span class="w"></span>
-<span class="w">                    </span><span class="k">return</span><span class="w"> </span><span class="n">ctx</span><span class="p">.</span><span class="n">begin</span><span class="p">();</span><span class="w"></span>
-<span class="w">            </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="k">template</span><span class="o">&lt;&gt;</span>
+<span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">fmt</span><span class="o">::</span><span class="n">formatter</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">timespec</span><span class="o">&gt;</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">            </span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">ParseContext</span><span class="o">&gt;</span>
+<span class="w">            </span><span class="k">constexpr</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">parse</span><span class="p">(</span><span class="n">ParseContext</span><span class="w"> </span><span class="o">&amp;</span><span class="n">ctx</span><span class="p">)</span>
+<span class="w">            </span><span class="p">{</span>
+<span class="w">                    </span><span class="k">return</span><span class="w"> </span><span class="n">ctx</span><span class="p">.</span><span class="n">begin</span><span class="p">();</span>
+<span class="w">            </span><span class="p">}</span>
 
-<span class="w">            </span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">FormatContext</span><span class="o">&gt;</span><span class="w"></span>
-<span class="w">            </span><span class="k">auto</span><span class="w"> </span><span class="n">format</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">timespec</span><span class="o">&amp;</span><span class="w"> </span><span class="n">ts</span><span class="p">,</span><span class="w"> </span><span class="n">FormatContext</span><span class="w"> </span><span class="o">&amp;</span><span class="n">ctx</span><span class="p">)</span><span class="w"></span>
-<span class="w">            </span><span class="p">{</span><span class="w"></span>
-<span class="w">                    </span><span class="k">return</span><span class="w"> </span><span class="n">format_to</span><span class="p">(</span><span class="n">ctx</span><span class="p">.</span><span class="n">out</span><span class="p">(),</span><span class="w"> </span><span class="s">&quot;{}.{}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">ts</span><span class="p">.</span><span class="n">tv_sec</span><span class="p">,</span><span class="w"> </span><span class="n">ts</span><span class="p">.</span><span class="n">tv_nsec</span><span class="p">);</span><span class="w"></span>
-<span class="w">            </span><span class="p">}</span><span class="w"></span>
-<span class="w">    </span><span class="p">};</span><span class="w"></span>
+<span class="w">            </span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">FormatContext</span><span class="o">&gt;</span>
+<span class="w">            </span><span class="k">auto</span><span class="w"> </span><span class="n">format</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">timespec</span><span class="o">&amp;</span><span class="w"> </span><span class="n">ts</span><span class="p">,</span><span class="w"> </span><span class="n">FormatContext</span><span class="w"> </span><span class="o">&amp;</span><span class="n">ctx</span><span class="p">)</span>
+<span class="w">            </span><span class="p">{</span>
+<span class="w">                    </span><span class="k">return</span><span class="w"> </span><span class="n">format_to</span><span class="p">(</span><span class="n">ctx</span><span class="p">.</span><span class="n">out</span><span class="p">(),</span><span class="w"> </span><span class="s">&quot;{}.{}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">ts</span><span class="p">.</span><span class="n">tv_sec</span><span class="p">,</span><span class="w"> </span><span class="n">ts</span><span class="p">.</span><span class="n">tv_nsec</span><span class="p">);</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">    </span><span class="p">};</span>
 
-<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"></span>
-<span class="w">    </span><span class="p">{</span><span class="w"></span>
-<span class="w">            </span><span class="n">xtr</span><span class="o">::</span><span class="n">logger</span><span class="w"> </span><span class="n">log</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">            </span><span class="n">xtr</span><span class="o">::</span><span class="n">logger</span><span class="w"> </span><span class="n">log</span><span class="p">;</span>
 
-<span class="w">            </span><span class="n">xtr</span><span class="o">::</span><span class="n">sink</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">log</span><span class="p">.</span><span class="n">get_sink</span><span class="p">(</span><span class="s">&quot;Main&quot;</span><span class="p">);</span><span class="w"></span>
+<span class="w">            </span><span class="n">xtr</span><span class="o">::</span><span class="n">sink</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">log</span><span class="p">.</span><span class="n">get_sink</span><span class="p">(</span><span class="s">&quot;Main&quot;</span><span class="p">);</span>
 
-<span class="w">            </span><span class="n">XTR_LOG_TS</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">timespec</span><span class="p">{</span><span class="mi">123</span><span class="p">,</span><span class="w"> </span><span class="mi">456</span><span class="p">}),</span><span class="w"> </span><span class="s">&quot;Hello world&quot;</span><span class="p">);</span><span class="w"></span>
+<span class="w">            </span><span class="n">XTR_LOG_TS</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">timespec</span><span class="p">{</span><span class="mi">123</span><span class="p">,</span><span class="w"> </span><span class="mi">456</span><span class="p">}),</span><span class="w"> </span><span class="s">&quot;Hello world&quot;</span><span class="p">);</span>
 
-<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"></span>
-<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
 </pre></div>
 </div>
 <p>View this example on <a class="reference external" href="https://godbolt.org/z/GcffPWjvz">Compiler Explorer</a>.</p>
@@ -579,35 +579,35 @@ thread affinities—for example
 on Linux.</p>
 <section id="id7">
 <h4>Example<a class="headerlink" href="#id7" title="Permalink to this heading"></a></h4>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;xtr/logger.hpp&gt;</span><span class="cp"></span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;xtr/logger.hpp&gt;</span>
 
-<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cerrno&gt;</span><span class="cp"></span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cerrno&gt;</span>
 
-<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;pthread.h&gt;</span><span class="cp"></span>
-<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;sched.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;pthread.h&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;sched.h&gt;</span>
 
-<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"></span>
-<span class="p">{</span><span class="w"></span>
-<span class="w">    </span><span class="n">xtr</span><span class="o">::</span><span class="n">logger</span><span class="w"> </span><span class="n">log</span><span class="p">;</span><span class="w"></span>
+<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="n">xtr</span><span class="o">::</span><span class="n">logger</span><span class="w"> </span><span class="n">log</span><span class="p">;</span>
 
-<span class="w">    </span><span class="kt">cpu_set_t</span><span class="w"> </span><span class="n">cpus</span><span class="p">;</span><span class="w"></span>
-<span class="w">    </span><span class="n">CPU_ZERO</span><span class="p">(</span><span class="o">&amp;</span><span class="n">cpus</span><span class="p">);</span><span class="w"></span>
-<span class="w">    </span><span class="n">CPU_SET</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">cpus</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="kt">cpu_set_t</span><span class="w"> </span><span class="n">cpus</span><span class="p">;</span>
+<span class="w">    </span><span class="n">CPU_ZERO</span><span class="p">(</span><span class="o">&amp;</span><span class="n">cpus</span><span class="p">);</span>
+<span class="w">    </span><span class="n">CPU_SET</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">cpus</span><span class="p">);</span>
 
-<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">handle</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">log</span><span class="p">.</span><span class="n">consumer_thread_native_handle</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">handle</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">log</span><span class="p">.</span><span class="n">consumer_thread_native_handle</span><span class="p">();</span>
 
-<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">errnum</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">::</span><span class="n">pthread_setaffinity_np</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">cpus</span><span class="p">),</span><span class="w"> </span><span class="o">&amp;</span><span class="n">cpus</span><span class="p">))</span><span class="w"></span>
-<span class="w">    </span><span class="p">{</span><span class="w"></span>
-<span class="w">        </span><span class="n">errno</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">errnum</span><span class="p">;</span><span class="w"></span>
-<span class="w">        </span><span class="n">perror</span><span class="p">(</span><span class="s">&quot;pthread_setaffinity_np&quot;</span><span class="p">);</span><span class="w"></span>
-<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">errnum</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">::</span><span class="n">pthread_setaffinity_np</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">cpus</span><span class="p">),</span><span class="w"> </span><span class="o">&amp;</span><span class="n">cpus</span><span class="p">))</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="n">errno</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">errnum</span><span class="p">;</span>
+<span class="w">        </span><span class="n">perror</span><span class="p">(</span><span class="s">&quot;pthread_setaffinity_np&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
 
-<span class="w">    </span><span class="n">xtr</span><span class="o">::</span><span class="n">sink</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">log</span><span class="p">.</span><span class="n">get_sink</span><span class="p">(</span><span class="s">&quot;Main&quot;</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="n">xtr</span><span class="o">::</span><span class="n">sink</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">log</span><span class="p">.</span><span class="n">get_sink</span><span class="p">(</span><span class="s">&quot;Main&quot;</span><span class="p">);</span>
 
-<span class="w">    </span><span class="n">XTR_LOG</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Hello world&quot;</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="n">XTR_LOG</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Hello world&quot;</span><span class="p">);</span>
 
-<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"></span>
-<span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
 </pre></div>
 </div>
 <p>View this example on <a class="reference external" href="https://godbolt.org/z/1vh5exK4K">Compiler Explorer</a>.</p>
@@ -638,22 +638,22 @@ the <a class="reference internal" href="xtrctl.html#xtrctl"><span class="std std
 <h2>Custom Back-ends<a class="headerlink" href="#custom-back-ends" title="Permalink to this heading"></a></h2>
 <p>The logger allows custom back-ends to be used. This is done by implementing the
 <a class="reference internal" href="api.html#_CPPv4N3xtr17storage_interfaceE" title="xtr::storage_interface"><code class="xref cpp cpp-class docutils literal notranslate"><span class="pre">xtr::storage_interface</span></code></a> interface:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">struct</span><span class="w"> </span><span class="nc">xtr</span><span class="o">::</span><span class="n">storage_interface</span><span class="w"></span>
-<span class="p">{</span><span class="w"></span>
-<span class="w">    </span><span class="k">virtual</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">span</span><span class="o">&lt;</span><span class="kt">char</span><span class="o">&gt;</span><span class="w"> </span><span class="n">allocate_buffer</span><span class="p">()</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"></span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">struct</span><span class="w"> </span><span class="nc">xtr</span><span class="o">::</span><span class="n">storage_interface</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">virtual</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">span</span><span class="o">&lt;</span><span class="kt">char</span><span class="o">&gt;</span><span class="w"> </span><span class="n">allocate_buffer</span><span class="p">()</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
 
-<span class="w">    </span><span class="k">virtual</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">submit_buffer</span><span class="p">(</span><span class="kt">char</span><span class="o">*</span><span class="w"> </span><span class="n">buf</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="kt">size_t</span><span class="w"> </span><span class="n">size</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">virtual</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">submit_buffer</span><span class="p">(</span><span class="kt">char</span><span class="o">*</span><span class="w"> </span><span class="n">buf</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="kt">size_t</span><span class="w"> </span><span class="n">size</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
 
-<span class="w">    </span><span class="k">virtual</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">flush</span><span class="p">()</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">virtual</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">flush</span><span class="p">()</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
 
-<span class="w">    </span><span class="k">virtual</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">sync</span><span class="p">()</span><span class="w"> </span><span class="k">noexcept</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">virtual</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">sync</span><span class="p">()</span><span class="w"> </span><span class="k">noexcept</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
 
-<span class="w">    </span><span class="k">virtual</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="nf">reopen</span><span class="p">()</span><span class="w"> </span><span class="k">noexcept</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">virtual</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="nf">reopen</span><span class="p">()</span><span class="w"> </span><span class="k">noexcept</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
 
-<span class="w">    </span><span class="k">virtual</span><span class="w"> </span><span class="o">~</span><span class="n">storage_interface</span><span class="p">()</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">default</span><span class="p">;</span><span class="w"></span>
-<span class="p">};</span><span class="w"></span>
+<span class="w">    </span><span class="k">virtual</span><span class="w"> </span><span class="o">~</span><span class="n">storage_interface</span><span class="p">()</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">default</span><span class="p">;</span>
+<span class="p">};</span>
 
-<span class="k">using</span><span class="w"> </span><span class="n">storage_interface_ptr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">storage_interface</span><span class="o">&gt;</span><span class="p">;</span><span class="w"></span>
+<span class="k">using</span><span class="w"> </span><span class="n">storage_interface_ptr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">storage_interface</span><span class="o">&gt;</span><span class="p">;</span>
 </pre></div>
 </div>
 <p>Storage interface objects are then passed to the <a class="reference internal" href="api.html#_CPPv4N3xtr21storage_interface_ptrE" title="xtr::storage_interface_ptr"><code class="xref cpp cpp-type docutils literal notranslate"><span class="pre">xtr::storage_interface_ptr</span></code></a>
@@ -707,51 +707,51 @@ associated backing store.</p>
 <h3>Example<a class="headerlink" href="#id8" title="Permalink to this heading"></a></h3>
 <p>Using the <a class="reference external" href="api.html#_CPPv4I0EN3xtr6logger6loggerE21storage_interface_ptrRR5ClockNSt6stringE17log_level_style_t">custom back-end constructor</a>
 to create a logger with a storage back-end that discards all input:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;xtr/logger.hpp&gt;</span><span class="cp"></span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;xtr/logger.hpp&gt;</span>
 
-<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;span&gt;</span><span class="cp"></span>
-<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cstddef&gt;</span><span class="cp"></span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;span&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cstddef&gt;</span>
 
-<span class="k">namespace</span><span class="w"></span>
-<span class="p">{</span><span class="w"></span>
-<span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">discard_storage</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">xtr</span><span class="o">::</span><span class="n">storage_interface</span><span class="w"></span>
-<span class="w">    </span><span class="p">{</span><span class="w"></span>
-<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">span</span><span class="o">&lt;</span><span class="kt">char</span><span class="o">&gt;</span><span class="w"> </span><span class="n">allocate_buffer</span><span class="p">()</span><span class="w"></span>
-<span class="w">        </span><span class="p">{</span><span class="w"></span>
-<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">buf</span><span class="p">;</span><span class="w"></span>
-<span class="w">        </span><span class="p">}</span><span class="w"></span>
+<span class="k">namespace</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">discard_storage</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">xtr</span><span class="o">::</span><span class="n">storage_interface</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">span</span><span class="o">&lt;</span><span class="kt">char</span><span class="o">&gt;</span><span class="w"> </span><span class="n">allocate_buffer</span><span class="p">()</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">buf</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
 
-<span class="w">        </span><span class="kt">void</span><span class="w"> </span><span class="n">submit_buffer</span><span class="p">(</span><span class="kt">char</span><span class="o">*</span><span class="w"> </span><span class="n">buf</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="kt">size_t</span><span class="w"> </span><span class="n">size</span><span class="p">)</span><span class="w"></span>
-<span class="w">        </span><span class="p">{</span><span class="w"></span>
-<span class="w">        </span><span class="p">}</span><span class="w"></span>
+<span class="w">        </span><span class="kt">void</span><span class="w"> </span><span class="n">submit_buffer</span><span class="p">(</span><span class="kt">char</span><span class="o">*</span><span class="w"> </span><span class="n">buf</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="kt">size_t</span><span class="w"> </span><span class="n">size</span><span class="p">)</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">        </span><span class="p">}</span>
 
-<span class="w">        </span><span class="kt">void</span><span class="w"> </span><span class="n">flush</span><span class="p">()</span><span class="w"></span>
-<span class="w">        </span><span class="p">{</span><span class="w"></span>
-<span class="w">        </span><span class="p">}</span><span class="w"></span>
+<span class="w">        </span><span class="kt">void</span><span class="w"> </span><span class="n">flush</span><span class="p">()</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">        </span><span class="p">}</span>
 
-<span class="w">        </span><span class="kt">void</span><span class="w"> </span><span class="n">sync</span><span class="p">()</span><span class="w"> </span><span class="k">noexcept</span><span class="w"></span>
-<span class="w">        </span><span class="p">{</span><span class="w"></span>
-<span class="w">        </span><span class="p">}</span><span class="w"></span>
+<span class="w">        </span><span class="kt">void</span><span class="w"> </span><span class="n">sync</span><span class="p">()</span><span class="w"> </span><span class="k">noexcept</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">        </span><span class="p">}</span>
 
-<span class="w">        </span><span class="kt">int</span><span class="w"> </span><span class="n">reopen</span><span class="p">()</span><span class="w"> </span><span class="k">noexcept</span><span class="w"></span>
-<span class="w">        </span><span class="p">{</span><span class="w"></span>
-<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"></span>
-<span class="w">        </span><span class="p">}</span><span class="w"></span>
+<span class="w">        </span><span class="kt">int</span><span class="w"> </span><span class="n">reopen</span><span class="p">()</span><span class="w"> </span><span class="k">noexcept</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
 
-<span class="w">        </span><span class="kt">char</span><span class="w"> </span><span class="n">buf</span><span class="p">[</span><span class="mi">1024</span><span class="p">];</span><span class="w"></span>
-<span class="w">    </span><span class="p">};</span><span class="w"></span>
-<span class="p">}</span><span class="w"></span>
+<span class="w">        </span><span class="kt">char</span><span class="w"> </span><span class="n">buf</span><span class="p">[</span><span class="mi">1024</span><span class="p">];</span>
+<span class="w">    </span><span class="p">};</span>
+<span class="p">}</span>
 
-<span class="kt">int</span><span class="w"> </span><span class="n">main</span><span class="p">()</span><span class="w"></span>
-<span class="p">{</span><span class="w"></span>
-<span class="w">    </span><span class="n">xtr</span><span class="o">::</span><span class="n">logger</span><span class="w"> </span><span class="nf">log</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">make_unique</span><span class="o">&lt;</span><span class="n">discard_storage</span><span class="o">&gt;</span><span class="p">());</span><span class="w"></span>
+<span class="kt">int</span><span class="w"> </span><span class="n">main</span><span class="p">()</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="n">xtr</span><span class="o">::</span><span class="n">logger</span><span class="w"> </span><span class="nf">log</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">make_unique</span><span class="o">&lt;</span><span class="n">discard_storage</span><span class="o">&gt;</span><span class="p">());</span>
 
-<span class="w">    </span><span class="n">xtr</span><span class="o">::</span><span class="n">sink</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">log</span><span class="p">.</span><span class="n">get_sink</span><span class="p">(</span><span class="s">&quot;Main&quot;</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="n">xtr</span><span class="o">::</span><span class="n">sink</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">log</span><span class="p">.</span><span class="n">get_sink</span><span class="p">(</span><span class="s">&quot;Main&quot;</span><span class="p">);</span>
 
-<span class="w">    </span><span class="n">XTR_LOG</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Hello world&quot;</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="n">XTR_LOG</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Hello world&quot;</span><span class="p">);</span>
 
-<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"></span>
-<span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
 </pre></div>
 </div>
 <p>View this example on <a class="reference external" href="https://godbolt.org/z/W4YE7YqPr">Compiler Explorer</a>.</p>
@@ -774,23 +774,23 @@ further details.</p>
 <span class="ow">not</span><span class="o">-</span><span class="n">info</span><span class="p">:</span> <span class="mi">2021</span><span class="o">-</span><span class="mi">09</span><span class="o">-</span><span class="mi">17</span> <span class="mi">23</span><span class="p">:</span><span class="mi">36</span><span class="p">:</span><span class="mf">39.043028</span> <span class="n">Main</span> <span class="o">&lt;</span><span class="n">source</span><span class="o">&gt;</span><span class="p">:</span><span class="mi">19</span><span class="p">:</span> <span class="n">Hello</span> <span class="n">world</span>
 </pre></div>
 </div>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;xtr/logger.hpp&gt;</span><span class="cp"></span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;xtr/logger.hpp&gt;</span>
 
-<span class="n">xtr</span><span class="o">::</span><span class="n">logger</span><span class="w"> </span><span class="n">log</span><span class="p">;</span><span class="w"></span>
+<span class="n">xtr</span><span class="o">::</span><span class="n">logger</span><span class="w"> </span><span class="n">log</span><span class="p">;</span>
 
-<span class="n">xtr</span><span class="o">::</span><span class="n">sink</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">log</span><span class="p">.</span><span class="n">get_sink</span><span class="p">(</span><span class="s">&quot;Main&quot;</span><span class="p">);</span><span class="w"></span>
+<span class="n">xtr</span><span class="o">::</span><span class="n">sink</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">log</span><span class="p">.</span><span class="n">get_sink</span><span class="p">(</span><span class="s">&quot;Main&quot;</span><span class="p">);</span>
 
-<span class="n">log</span><span class="p">.</span><span class="n">set_log_level_style</span><span class="p">(</span><span class="w"></span>
-<span class="w">    </span><span class="p">[](</span><span class="k">auto</span><span class="w"> </span><span class="n">level</span><span class="p">)</span><span class="w"></span>
-<span class="w">    </span><span class="p">{</span><span class="w"></span>
-<span class="w">        </span><span class="k">return</span><span class="w"></span>
-<span class="w">            </span><span class="n">level</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">xtr</span><span class="o">::</span><span class="n">log_level_t</span><span class="o">::</span><span class="n">info</span><span class="w"> </span><span class="o">?</span><span class="w"></span>
-<span class="w">                </span><span class="s">&quot;info: &quot;</span><span class="w"> </span><span class="o">:</span><span class="w"></span>
-<span class="w">                </span><span class="s">&quot;not-info: &quot;</span><span class="p">;</span><span class="w"></span>
-<span class="w">    </span><span class="p">});</span><span class="w"></span>
+<span class="n">log</span><span class="p">.</span><span class="n">set_log_level_style</span><span class="p">(</span>
+<span class="w">    </span><span class="p">[](</span><span class="k">auto</span><span class="w"> </span><span class="n">level</span><span class="p">)</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span>
+<span class="w">            </span><span class="n">level</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">xtr</span><span class="o">::</span><span class="n">log_level_t</span><span class="o">::</span><span class="n">info</span><span class="w"> </span><span class="o">?</span>
+<span class="w">                </span><span class="s">&quot;info: &quot;</span><span class="w"> </span><span class="o">:</span>
+<span class="w">                </span><span class="s">&quot;not-info: &quot;</span><span class="p">;</span>
+<span class="w">    </span><span class="p">});</span>
 
-<span class="n">XTR_LOGL</span><span class="p">(</span><span class="n">info</span><span class="p">,</span><span class="w"> </span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Hello world&quot;</span><span class="p">);</span><span class="w"></span>
-<span class="n">XTR_LOGL</span><span class="p">(</span><span class="n">error</span><span class="p">,</span><span class="w"> </span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Hello world&quot;</span><span class="p">);</span><span class="w"></span>
+<span class="n">XTR_LOGL</span><span class="p">(</span><span class="n">info</span><span class="p">,</span><span class="w"> </span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Hello world&quot;</span><span class="p">);</span>
+<span class="n">XTR_LOGL</span><span class="p">(</span><span class="n">error</span><span class="p">,</span><span class="w"> </span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Hello world&quot;</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>View this example on <a class="reference external" href="https://godbolt.org/z/ohcW6ndoz">Compiler Explorer</a>.</p>
@@ -806,22 +806,22 @@ systemd journal can be enabled by passing the
 level styles.</p>
 <section id="id11">
 <h3>Example<a class="headerlink" href="#id11" title="Permalink to this heading"></a></h3>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;xtr/logger.hpp&gt;</span><span class="cp"></span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;xtr/logger.hpp&gt;</span>
 
-<span class="n">xtr</span><span class="o">::</span><span class="n">logger</span><span class="w"> </span><span class="n">log</span><span class="p">;</span><span class="w"></span>
+<span class="n">xtr</span><span class="o">::</span><span class="n">logger</span><span class="w"> </span><span class="n">log</span><span class="p">;</span>
 
-<span class="n">log</span><span class="p">.</span><span class="n">set_log_level_style</span><span class="p">(</span><span class="n">xtr</span><span class="o">::</span><span class="n">systemd_log_level_style</span><span class="p">);</span><span class="w"></span>
+<span class="n">log</span><span class="p">.</span><span class="n">set_log_level_style</span><span class="p">(</span><span class="n">xtr</span><span class="o">::</span><span class="n">systemd_log_level_style</span><span class="p">);</span>
 
 <span class="c1">// If the systemd journal is to be used then it is advisable to set the log</span>
 <span class="c1">// level to debug and use journalctl to filter by log level instead.</span>
-<span class="n">log</span><span class="p">.</span><span class="n">set_default_log_level</span><span class="p">(</span><span class="n">xtr</span><span class="o">::</span><span class="n">log_level_t</span><span class="o">::</span><span class="n">debug</span><span class="p">);</span><span class="w"></span>
+<span class="n">log</span><span class="p">.</span><span class="n">set_default_log_level</span><span class="p">(</span><span class="n">xtr</span><span class="o">::</span><span class="n">log_level_t</span><span class="o">::</span><span class="n">debug</span><span class="p">);</span>
 
-<span class="n">xtr</span><span class="o">::</span><span class="n">sink</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">log</span><span class="p">.</span><span class="n">get_sink</span><span class="p">(</span><span class="s">&quot;Main&quot;</span><span class="p">);</span><span class="w"></span>
+<span class="n">xtr</span><span class="o">::</span><span class="n">sink</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">log</span><span class="p">.</span><span class="n">get_sink</span><span class="p">(</span><span class="s">&quot;Main&quot;</span><span class="p">);</span>
 
-<span class="n">XTR_LOGL</span><span class="p">(</span><span class="n">debug</span><span class="p">,</span><span class="w"> </span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Debug&quot;</span><span class="p">);</span><span class="w"></span>
-<span class="n">XTR_LOGL</span><span class="p">(</span><span class="n">info</span><span class="p">,</span><span class="w"> </span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Info&quot;</span><span class="p">);</span><span class="w"></span>
-<span class="n">XTR_LOGL</span><span class="p">(</span><span class="n">warning</span><span class="p">,</span><span class="w"> </span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Warning&quot;</span><span class="p">);</span><span class="w"></span>
-<span class="n">XTR_LOGL</span><span class="p">(</span><span class="n">error</span><span class="p">,</span><span class="w"> </span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Error&quot;</span><span class="p">);</span><span class="w"></span>
+<span class="n">XTR_LOGL</span><span class="p">(</span><span class="n">debug</span><span class="p">,</span><span class="w"> </span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Debug&quot;</span><span class="p">);</span>
+<span class="n">XTR_LOGL</span><span class="p">(</span><span class="n">info</span><span class="p">,</span><span class="w"> </span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Info&quot;</span><span class="p">);</span>
+<span class="n">XTR_LOGL</span><span class="p">(</span><span class="n">warning</span><span class="p">,</span><span class="w"> </span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Warning&quot;</span><span class="p">);</span>
+<span class="n">XTR_LOGL</span><span class="p">(</span><span class="n">error</span><span class="p">,</span><span class="w"> </span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Error&quot;</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>View this example on <a class="reference external" href="https://godbolt.org/z/zvsjech4a">Compiler Explorer</a>.</p>

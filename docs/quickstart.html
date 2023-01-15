@@ -104,51 +104,51 @@ formatting.</p>
 <section id="examples">
 <h2>Examples<a class="headerlink" href="#examples" title="Permalink to this heading"></a></h2>
 <p>Creating a sink:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;xtr/logger.hpp&gt;</span><span class="cp"></span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;xtr/logger.hpp&gt;</span>
 
-<span class="n">xtr</span><span class="o">::</span><span class="n">logger</span><span class="w"> </span><span class="n">log</span><span class="p">;</span><span class="w"></span>
+<span class="n">xtr</span><span class="o">::</span><span class="n">logger</span><span class="w"> </span><span class="n">log</span><span class="p">;</span>
 
-<span class="n">xtr</span><span class="o">::</span><span class="n">sink</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">log</span><span class="p">.</span><span class="n">get_sink</span><span class="p">(</span><span class="s">&quot;Main&quot;</span><span class="p">);</span><span class="w"></span>
+<span class="n">xtr</span><span class="o">::</span><span class="n">sink</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">log</span><span class="p">.</span><span class="n">get_sink</span><span class="p">(</span><span class="s">&quot;Main&quot;</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>Writing to the log, blocking if the sink is full, reading the timestamp
 in the background thread <a class="footnote-reference brackets" href="#timestamps" id="id1">1</a>:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">XTR_LOG</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Hello world&quot;</span><span class="p">);</span><span class="w"></span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">XTR_LOG</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Hello world&quot;</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>Write to the log, discarding the message if the sink is full, reading the
 timestamp in the background thread:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">XTR_TRY_LOG</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Hello world&quot;</span><span class="p">);</span><span class="w"></span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">XTR_TRY_LOG</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Hello world&quot;</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>Write to the log, immediately reading the timestamp from the TSC:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">XTR_LOG_TSC</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Hello world&quot;</span><span class="p">);</span><span class="w"></span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">XTR_LOG_TSC</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Hello world&quot;</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>Write to the log, immediately reading the timestamp using
 <a class="reference external" href="https://www.man7.org/linux/man-pages/man3/clock_gettime.3.html">clock_gettime(3)</a>
 with a clock source of either CLOCK_REALTIME_COARSE on Linux or CLOCK_REALTIME_FAST
 on FreeBSD:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">XTR_LOG_RTC</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Hello world&quot;</span><span class="p">);</span><span class="w"></span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">XTR_LOG_RTC</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Hello world&quot;</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>Write to the log if the log level of the sink is at the ‘info’ level or a level
 with lower importance than ‘info’. The default sink level ‘info’ so this
 message will be logged:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">XTR_LOGL</span><span class="p">(</span><span class="n">info</span><span class="p">,</span><span class="w"> </span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Hello world&quot;</span><span class="p">);</span><span class="w"></span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">XTR_LOGL</span><span class="p">(</span><span class="n">info</span><span class="p">,</span><span class="w"> </span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Hello world&quot;</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>Set the log level of the sink ‘s’ to ‘error’, causing messages with importance
 lower than ‘error’ to be dropped. Available log levels are debug, info, warning,
 error and fatal—see <a class="reference internal" href="api.html#_CPPv4N3xtr11log_level_tE" title="xtr::log_level_t"><code class="xref cpp cpp-enum docutils literal notranslate"><span class="pre">xtr::log_level_t</span></code></a>.</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">s</span><span class="p">.</span><span class="n">set_level</span><span class="p">(</span><span class="n">xtr</span><span class="o">::</span><span class="n">log_level_t</span><span class="o">::</span><span class="n">error</span><span class="p">);</span><span class="w"></span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">s</span><span class="p">.</span><span class="n">set_level</span><span class="p">(</span><span class="n">xtr</span><span class="o">::</span><span class="n">log_level_t</span><span class="o">::</span><span class="n">error</span><span class="p">);</span>
 
 <span class="n">XTR_LOGL</span><span class="p">(</span><span class="n">info</span><span class="p">,</span><span class="w"> </span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Hello world&quot;</span><span class="p">);</span><span class="w"> </span><span class="c1">// Dropped</span>
 </pre></div>
 </div>
 <p>Fatal errors will log and then terminate the program using
 <a class="reference external" href="https://www.man7.org/linux/man-pages/man3/abort.3.html">abort(3)</a>:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">XTR_LOGL</span><span class="p">(</span><span class="n">fatal</span><span class="p">,</span><span class="w"> </span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Goodbye cruel world&quot;</span><span class="p">);</span><span class="w"></span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">XTR_LOGL</span><span class="p">(</span><span class="n">fatal</span><span class="p">,</span><span class="w"> </span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Goodbye cruel world&quot;</span><span class="p">);</span>
 <span class="c1">// NOTREACHED</span>
 </pre></div>
 </div>
@@ -156,18 +156,18 @@ error and fatal—see <a class="reference internal" href="api.html#_CPPv4N3xtr11
 default behaviour is safe—i.e. to avoid creating dangling references the
 logger does not assume anything about the lifetime of objects passed as
 arguments:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">str1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;Hello&quot;</span><span class="p">;</span><span class="w"></span>
-<span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="o">*</span><span class="w"> </span><span class="n">str2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;world&quot;</span><span class="p">;</span><span class="w"></span>
-<span class="n">XTR_LOG</span><span class="p">(</span><span class="s">&quot;{} {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">str1</span><span class="p">,</span><span class="w"> </span><span class="n">str2</span><span class="p">);</span><span class="w"></span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">str1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;Hello&quot;</span><span class="p">;</span>
+<span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="o">*</span><span class="w"> </span><span class="n">str2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;world&quot;</span><span class="p">;</span>
+<span class="n">XTR_LOG</span><span class="p">(</span><span class="s">&quot;{} {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">str1</span><span class="p">,</span><span class="w"> </span><span class="n">str2</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>To avoid copying, wrap arguments in a call to <a class="reference internal" href="api.html#_CPPv4I0EN3xtr6nocopyEDaRK1T" title="xtr::nocopy"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">xtr::nocopy()</span></code></a>:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">XTR_LOG</span><span class="p">(</span><span class="s">&quot;{} {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">nocopy</span><span class="p">(</span><span class="n">str1</span><span class="p">),</span><span class="w"> </span><span class="n">nocopy</span><span class="p">(</span><span class="n">str2</span><span class="p">));</span><span class="w"></span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">XTR_LOG</span><span class="p">(</span><span class="s">&quot;{} {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">nocopy</span><span class="p">(</span><span class="n">str1</span><span class="p">),</span><span class="w"> </span><span class="n">nocopy</span><span class="p">(</span><span class="n">str2</span><span class="p">));</span>
 </pre></div>
 </div>
 <p>Arguments may also be moved in to the logger:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">str3</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;world&quot;</span><span class="p">;</span><span class="w"></span>
-<span class="n">XTR_LOG</span><span class="p">(</span><span class="s">&quot;Hello {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">str3</span><span class="p">));</span><span class="w"></span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">str3</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;world&quot;</span><span class="p">;</span>
+<span class="n">XTR_LOG</span><span class="p">(</span><span class="s">&quot;Hello {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">str3</span><span class="p">));</span>
 </pre></div>
 </div>
 <p class="rubric">Footnotes</p>
