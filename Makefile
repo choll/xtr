@@ -7,6 +7,7 @@ DEBUG ?= 0
 RELDEBUG ?= 0
 PIC ?= 0
 LTO ?= 1
+URING ?= auto
 
 GOOGLE_BENCH_CPPFLAGS = $(addprefix -isystem, $(CONAN_INCLUDE_DIRS_BENCHMARK) $(GOOGLE_BENCH_INCLUDE_DIR))
 GOOGLE_BENCH_LDFLAGS = $(addprefix -L, $(CONAN_LIB_DIRS_BENCHMARK) $(GOOGLE_BENCH_LIB_DIR))
@@ -82,6 +83,20 @@ endif
 ifeq ($(LTO), 1)
 	CXXFLAGS += -flto
 	BUILD_DIR := $(BUILD_DIR)-lto
+endif
+
+ifneq ($(URING), auto)
+	CXXFLAGS += -DXTR_USE_IO_URING=$(URING)
+	ifeq ($(URING), 1)
+		ifneq ($(SUBMODULES_FLAG),)
+			LDLIBS += -luring
+		else
+			LDLIBS += $(addprefix -l, $(CONAN_LIBS_LIBURING))
+		endif
+		BUILD_DIR := $(BUILD_DIR)-uring
+	else
+		BUILD_DIR := $(BUILD_DIR)-no-uring
+	endif
 endif
 
 ifeq ($(COVERAGE), 1)
