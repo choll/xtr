@@ -3801,6 +3801,7 @@ inline void xtr::detail::fd_storage_base::replace_fd(int newfd) noexcept
 }
 
 #include <cerrno>
+#include <iostream>
 #include <memory>
 #include <utility>
 
@@ -3836,10 +3837,22 @@ inline xtr::storage_interface_ptr xtr::make_fd_storage(
     (void)syscall(__NR_io_uring_setup, 0, nullptr);
 
     if (errno != ENOSYS)
-        return std::make_unique<io_uring_fd_storage>(fd, std::move(reopen_path));
-    else
+    {
+        try
+        {
+            return std::make_unique<io_uring_fd_storage>(
+                fd,
+                std::move(reopen_path));
+        }
+        catch (const std::exception& e)
+        {
+            std::cerr << "Falling back to posix_fd_storage due to "
+                         "io_uring_fd_storage error: "
+                      << e.what() << "\n";
+        }
+    }
 #endif
-        return std::make_unique<posix_fd_storage>(fd, std::move(reopen_path));
+    return std::make_unique<posix_fd_storage>(fd, std::move(reopen_path));
 }
 
 #include <fcntl.h>
