@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>XTR Logger API Reference &mdash; XTR Documentation</title>
@@ -11,10 +11,9 @@
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
         <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/doctools.js"></script>
         <script src="_static/sphinx_highlight.js"></script>
     <script src="_static/js/theme.js"></script>
@@ -29,11 +28,15 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="index.html" class="icon icon-home"> xtr
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            xtr
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
@@ -80,7 +83,7 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home"></a></li>
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
       <li class="breadcrumb-item active">XTR Logger API Reference</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/api.rst.txt" rel="nofollow"> View page source</a>
@@ -371,7 +374,7 @@ logging. Use these macros if accurate timestamps are required.</p>
 <span id="_CPPv3N3xtr6logger8get_sinkENSt6stringE"></span><span id="_CPPv2N3xtr6logger8get_sinkENSt6stringE"></span><span id="xtr::logger::get_sink__ss"></span><span class="target" id="classxtr_1_1logger_1a1f8df984c2ec4f5f765c05a11fdb05e6"></span><a class="reference internal" href="#_CPPv4N3xtr4sinkE" title="xtr::sink"><span class="n"><span class="pre">sink</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">get_sink</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">name</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xtr6logger8get_sinkENSt6stringE" title="Permalink to this definition"></a><br /></dt>
 <dd><p>Creates a sink with the specified name. Note that each call to this function creates a new sink; if repeated calls are made with the same name, separate sinks with the name name are created.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>name</strong> – The name for the given sink. </p>
 </dd>
 </dl>
@@ -382,13 +385,13 @@ logging. Use these macros if accurate timestamps are required.</p>
 <span id="_CPPv3N3xtr6logger13register_sinkER4sinkNSt6stringE"></span><span id="_CPPv2N3xtr6logger13register_sinkER4sinkNSt6stringE"></span><span id="xtr::logger::register_sink__sinkR.ss"></span><span class="target" id="classxtr_1_1logger_1ab9bff842b164da551857f6f5a2fb17bf"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">register_sink</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4N3xtr4sinkE" title="xtr::sink"><span class="n"><span class="pre">sink</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">s</span></span>, <span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">name</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">noexcept</span></span><a class="headerlink" href="#_CPPv4N3xtr6logger13register_sinkER4sinkNSt6stringE" title="Permalink to this definition"></a><br /></dt>
 <dd><p>Registers the sink with the logger. Note that the sink name does not need to be unique; if repeated calls are made with the same name, separate sinks with the same name are registered.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>s</strong> – The sink to register. </p></li>
 <li><p><strong>name</strong> – The name for the given sink.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Pre</dt>
+<dt class="field-even">Pre<span class="colon">:</span></dt>
 <dd class="field-even"><p>The sink must be closed. </p>
 </dd>
 </dl>
@@ -460,7 +463,7 @@ logging. Use these macros if accurate timestamps are required.</p>
 <span id="_CPPv3N3xtr4sink4syncEv"></span><span id="_CPPv2N3xtr4sink4syncEv"></span><span id="xtr::sink::sync"></span><span class="target" id="classxtr_1_1sink_1aa3b28b9b9d8f4c5b90ca398eacfafed3"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">sync</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xtr4sink4syncEv" title="Permalink to this definition"></a><br /></dt>
 <dd><p>Synchronizes all log calls previously made by this sink with the background thread and syncs all data to back-end storage.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Post</dt>
+<dt class="field-odd">Post<span class="colon">:</span></dt>
 <dd class="field-odd"><p>All entries in the sink’s queue have been processed by the background thread, buffers have been flushed and the <a class="reference internal" href="#classxtr_1_1sink_1aa3b28b9b9d8f4c5b90ca398eacfafed3"><span class="std std-ref">sync()</span></a> function on the storage interface has been called. For the default (disk) storage this means fsync(2) (if available) has been called. </p>
 </dd>
 </dl>

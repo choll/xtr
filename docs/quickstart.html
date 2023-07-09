@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>XTR Logger Quick-Start Guide &mdash; XTR Documentation</title>
@@ -11,10 +11,9 @@
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
         <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/doctools.js"></script>
         <script src="_static/sphinx_highlight.js"></script>
     <script src="_static/js/theme.js"></script>
@@ -29,11 +28,15 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="index.html" class="icon icon-home"> xtr
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            xtr
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
@@ -67,7 +70,7 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home"></a></li>
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
       <li class="breadcrumb-item active">XTR Logger Quick-Start Guide</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/quickstart.rst.txt" rel="nofollow"> View page source</a>
@@ -112,7 +115,7 @@ formatting.</p>
 </pre></div>
 </div>
 <p>Writing to the log, blocking if the sink is full, reading the timestamp
-in the background thread <a class="footnote-reference brackets" href="#timestamps" id="id1">1</a>:</p>
+in the background thread <a class="footnote-reference brackets" href="#timestamps" id="id1" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a>:</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">XTR_LOG</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Hello world&quot;</span><span class="p">);</span>
 </pre></div>
 </div>
@@ -171,17 +174,18 @@ arguments:</p>
 </pre></div>
 </div>
 <p class="rubric">Footnotes</p>
-<dl class="footnote brackets">
-<dt class="label" id="timestamps"><span class="brackets"><a class="fn-backref" href="#id1">1</a></span></dt>
-<dd><p>The behaviour for XTR_LOG is that timestamps are read when
+<aside class="footnote-list brackets">
+<aside class="footnote brackets" id="timestamps" role="note">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id1">1</a><span class="fn-bracket">]</span></span>
+<p>The behaviour for XTR_LOG is that timestamps are read when
 the background thread reads the event from the sink. This is
 less accurate, but faster than reading the time at the log
 call-site. If reading the time at the call-site is preferred,
 use XTR_LOG_TSC or XTR_LOG_RTC. See the
 <a class="reference internal" href="guide.html#time-sources"><span class="std std-ref">time sources</span></a> section of the user guide
 for further information.</p>
-</dd>
-</dl>
+</aside>
+</aside>
 </section>
 </section>
 
