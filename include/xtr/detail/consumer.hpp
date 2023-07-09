@@ -71,6 +71,12 @@ public:
         set_command_path(std::move(command_path));
     }
 
+    consumer(const consumer&) = delete;
+    consumer(consumer&&) = delete;
+
+    consumer& operator=(const consumer&) = delete;
+    consumer& operator=(consumer&&) = delete;
+
     void add_sink(sink& s, const std::string& name);
 
     buffer buf;

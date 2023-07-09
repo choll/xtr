@@ -252,7 +252,7 @@ public:
         consumer_ =
             jthread(
                 &detail::consumer::run,
-                detail::consumer(
+                std::make_unique<detail::consumer>(
                     detail::buffer(std::move(storage), level_style),
                     &control_,
                     std::move(command_path)),
