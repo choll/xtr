@@ -27,7 +27,7 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .in \\n[rst2man-indent\\n[rst2man-indent-level]]u
 ..
-.TH "LIBXTR-USERGUIDE" "3" "January 2023" "" "xtr"
+.TH "LIBXTR-USERGUIDE" "3" "July 2023" "" "xtr"
 .SH NAME
 libxtr-userguide \- C++ logging library user guide
 .SH OVERVIEW
@@ -82,9 +82,9 @@ Sink creation via \fI\%xtr::logger::get_sink()\fP:
 
 xtr::logger log;
 
-xtr::sink s = log.get_sink("Main");
+xtr::sink s = log.get_sink(\(dqMain\(dq);
 
-XTR_LOG(s, "Hello world");
+XTR_LOG(s, \(dqHello world\(dq);
 .ft P
 .fi
 .UNINDENT
@@ -103,9 +103,9 @@ Sink creation via \fI\%xtr::logger::register_sink()\fP:
 xtr::logger log;
 xtr::sink s;
 
-log.register_sink(s, "Main");
+log.register_sink(s, \(dqMain\(dq);
 
-XTR_LOG(s, "Hello world");
+XTR_LOG(s, \(dqHello world\(dq);
 .ft P
 .fi
 .UNINDENT
@@ -123,13 +123,13 @@ Sink creation via copying:
 
 xtr::logger log;
 
-xtr::sink s1 = log.get_sink("Main");
+xtr::sink s1 = log.get_sink(\(dqMain\(dq);
 xtr::sink s2 = s1;
 
-s2.set_name("Copy");
+s2.set_name(\(dqCopy\(dq);
 
-XTR_LOG(s1, "Hello world");
-XTR_LOG(s2, "Hello world");
+XTR_LOG(s1, \(dqHello world\(dq);
+XTR_LOG(s2, \(dqHello world\(dq);
 .ft P
 .fi
 .UNINDENT
@@ -152,11 +152,11 @@ style formatting as found in {fmt}. The {fmt} format string documentation can be
 
 xtr::logger log;
 
-xtr::sink s = log.get_sink("Main");
+xtr::sink s = log.get_sink(\(dqMain\(dq);
 
-XTR_LOG(s, "Hello {}", 123); // Hello 123
-XTR_LOG(s, "Hello {}", 123.456); // Hello 123.456
-XTR_LOG(s, "Hello {:.1f}", 123.456); // Hello 123.1
+XTR_LOG(s, \(dqHello {}\(dq, 123); // Hello 123
+XTR_LOG(s, \(dqHello {}\(dq, 123.456); // Hello 123.456
+XTR_LOG(s, \(dqHello {:.1f}\(dq, 123.456); // Hello 123.1
 .ft P
 .fi
 .UNINDENT
@@ -179,15 +179,15 @@ passed by reference by wrapping them in a call to \fI\%xtr::nocopy()\fP\&.
 
 xtr::logger log;
 
-xtr::sink s = log.get_sink("Main");
+xtr::sink s = log.get_sink(\(dqMain\(dq);
 
-static std::string arg = "world";
+static std::string arg = \(dqworld\(dq;
 
 // Here \(aqarg\(aq is passed by reference:
-XTR_LOG(s, "Hello {}", nocopy(arg));
+XTR_LOG(s, \(dqHello {}\(dq, nocopy(arg));
 
 // Here \(aqarg\(aq is passed by value:
-XTR_LOG(s, "Hello {}", arg);
+XTR_LOG(s, \(dqHello {}\(dq, arg);
 .ft P
 .fi
 .UNINDENT
@@ -204,7 +204,7 @@ following log statement:
 .sp
 .nf
 .ft C
-XTR_LOG(s, "{}", str);
+XTR_LOG(s, \(dq{}\(dq, str);
 .ft P
 .fi
 .UNINDENT
@@ -223,7 +223,7 @@ string arguments may be wrapped in a call to \fI\%xtr::nocopy()\fP:
 .sp
 .nf
 .ft C
-XTR_LOG(sink, "{}", nocopy(str));
+XTR_LOG(sink, \(dq{}\(dq, nocopy(str));
 .ft P
 .fi
 .UNINDENT
@@ -241,7 +241,7 @@ are enumerated in the \fI\%xtr::log_level_t\fP enum. Log statements with
 these levels may be produced using the \fI\%XTR_LOGL\fP macro, along with
 additional macros that are described in the \fI\%log macros\fP
 section of the API reference, all of which follow the convention of containing
-"LOGL" in the macro name.
+\(dqLOGL\(dq in the macro name.
 .sp
 Each sink has its own log level, which can be programmatically set or queried
 via \fI\%xtr::sink::set_level()\fP and \fI\%xtr::sink::level()\fP, and can
@@ -262,11 +262,11 @@ so in the following example the function \fBfoo()\fP is not called:
 
 xtr::logger log;
 
-xtr::sink s = log.get_sink("Main");
+xtr::sink s = log.get_sink(\(dqMain\(dq);
 
 s.set_level(xtr::log_level_t::error);
 
-XTR_LOGL(info, s, "Hello {}", foo());
+XTR_LOGL(info, s, \(dqHello {}\(dq, foo());
 .ft P
 .fi
 .UNINDENT
@@ -326,7 +326,7 @@ namespace
 
     std::ostream& operator<<(std::ostream& os, const custom&)
     {
-        return os << "custom";
+        return os << \(dqcustom\(dq;
     }
 }
 
@@ -334,9 +334,9 @@ int main()
 {
     xtr::logger log;
 
-    xtr::sink s = log.get_sink("Main");
+    xtr::sink s = log.get_sink(\(dqMain\(dq);
 
-    XTR_LOG(s, "Hello {}", custom());
+    XTR_LOG(s, \(dqHello {}\(dq, custom());
 
     return 0;
 }
@@ -372,7 +372,7 @@ struct fmt::formatter<custom>
     template<typename FormatContext>
     auto format(const custom&, FormatContext& ctx)
     {
-        return format_to(ctx.out(), "custom");
+        return format_to(ctx.out(), \(dqcustom\(dq);
     }
 };
 
@@ -380,9 +380,9 @@ int main()
 {
     xtr::logger log;
 
-    xtr::sink s = log.get_sink("Main");
+    xtr::sink s = log.get_sink(\(dqMain\(dq);
 
-    XTR_LOG(s, "Hello {}", custom());
+    XTR_LOG(s, \(dqHello {}\(dq, custom());
 
     return 0;
 }
@@ -526,7 +526,7 @@ argument. Any type may be passed as long as it has a formatter defined
             template<typename FormatContext>
             auto format(const std::timespec& ts, FormatContext &ctx)
             {
-                    return format_to(ctx.out(), "{}.{}", ts.tv_sec, ts.tv_nsec);
+                    return format_to(ctx.out(), \(dq{}.{}\(dq, ts.tv_sec, ts.tv_nsec);
             }
     };
 
@@ -534,9 +534,9 @@ argument. Any type may be passed as long as it has a formatter defined
     {
             xtr::logger log;
 
-            xtr::sink s = log.get_sink("Main");
+            xtr::sink s = log.get_sink(\(dqMain\(dq);
 
-            XTR_LOG_TS(s, (std::timespec{123, 456}), "Hello world");
+            XTR_LOG_TS(s, (std::timespec{123, 456}), \(dqHello world\(dq);
 
             return 0;
     }
@@ -599,12 +599,12 @@ int main()
     if (const int errnum = ::pthread_setaffinity_np(handle, sizeof(cpus), &cpus))
     {
         errno = errnum;
-        perror("pthread_setaffinity_np");
+        perror(\(dqpthread_setaffinity_np\(dq);
     }
 
-    xtr::sink s = log.get_sink("Main");
+    xtr::sink s = log.get_sink(\(dqMain\(dq);
 
-    XTR_LOG(s, "Hello world");
+    XTR_LOG(s, \(dqHello world\(dq);
 
     return 0;
 }
@@ -764,9 +764,9 @@ int main()
 {
     xtr::logger log(std::make_unique<discard_storage>());
 
-    xtr::sink s = log.get_sink("Main");
+    xtr::sink s = log.get_sink(\(dqMain\(dq);
 
-    XTR_LOG(s, "Hello world");
+    XTR_LOG(s, \(dqHello world\(dq);
 
     return 0;
 }
@@ -809,19 +809,19 @@ not\-info: 2021\-09\-17 23:36:39.043028 Main <source>:19: Hello world
 
 xtr::logger log;
 
-xtr::sink s = log.get_sink("Main");
+xtr::sink s = log.get_sink(\(dqMain\(dq);
 
 log.set_log_level_style(
     [](auto level)
     {
         return
             level == xtr::log_level_t::info ?
-                "info: " :
-                "not\-info: ";
+                \(dqinfo: \(dq :
+                \(dqnot\-info: \(dq;
     });
 
-XTR_LOGL(info, s, "Hello world");
-XTR_LOGL(error, s, "Hello world");
+XTR_LOGL(info, s, \(dqHello world\(dq);
+XTR_LOGL(error, s, \(dqHello world\(dq);
 .ft P
 .fi
 .UNINDENT
@@ -852,12 +852,12 @@ log.set_log_level_style(xtr::systemd_log_level_style);
 // level to debug and use journalctl to filter by log level instead.
 log.set_default_log_level(xtr::log_level_t::debug);
 
-xtr::sink s = log.get_sink("Main");
+xtr::sink s = log.get_sink(\(dqMain\(dq);
 
-XTR_LOGL(debug, s, "Debug");
-XTR_LOGL(info, s, "Info");
-XTR_LOGL(warning, s, "Warning");
-XTR_LOGL(error, s, "Error");
+XTR_LOGL(debug, s, \(dqDebug\(dq);
+XTR_LOGL(info, s, \(dqInfo\(dq);
+XTR_LOGL(warning, s, \(dqWarning\(dq);
+XTR_LOGL(error, s, \(dqError\(dq);
 .ft P
 .fi
 .UNINDENT

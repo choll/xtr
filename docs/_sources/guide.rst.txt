@@ -712,7 +712,7 @@ View this example on `Compiler Explorer <https://godbolt.org/z/ohcW6ndoz>`__.
 Logging to the Systemd Journal
 ------------------------------
 
-To support logging to systemd, log level prefixes suitable for logging to the 
+To support logging to systemd, log level prefixes suitable for logging to the
 systemd journal can be enabled by passing the
 :cpp:func:`xtr::systemd_log_level_style` to
 :cpp:func:`xtr::logger::set_log_level_style`. Please refer to the

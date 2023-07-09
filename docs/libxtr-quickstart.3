@@ -27,7 +27,7 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .in \\n[rst2man-indent\\n[rst2man-indent-level]]u
 ..
-.TH "LIBXTR-QUICKSTART" "3" "January 2023" "" "xtr"
+.TH "LIBXTR-QUICKSTART" "3" "July 2023" "" "xtr"
 .SH NAME
 libxtr-quickstart \- C++ logging library quick-start guide
 .SH INSTALLING
@@ -62,7 +62,7 @@ Creating a sink:
 
 xtr::logger log;
 
-xtr::sink s = log.get_sink("Main");
+xtr::sink s = log.get_sink(\(dqMain\(dq);
 .ft P
 .fi
 .UNINDENT
@@ -75,7 +75,7 @@ in the background thread [1]:
 .sp
 .nf
 .ft C
-XTR_LOG(s, "Hello world");
+XTR_LOG(s, \(dqHello world\(dq);
 .ft P
 .fi
 .UNINDENT
@@ -88,7 +88,7 @@ timestamp in the background thread:
 .sp
 .nf
 .ft C
-XTR_TRY_LOG(s, "Hello world");
+XTR_TRY_LOG(s, \(dqHello world\(dq);
 .ft P
 .fi
 .UNINDENT
@@ -100,7 +100,7 @@ Write to the log, immediately reading the timestamp from the TSC:
 .sp
 .nf
 .ft C
-XTR_LOG_TSC(s, "Hello world");
+XTR_LOG_TSC(s, \(dqHello world\(dq);
 .ft P
 .fi
 .UNINDENT
@@ -115,7 +115,7 @@ on FreeBSD:
 .sp
 .nf
 .ft C
-XTR_LOG_RTC(s, "Hello world");
+XTR_LOG_RTC(s, \(dqHello world\(dq);
 .ft P
 .fi
 .UNINDENT
@@ -129,7 +129,7 @@ message will be logged:
 .sp
 .nf
 .ft C
-XTR_LOGL(info, s, "Hello world");
+XTR_LOGL(info, s, \(dqHello world\(dq);
 .ft P
 .fi
 .UNINDENT
@@ -145,7 +145,7 @@ error and fatal\-\-\-see \fI\%xtr::log_level_t\fP\&.
 .ft C
 s.set_level(xtr::log_level_t::error);
 
-XTR_LOGL(info, s, "Hello world"); // Dropped
+XTR_LOGL(info, s, \(dqHello world\(dq); // Dropped
 .ft P
 .fi
 .UNINDENT
@@ -158,7 +158,7 @@ Fatal errors will log and then terminate the program using
 .sp
 .nf
 .ft C
-XTR_LOGL(fatal, s, "Goodbye cruel world");
+XTR_LOGL(fatal, s, \(dqGoodbye cruel world\(dq);
 // NOTREACHED
 .ft P
 .fi
@@ -174,9 +174,9 @@ arguments:
 .sp
 .nf
 .ft C
-const std::string str1 = "Hello";
-const char* str2 = "world";
-XTR_LOG("{} {}", str1, str2);
+const std::string str1 = \(dqHello\(dq;
+const char* str2 = \(dqworld\(dq;
+XTR_LOG(\(dq{} {}\(dq, str1, str2);
 .ft P
 .fi
 .UNINDENT
@@ -188,7 +188,7 @@ To avoid copying, wrap arguments in a call to \fI\%xtr::nocopy()\fP:
 .sp
 .nf
 .ft C
-XTR_LOG("{} {}", nocopy(str1), nocopy(str2));
+XTR_LOG(\(dq{} {}\(dq, nocopy(str1), nocopy(str2));
 .ft P
 .fi
 .UNINDENT
@@ -200,8 +200,8 @@ Arguments may also be moved in to the logger:
 .sp
 .nf
 .ft C
-std::string str3 = "world";
-XTR_LOG("Hello {}", std::move(str3));
+std::string str3 = \(dqworld\(dq;
+XTR_LOG(\(dqHello {}\(dq, std::move(str3));
 .ft P
 .fi
 .UNINDENT

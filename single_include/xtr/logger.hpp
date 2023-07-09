@@ -2299,6 +2299,12 @@ public:
         set_command_path(std::move(command_path));
     }
 
+    consumer(const consumer&) = delete;
+    consumer(consumer&&) = delete;
+
+    consumer& operator=(const consumer&) = delete;
+    consumer& operator=(consumer&&) = delete;
+
     void add_sink(sink& s, const std::string& name);
 
     buffer buf;
@@ -3098,7 +3104,7 @@ public:
     {
         consumer_ = jthread(
             &detail::consumer::run,
-            detail::consumer(
+            std::make_unique<detail::consumer>(
                 detail::buffer(std::move(storage), level_style),
                 &control_,
                 std::move(command_path)),

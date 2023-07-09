@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>XTR Logger User Guide &mdash; XTR Documentation</title>
@@ -11,10 +11,9 @@
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
         <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/doctools.js"></script>
         <script src="_static/sphinx_highlight.js"></script>
     <script src="_static/js/theme.js"></script>
@@ -29,11 +28,15 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="index.html" class="icon icon-home"> xtr
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            xtr
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
@@ -122,7 +125,7 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home"></a></li>
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
       <li class="breadcrumb-item active">XTR Logger User Guide</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/guide.rst.txt" rel="nofollow"> View page source</a>
@@ -138,7 +141,7 @@
 <section id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Permalink to this heading"></a></h2>
 <p>The XTR API contains two classes; <a class="reference internal" href="api.html#_CPPv4N3xtr6loggerE" title="xtr::logger"><code class="xref cpp cpp-class docutils literal notranslate"><span class="pre">xtr::logger</span></code></a> and
-<a class="reference internal" href="api.html#_CPPv4N3xtr4sinkE" title="xtr::sink"><code class="xref cpp cpp-class docutils literal notranslate"><span class="pre">xtr::sink</span></code></a>. Sinks each contain a queue <a class="footnote-reference brackets" href="#queue" id="id1">1</a>, and
+<a class="reference internal" href="api.html#_CPPv4N3xtr4sinkE" title="xtr::sink"><code class="xref cpp cpp-class docutils literal notranslate"><span class="pre">xtr::sink</span></code></a>. Sinks each contain a queue <a class="footnote-reference brackets" href="#queue" id="id1" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a>, and
 pass log messages to the associated logger via these queues. Each logger
 has a background consumer thread which reads from the sinks that were created from the
 logger. The background thread then formats the log message and either writes it
@@ -439,11 +442,6 @@ following criteria;</p>
 <p>The logger provides a choice of time-sources when logging messages, each with
 varying levels of accuracy and performance. The options are listed below.</p>
 <table class="docutils align-default">
-<colgroup>
-<col style="width: 43%" />
-<col style="width: 25%" />
-<col style="width: 33%" />
-</colgroup>
 <thead>
 <tr class="row-odd"><th class="head"><p>Source</p></th>
 <th class="head"><p>Accuracy</p></th>
@@ -663,7 +661,7 @@ argument of the <a class="reference external" href="api.html#_CPPv4I0EN3xtr6logg
 <p>All back-end functions are invoked from the logger’s background thread.</p>
 </div>
 <dl class="field-list">
-<dt class="field-odd">allocate_buffer and submit_buffer</dt>
+<dt class="field-odd">allocate_buffer and submit_buffer<span class="colon">:</span></dt>
 <dd class="field-odd"><p>The <em>allocate_buffer</em> function is called by the logger to obtain a buffer
 where formatted log data will be written to. When the logger has finished
 writing to the buffer it is passed back to the back-end by calling
@@ -678,16 +676,16 @@ submit_buffer may be smaller than the span returned by allocate_buffer.
 After a partial buffer is submitted, the logger will allocate a new buffer.</p></li>
 </ul>
 </dd>
-<dt class="field-even">flush</dt>
+<dt class="field-even">flush<span class="colon">:</span></dt>
 <dd class="field-even"><p>The <em>flush</em> function is invoked to indicate that the back-end should write
 any buffered data to its associated backing store.</p>
 </dd>
-<dt class="field-odd">sync</dt>
+<dt class="field-odd">sync<span class="colon">:</span></dt>
 <dd class="field-odd"><p>The <em>sync</em> function is invoked to indicate that the back-end should ensure
 that all data written to the associated backing store has reached permanent
 storage.</p>
 </dd>
-<dt class="field-even">reopen</dt>
+<dt class="field-even">reopen<span class="colon">:</span></dt>
 <dd class="field-even"><p>The <em>reopen</em> function is invoked to indicate that if the back-end has a regular
 file opened for writing log data then the file should be reopened. This is
 intended to be used to implement log rotation via tool such as
@@ -698,7 +696,7 @@ of the <a class="reference internal" href="xtrctl.html#xtrctl"><span class="std 
 <a class="reference external" href="https://www.man7.org/linux/man-pages/man3/errno.3.html">errno(3)</a>
 compatible error number on failure.</p>
 </dd>
-<dt class="field-odd">destructor</dt>
+<dt class="field-odd">destructor<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Upon destruction the back-end should flush any buffered data and close the
 associated backing store.</p>
 </dd>
@@ -856,11 +854,12 @@ the messages logged to the journal can be viewed via e.g.
 exception, an error message is instead printed to <cite>stderr</cite> and the program
 terminates via  <a class="reference external" href="https://www.man7.org/linux/man-pages/man3/abort.3.html">abort(3)</a>.</p>
 <p class="rubric">Footnotes</p>
-<dl class="footnote brackets">
-<dt class="label" id="queue"><span class="brackets"><a class="fn-backref" href="#id1">1</a></span></dt>
-<dd><p>Specifically the queue is a single-producer/single-consumer ring buffer.</p>
-</dd>
-</dl>
+<aside class="footnote-list brackets">
+<aside class="footnote brackets" id="queue" role="note">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id1">1</a><span class="fn-bracket">]</span></span>
+<p>Specifically the queue is a single-producer/single-consumer ring buffer.</p>
+</aside>
+</aside>
 </section>
 </section>
 
