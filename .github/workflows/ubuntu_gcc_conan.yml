@@ -29,8 +29,7 @@ jobs:
           
     - name: install conan
       run: |
-        sudo pip install conan
-        conan profile detect
+        sudo pip install 'conan<2'
     - name: install dependencies
       run: conan install . --build missing -s compiler.libcxx=libstdc++11
 
