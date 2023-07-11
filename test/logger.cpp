@@ -18,8 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#define FMT_DEPRECATED_OSTREAM
-
 #include "xtr/config.hpp"
 #include "xtr/logger.hpp"
 #include "xtr/formatters.hpp"
@@ -498,6 +496,21 @@ namespace fmt
             return format_to(ctx.out(), "<blocker>");
         }
     };
+
+    template<>
+    struct formatter<streams_format> : ostream_formatter {};
+
+    template<std::size_t Align>
+    struct formatter<align_format<Align>> : ostream_formatter {};
+
+    template<>
+    struct formatter<non_copyable> : ostream_formatter {};
+
+    template<>
+    struct formatter<thrower> : ostream_formatter {};
+
+    template<typename T>
+    struct formatter<std::shared_ptr<T>> : ostream_formatter {};
 }
 
 using namespace fmt::literals;
