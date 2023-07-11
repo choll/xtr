@@ -497,6 +497,7 @@ namespace fmt
         }
     };
 
+#if FMT_VERSION >= 90000
     template<>
     struct formatter<streams_format> : ostream_formatter {};
 
@@ -511,6 +512,7 @@ namespace fmt
 
     template<typename T>
     struct formatter<std::shared_ptr<T>> : ostream_formatter {};
+#endif
 }
 
 using namespace fmt::literals;
