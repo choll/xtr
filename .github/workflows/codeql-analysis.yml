@@ -56,7 +56,7 @@ jobs:
           --install /usr/bin/clang-format clang-format /usr/bin/clang-format-12 1000
 
     - name: install conan
-      run: sudo pip install conan
+      run: sudo pip install 'conan<2'
     - name: install dependencies
       run: conan install . --build missing -s compiler.libcxx=libstdc++11
 
