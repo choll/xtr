@@ -2,7 +2,7 @@ task:
   name: freebsd-14-gcc
   freebsd_instance:
     image_family: freebsd-14-0-snap
-  install_script: pkg-static install -y git gmake gcc
+  install_script: pkg install -y git gmake gcc
   submodules_script:
     - git submodule init
     - git submodule update
@@ -13,7 +13,7 @@ task:
   freebsd_instance:
     image_family: freebsd-14-0-snap
   install_script:
-    - pkg-static install -y git gmake cmake gcc conan llvm13
+    - pkg install -y git gmake cmake gcc conan llvm13
     - ln -s /usr/local/bin/clang-format13 /usr/local/bin/clang-format
   script:
     - export CC=gcc CXX=g++ RANLIB=gcc-ranlib12 AR=gcc-ar12
@@ -25,7 +25,7 @@ task:
   freebsd_instance:
     image_family: freebsd-14-0-snap
   install_script:
-    - pkg-static install -y git gmake cmake gcc conan llvm13
+    - pkg install -y git gmake cmake gcc conan llvm13
     - ln -s /usr/local/bin/clang-format13 /usr/local/bin/clang-format
   script:
     - export CC=gcc CXX=g++ RANLIB=gcc-ranlib12 AR=gcc-ar12
@@ -39,7 +39,7 @@ task:
   name: freebsd-14-clang
   freebsd_instance:
     image_family: freebsd-14-0-snap
-  install_script: pkg-static install -y git gmake binutils llvm13
+  install_script: pkg install -y git gmake binutils llvm13
   submodules_script:
     - git submodule init
     - git submodule update
@@ -50,7 +50,7 @@ task:
   freebsd_instance:
     image_family: freebsd-14-0-snap
   install_script:
-    - pkg-static install -y git gmake cmake conan llvm13 binutils
+    - pkg install -y git gmake cmake conan llvm13 binutils
     - ln -s /usr/local/bin/clang-format13 /usr/bin/clang-format
   script:
     - export CC=clang13 CXX=clang++13 RANLIB=llvm-ranlib13 AR=llvm-ar13
@@ -62,7 +62,7 @@ task:
   freebsd_instance:
     image_family: freebsd-14-0-snap
   install_script:
-    - pkg-static install -y git gmake cmake conan llvm13 binutils
+    - pkg install -y git gmake cmake conan llvm13 binutils
     - ln -s /usr/local/bin/clang-format13 /usr/bin/clang-format
   script:
     - export CC=clang13 CXX=clang++13 RANLIB=llvm-ranlib13 AR=llvm-ar13
@@ -76,7 +76,7 @@ task:
   name: freebsd-13-gcc
   freebsd_instance:
     image_family: freebsd-13-0
-  install_script: pkg-static install -y git gmake gcc
+  install_script: pkg install -y git gmake gcc
   submodules_script:
     - git submodule init
     - git submodule update
@@ -86,7 +86,7 @@ task:
   name: freebsd-13-clang
   freebsd_instance:
     image_family: freebsd-13-0
-  install_script: pkg-static install -y git gmake binutils llvm12
+  install_script: pkg install -y git gmake binutils llvm12
   submodules_script:
     - git submodule init
     - git submodule update
