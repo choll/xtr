@@ -507,8 +507,10 @@ namespace fmt
     template<>
     struct formatter<non_copyable> : ostream_formatter {};
 
+#if __cpp_exceptions
     template<>
     struct formatter<thrower> : ostream_formatter {};
+#endif
 
     template<typename T>
     struct formatter<std::shared_ptr<T>> : ostream_formatter {};
