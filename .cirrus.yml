@@ -13,11 +13,11 @@ task:
   freebsd_instance:
     image_family: freebsd-14-0-snap
   install_script:
-    - pkg install -y git gmake cmake gcc llvm13 devel/py-pip
+    - pkg install -y git gmake cmake gcc llvm13 devel/py-pip py39-sqlite3
     - pip install --user 'pyyaml==5.3.1' 'conan<2'
     - ln -s /usr/local/bin/clang-format13 /usr/local/bin/clang-format
   script:
-    - export CC=gcc CXX=g++ RANLIB=gcc-ranlib12 AR=gcc-ar12
+    - export CC=gcc CXX=g++ RANLIB=gcc-ranlib12 AR=gcc-ar12 PATH=~/.local/bin:$PATH
     - conan install . --build missing -s compiler.libcxx=libstdc++11
     - gmake all
   tests_script: CXX=g++ RANLIB=gcc-ranlib12 AR=gcc-ar12 gmake check
@@ -26,10 +26,10 @@ task:
   freebsd_instance:
     image_family: freebsd-14-0-snap
   install_script:
-    - pkg install -y git gmake cmake gcc conan llvm13 py39-sqlite3
+    - pkg install -y git gmake cmake gcc conan llvm13
     - ln -s /usr/local/bin/clang-format13 /usr/local/bin/clang-format
   script:
-    - export CC=gcc CXX=g++ RANLIB=gcc-ranlib12 AR=gcc-ar12 PATH=~/.local/bin:$PATH
+    - export CC=gcc CXX=g++ RANLIB=gcc-ranlib12 AR=gcc-ar12
     - mkdir build && cd build
     - conan install .. -g cmake_find_package --build missing -s compiler.libcxx=libstdc++11
     - cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_MODULE_PATH=${PWD} -DBUILD_TESTING=ON -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INSTALL_PREFIX=/tmp/install -DCMAKE_AR=`which $AR` -DCMAKE_RANLIB=`which $RANLIB`
