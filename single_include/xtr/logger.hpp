@@ -128,15 +128,14 @@ namespace xtr::detail
 
 #include <cerrno>
 
-#define XTR_TEMP_FAILURE_RETRY(expr)                    \
-    (__extension__(                                     \
-        {                                               \
-            decltype(expr) xtr_result;                  \
-            do                                          \
-                xtr_result = (expr);                    \
-            while (xtr_result == -1 && errno == EINTR); \
-            xtr_result;                                 \
-        }))
+#define XTR_TEMP_FAILURE_RETRY(expr)                \
+    (__extension__({                                \
+        decltype(expr) xtr_result;                  \
+        do                                          \
+            xtr_result = (expr);                    \
+        while (xtr_result == -1 && errno == EINTR); \
+        xtr_result;                                 \
+    }))
 
 #include <bit>
 #include <cassert>
@@ -708,9 +707,8 @@ public:
 
 public:
     synchronized_ring_buffer(
-        int fd = -1,
-        std::size_t offset = 0,
-        int flags = srb_flags) requires(!is_dynamic)
+        int fd = -1, std::size_t offset = 0, int flags = srb_flags)
+        requires(!is_dynamic)
     {
         m_ = mirrored_memory_mapping{capacity(), fd, offset, flags};
         nread_plus_capacity_ = wrnread_plus_capacity_ = capacity();
@@ -721,12 +719,14 @@ public:
         size_type min_capacity,
         int fd = -1,
         std::size_t offset = 0,
-        int flags = srb_flags) requires is_dynamic :
+        int flags = srb_flags)
+        requires is_dynamic
+        :
         m_(align_to_page_size(
 #if defined(__cpp_lib_int_pow2) && __cpp_lib_int_pow2 >= 202002L
                std::bit_ceil(min_capacity)),
 #else
-               std::ceil2(min_capacity)),
+                std::ceil2(min_capacity)),
 #endif
            fd,
            offset,
@@ -769,19 +769,18 @@ public:
         size_type sz = wrnread_plus_capacity_ - wrnwritten_;
         const auto b = wrbase_ + clamp(wrnwritten_, wrcapacity());
 
-        while (sz < minsize)
-            [[unlikely]]
-            {
-                if constexpr (!is_non_blocking_v<Tags>)
-                    pause();
+        while (sz < minsize) [[unlikely]]
+        {
+            if constexpr (!is_non_blocking_v<Tags>)
+                pause();
 
-                wrnread_plus_capacity_ =
-                    nread_plus_capacity_.load(std::memory_order_acquire);
-                sz = wrnread_plus_capacity_ - wrnwritten_;
+            wrnread_plus_capacity_ =
+                nread_plus_capacity_.load(std::memory_order_acquire);
+            sz = wrnread_plus_capacity_ - wrnwritten_;
 
-                if constexpr (is_non_blocking_v<Tags>)
-                    break;
-            }
+            if constexpr (is_non_blocking_v<Tags>)
+                break;
+        }
 
         if (is_non_blocking_v<Tags> && sz < minsize) [[unlikely]]
         {
@@ -1335,8 +1334,8 @@ namespace xtr::detail
     };
 
     template<typename T>
-    requires(!std::same_as<std::remove_cvref_t<T>, string_table_entry>) T &&
-        transform_string_table_entry(const std::byte*, T&& value)
+        requires(!std::same_as<std::remove_cvref_t<T>, string_table_entry>)
+    T&& transform_string_table_entry(const std::byte*, T&& value)
     {
         return std::forward<T>(value);
     }
@@ -1354,36 +1353,35 @@ namespace xtr::detail
     }
 
     template<typename Tags, typename T, typename Buffer>
-    requires(
-        std::is_rvalue_reference_v<decltype(std::forward<T>(std::declval<T>()))>&&
-            std::same_as<std::remove_cvref_t<T>, std::string>) ||
-        (!is_c_string<T>::value &&
-         !std::same_as<std::remove_cvref_t<T>, std::string> &&
-         !std::same_as<std::remove_cvref_t<T>, std::string_view>)
-            T&& build_string_table(std::byte*&, std::byte*&, Buffer&, T&& value)
+        requires(std::is_rvalue_reference_v<
+                     decltype(std::forward<T>(std::declval<T>()))> &&
+                 std::same_as<std::remove_cvref_t<T>, std::string>) ||
+                (!is_c_string<T>::value &&
+                 !std::same_as<std::remove_cvref_t<T>, std::string> &&
+                 !std::same_as<std::remove_cvref_t<T>, std::string_view>)
+    T&& build_string_table(std::byte*&, std::byte*&, Buffer&, T&& value)
     {
         return std::forward<T>(value);
     }
 
     template<typename Tags, typename Buffer, typename String>
-    requires std::same_as<String, std::string> ||
-        std::same_as<String, std::string_view>
-            string_table_entry build_string_table(
-                std::byte*& pos, std::byte*& end, Buffer& buf, const String& sv)
+        requires std::same_as<String, std::string> ||
+                 std::same_as<String, std::string_view>
+    string_table_entry build_string_table(
+        std::byte*& pos, std::byte*& end, Buffer& buf, const String& sv)
     {
         std::byte* str_end = pos + sv.length();
-        while (end < str_end)
-            [[unlikely]]
+        while (end < str_end) [[unlikely]]
+        {
+            pause();
+            const auto s = buf.write_span();
+            if (s.end() < str_end) [[unlikely]]
             {
-                pause();
-                const auto s = buf.write_span();
-                if (s.end() < str_end) [[unlikely]]
-                {
-                    if (s.size() == buf.capacity() || is_non_blocking_v<Tags>)
-                        return string_table_entry{string_table_entry::truncated};
-                }
-                end = s.end();
+                if (s.size() == buf.capacity() || is_non_blocking_v<Tags>)
+                    return string_table_entry{string_table_entry::truncated};
             }
+            end = s.end();
+        }
 
         std::memcpy(pos, sv.data(), sv.length());
         pos += sv.length();
@@ -1398,23 +1396,20 @@ namespace xtr::detail
         std::byte* begin = pos;
         while (*str != '\0')
         {
-            while (pos == end)
-                [[unlikely]]
+            while (pos == end) [[unlikely]]
+            {
+                pause();
+                const auto s = buf.write_span();
+                if (s.end() == end) [[unlikely]]
                 {
-                    pause();
-                    const auto s = buf.write_span();
-                    if (s.end() == end) [[unlikely]]
+                    if (s.size() == buf.capacity() || is_non_blocking_v<Tags>)
                     {
-                        if (s.size() == buf.capacity() ||
-                            is_non_blocking_v<Tags>)
-                        {
-                            pos = begin;
-                            return string_table_entry{
-                                string_table_entry::truncated};
-                        }
+                        pos = begin;
+                        return string_table_entry{string_table_entry::truncated};
                     }
-                    end = s.end();
                 }
+                end = s.end();
+            }
             ::new (pos++) char(*str++);
         }
         return string_table_entry(std::size_t(pos - begin));
@@ -2586,37 +2581,35 @@ namespace xtr
 #define XTR_XSTR(s) XTR_STR(s)
 #define XTR_STR(s)  #s
 
-#define XTR_LOGL_TAGS(TAGS, LEVEL, SINK, ...)                                                \
-    (__extension__(                                                                          \
-        {                                                                                    \
-            if constexpr (xtr::log_level_t::LEVEL != xtr::log_level_t::debug || !XTR_NDEBUG) \
-            {                                                                                \
-                if ((SINK).level() >= xtr::log_level_t::LEVEL)                               \
-                    XTR_LOG_TAGS(TAGS, LEVEL, SINK, __VA_ARGS__);                            \
-                if constexpr (xtr::log_level_t::LEVEL == xtr::log_level_t::fatal)            \
-                {                                                                            \
-                    (SINK).sync();                                                           \
-                    std::abort();                                                            \
-                }                                                                            \
-            }                                                                                \
-        }))
+#define XTR_LOGL_TAGS(TAGS, LEVEL, SINK, ...)                                            \
+    (__extension__({                                                                     \
+        if constexpr (xtr::log_level_t::LEVEL != xtr::log_level_t::debug || !XTR_NDEBUG) \
+        {                                                                                \
+            if ((SINK).level() >= xtr::log_level_t::LEVEL)                               \
+                XTR_LOG_TAGS(TAGS, LEVEL, SINK, __VA_ARGS__);                            \
+            if constexpr (xtr::log_level_t::LEVEL == xtr::log_level_t::fatal)            \
+            {                                                                            \
+                (SINK).sync();                                                           \
+                std::abort();                                                            \
+            }                                                                            \
+        }                                                                                \
+    }))
 
 #define XTR_LOG_TAGS(TAGS, LEVEL, SINK, ...) \
     (__extension__({ XTR_LOG_TAGS_IMPL(TAGS, LEVEL, SINK, __VA_ARGS__); }))
 
-#define XTR_LOG_TAGS_IMPL(TAGS, LEVEL, SINK, FORMAT, ...)                       \
-    (__extension__(                                                             \
-        {                                                                       \
-            static constexpr auto xtr_fmt =                                     \
-                xtr::detail::string{"{}{} {} "} +                               \
-                xtr::detail::rcut<xtr::detail::rindex(__FILE__, '/') + 1>(      \
-                    __FILE__) +                                                 \
-                xtr::detail::string{":"} +                                      \
-                xtr::detail::string{XTR_XSTR(__LINE__) ": " FORMAT "\n"};       \
-            using xtr::nocopy;                                                  \
-            (SINK).template log<&xtr_fmt, xtr::log_level_t::LEVEL, void(TAGS)>( \
-                __VA_ARGS__);                                                   \
-        }))
+#define XTR_LOG_TAGS_IMPL(TAGS, LEVEL, SINK, FORMAT, ...)                   \
+    (__extension__({                                                        \
+        static constexpr auto xtr_fmt =                                     \
+            xtr::detail::string{"{}{} {} "} +                               \
+            xtr::detail::rcut<xtr::detail::rindex(__FILE__, '/') + 1>(      \
+                __FILE__) +                                                 \
+            xtr::detail::string{":"} +                                      \
+            xtr::detail::string{XTR_XSTR(__LINE__) ": " FORMAT "\n"};       \
+        using xtr::nocopy;                                                  \
+        (SINK).template log<&xtr_fmt, xtr::log_level_t::LEVEL, void(TAGS)>( \
+            __VA_ARGS__);                                                   \
+    }))
 
 #include <string>
 
