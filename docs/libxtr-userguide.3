@@ -27,7 +27,7 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .in \\n[rst2man-indent\\n[rst2man-indent-level]]u
 ..
-.TH "LIBXTR-USERGUIDE" "3" "July 2023" "" "xtr"
+.TH "LIBXTR-USERGUIDE" "3" "October 2023" "" "xtr"
 .SH NAME
 libxtr-userguide \- C++ logging library user guide
 .SH OVERVIEW
@@ -402,7 +402,7 @@ Any non\-string iterable type\-\-\-specifically any type that meets all of the
 following criteria;
 .INDENT 2.0
 .IP 1. 3
-Is not constructible from const  char*\&.
+Is not constructible from const char*\&.
 .IP 2. 3
 \fBstd::begin()\fP and \fBstd::end()\fP are defined.
 .IP 3. 3
@@ -783,7 +783,7 @@ the statement can be customised via \fI\%xtr::logger::set_log_level_style()\fP,
 which accepts a function pointer of type
 \fI\%xtr::log_level_style_t\fP\&. The passed function should accept
 a single argument of type \fI\%xtr::log_level_t\fP and should return
-a const  char* string literal to be used as the log level prefix.
+a const char* string literal to be used as the log level prefix.
 Please refer to the \fI\%xtr::log_level_style_t\fP documentation for
 further details.
 .SS Example
