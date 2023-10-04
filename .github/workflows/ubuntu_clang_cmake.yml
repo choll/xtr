@@ -14,16 +14,12 @@ jobs:
 
     - name: setup clang
       run: |
-        sudo update-alternatives \
-          --install /usr/lib/llvm llvm /usr/lib/llvm-15 1000 \
-          --slave /usr/bin/llvm-ar llvm-ar /usr/bin/llvm-ar-15 \
-          --slave /usr/bin/llvm-ranlib llvm-ranlib /usr/bin/llvm-ranlib-15
-        sudo update-alternatives \
-          --install /usr/bin/clang clang /usr/bin/clang-15 1000
-        sudo update-alternatives \
-          --install /usr/bin/clang++ clang++ /usr/bin/clang++-15 1000
-        sudo update-alternatives \
-          --install /usr/bin/clang-format clang-format /usr/bin/clang-format-15 1000
+        sudo update-alternatives --install /usr/lib/llvm llvm /usr/lib/llvm-15 1000
+        sudo update-alternatives --install /usr/bin/llvm-ar llvm-ar /usr/bin/llvm-ar-15 1000
+        sudo update-alternatives --install /usr/bin/llvm-ranlib llvm-ranlib /usr/bin/llvm-ranlib-15 1000
+        sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-15 1000
+        sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-15 1000
+        sudo update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-15 1000
 
     - name: install conan
       run: sudo pip install 'conan<2'
