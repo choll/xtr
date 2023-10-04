@@ -25,7 +25,7 @@ jobs:
           --slave /usr/bin/gcc-ar gcc-ar /usr/bin/gcc-ar-10 \
           --slave /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib-10
         sudo update-alternatives \
-          --install /usr/bin/clang-format clang-format /usr/bin/clang-format-12 1000
+          --install /usr/bin/clang-format clang-format /usr/bin/clang-format-15 1000
           
     - name: install conan
       run: sudo pip install 'conan<2'
