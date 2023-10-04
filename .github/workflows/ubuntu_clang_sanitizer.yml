@@ -33,4 +33,4 @@ jobs:
       run: git submodule update
 
     - name: sanitizer
-      run: CXX=clang++ make -j2 EXCEPTIONS=${{matrix.except}} SANITIZER=${{matrix.sanitizer}} check
+      run: CXX=clang++ AR=llvm-ar RANLIB=llvm-ranlib make -j2 EXCEPTIONS=${{matrix.except}} SANITIZER=${{matrix.sanitizer}} check

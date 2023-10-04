@@ -36,6 +36,6 @@ jobs:
       run: CC=clang CXX=clang++ conan install . --build missing -s compiler=clang -s compiler.libcxx=libstdc++11
 
     - name: make
-      run: URING=0 CXX=clang++ make -j2 EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}} RTTI=${{matrix.rtti}} all
+      run: URING=0 CXX=clang++ AR=llvm-ar RANLIB=llvm-ranlib make -j2 EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}} RTTI=${{matrix.rtti}} all
     - name: test
-      run: URING=0 CXX=clang++ make -j2 EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}} RTTI=${{matrix.rtti}} check
+      run: URING=0 CXX=clang++ AR=llvm-ar RANLIB=llvm-ranlib make -j2 EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}} RTTI=${{matrix.rtti}} check
