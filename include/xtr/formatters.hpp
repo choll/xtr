@@ -63,13 +63,13 @@ namespace fmt
             FormatContext& ctx,
             std::index_sequence<Index, Indexes...>)
         {
-            format_to(ctx.out(), "(");
+            fmt::format_to(ctx.out(), "(");
             if (std::tuple_size_v<T> > 0)
             {
-                format_to(ctx.out(), "{}", std::get<0>(value));
-                ((format_to(ctx.out(), ", {}", std::get<Indexes>(value))), ...);
+                fmt::format_to(ctx.out(), "{}", std::get<0>(value));
+                ((fmt::format_to(ctx.out(), ", {}", std::get<Indexes>(value))), ...);
             }
-            return format_to(ctx.out(), ")");
+            return fmt::format_to(ctx.out(), ")");
         }
     };
 
@@ -85,19 +85,19 @@ namespace fmt
         template<typename FormatContext>
         auto format(const T& value, FormatContext& ctx)
         {
-            format_to(ctx.out(), "{{");
+            fmt::format_to(ctx.out(), "{{");
             if (!value.empty())
             {
                 auto it = std::begin(value);;
-                format_to(ctx.out(), "{}: {}", it->first, it->second);
+                fmt::format_to(ctx.out(), "{}: {}", it->first, it->second);
                 ++it;
                 while (it != std::end(value))
                 {
-                    format_to(ctx.out(), ", {}: {}", it->first, it->second);
+                    fmt::format_to(ctx.out(), ", {}: {}", it->first, it->second);
                     ++it;
                 }
             }
-            return format_to(ctx.out(), "}}");
+            return fmt::format_to(ctx.out(), "}}");
         }
     };
 
@@ -117,15 +117,15 @@ namespace fmt
         template<typename FormatContext>
         auto format(const T& value, FormatContext& ctx)
         {
-            format_to(ctx.out(), "[");
+            fmt::format_to(ctx.out(), "[");
             if (!value.empty())
             {
                 auto it = std::begin(value);;
-                format_to(ctx.out(), "{}", *it++);
+                fmt::format_to(ctx.out(), "{}", *it++);
                 while (it != std::end(value))
-                    format_to(ctx.out(), ", {}", *it++);
+                    fmt::format_to(ctx.out(), ", {}", *it++);
             }
-            return format_to(ctx.out(), "]");
+            return fmt::format_to(ctx.out(), "]");
         }
     };
 }

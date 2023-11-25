@@ -476,7 +476,7 @@ namespace fmt
         template<typename FormatContext>
         auto format(const custom_format &c, FormatContext &ctx)
         {
-            return format_to(ctx.out(), "({}, {})", c.x, c.y);
+            return fmt::format_to(ctx.out(), "({}, {})", c.x, c.y);
         }
     };
 
@@ -493,7 +493,7 @@ namespace fmt
         auto format(const blocker &b, FormatContext &ctx)
         {
             b.wait();
-            return format_to(ctx.out(), "<blocker>");
+            return fmt::format_to(ctx.out(), "<blocker>");
         }
     };
 
