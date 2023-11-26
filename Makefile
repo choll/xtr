@@ -234,10 +234,10 @@ install: $(TARGET) $(XTRCTL_TARGET) docs
 	mkdir -p $(PREFIX)/lib $(PREFIX)/bin $(PREFIX)/include/xtr/detail $(PREFIX)/man/man1 $(PREFIX)/man/man3
 	install $(TARGET) $(PREFIX)/lib
 	install $(XTRCTL_TARGET) $(PREFIX)/bin
-	install include/xtr/*.hpp $(PREFIX)/include/xtr/
-	install include/xtr/detail/*.hpp $(PREFIX)/include/xtr/detail/
-	install $(MAN3_PAGES) $(PREFIX)/man/man3
-	install $(MAN1_PAGES) $(PREFIX)/man/man1
+	install --mode=644  include/xtr/*.hpp $(PREFIX)/include/xtr/
+	install --mode=644 include/xtr/detail/*.hpp $(PREFIX)/include/xtr/detail/
+	install --mode=644 $(MAN3_PAGES) $(PREFIX)/man/man3
+	install --mode=644 $(MAN1_PAGES) $(PREFIX)/man/man1
 
 clean:
 	$(RM) $(TARGET) $(TEST_TARGET) $(BENCH_TARGET) $(XTRCTL_TARGET) \
