@@ -74,7 +74,6 @@ add_library(${PROJECT_NAME} src/buffer.cpp
                             src/wildcard_matcher.cpp)
 target_link_libraries(${PROJECT_NAME} fmt::fmt Threads::Threads)
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
-set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "${HEADER_FILES}")
 target_include_directories(${PROJECT_NAME} PUBLIC include)
 target_compile_definitions(${PROJECT_NAME} PRIVATE XTR_FUNC=)
 
