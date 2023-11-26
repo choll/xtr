@@ -79,7 +79,7 @@ task:
 task:
   name: freebsd-13-gcc
   freebsd_instance:
-    image_family: freebsd-13-0
+    image_family: freebsd-13-2
   install_script: pkg install -y git gmake gcc
   submodules_script:
     - git submodule init
@@ -89,7 +89,7 @@ task:
 task:
   name: freebsd-13-clang
   freebsd_instance:
-    image_family: freebsd-13-0
+    image_family: freebsd-13-2
   install_script: pkg install -y git gmake binutils llvm12
   submodules_script:
     - git submodule init
