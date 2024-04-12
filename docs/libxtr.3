@@ -27,7 +27,7 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .in \\n[rst2man-indent\\n[rst2man-indent-level]]u
 ..
-.TH "LIBXTR" "3" "December 2023" "" "xtr"
+.TH "LIBXTR" "3" "April 2024" "" "xtr"
 .SH NAME
 libxtr \- C++ logging library API reference
 .SH LOG MACROS
@@ -252,7 +252,7 @@ The main logger class. When constructed a background thread will be created whic
 Public Functions
 .INDENT 7.0
 .TP
-.B template<typename Clock = std::chrono::system_clock> inline explicit logger(const char *path, \fI\%Clock\fP &&clock = \fI\%Clock\fP(), std::string command_path = \fI\%default_command_path\fP(), \fI\%log_level_style_t\fP level_style = \fI\%default_log_level_style\fP) 
+.B template<typename Clock = std::chrono::system_clock> inline explicit logger(const char *path, \fI\%Clock\fP &&clock = \fI\%Clock\fP(), std::string command_path = \fI\%default_command_path\fP(), \fI\%log_level_style_t\fP level_style = \fI\%default_log_level_style\fP, option_flags options = option_flags::none) 
 Path constructor. The first argument is the path to a file which should be opened and logged to. The file will be opened in append mode, and will be created if it does not exist. Errors will be written to stdout.
 .sp
 .INDENT 7.0
@@ -269,7 +269,7 @@ level_style: The log level style that will be used to prefix each log statement\
 .UNINDENT
 .INDENT 7.0
 .TP
-.B template<typename Clock = std::chrono::system_clock> inline explicit logger(FILE *stream = stderr, \fI\%Clock\fP &&clock = \fI\%Clock\fP(), std::string command_path = \fI\%default_command_path\fP(), \fI\%log_level_style_t\fP level_style = \fI\%default_log_level_style\fP) 
+.B template<typename Clock = std::chrono::system_clock> inline explicit logger(FILE *stream = stderr, \fI\%Clock\fP &&clock = \fI\%Clock\fP(), std::string command_path = \fI\%default_command_path\fP(), \fI\%log_level_style_t\fP level_style = \fI\%default_log_level_style\fP, option_flags options = option_flags::none) 
 Stream constructor.
 .sp
 It is expected that this constructor will be used with streams such as stdout or stderr. If a stream that has been opened by the user is to be passed to the logger then the \fI\%stream constructor with reopen path\fP constructor is recommended instead, as this will mean that the log file can be rotated\-\-\-please refer to the xtrctl documentation for the \fI\%reopening log files\fP command for details.
@@ -295,7 +295,7 @@ Reopening the log file via the \fI\%xtrctl\fP tool is \fInot\fP supported if thi
 .UNINDENT
 .INDENT 7.0
 .TP
-.B template<typename Clock = std::chrono::system_clock> inline logger(std::string reopen_path, FILE *stream, \fI\%Clock\fP &&clock = \fI\%Clock\fP(), std::string command_path = \fI\%default_command_path\fP(), \fI\%log_level_style_t\fP level_style = \fI\%default_log_level_style\fP) 
+.B template<typename Clock = std::chrono::system_clock> inline logger(std::string reopen_path, FILE *stream, \fI\%Clock\fP &&clock = \fI\%Clock\fP(), std::string command_path = \fI\%default_command_path\fP(), \fI\%log_level_style_t\fP level_style = \fI\%default_log_level_style\fP, option_flags options = option_flags::none) 
  Stream constructor with reopen path.
 .sp
 .INDENT 7.0
@@ -321,7 +321,7 @@ Reopening the log file via the \fI\%xtrctl\fP tool is supported, with the reopen
 .UNINDENT
 .INDENT 7.0
 .TP
-.B template<typename Clock = std::chrono::system_clock> inline explicit logger(\fI\%storage_interface_ptr\fP storage, \fI\%Clock\fP &&clock = \fI\%Clock\fP(), std::string command_path = \fI\%default_command_path\fP(), \fI\%log_level_style_t\fP level_style = \fI\%default_log_level_style\fP) 
+.B template<typename Clock = std::chrono::system_clock> inline explicit logger(\fI\%storage_interface_ptr\fP storage, \fI\%Clock\fP &&clock = \fI\%Clock\fP(), std::string command_path = \fI\%default_command_path\fP(), \fI\%log_level_style_t\fP level_style = \fI\%default_log_level_style\fP, option_flags options = option_flags::none) 
  Custom back\-end constructor (please refer to the \fI\%custom back\-ends\fP section of the user guide for further details on implementing a custom back\-end).
 .sp
 .INDENT 7.0
