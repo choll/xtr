@@ -97,8 +97,6 @@ private:
 #endif
 
 public:
-    enum class option_flags {none, disable_worker_thread};
-
     /**
      * Path constructor. The first argument is the path to a file which
      * should be opened and logged to. The file will be opened in append mode,
@@ -133,8 +131,7 @@ public:
         const char* path,
         Clock&& clock = Clock(),
         std::string command_path = default_command_path(),
-        log_level_style_t level_style = default_log_level_style,
-        option_flags options = option_flags::none)
+        log_level_style_t level_style = default_log_level_style)
     :
         logger(
             make_fd_storage(path),
@@ -174,8 +171,7 @@ public:
         FILE* stream = stderr,
         Clock&& clock = Clock(),
         std::string command_path = default_command_path(),
-        log_level_style_t level_style = default_log_level_style,
-        option_flags options = option_flags::none)
+        log_level_style_t level_style = default_log_level_style)
     :
         logger(
             make_fd_storage(stream, null_reopen_path),
@@ -213,8 +209,7 @@ public:
         FILE* stream,
         Clock&& clock = Clock(),
         std::string command_path = default_command_path(),
-        log_level_style_t level_style = default_log_level_style,
-        option_flags options = option_flags::none)
+        log_level_style_t level_style = default_log_level_style)
     :
         logger(
             make_fd_storage(stream, std::move(reopen_path)),
@@ -250,22 +245,18 @@ public:
         storage_interface_ptr storage,
         Clock&& clock = Clock(),
         std::string command_path = default_command_path(),
-        log_level_style_t level_style = default_log_level_style,
-        option_flags options = option_flags::none)
+        log_level_style_t level_style = default_log_level_style)
     {
-        if (options != option_flags::disable_worker_thread)
-        {
-            // The consumer thread must be started after control_ has been
-            // constructed
-            consumer_ =
-                jthread(
-                    &detail::consumer::run,
-                    std::make_unique<detail::consumer>(
-                        detail::buffer(std::move(storage), level_style),
-                        &control_,
-                        std::move(command_path)),
-                    make_clock(std::forward<Clock>(clock)));
-        }
+        // The consumer thread must be started after control_ has been
+        // constructed
+        consumer_ =
+            jthread(
+                &detail::consumer::run,
+                std::make_unique<detail::consumer>(
+                    detail::buffer(std::move(storage), level_style),
+                    &control_,
+                    std::move(command_path)),
+                make_clock(std::forward<Clock>(clock)));
         // Passing control_ to the consumer is equivalent to calling
         // register_sink, so mark it as open.
         control_.open_ = true;
@@ -331,11 +322,6 @@ public:
      * will be created with the given log level.
      */
     void set_default_log_level(log_level_t level);
-
-    /**
-     *
-     */
-    void process_some_log_events();
 
 private:
     template<typename Func>
