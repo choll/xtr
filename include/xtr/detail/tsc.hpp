@@ -47,7 +47,7 @@ namespace fmt
         }
 
         template<typename FormatContext>
-        auto format(const xtr::detail::tsc ticks, FormatContext &ctx)
+        auto format(const xtr::detail::tsc ticks, FormatContext &ctx) const
         {
             const auto ts = xtr::detail::tsc::to_timespec(ticks);
             return formatter<xtr::timespec>().format(ts, ctx);

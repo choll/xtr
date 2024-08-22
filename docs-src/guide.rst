@@ -306,7 +306,7 @@ Formatting a custom type via fmt::formatter:
         }
 
         template<typename FormatContext>
-        auto format(const custom&, FormatContext& ctx)
+        auto format(const custom&, FormatContext& ctx) const
         {
             return format_to(ctx.out(), "custom");
         }
@@ -428,7 +428,7 @@ Example
 		}
 
 		template<typename FormatContext>
-		auto format(const std::timespec& ts, FormatContext &ctx)
+		auto format(const std::timespec& ts, FormatContext &ctx) const
 		{
 			return format_to(ctx.out(), "{}.{}", ts.tv_sec, ts.tv_nsec);
 		}

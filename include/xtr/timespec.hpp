@@ -33,7 +33,7 @@ struct fmt::formatter<xtr::timespec>
     }
 
     template<typename FormatContext>
-    auto format(const xtr::timespec ts, FormatContext &ctx)
+    auto format(const xtr::timespec ts, FormatContext &ctx) const
     {
         std::tm temp;
         return

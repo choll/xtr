@@ -93,7 +93,7 @@ struct fmt::formatter<xtr::timespec>
     }
 
     template<typename FormatContext>
-    auto format(const xtr::timespec ts, FormatContext& ctx)
+    auto format(const xtr::timespec ts, FormatContext& ctx) const
     {
         std::tm temp;
         return fmt::format_to(
@@ -390,7 +390,7 @@ public:
     mirrored_memory_mapping& operator=(mirrored_memory_mapping&&) = default;
 
     explicit mirrored_memory_mapping(
-        std::size_t length, // must be multiple of page size
+        std::size_t length,     // must be multiple of page size
         int fd = -1,
         std::size_t offset = 0, // must be multiple of page size
         int flags = 0);
@@ -479,9 +479,9 @@ namespace xtr::detail
         const char* str;
     };
 
-    string_ref(const char*)->string_ref<const char*>;
-    string_ref(const std::string&)->string_ref<const char*>;
-    string_ref(const std::string_view&)->string_ref<std::string_view>;
+    string_ref(const char*) -> string_ref<const char*>;
+    string_ref(const std::string&) -> string_ref<const char*>;
+    string_ref(const std::string_view&) -> string_ref<std::string_view>;
 
     template<>
     struct string_ref<std::string_view>
@@ -506,7 +506,8 @@ namespace fmt
         }
 
         template<typename FormatContext>
-        auto format(xtr::detail::string_ref<const char*> ref, FormatContext& ctx)
+        auto format(
+            xtr::detail::string_ref<const char*> ref, FormatContext& ctx) const
         {
             auto pos = ctx.out();
             while (*ref.str != '\0')
@@ -527,7 +528,7 @@ namespace fmt
         template<typename FormatContext>
         auto format(
             const xtr::detail::string_ref<std::string_view> ref,
-            FormatContext& ctx)
+            FormatContext& ctx) const
         {
             auto pos = ctx.out();
             for (const char c : ref.str)
@@ -942,7 +943,7 @@ namespace fmt
         }
 
         template<typename FormatContext>
-        auto format(const xtr::detail::tsc ticks, FormatContext& ctx)
+        auto format(const xtr::detail::tsc ticks, FormatContext& ctx) const
         {
             const auto ts = xtr::detail::tsc::to_timespec(ticks);
             return formatter<xtr::timespec>().format(ts, ctx);
@@ -1547,13 +1548,11 @@ namespace xtr
 class xtr::sink
 {
 private:
-    using fptr_t =
-        std::byte* (*)(
-            detail::buffer& buf, // output buffer
-            std::byte* record, // pointer to log record
-            detail::consumer&,
-            const char* timestamp,
-            std::string& name) noexcept;
+    using fptr_t = std::byte* (*)(detail::buffer& buf, // output buffer
+                                  std::byte* record,   // pointer to log record
+                                  detail::consumer&,
+                                  const char* timestamp,
+                                  std::string& name) noexcept;
 
 public:
     explicit sink(log_level_t level = log_level_t::info);

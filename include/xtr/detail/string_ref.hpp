@@ -80,7 +80,7 @@ namespace fmt
         }
 
         template<typename FormatContext>
-        auto format(xtr::detail::string_ref<const char*> ref, FormatContext &ctx)
+        auto format(xtr::detail::string_ref<const char*> ref, FormatContext &ctx) const
         {
             auto pos = ctx.out();
             while (*ref.str != '\0')
@@ -99,7 +99,7 @@ namespace fmt
         }
 
         template<typename FormatContext>
-        auto format(const xtr::detail::string_ref<std::string_view> ref, FormatContext &ctx)
+        auto format(const xtr::detail::string_ref<std::string_view> ref, FormatContext &ctx) const
         {
             auto pos = ctx.out();
             for (const char c : ref.str)
