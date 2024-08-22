@@ -27,13 +27,13 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .in \\n[rst2man-indent\\n[rst2man-indent-level]]u
 ..
-.TH "LIBXTR-USERGUIDE" "3" "April 2024" "" "xtr"
+.TH "LIBXTR-USERGUIDE" "3" "August 2024" "" "xtr"
 .SH NAME
 libxtr-userguide \- C++ logging library user guide
 .SH OVERVIEW
 .sp
-The XTR API contains two classes; \X'tty: link #_CPPv4N3xtr6loggerE'\fI\%xtr::logger\fP\X'tty: link' and
-\X'tty: link #_CPPv4N3xtr4sinkE'\fI\%xtr::sink\fP\X'tty: link'\&. Sinks each contain a queue [1], and
+The XTR API contains two classes; \fI\%xtr::logger\fP and
+\fI\%xtr::sink\fP\&. Sinks each contain a queue [1], and
 pass log messages to the associated logger via these queues. Each logger
 has a background consumer thread which reads from the sinks that were created from the
 logger. The background thread then formats the log message and either writes it
@@ -64,15 +64,15 @@ sink per component. To support this sinks have a name associated with them which
 is included in the output log message. Sink names do not need to be unique.
 .SH CREATING AND WRITING TO SINKS
 .sp
-Sinks are created either by calling \X'tty: link #_CPPv4N3xtr6logger8get_sinkENSt6stringE'\fI\%xtr::logger::get_sink()\fP\X'tty: link', via normal
-construction followed by a call to \X'tty: link #_CPPv4N3xtr6logger13register_sinkER4sinkNSt6stringE'\fI\%xtr::logger::register_sink()\fP\X'tty: link', or by
+Sinks are created either by calling \fI\%xtr::logger::get_sink()\fP, via normal
+construction followed by a call to \fI\%xtr::logger::register_sink()\fP, or by
 copying another sink. Copied sinks are registered to the same logger and have the
-same name as the source sink. Sinks may be renamed by calling \X'tty: link #_CPPv4N3xtr4sink8set_nameENSt6stringE'\fI\%xtr::sink::set_name()\fP\X'tty: link'\&.
+same name as the source sink. Sinks may be renamed by calling \fI\%xtr::sink::set_name()\fP\&.
 Once a sink has been created or registered, it may be written to using one of several
-log macros which are described in the \X'tty: link #log-macros'\fI\%log macros\fP\X'tty: link' section.
+log macros which are described in the \fI\%log macros\fP section.
 .SS Examples
 .sp
-Sink creation via \X'tty: link #_CPPv4N3xtr6logger8get_sinkENSt6stringE'\fI\%xtr::logger::get_sink()\fP\X'tty: link':
+Sink creation via \fI\%xtr::logger::get_sink()\fP:
 .INDENT 0.0
 .INDENT 3.5
 .sp
@@ -92,7 +92,7 @@ XTR_LOG(s, \(dqHello world\(dq);
 .sp
 View this example on \X'tty: link https://godbolt.org/z/1GWbEPq8T'\fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/1GWbEPq8T\fP>\X'tty: link'\&.
 .sp
-Sink creation via \X'tty: link #_CPPv4N3xtr6logger13register_sinkER4sinkNSt6stringE'\fI\%xtr::logger::register_sink()\fP\X'tty: link':
+Sink creation via \fI\%xtr::logger::register_sink()\fP:
 .INDENT 0.0
 .INDENT 3.5
 .sp
@@ -168,7 +168,7 @@ View this example on \X'tty: link https://godbolt.org/z/zxs7WThM6'\fI\%Compiler 
 The default behaviour of the logger is to copy format arguments into the
 specified sink by value. Note that no allocations are be performed by the
 logger when this is done. If copying is undesirable then arguments may be
-passed by reference by wrapping them in a call to \X'tty: link #_CPPv4I0EN3xtr6nocopyEDaRK1T'\fI\%xtr::nocopy()\fP\X'tty: link'\&.
+passed by reference by wrapping them in a call to \fI\%xtr::nocopy()\fP\&.
 .SS Example
 .INDENT 0.0
 .INDENT 3.5
@@ -217,7 +217,7 @@ to not allocate\-\-\-i.e. even if std::string is passed, the
 std::string copy constructor is not invoked and no allocation occurs.
 String data is copied in order to provide safe default behaviour regarding the
 lifetime of the string data. If copying the string data is undesirable then
-string arguments may be wrapped in a call to \X'tty: link #_CPPv4I0EN3xtr6nocopyEDaRK1T'\fI\%xtr::nocopy()\fP\X'tty: link':
+string arguments may be wrapped in a call to \fI\%xtr::nocopy()\fP:
 .INDENT 0.0
 .INDENT 3.5
 .sp
@@ -237,15 +237,15 @@ object itself does not need to remain valid, just the data it references.
 .SH LOG LEVELS
 .sp
 The logger supports debug, info, warning, error and fatal log levels, which
-are enumerated in the \X'tty: link #_CPPv4N3xtr11log_level_tE'\fI\%xtr::log_level_t\fP\X'tty: link' enum. Log statements with
-these levels may be produced using the \X'tty: link #c.XTR_LOGL'\fI\%XTR_LOGL\fP\X'tty: link' macro, along with
-additional macros that are described in the \X'tty: link #log-macros'\fI\%log macros\fP\X'tty: link'
+are enumerated in the \fI\%xtr::log_level_t\fP enum. Log statements with
+these levels may be produced using the \fI\%XTR_LOGL\fP macro, along with
+additional macros that are described in the \fI\%log macros\fP
 section of the API reference, all of which follow the convention of containing
 \(dqLOGL\(dq in the macro name.
 .sp
 Each sink has its own log level, which can be programmatically set or queried
-via \X'tty: link #_CPPv4N3xtr4sink9set_levelE11log_level_t'\fI\%xtr::sink::set_level()\fP\X'tty: link' and \X'tty: link #_CPPv4NK3xtr4sink5levelEv'\fI\%xtr::sink::level()\fP\X'tty: link', and can
-be set or queried from the command line using the \X'tty: link #xtrctl'\fI\%xtrctl\fP\X'tty: link' tool.
+via \fI\%xtr::sink::set_level()\fP and \fI\%xtr::sink::level()\fP, and can
+be set or queried from the command line using the \fI\%xtrctl\fP tool.
 .sp
 Each log level has an order of importance. The listing of levels above is in
 the order of increasing importance\-\-\-so the least important level is \(aqdebug\(aq
@@ -278,17 +278,17 @@ View this example on \X'tty: link https://godbolt.org/z/ss36qzo1c'\fI\%Compiler 
 Debug log statements can be disabled by defining XTR_NDEBUG.
 .SS Fatal Log Statements
 .sp
-Fatal log statements will additionally call \X'tty: link #_CPPv4N3xtr4sink4syncEv'\fI\%xtr::sink::sync()\fP\X'tty: link' followed
+Fatal log statements will additionally call \fI\%xtr::sink::sync()\fP followed
 by \X'tty: link https://www.man7.org/linux/man-pages/man3/abort.3.html'\fI\%abort(3)\fP <\fBhttps://www.man7.org/linux/man-pages/man3/abort.3.html\fP>\X'tty: link'\&.
 .SH THREAD SAFETY
 .INDENT 0.0
 .INDENT 3.5
 .INDENT 0.0
 .IP \(bu 2
-All functions in \X'tty: link #_CPPv4N3xtr6loggerE'\fI\%xtr::logger\fP\X'tty: link' are thread\-safe.
+All functions in \fI\%xtr::logger\fP are thread\-safe.
 .IP \(bu 2
-No functions in \X'tty: link #_CPPv4N3xtr4sinkE'\fI\%xtr::sink\fP\X'tty: link' are thread\-safe other than
-\X'tty: link #_CPPv4NK3xtr4sink5levelEv'\fI\%xtr::sink::level()\fP\X'tty: link' and \X'tty: link #_CPPv4N3xtr4sink9set_levelE11log_level_t'\fI\%xtr::sink::set_level()\fP\X'tty: link'\&.
+No functions in \fI\%xtr::sink\fP are thread\-safe other than
+\fI\%xtr::sink::level()\fP and \fI\%xtr::sink::set_level()\fP\&.
 This is because each thread is expected to have its own sink(s).
 .UNINDENT
 .UNINDENT
@@ -473,8 +473,8 @@ The performance of the TSC source is listed as either low or medium as it depend
 on the particular CPU.
 .SS Basic
 .sp
-The \X'tty: link #c.XTR_LOG'\fI\%XTR_LOG\fP\X'tty: link' macro and it\(aqs variants listed under the
-\X'tty: link #log-macros'\fI\%basic macros\fP\X'tty: link' section of the API reference all use the basic
+The \fI\%XTR_LOG\fP macro and it\(aqs variants listed under the
+\fI\%basic macros\fP section of the API reference all use the basic
 time source. In these macros no timestamp is read when the log message is written
 to the sink\(aqs queue, instead the logger\(aqs background thread reads the timestamp when
 the log message is read from the queue. This is of course not accurate, but it is
@@ -482,27 +482,27 @@ fast.
 .sp
 \fBstd::chrono::system_clock()\fP is used to read the current time, this can
 be customised by passing an arbitrary function to the \(aqclock\(aq parameter when
-constructing the logger (see \X'tty: link #_CPPv4I0EN3xtr6logger6loggerEPKcRR5ClockNSt6stringE17log_level_style_t'\fI\%xtr::logger::logger()\fP\X'tty: link'). In these macros
+constructing the logger (see \fI\%xtr::logger::logger()\fP). In these macros
 .SS Real\-time Clock
 .sp
-The \X'tty: link #c.XTR_LOG_RTC'\fI\%XTR_LOG_RTC\fP\X'tty: link' macro and it\(aqs variants listed under the
-\X'tty: link #rtc-macros'\fI\%real\-time clock macros\fP\X'tty: link' section of the API reference all use the
+The \fI\%XTR_LOG_RTC\fP macro and it\(aqs variants listed under the
+\fI\%real\-time clock macros\fP section of the API reference all use the
 real\-time clock source. In these macros the timestamp is read using
 \X'tty: link https://www.man7.org/linux/man-pages/man3/clock_gettime.3.html'\fI\%clock_gettime(3)\fP <\fBhttps://www.man7.org/linux/man-pages/man3/clock_gettime.3.html\fP>\X'tty: link'
 with a clock source of either CLOCK_REALTIME_COARSE on Linux or CLOCK_REALTIME_FAST
 on FreeBSD.
 .SS TSC
 .sp
-The \X'tty: link #c.XTR_LOG_TSC'\fI\%XTR_LOG_TSC\fP\X'tty: link' macro and it\(aqs variants listed under the
-\X'tty: link #tsc-macros'\fI\%TSC macros\fP\X'tty: link' section of the API reference all use the TSC
+The \fI\%XTR_LOG_TSC\fP macro and it\(aqs variants listed under the
+\fI\%TSC macros\fP section of the API reference all use the TSC
 clock source. In these macros the timestamp is read from the CPU timestamp
 counter via the RDTSC instruction. The TSC time source is is listed in the
 table above as either low or medium performance as the cost of the RDTSC
 instruction varies depending upon the host CPU microarchitecture.
 .SS User\-Supplied Timestamp
 .sp
-The \X'tty: link #c.XTR_LOG_TS'\fI\%XTR_LOG_TS\fP\X'tty: link' macro and it\(aqs variants listed under the
-\X'tty: link #user-supplied-timestamp-macros'\fI\%user\-supplied timestamp macros\fP\X'tty: link' section of the
+The \fI\%XTR_LOG_TS\fP macro and it\(aqs variants listed under the
+\fI\%user\-supplied timestamp macros\fP section of the
 API reference all allow passing a user\-supplied timestamp to the logger as the second
 argument. Any type may be passed as long as it has a formatter defined
 (see \fI\%custom formatters\fP).
@@ -567,7 +567,7 @@ unless they are explicitly disconnected by closing the sink.
 .SS CPU Affinity
 .sp
 To bind the background thread to a specific CPU
-\X'tty: link #_CPPv4N3xtr6logger29consumer_thread_native_handleEv'\fI\%xtr::logger::consumer_thread_native_handle()\fP\X'tty: link' can be used to obtain
+\fI\%xtr::logger::consumer_thread_native_handle()\fP can be used to obtain
 the consumer thread\(aqs platform specific thread handle. The handle can then be
 used with whatever platform specific functionality is available for setting
 thread affinities\-\-\-for example
@@ -630,12 +630,12 @@ posted to the full\-disclosure mailing list for a more thorough explanation of t
 escape sequence attacks.
 .SH LOG ROTATION
 .sp
-Please refer to the \X'tty: link #reopening-log-files'\fI\%reopening log files\fP\X'tty: link' section of
-the \X'tty: link #xtrctl'\fI\%xtrctl\fP\X'tty: link' guide.
+Please refer to the \fI\%reopening log files\fP section of
+the \fI\%xtrctl\fP guide.
 .SH CUSTOM BACK-ENDS
 .sp
 The logger allows custom back\-ends to be used. This is done by implementing the
-\X'tty: link #_CPPv4N3xtr17storage_interfaceE'\fI\%xtr::storage_interface\fP\X'tty: link' interface:
+\fI\%xtr::storage_interface\fP interface:
 .INDENT 0.0
 .INDENT 3.5
 .sp
@@ -662,8 +662,8 @@ using storage_interface_ptr = std::unique_ptr<storage_interface>;
 .UNINDENT
 .UNINDENT
 .sp
-Storage interface objects are then passed to the \X'tty: link #_CPPv4N3xtr21storage_interface_ptrE'\fI\%xtr::storage_interface_ptr\fP\X'tty: link'
-argument of the \X'tty: link api.html#_CPPv4I0EN3xtr6logger6loggerE21storage_interface_ptrRR5ClockNSt6stringE17log_level_style_t'\fI\%custom back\-end constructor\fP\X'tty: link'\&.
+Storage interface objects are then passed to the \fI\%xtr::storage_interface_ptr\fP
+argument of the \fI\%custom back\-end constructor\fP <\fBapi.html#_CPPv4I0EN3xtr6logger6loggerE21storage_interface_ptrRR5ClockNSt6stringE17log_level_style_t\fP>\&.
 .sp
 \fBNOTE:\fP
 .INDENT 0.0
@@ -705,8 +705,8 @@ The \fIreopen\fP function is invoked to indicate that if the back\-end has a reg
 file opened for writing log data then the file should be reopened. This is
 intended to be used to implement log rotation via tool such as
 \X'tty: link https://www.man7.org/linux/man-pages/man8/logrotate.8.html'\fI\%logrotate(8)\fP <\fBhttps://www.man7.org/linux/man-pages/man8/logrotate.8.html\fP>\X'tty: link'\&.
-Please refer to the \X'tty: link #reopening-log-files'\fI\%Reopening Log Files\fP\X'tty: link' section
-of the \X'tty: link #xtrctl'\fI\%xtrctl\fP\X'tty: link' documentation for further details.
+Please refer to the \fI\%Reopening Log Files\fP section
+of the \fI\%xtrctl\fP documentation for further details.
 .sp
 The return value should be either zero on success or an
 \X'tty: link https://www.man7.org/linux/man-pages/man3/errno.3.html'\fI\%errno(3)\fP <\fBhttps://www.man7.org/linux/man-pages/man3/errno.3.html\fP>\X'tty: link'
@@ -718,7 +718,7 @@ associated backing store.
 .UNINDENT
 .SS Example
 .sp
-Using the \X'tty: link api.html#_CPPv4I0EN3xtr6logger6loggerE21storage_interface_ptrRR5ClockNSt6stringE17log_level_style_t'\fI\%custom back\-end constructor\fP\X'tty: link'
+Using the \fI\%custom back\-end constructor\fP <\fBapi.html#_CPPv4I0EN3xtr6logger6loggerE21storage_interface_ptrRR5ClockNSt6stringE17log_level_style_t\fP>
 to create a logger with a storage back\-end that discards all input:
 .INDENT 0.0
 .INDENT 3.5
@@ -779,12 +779,12 @@ View this example on \X'tty: link https://godbolt.org/z/W4YE7YqPr'\fI\%Compiler 
 .SH CUSTOM LOG LEVEL STYLES
 .sp
 The text at the beginning of each log statement representing the log level of
-the statement can be customised via \X'tty: link #_CPPv4N3xtr6logger19set_log_level_styleE17log_level_style_t'\fI\%xtr::logger::set_log_level_style()\fP\X'tty: link',
+the statement can be customised via \fI\%xtr::logger::set_log_level_style()\fP,
 which accepts a function pointer of type
-\X'tty: link #_CPPv4N3xtr17log_level_style_tE'\fI\%xtr::log_level_style_t\fP\X'tty: link'\&. The passed function should accept
-a single argument of type \X'tty: link #_CPPv4N3xtr11log_level_tE'\fI\%xtr::log_level_t\fP\X'tty: link' and should return
+\fI\%xtr::log_level_style_t\fP\&. The passed function should accept
+a single argument of type \fI\%xtr::log_level_t\fP and should return
 a const char* string literal to be used as the log level prefix.
-Please refer to the \X'tty: link #_CPPv4N3xtr17log_level_style_tE'\fI\%xtr::log_level_style_t\fP\X'tty: link' documentation for
+Please refer to the \fI\%xtr::log_level_style_t\fP documentation for
 further details.
 .SS Example
 .sp
@@ -832,9 +832,9 @@ View this example on \X'tty: link https://godbolt.org/z/ohcW6ndoz'\fI\%Compiler 
 .sp
 To support logging to systemd, log level prefixes suitable for logging to the
 systemd journal can be enabled by passing the
-\X'tty: link #_CPPv4N3xtr23systemd_log_level_styleE11log_level_t'\fI\%xtr::systemd_log_level_style()\fP\X'tty: link' to
-\X'tty: link #_CPPv4N3xtr6logger19set_log_level_styleE17log_level_style_t'\fI\%xtr::logger::set_log_level_style()\fP\X'tty: link'\&. Please refer to the
-\X'tty: link #_CPPv4N3xtr17log_level_style_tE'\fI\%xtr::log_level_style_t\fP\X'tty: link' documentation for further details on log
+\fI\%xtr::systemd_log_level_style()\fP to
+\fI\%xtr::logger::set_log_level_style()\fP\&. Please refer to the
+\fI\%xtr::log_level_style_t\fP documentation for further details on log
 level styles.
 .SS Example
 .INDENT 0.0

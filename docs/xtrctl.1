@@ -27,7 +27,7 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .in \\n[rst2man-indent\\n[rst2man-indent-level]]u
 ..
-.TH "XTRCTL" "1" "April 2024" "" "xtr"
+.TH "XTRCTL" "1" "August 2024" "" "xtr"
 .SH NAME
 xtrctl \- Control tool for the xtr logger
 .SH SYNOPSIS
@@ -67,7 +67,7 @@ xtrctl level <level> [options] [pattern] <socket path>
 The level command sets the log level to \fIlevel\fP for sinks matching the given
 pattern, or for all sinks if no pattern is specified. Valid values for \fIlevel\fP
 are \(aqnone\(aq, \(aqfatal\(aq, \(aqerror\(aq, \(aqwarning\(aq, \(aqinfo\(aq or \(aqdebug\(aq (please refer to the
-\X'tty: link #log-levels'\fI\%log levels\fP\X'tty: link' section of the API reference or \fBlibxtr\fP(3)).
+\fI\%log levels\fP section of the API reference or \fBlibxtr\fP(3)).
 .SS Reopening Log Files
 .sp
 xtrctl reopen <socket path>
@@ -116,11 +116,11 @@ Interpret \fIpattern\fP options as shell wildcard patterns (see \fBglob\fP(7)).
 .UNINDENT
 .SH SOCKET PATHS
 .sp
-Please refer to the documentation for \X'tty: link #_CPPv4N3xtr20default_command_pathEv'\fI\%xtr::default_command_path()\fP\X'tty: link' in
+Please refer to the documentation for \fI\%xtr::default_command_path()\fP in
 the API reference or \fBlibxtr\fP(3) for an explanation of how the default
 socket path is constructed. Custom command paths may be specified either by
-passing an argument to \X'tty: link #_CPPv4I0EN3xtr6logger6loggerEPKcRR5ClockNSt6stringE17log_level_style_t'\fI\%xtr::logger::logger()\fP\X'tty: link' or by calling
-\X'tty: link #_CPPv4N3xtr6logger16set_command_pathENSt6stringE'\fI\%xtr::logger::set_command_path()\fP\X'tty: link', the documentation for both may also
+passing an argument to \fI\%xtr::logger::logger()\fP or by calling
+\fI\%xtr::logger::set_command_path()\fP, the documentation for both may also
 be found in the API reference or \fBlibxtr\fP(3).
 .SH EXAMPLES
 .sp
