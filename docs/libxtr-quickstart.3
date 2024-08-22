@@ -27,7 +27,7 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .in \\n[rst2man-indent\\n[rst2man-indent-level]]u
 ..
-.TH "LIBXTR-QUICKSTART" "3" "April 2024" "" "xtr"
+.TH "LIBXTR-QUICKSTART" "3" "August 2024" "" "xtr"
 .SH NAME
 libxtr-quickstart \- C++ logging library quick-start guide
 .SH INSTALLING
@@ -38,14 +38,14 @@ truly impatient there is a single\-include file
 \X'tty: link https://github.com/choll/xtr/blob/master/single_include/xtr/logger.hpp'\fI\%here\fP <\fBhttps://github.com/choll/xtr/blob/master/single_include/xtr/logger.hpp\fP>\X'tty: link'\&.
 .SH OVERVIEW
 .sp
-The logger is split into two main components, the \X'tty: link #logger'\fI\%logger\fP\X'tty: link' class
-and the \X'tty: link #sink'\fI\%sink\fP\X'tty: link' class. The logger takes care of opening and closing the log file,
+The logger is split into two main components, the \fI\%logger\fP class
+and the \fI\%sink\fP class. The logger takes care of opening and closing the log file,
 and is thread\-safe. The sink class is used to write to the log. Sinks are
-created by calling \X'tty: link #_CPPv4N3xtr6logger8get_sinkENSt6stringE'\fI\%xtr::logger::get_sink()\fP\X'tty: link' and are not thread
+created by calling \fI\%xtr::logger::get_sink()\fP and are not thread
 safe\-\-\-the idea is that applications have many sinks, so threads should each
 have their own set of separate sinks.
 .sp
-Log messages are written using various \X'tty: link #log-macros'\fI\%macros\fP\X'tty: link' which accept
+Log messages are written using various \fI\%macros\fP which accept
 a sink as their first argument, followed by a Python
 \X'tty: link https://docs.python.org/3/library/string.html#formatstrings'\fI\%str.format\fP <\fBhttps://docs.python.org/3/library/string.html#formatstrings\fP>\X'tty: link'
 style format string. The \X'tty: link https://fmt.dev'\fI\%{fmt}\fP <\fBhttps://fmt.dev\fP>\X'tty: link' library is used for
@@ -137,7 +137,7 @@ XTR_LOGL(info, s, \(dqHello world\(dq);
 .sp
 Set the log level of the sink \(aqs\(aq to \(aqerror\(aq, causing messages with importance
 lower than \(aqerror\(aq to be dropped. Available log levels are debug, info, warning,
-error and fatal\-\-\-see \X'tty: link #_CPPv4N3xtr11log_level_tE'\fI\%xtr::log_level_t\fP\X'tty: link'\&.
+error and fatal\-\-\-see \fI\%xtr::log_level_t\fP\&.
 .INDENT 0.0
 .INDENT 3.5
 .sp
@@ -182,7 +182,7 @@ XTR_LOG(\(dq{} {}\(dq, str1, str2);
 .UNINDENT
 .UNINDENT
 .sp
-To avoid copying, wrap arguments in a call to \X'tty: link #_CPPv4I0EN3xtr6nocopyEDaRK1T'\fI\%xtr::nocopy()\fP\X'tty: link':
+To avoid copying, wrap arguments in a call to \fI\%xtr::nocopy()\fP:
 .INDENT 0.0
 .INDENT 3.5
 .sp
@@ -213,7 +213,7 @@ the background thread reads the event from the sink. This is
 less accurate, but faster than reading the time at the log
 call\-site. If reading the time at the call\-site is preferred,
 use XTR_LOG_TSC or XTR_LOG_RTC. See the
-\X'tty: link #time-sources'\fI\%time sources\fP\X'tty: link' section of the user guide
+\fI\%time sources\fP section of the user guide
 for further information.
 .SH AUTHOR
 Chris E. Holloway
