@@ -390,7 +390,7 @@ public:
     mirrored_memory_mapping& operator=(mirrored_memory_mapping&&) = default;
 
     explicit mirrored_memory_mapping(
-        std::size_t length,     // must be multiple of page size
+        std::size_t length, // must be multiple of page size
         int fd = -1,
         std::size_t offset = 0, // must be multiple of page size
         int flags = 0);
@@ -479,9 +479,9 @@ namespace xtr::detail
         const char* str;
     };
 
-    string_ref(const char*) -> string_ref<const char*>;
-    string_ref(const std::string&) -> string_ref<const char*>;
-    string_ref(const std::string_view&) -> string_ref<std::string_view>;
+    string_ref(const char*)->string_ref<const char*>;
+    string_ref(const std::string&)->string_ref<const char*>;
+    string_ref(const std::string_view&)->string_ref<std::string_view>;
 
     template<>
     struct string_ref<std::string_view>
@@ -1548,11 +1548,13 @@ namespace xtr
 class xtr::sink
 {
 private:
-    using fptr_t = std::byte* (*)(detail::buffer& buf, // output buffer
-                                  std::byte* record,   // pointer to log record
-                                  detail::consumer&,
-                                  const char* timestamp,
-                                  std::string& name) noexcept;
+    using fptr_t =
+        std::byte* (*)(
+            detail::buffer& buf, // output buffer
+            std::byte* record, // pointer to log record
+            detail::consumer&,
+            const char* timestamp,
+            std::string& name) noexcept;
 
 public:
     explicit sink(log_level_t level = log_level_t::info);
