@@ -370,7 +370,7 @@ struct fmt::formatter<custom>
     }
 
     template<typename FormatContext>
-    auto format(const custom&, FormatContext& ctx)
+    auto format(const custom&, FormatContext& ctx) const
     {
         return format_to(ctx.out(), \(dqcustom\(dq);
     }
@@ -524,7 +524,7 @@ argument. Any type may be passed as long as it has a formatter defined
             }
 
             template<typename FormatContext>
-            auto format(const std::timespec& ts, FormatContext &ctx)
+            auto format(const std::timespec& ts, FormatContext &ctx) const
             {
                     return format_to(ctx.out(), \(dq{}.{}\(dq, ts.tv_sec, ts.tv_nsec);
             }
