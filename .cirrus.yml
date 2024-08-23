@@ -14,11 +14,12 @@ task:
     image_family: freebsd-14-0
   install_script:
     - pkg install -y git gmake cmake gcc llvm15 devel/py-pip py311-sqlite3
-    - pip install --user 'pyyaml==5.3.1' 'conan<2'
+    - pip install --user 'pyyaml==5.3.1' conan
     - ln -s /usr/local/bin/clang-format15 /usr/local/bin/clang-format
   script:
     - export CC=gcc CXX=g++ RANLIB=gcc-ranlib13 AR=gcc-ar13 PATH=~/.local/bin:$PATH
-    - conan install . --build missing -s compiler.libcxx=libstdc++11
+    - conan profile detect
+    - conan install . --build=missing -s compiler.cppstd=20 -s compiler.libcxx=libstdc++11
     - gmake all
   tests_script: CXX=g++ RANLIB=gcc-ranlib13 AR=gcc-ar13 gmake check
 task:
@@ -27,12 +28,13 @@ task:
     image_family: freebsd-14-0
   install_script:
     - pkg install -y git gmake cmake gcc llvm15 devel/py-pip py311-sqlite3
-    - pip install --user 'pyyaml==5.3.1' 'conan<2'
+    - pip install --user 'pyyaml==5.3.1' conan
     - ln -s /usr/local/bin/clang-format15 /usr/local/bin/clang-format
   script:
     - export CC=gcc CXX=g++ RANLIB=gcc-ranlib13 AR=gcc-ar13 PATH=~/.local/bin:$PATH
     - mkdir build && cd build
-    - conan install .. -g cmake_find_package --build missing -s compiler.libcxx=libstdc++11
+    - conan profile detect
+    - conan install .. -g cmake_find_package --build missing -s compiler.cppstd=20 -s compiler.libcxx=libstdc++11
     - cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_MODULE_PATH=${PWD} -DBUILD_TESTING=ON -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INSTALL_PREFIX=/tmp/install -DCMAKE_AR=`which $AR` -DCMAKE_RANLIB=`which $RANLIB`
     - cmake --build .
     - cmake --build . --target install
@@ -53,11 +55,12 @@ task:
     image_family: freebsd-14-0
   install_script:
     - pkg install -y git gmake cmake llvm15 binutils devel/py-pip py311-sqlite3
-    - pip install --user 'pyyaml==5.3.1' 'conan<2'
+    - pip install --user 'pyyaml==5.3.1' conan
     - ln -s /usr/local/bin/clang-format15 /usr/bin/clang-format
   script:
     - export CC=clang15 CXX=clang++15 RANLIB=llvm-ranlib15 AR=llvm-ar15 PATH=~/.local/bin:$PATH
-    - conan install . --build missing
+    - conan profile detect
+    - conan install . --build=missing -s compiler.cppstd=20
     - gmake all
   tests_script: CXX=clang++15 RANLIB=llvm-ranlib15 AR=llvm-ar15 gmake check
 task:
@@ -66,12 +69,13 @@ task:
     image_family: freebsd-14-0
   install_script:
     - pkg install -y git gmake cmake llvm15 binutils devel/py-pip py311-sqlite3
-    - pip install --user 'pyyaml==5.3.1' 'conan<2'
+    - pip install --user 'pyyaml==5.3.1' conan
     - ln -s /usr/local/bin/clang-format15 /usr/bin/clang-format
   script:
     - export CC=clang15 CXX=clang++15 RANLIB=llvm-ranlib15 AR=llvm-ar15 PATH=~/.local/bin:$PATH
     - mkdir build && cd build
-    - conan install .. -g cmake_find_package --build missing
+    - conan profile detect
+    - conan install .. -g cmake_find_package --build missing -s compiler.cppstd=20
     - cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_MODULE_PATH=${PWD} -DBUILD_TESTING=ON -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INSTALL_PREFIX=/tmp/install -DCMAKE_AR=`which $AR` -DCMAKE_RANLIB=`which $RANLIB`
     - cmake --build .
     - cmake --build . --target install
