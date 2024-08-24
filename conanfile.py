@@ -71,6 +71,10 @@ class XtrConan(ConanFile):
         if self.options.get_safe("enable_io_uring"):
             self.requires("liburing/2.4")
 
+    def build_requirements(self):
+       self.test_requires("benchmark/1.9.0")
+       self.test_requires("catch2/2.13.9")
+
     def validate(self):
         if self.settings.os not in ["FreeBSD", "Linux"]:
             raise ConanInvalidConfiguration(f"Unsupported os={self.settings.os}")
@@ -130,11 +134,6 @@ class XtrConan(ConanFile):
                             "find_package(liburing REQUIRED NO_DEFAULT_PATH PATHS ${CMAKE_PREFIX_PATH})"
                             if self.options.get_safe("enable_io_uring") else
                             "")
-        # Non-single header installation is broken as of 2.1.0
-        # https://github.com/choll/xtr/pull/4
-        replace_in_file(self, os.path.join(self.source_folder, "CMakeLists.txt"),
-                        "        PUBLIC_HEADER DESTINATION include)",
-                        ")\ninstall(DIRECTORY ${CMAKE_SOURCE_DIR}/include/ DESTINATION include)")
 
     def build(self):
         self._patch_sources()
