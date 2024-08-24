@@ -72,7 +72,7 @@ class XtrConan(ConanFile):
             self.requires("liburing/2.4")
 
     def build_requirements(self):
-       self.test_requires("benchmark/1.9.0")
+       self.test_requires("benchmark/1.7.0")
        self.test_requires("catch2/2.13.9")
 
     def validate(self):
