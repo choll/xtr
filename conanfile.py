@@ -65,9 +65,6 @@ class XtrConan(ConanFile):
         if self.options.shared:
             self.options.rm_safe("fPIC")
 
-    def layout(self):
-        basic_layout(self, src_folder="src")
-
     def requirements(self):
         # INFO: https://github.com/choll/xtr/blob/2.1.0/include/xtr/detail/buffer.hpp#L27
         self.requires("fmt/10.1.1", transitive_headers=True, transitive_libs=True)
