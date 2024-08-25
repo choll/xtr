@@ -60,16 +60,24 @@ private:
     };
 
 public:
-    void run(std::function<std::timespec()>&& clock) noexcept;
+    void run() noexcept;
+    std::size_t run_once() noexcept;
     void set_command_path(std::string path) noexcept;
 
-    consumer(buffer&& bf, sink* control, std::string command_path)
+    consumer(
+        buffer&& bf,
+        sink* control,
+        std::string command_path,
+        std::function<std::timespec()> clock)
     :
         buf(std::move(bf)),
+        clock_(std::move(clock)),
         sinks_({{control, "control", 0}})
     {
         set_command_path(std::move(command_path));
     }
+
+    ~consumer();
 
     consumer(const consumer&) = delete;
     consumer(consumer&&) = delete;
@@ -87,10 +95,12 @@ private:
     void set_level_handler(int fd, detail::set_level&);
     void reopen_handler(int fd, detail::reopen&);
 
+    std::function<std::timespec()> clock_;
     std::vector<sink_handle> sinks_;
     std::unique_ptr<
         detail::command_dispatcher,
         detail::command_dispatcher_deleter> cmds_;
+    std::size_t flush_count_ = 0;
 };
 
 #endif

@@ -127,6 +127,7 @@ public:
      * @arg level_style: The log level style that will be used to prefix each log
      *                   statement\---please refer to the @ref log_level_style_t
      *                   documentation for details.
+     * @arg options: XXX TODO
      */
     template<typename Clock = std::chrono::system_clock>
     explicit logger(
@@ -140,7 +141,8 @@ public:
             make_fd_storage(path),
             std::forward<Clock>(clock),
             std::move(command_path),
-            level_style)
+            level_style,
+            options)
     {
     }
 
@@ -168,6 +170,7 @@ public:
      * @arg level_style: The log level style that will be used to prefix each log
      *                   statement\---please refer to the @ref log_level_style_t
      *                   documentation for details.
+     * @arg options: XXX TODO
      */
     template<typename Clock = std::chrono::system_clock>
     explicit logger(
@@ -181,7 +184,8 @@ public:
             make_fd_storage(stream, null_reopen_path),
             std::forward<Clock>(clock),
             std::move(command_path),
-            level_style)
+            level_style,
+            options)
     {
     }
 
@@ -206,6 +210,7 @@ public:
      * @arg level_style: The log level style that will be used to prefix each log
      *                   statement\---please refer to the @ref log_level_style_t
      *                   documentation for details.
+     * @arg options: XXX TODO
      */
     template<typename Clock = std::chrono::system_clock>
     logger(
@@ -220,7 +225,8 @@ public:
             make_fd_storage(stream, std::move(reopen_path)),
             std::forward<Clock>(clock),
             std::move(command_path),
-            level_style)
+            level_style,
+            options)
     {
     }
 
@@ -244,6 +250,7 @@ public:
      * @arg level_style: The log level style that will be used to prefix each log
      *                   statement\---please refer to the @ref log_level_style_t
      *                   documentation for details.
+     * @arg options: XXX TODO
      */
     template<typename Clock = std::chrono::system_clock>
     explicit logger(
@@ -252,19 +259,18 @@ public:
         std::string command_path = default_command_path(),
         log_level_style_t level_style = default_log_level_style,
         option_flags options = option_flags::none)
+    :
+        consumer_(
+            detail::buffer(std::move(storage), level_style),
+            &control_,
+            std::move(command_path),
+            make_clock(std::forward<Clock>(clock)))
     {
         if (options != option_flags::disable_worker_thread)
         {
             // The consumer thread must be started after control_ has been
             // constructed
-            consumer_ =
-                jthread(
-                    &detail::consumer::run,
-                    std::make_unique<detail::consumer>(
-                        detail::buffer(std::move(storage), level_style),
-                        &control_,
-                        std::move(command_path)),
-                    make_clock(std::forward<Clock>(clock)));
+            consumer_thread_ = jthread(&detail::consumer::run, &consumer_);
         }
         // Passing control_ to the consumer is equivalent to calling
         // register_sink, so mark it as open.
@@ -290,7 +296,7 @@ public:
      */
     std::thread::native_handle_type consumer_thread_native_handle()
     {
-        return consumer_.native_handle();
+        return consumer_thread_.native_handle();
     }
 
     /**
@@ -333,9 +339,9 @@ public:
     void set_default_log_level(log_level_t level);
 
     /**
-     *
+     * XXX ADD NOTES TO DESTRUCTOR, ADD NOTES TO NO THREAD OPTION
      */
-    void process_some_log_events();
+    bool pump_io();
 
 private:
     template<typename Func>
@@ -365,7 +371,8 @@ private:
             };
     }
 
-    jthread consumer_;
+    detail::consumer consumer_;
+    jthread consumer_thread_;
     sink control_;
     std::mutex control_mutex_;
     log_level_t default_log_level_ = log_level_t::info;

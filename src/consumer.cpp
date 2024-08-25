@@ -39,39 +39,47 @@
 #include <version>
 
 XTR_FUNC
-void xtr::detail::consumer::run(std::function<::timespec()>&& clock) noexcept
+xtr::detail::consumer::~consumer()
+{
+}
+
+XTR_FUNC
+void xtr::detail::consumer::run() noexcept
+{
+    while (run_once() != 0)
+        ;
+}
+
+XTR_FUNC
+std::size_t xtr::detail::consumer::run_once() noexcept
 {
     char ts[32] = {};
     bool ts_stale = true;
-    std::size_t flush_count = 0;
 
-    for (std::size_t i = 0; !sinks_.empty(); ++i)
+    // Read commands once per loop over sinks
+    if (cmds_)
+        cmds_->process_commands(/* timeout= */0);
+
+    // The inner do/while loop below can modify sinks_ so references to sinks_
+    // cannot be taken here (i.e. no range-based for).
+    for (std::size_t i = 0; i != sinks_.size(); ++i)
     {
         sink::ring_buffer::span span;
-        // The inner loop below can modify sinks so a reference cannot be taken
-        const std::size_t n = i % sinks_.size();
 
-        if (n == 0)
-        {
-            // Read the clock and commands once per loop over sinks
-            ts_stale |= true;
-            if (cmds_)
-                cmds_->process_commands(/* timeout= */0);
-        }
-
-        if ((span = sinks_[n]->buf_.read_span()).empty())
+        if ((span = sinks_[i]->buf_.read_span()).empty())
         {
             // flush if no further data available (all sinks empty)
-            if (flush_count != 0 && flush_count-- == 1)
+            if (flush_count_ != 0 && --flush_count_ == 0)
                 buf.flush();
             continue;
         }
 
         destroy = false;
 
+        // Read the clock once per loop over sinks
         if (ts_stale)
         {
-            fmt::format_to(ts, "{}", xtr::timespec{clock()});
+            fmt::format_to(ts, "{}", xtr::timespec{clock_()});
             ts_stale = false;
         }
 
@@ -84,43 +92,46 @@ void xtr::detail::consumer::run(std::function<::timespec()>&& clock) noexcept
         // other CPUs but is outside of what is permitted by the C++ memory
         // model.
         std::byte* pos = span.begin();
-        std::byte* end = std::min(span.end(), sinks_[n]->buf_.end());
+        std::byte* end = std::min(span.end(), sinks_[i]->buf_.end());
         do
         {
             assert(std::uintptr_t(pos) % alignof(sink::fptr_t) == 0);
             assert(!destroy);
             const sink::fptr_t fptr = *reinterpret_cast<const sink::fptr_t*>(pos);
-            pos = fptr(buf, pos, *this, ts, sinks_[n].name);
+            pos = fptr(buf, pos, *this, ts, sinks_[i].name);
         } while (pos < end);
 
         if (destroy)
         {
             using std::swap;
-            swap(sinks_[n], sinks_.back()); // possible self-swap, ok
+            swap(sinks_[i], sinks_.back()); // possible self-swap, ok
             sinks_.pop_back();
+            --i;
             continue;
         }
 
-        sinks_[n]->buf_.reduce_readable(
+        sinks_[i]->buf_.reduce_readable(
             sink::ring_buffer::size_type(pos - span.begin()));
 
         std::size_t n_dropped;
-        if (sinks_[n]->buf_.read_span().empty() &&
-            (n_dropped = sinks_[n]->buf_.dropped_count()) > 0)
+        if (sinks_[i]->buf_.read_span().empty() &&
+            (n_dropped = sinks_[i]->buf_.dropped_count()) > 0)
         {
             detail::print(
                 buf,
                 "{}{} {}: {} messages dropped\n",
                 log_level_t::warning,
                 ts,
-                sinks_[n].name,
+                sinks_[i].name,
                 n_dropped);
-            sinks_[n].dropped_count += n_dropped;
+            sinks_[i].dropped_count += n_dropped;
         }
 
         // flushing may be late/early if sinks is modified, doesn't matter
-        flush_count = sinks_.size();
+        flush_count_ = sinks_.size();
     }
+
+    return sinks_.size();
 }
 
 XTR_FUNC

@@ -68,3 +68,15 @@ void xtr::logger::set_default_log_level(log_level_t level)
 {
     default_log_level_ = level;
 }
+
+XTR_FUNC
+bool xtr::logger::pump_io()
+{
+    // If this assert is hit then pump_io has been called after the logger
+    // object has been destroyed.
+    assert(control_.is_open());
+    // If there is more than one sink then user sinks are still connected,
+    // so pump_io should continue to be called (the one remaining sink is
+    // control_).
+    return consumer_.run_once() > 1;
+}
