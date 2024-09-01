@@ -262,14 +262,19 @@ private:
         xtr::sink s_ = log_.get_sink("Name");
     };
 
-    struct no_worker_thread_fixture_base
+    struct pump_io_fixture_base
     {
-        std::jthread worker_;
+        ~pump_io_fixture_base()
+        {
+            worker_.join();
+        }
+
+        std::thread worker_;
     };
 
-    struct no_worker_thread_fixture : no_worker_thread_fixture_base, fixture
+    struct pump_io_fixture : pump_io_fixture_base, fixture
     {
-        no_worker_thread_fixture()
+        pump_io_fixture()
         :
             fixture(
                 std::make_unique<container_storage>(m_, lines_),
@@ -279,7 +284,7 @@ private:
                 xtr::option_flags::disable_worker_thread)
         {
             worker_ =
-                std::jthread(
+                std::thread(
                     [&]()
                     {
                         while (log_.pump_io())
@@ -2603,7 +2608,7 @@ TEST_CASE_METHOD(fixture, "logger log_level_from_string test", "[logger]")
 #endif
 }
 
-TEST_CASE_METHOD(no_worker_thread_fixture, "logger pump_io test", "[logger]")
+TEST_CASE_METHOD(pump_io_fixture, "logger pump_io test", "[logger]")
 {
     XTR_LOG(s_, "Test"), line_ = __LINE__;
     REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
