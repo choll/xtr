@@ -66,7 +66,7 @@ public:
     void set_command_path(std::string path) noexcept;
 
     consumer(
-        buffer&& bf,
+        buffer bf,
         sink* control,
         std::string command_path,
         std::function<std::timespec()> clock)
