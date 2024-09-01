@@ -14,7 +14,7 @@ task:
     image_family: freebsd-14-0
   install_script:
     - pkg install -y git gmake cmake gcc llvm15 devel/py-pip py311-sqlite3
-    - pip install --user 'pyyaml==5.3.1' 'conan>==2.7.0' distro cmake
+    - pip install --user conan distro cmake
     - ln -s /usr/local/bin/clang-format15 /usr/local/bin/clang-format
   script:
     - export CC=gcc CXX=g++ RANLIB=gcc-ranlib13 AR=gcc-ar13 PATH=~/.local/bin:$PATH
@@ -28,7 +28,7 @@ task:
     image_family: freebsd-14-0
   install_script:
     - pkg install -y git gmake cmake gcc llvm15 devel/py-pip py311-sqlite3
-    - pip install --user 'pyyaml==5.3.1' 'conan>==2.7.0' distro cmake
+    - pip install --user conan distro cmake
     - ln -s /usr/local/bin/clang-format15 /usr/local/bin/clang-format
   script:
     - export CC=gcc CXX=g++ RANLIB=gcc-ranlib13 AR=gcc-ar13 PATH=~/.local/bin:$PATH
@@ -55,7 +55,7 @@ task:
     image_family: freebsd-14-0
   install_script:
     - pkg install -y git gmake cmake llvm15 binutils devel/py-pip py311-sqlite3
-    - pip install --user 'pyyaml==5.3.1' 'conan>==2.7.0' distro cmake
+    - pip install --user conan distro cmake
     - ln -s /usr/local/bin/clang-format15 /usr/bin/clang-format
   script:
     - export CC=clang15 CXX=clang++15 RANLIB=llvm-ranlib15 AR=llvm-ar15 PATH=~/.local/bin:$PATH
@@ -69,7 +69,7 @@ task:
     image_family: freebsd-14-0
   install_script:
     - pkg install -y git gmake cmake llvm15 binutils devel/py-pip py311-sqlite3
-    - pip install --user 'pyyaml==5.3.1' 'conan>==2.7.0' distro cmake
+    - pip install --user conan distro cmake
     - ln -s /usr/local/bin/clang-format15 /usr/bin/clang-format
   script:
     - export CC=clang15 CXX=clang++15 RANLIB=llvm-ranlib15 AR=llvm-ar15 PATH=~/.local/bin:$PATH
