@@ -41,17 +41,31 @@
 XTR_FUNC
 xtr::detail::consumer::~consumer()
 {
+#if __cpp_exceptions
+    try
+    {
+#endif
+        // Wait for run_once to signal that it has finished (all its sinks have
+        // closed).
+        destruct_latch_.wait();
+#if __cpp_exceptions
+    }
+    catch(const std::exception& e)
+    {
+        fmt::print(stderr, "Error destructing consumer: {}\n", e.what());
+    }
+#endif
 }
 
 XTR_FUNC
 void xtr::detail::consumer::run() noexcept
 {
-    while (run_once() != 0)
+    while (run_once())
         ;
 }
 
 XTR_FUNC
-std::size_t xtr::detail::consumer::run_once() noexcept
+bool xtr::detail::consumer::run_once() noexcept
 {
     char ts[32] = {};
     bool ts_stale = true;
@@ -131,7 +145,12 @@ std::size_t xtr::detail::consumer::run_once() noexcept
         flush_count_ = sinks_.size();
     }
 
-    return sinks_.size();
+    // Signal to ~consumer that it can safely destruct (run_once will not be
+    // called again after it returns false).
+    if (sinks_.empty())
+        destruct_latch_.count_down();
+
+    return !sinks_.empty();
 }
 
 XTR_FUNC

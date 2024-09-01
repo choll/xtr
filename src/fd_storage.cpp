@@ -26,8 +26,9 @@
 #include "xtr/detail/retry.hpp"
 #include "xtr/detail/throw.hpp"
 
+#include <fmt/format.h>
+
 #include <cerrno>
-#include <iostream>
 #include <memory>
 #include <utility>
 
@@ -67,17 +68,20 @@ xtr::storage_interface_ptr xtr::make_fd_storage(int fd, std::string reopen_path)
 
     if (errno != ENOSYS)
     {
+#if __cpp_exceptions
         try
         {
+#endif
             return std::make_unique<io_uring_fd_storage>(fd, std::move(reopen_path));
+#if __cpp_exceptions
         }
         catch (const std::exception& e)
         {
-            std::cerr
-                << "Falling back to posix_fd_storage due to "
-                   "io_uring_fd_storage error: "
-                << e.what() << "\n";
+            fmt::print(
+                "Falling back to posix_fd_storage due to io_uring_fd_storage "
+                "error: {}\n", e.what());
         }
+#endif
     }
 #endif
     return std::make_unique<posix_fd_storage>(fd, std::move(reopen_path));

@@ -60,10 +60,9 @@ void xtr::detail::buffer::flush() noexcept
     }
     catch (const std::exception& e)
     {
-        using namespace std::literals::string_view_literals;
         fmt::print(
             stderr,
-            "{}{}: Error flushing log: {}\n"sv,
+            "{}{}: Error flushing log: {}\n",
             lstyle(log_level_t::error),
             detail::get_time<XTR_CLOCK_WALL>(),
             e.what());

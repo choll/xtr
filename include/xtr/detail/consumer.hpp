@@ -28,6 +28,7 @@
 #include <ctime>
 #include <cstddef>
 #include <functional>
+#include <latch>
 #include <memory>
 #include <string>
 #include <vector>
@@ -61,7 +62,7 @@ private:
 
 public:
     void run() noexcept;
-    std::size_t run_once() noexcept;
+    bool run_once() noexcept;
     void set_command_path(std::string path) noexcept;
 
     consumer(
@@ -101,6 +102,7 @@ private:
         detail::command_dispatcher,
         detail::command_dispatcher_deleter> cmds_;
     std::size_t flush_count_ = 0;
+    std::latch destruct_latch_{1};
 };
 
 #endif

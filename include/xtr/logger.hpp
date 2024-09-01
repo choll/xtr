@@ -47,6 +47,8 @@ namespace xtr
 {
     class logger;
 
+    enum class option_flags {none, disable_worker_thread};
+
     // This can be replaced with a template alias once clang supports it:
     // template<typename T> using nocopy = detail::string_ref<T>;
     /**
@@ -97,8 +99,6 @@ private:
 #endif
 
 public:
-    enum class option_flags {none, disable_worker_thread};
-
     /**
      * Path constructor. The first argument is the path to a file which
      * should be opened and logged to. The file will be opened in append mode,
@@ -340,6 +340,11 @@ public:
 
     /**
      * XXX ADD NOTES TO DESTRUCTOR, ADD NOTES TO NO THREAD OPTION
+     * COMMENT THAT IT WILL HAVE TO BE CALLED ON ANOTHER THREAD
+     * COMMENT THAT IT MUST BE CALLED UNTIL IT RETURNS FALSE
+     * COMMENT THAT AFTER IT RETURNS FALSE IT MUST NOT BE CALLED
+     * COMMENT ON RETURN FALSE WHEN ALL SINKS AND LOGGER HAVE DESTRUCTED
+     * COMMENT THAT LOGGER DESTRUCTOR WILL NOT COMPLETE IF IT IS NOT CALLED
      */
     bool pump_io();
 
