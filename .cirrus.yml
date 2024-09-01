@@ -19,7 +19,7 @@ task:
   script:
     - export CC=gcc CXX=g++ RANLIB=gcc-ranlib13 AR=gcc-ar13 PATH=~/.local/bin:$PATH
     - conan profile detect
-    - conan install . --build=missing -s compiler.cppstd=20 -s compiler.libcxx=libstdc++11 --generator AutotoolsDeps --output-folder build/conan
+    - conan install . --build=missing -s compiler.cppstd=20 -s compiler.libcxx=libstdc++11 --generator MakeDeps --output-folder build/conan
     - gmake all
   tests_script: CXX=g++ RANLIB=gcc-ranlib13 AR=gcc-ar13 gmake check
 task:
@@ -60,7 +60,7 @@ task:
   script:
     - export CC=clang15 CXX=clang++15 RANLIB=llvm-ranlib15 AR=llvm-ar15 PATH=~/.local/bin:$PATH
     - conan profile detect
-    - conan install . --build=missing -s compiler.cppstd=20 --generator AutotoolsDeps --output-folder build/conan
+    - conan install . --build=missing -s compiler.cppstd=20 --generator MakeDeps --output-folder build/conan
     - gmake all
   tests_script: CXX=clang++15 RANLIB=llvm-ranlib15 AR=llvm-ar15 gmake check
 task:
