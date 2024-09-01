@@ -72,8 +72,12 @@ class XtrConan(ConanFile):
             self.requires("liburing/2.4")
 
     def build_requirements(self):
-       self.test_requires("benchmark/1.9.0")
-       self.test_requires("catch2/2.13.9")
+        # benchmark does not work on FreeBSD due to it depending on the CMake
+        # recipe which fails as it only installs from pre-built binaries and no
+        # FreeBSD binaries are provided.
+        if self.settings.os == "Linux":
+            self.test_requires("benchmark/1.9.0")
+        self.test_requires("catch2/2.13.9")
 
     def validate(self):
         if self.settings.os not in ["FreeBSD", "Linux"]:
