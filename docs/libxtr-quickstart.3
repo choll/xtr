@@ -27,15 +27,15 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .in \\n[rst2man-indent\\n[rst2man-indent-level]]u
 ..
-.TH "LIBXTR-QUICKSTART" "3" "April 2024" "" "xtr"
+.TH "LIBXTR-QUICKSTART" "3" "August 2024" "" "xtr"
 .SH NAME
 libxtr-quickstart \- C++ logging library quick-start guide
 .SH INSTALLING
 .sp
 The easiest way to install XTR is via Conan. If you are not using Conan, see the
-\fI\%INSTALL\fP <\fBhttps://github.com/choll/xtr/blob/master/INSTALL.md\fP> guide, or for the
+\X'tty: link https://github.com/choll/xtr/blob/master/INSTALL.md'\fI\%INSTALL\fP <\fBhttps://github.com/choll/xtr/blob/master/INSTALL.md\fP>\X'tty: link' guide, or for the
 truly impatient there is a single\-include file
-\fI\%here\fP <\fBhttps://github.com/choll/xtr/blob/master/single_include/xtr/logger.hpp\fP>\&.
+\X'tty: link https://github.com/choll/xtr/blob/master/single_include/xtr/logger.hpp'\fI\%here\fP <\fBhttps://github.com/choll/xtr/blob/master/single_include/xtr/logger.hpp\fP>\X'tty: link'\&.
 .SH OVERVIEW
 .sp
 The logger is split into two main components, the \fI\%logger\fP class
@@ -47,8 +47,8 @@ have their own set of separate sinks.
 .sp
 Log messages are written using various \fI\%macros\fP which accept
 a sink as their first argument, followed by a Python
-\fI\%str.format\fP <\fBhttps://docs.python.org/3/library/string.html#formatstrings\fP>
-style format string. The \fI\%{fmt}\fP <\fBhttps://fmt.dev\fP> library is used for
+\X'tty: link https://docs.python.org/3/library/string.html#formatstrings'\fI\%str.format\fP <\fBhttps://docs.python.org/3/library/string.html#formatstrings\fP>\X'tty: link'
+style format string. The \X'tty: link https://fmt.dev'\fI\%{fmt}\fP <\fBhttps://fmt.dev\fP>\X'tty: link' library is used for
 formatting.
 .SH EXAMPLES
 .sp
@@ -107,7 +107,7 @@ XTR_LOG_TSC(s, \(dqHello world\(dq);
 .UNINDENT
 .sp
 Write to the log, immediately reading the timestamp using
-\fI\%clock_gettime(3)\fP <\fBhttps://www.man7.org/linux/man-pages/man3/clock_gettime.3.html\fP>
+\X'tty: link https://www.man7.org/linux/man-pages/man3/clock_gettime.3.html'\fI\%clock_gettime(3)\fP <\fBhttps://www.man7.org/linux/man-pages/man3/clock_gettime.3.html\fP>\X'tty: link'
 with a clock source of either CLOCK_REALTIME_COARSE on Linux or CLOCK_REALTIME_FAST
 on FreeBSD:
 .INDENT 0.0
@@ -152,7 +152,7 @@ XTR_LOGL(info, s, \(dqHello world\(dq); // Dropped
 .UNINDENT
 .sp
 Fatal errors will log and then terminate the program using
-\fI\%abort(3)\fP <\fBhttps://www.man7.org/linux/man-pages/man3/abort.3.html\fP>:
+\X'tty: link https://www.man7.org/linux/man-pages/man3/abort.3.html'\fI\%abort(3)\fP <\fBhttps://www.man7.org/linux/man-pages/man3/abort.3.html\fP>\X'tty: link':
 .INDENT 0.0
 .INDENT 3.5
 .sp

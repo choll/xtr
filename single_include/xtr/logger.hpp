@@ -93,7 +93,7 @@ struct fmt::formatter<xtr::timespec>
     }
 
     template<typename FormatContext>
-    auto format(const xtr::timespec ts, FormatContext& ctx)
+    auto format(const xtr::timespec ts, FormatContext& ctx) const
     {
         std::tm temp;
         return fmt::format_to(
@@ -506,7 +506,8 @@ namespace fmt
         }
 
         template<typename FormatContext>
-        auto format(xtr::detail::string_ref<const char*> ref, FormatContext& ctx)
+        auto format(
+            xtr::detail::string_ref<const char*> ref, FormatContext& ctx) const
         {
             auto pos = ctx.out();
             while (*ref.str != '\0')
@@ -527,7 +528,7 @@ namespace fmt
         template<typename FormatContext>
         auto format(
             const xtr::detail::string_ref<std::string_view> ref,
-            FormatContext& ctx)
+            FormatContext& ctx) const
         {
             auto pos = ctx.out();
             for (const char c : ref.str)
@@ -942,7 +943,7 @@ namespace fmt
         }
 
         template<typename FormatContext>
-        auto format(const xtr::detail::tsc ticks, FormatContext& ctx)
+        auto format(const xtr::detail::tsc ticks, FormatContext& ctx) const
         {
             const auto ts = xtr::detail::tsc::to_timespec(ticks);
             return formatter<xtr::timespec>().format(ts, ctx);
