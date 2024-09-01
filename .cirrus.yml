@@ -14,13 +14,13 @@ task:
     image_family: freebsd-14-0
   install_script:
     - pkg install -y git gmake cmake gcc llvm15 devel/py-pip py311-sqlite3
-    - pip install --user 'pyyaml==5.3.1' conan distro cmake
+    - pip install --user 'pyyaml==5.3.1' 'conan>==2.7.0' distro cmake
     - ln -s /usr/local/bin/clang-format15 /usr/local/bin/clang-format
   script:
     - export CC=gcc CXX=g++ RANLIB=gcc-ranlib13 AR=gcc-ar13 PATH=~/.local/bin:$PATH
     - conan profile detect
     - conan install . --build=missing -s compiler.cppstd=20 -s compiler.libcxx=libstdc++11 --generator MakeDeps --output-folder build/conan
-    - gmake all
+    - gmake check
   tests_script: CXX=g++ RANLIB=gcc-ranlib13 AR=gcc-ar13 gmake check
 task:
   name: freebsd-14-gcc-cmake
@@ -28,7 +28,7 @@ task:
     image_family: freebsd-14-0
   install_script:
     - pkg install -y git gmake cmake gcc llvm15 devel/py-pip py311-sqlite3
-    - pip install --user 'pyyaml==5.3.1' conan distro cmake
+    - pip install --user 'pyyaml==5.3.1' 'conan>==2.7.0' distro cmake
     - ln -s /usr/local/bin/clang-format15 /usr/local/bin/clang-format
   script:
     - export CC=gcc CXX=g++ RANLIB=gcc-ranlib13 AR=gcc-ar13 PATH=~/.local/bin:$PATH
@@ -55,13 +55,13 @@ task:
     image_family: freebsd-14-0
   install_script:
     - pkg install -y git gmake cmake llvm15 binutils devel/py-pip py311-sqlite3
-    - pip install --user 'pyyaml==5.3.1' conan distro cmake
+    - pip install --user 'pyyaml==5.3.1' 'conan>==2.7.0' distro cmake
     - ln -s /usr/local/bin/clang-format15 /usr/bin/clang-format
   script:
     - export CC=clang15 CXX=clang++15 RANLIB=llvm-ranlib15 AR=llvm-ar15 PATH=~/.local/bin:$PATH
     - conan profile detect
     - conan install . --build=missing -s compiler.cppstd=20 --generator MakeDeps --output-folder build/conan
-    - gmake all
+    - gmake check
   tests_script: CXX=clang++15 RANLIB=llvm-ranlib15 AR=llvm-ar15 gmake check
 task:
   name: freebsd-14-clang-cmake
@@ -69,7 +69,7 @@ task:
     image_family: freebsd-14-0
   install_script:
     - pkg install -y git gmake cmake llvm15 binutils devel/py-pip py311-sqlite3
-    - pip install --user 'pyyaml==5.3.1' conan distro cmake
+    - pip install --user 'pyyaml==5.3.1' 'conan>==2.7.0' distro cmake
     - ln -s /usr/local/bin/clang-format15 /usr/bin/clang-format
   script:
     - export CC=clang15 CXX=clang++15 RANLIB=llvm-ranlib15 AR=llvm-ar15 PATH=~/.local/bin:$PATH
