@@ -19,8 +19,9 @@ task:
   script:
     - export CC=gcc CXX=g++ RANLIB=gcc-ranlib13 AR=gcc-ar13 PATH=~/.local/bin:$PATH
     - conan profile detect
+    - echo -e '[platform_tool_requires]\ncmake/3.30.2' >> ~/.conan2/profiles/default
     - conan install . --build=missing -s compiler.cppstd=20 -s compiler.libcxx=libstdc++11 --generator MakeDeps --output-folder build/conan
-    - gmake check
+    - gmake all
   tests_script: CXX=g++ RANLIB=gcc-ranlib13 AR=gcc-ar13 gmake check
 task:
   name: freebsd-14-gcc-cmake
@@ -34,8 +35,9 @@ task:
     - export CC=gcc CXX=g++ RANLIB=gcc-ranlib13 AR=gcc-ar13 PATH=~/.local/bin:$PATH
     - mkdir build && cd build
     - conan profile detect
+    - echo -e '[platform_tool_requires]\ncmake/3.30.2' >> ~/.conan2/profiles/default
     - conan install .. --build missing -s compiler.cppstd=20 -s compiler.libcxx=libstdc++11
-    - cmake .. -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=${PWD} -DBUILD_TESTING=ON -DBUILD_BENCHMARK=OFF -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INSTALL_PREFIX=/tmp/install -DCMAKE_AR=`which $AR` -DCMAKE_RANLIB=`which $RANLIB`
+    - cmake .. -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=${PWD} -DBUILD_TESTING=ON -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INSTALL_PREFIX=/tmp/install -DCMAKE_AR=`which $AR` -DCMAKE_RANLIB=`which $RANLIB`
     - cmake --build .
     - cmake --build . --target install
   tests_script: cd build && cmake --build . --target test
@@ -60,8 +62,9 @@ task:
   script:
     - export CC=clang15 CXX=clang++15 RANLIB=llvm-ranlib15 AR=llvm-ar15 PATH=~/.local/bin:$PATH
     - conan profile detect
+    - echo -e '[platform_tool_requires]\ncmake/3.30.2' >> ~/.conan2/profiles/default
     - conan install . --build=missing -s compiler.cppstd=20 --generator MakeDeps --output-folder build/conan
-    - gmake check
+    - gmake all
   tests_script: CXX=clang++15 RANLIB=llvm-ranlib15 AR=llvm-ar15 gmake check
 task:
   name: freebsd-14-clang-cmake
@@ -75,8 +78,9 @@ task:
     - export CC=clang15 CXX=clang++15 RANLIB=llvm-ranlib15 AR=llvm-ar15 PATH=~/.local/bin:$PATH
     - mkdir build && cd build
     - conan profile detect
+    - echo -e '[platform_tool_requires]\ncmake/3.30.2' >> ~/.conan2/profiles/default
     - conan install .. --build missing -s compiler.cppstd=20
-    - cmake .. -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=${PWD} -DBUILD_TESTING=ON -DBUILD_BENCHMARK=OFF -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INSTALL_PREFIX=/tmp/install -DCMAKE_AR=`which $AR` -DCMAKE_RANLIB=`which $RANLIB`
+    - cmake .. -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=${PWD} -DBUILD_TESTING=ON -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INSTALL_PREFIX=/tmp/install -DCMAKE_AR=`which $AR` -DCMAKE_RANLIB=`which $RANLIB`
     - cmake --build .
     - cmake --build . --target install
   tests_script: cd build && cmake --build . --target test
