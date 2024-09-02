@@ -28,9 +28,11 @@ jobs:
           --install /usr/bin/clang-format clang-format /usr/bin/clang-format-15 1000
           
     - name: install conan
-      run: sudo pip install 'conan<2'
+      run: sudo pip install conan
     - name: install dependencies
-      run: conan install . --build missing -s compiler.libcxx=libstdc++11
+      run: |
+        conan profile detect
+        conan install . --build missing -s compiler.cppstd=20 -s compiler.libcxx=libstdc++11
 
     - name: make
       run: URING=0 make -j2 EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}} RTTI=${{matrix.rtti}} all
