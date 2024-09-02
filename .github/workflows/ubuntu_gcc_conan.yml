@@ -32,7 +32,7 @@ jobs:
     - name: install dependencies
       run: |
         conan profile detect
-        conan install . --build missing -s compiler.cppstd=20 -s compiler.libcxx=libstdc++11
+        conan install . --build missing -s compiler.cppstd=20 -s compiler.libcxx=libstdc++11 --generator MakeDeps --output-folder build/conan
 
     - name: make
       run: URING=0 make -j2 EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}} RTTI=${{matrix.rtti}} all
