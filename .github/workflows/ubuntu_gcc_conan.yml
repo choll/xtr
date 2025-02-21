@@ -17,8 +17,6 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: install conan
-      run: sudo pip install conan
     - name: install dependencies
       run: conan install . --build missing -s compiler.libcxx=libstdc++11
 
