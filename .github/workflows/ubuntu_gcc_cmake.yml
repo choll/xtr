@@ -13,7 +13,7 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: install conan
-      run: sudo pip install 'conan<2'
+      run: sudo pip install conan
 
     - name: build with cmake
       run: |

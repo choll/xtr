@@ -26,7 +26,7 @@ jobs:
           --install /usr/bin/clang-format clang-format /usr/bin/clang-format-18 1000
 
     - name: install conan
-      run: sudo pip install 'conan<2'
+      run: sudo pip install conan
 
     - name: build with cmake
       run: |
