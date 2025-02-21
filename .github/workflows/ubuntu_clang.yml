@@ -20,13 +20,13 @@ jobs:
     - name: setup clang
       run: |
         sudo update-alternatives \
-          --install /usr/lib/llvm llvm /usr/lib/llvm-19 1000 \
-          --slave /usr/bin/llvm-ar llvm-ar /usr/bin/llvm-ar-19 \
-          --slave /usr/bin/llvm-ranlib llvm-ranlib /usr/bin/llvm-ranlib-19
+          --install /usr/lib/llvm llvm /usr/lib/llvm-18 1000 \
+          --slave /usr/bin/llvm-ar llvm-ar /usr/bin/llvm-ar-18 \
+          --slave /usr/bin/llvm-ranlib llvm-ranlib /usr/bin/llvm-ranlib-18
         sudo update-alternatives \
-          --install /usr/bin/clang clang /usr/bin/clang-19 1000
+          --install /usr/bin/clang clang /usr/bin/clang-18 1000
         sudo update-alternatives \
-          --install /usr/bin/clang++ clang++ /usr/bin/clang++-19 1000
+          --install /usr/bin/clang++ clang++ /usr/bin/clang++-18 1000
 
     - name: init submodules
       run: git submodule init
