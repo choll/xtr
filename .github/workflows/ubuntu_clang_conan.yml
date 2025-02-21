@@ -17,6 +17,19 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
+    - name: setup clang
+      run: |
+        sudo update-alternatives \
+          --install /usr/lib/llvm llvm /usr/lib/llvm-19 1000 \
+          --slave /usr/bin/llvm-ar llvm-ar /usr/bin/llvm-ar-19 \
+          --slave /usr/bin/llvm-ranlib llvm-ranlib /usr/bin/llvm-ranlib-19
+        sudo update-alternatives \
+          --install /usr/bin/clang clang /usr/bin/clang-19 1000
+        sudo update-alternatives \
+          --install /usr/bin/clang++ clang++ /usr/bin/clang++-19 1000
+        sudo update-alternatives \
+          --install /usr/bin/clang-format clang-format /usr/bin/clang-format-19 1000
+
     - name: install conan
       run: sudo pip install 'conan<2'
     - name: install dependencies
