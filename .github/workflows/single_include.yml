@@ -12,17 +12,6 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: set symlinks
-      run: |
-        sudo update-alternatives \
-          --install /usr/bin/gcc gcc /usr/bin/gcc-11 1000 \
-          --slave /usr/bin/g++ g++ /usr/bin/g++-11 \
-          --slave /usr/bin/gcov gcov /usr/bin/gcov-11 \
-          --slave /usr/bin/gcc-ar gcc-ar /usr/bin/gcc-ar-11 \
-          --slave /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib-11
-        sudo update-alternatives \
-          --install /usr/bin/clang-format clang-format /usr/bin/clang-format-15 1000
-
     - name: init submodules
       run: git submodule init
     - name: update submodules

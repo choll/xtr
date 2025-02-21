@@ -17,16 +17,6 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: setup gcc
-      run: |
-        sudo update-alternatives \
-          --install /usr/bin/gcc gcc /usr/bin/gcc-11 1000 \
-          --slave /usr/bin/g++ g++ /usr/bin/g++-11 \
-          --slave /usr/bin/gcc-ar gcc-ar /usr/bin/gcc-ar-11 \
-          --slave /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib-11
-        sudo update-alternatives \
-          --install /usr/bin/clang-format clang-format /usr/bin/clang-format-15 1000
-          
     - name: install conan
       run: sudo pip install 'conan<2'
     - name: install dependencies
