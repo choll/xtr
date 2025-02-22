@@ -18,7 +18,9 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: install conan
-      run: pip install --user conan
+      run: |
+        pip install --user conan
+        conan profile detect
     - name: install dependencies
       run: conan install . --build missing -s compiler.libcxx=libstdc++11
 
