@@ -2,7 +2,7 @@ task:
   name: freebsd-14-gcc
   freebsd_instance:
     image_family: freebsd-14-2
-  install_script: pkg install -y git gmake gcc
+  install_script: pkg install -y git gmake gcc14
   submodules_script:
     - git submodule init
     - git submodule update
@@ -13,7 +13,7 @@ task:
   freebsd_instance:
     image_family: freebsd-14-2
   install_script:
-    - pkg install -y git gmake cmake gcc llvm18 devel/py-pip py311-sqlite3
+    - pkg install -y git gmake cmake gcc14 llvm18 devel/py-pip py311-sqlite3
     - pip install --user 'pyyaml==5.3.1' conan
     - ln -s /usr/local/bin/clang-format18 /usr/local/bin/clang-format
   script:
@@ -27,7 +27,7 @@ task:
   freebsd_instance:
     image_family: freebsd-14-2
   install_script:
-    - pkg install -y git gmake cmake gcc llvm18 devel/py-pip py311-sqlite3
+    - pkg install -y git gmake cmake gcc14 llvm18 devel/py-pip py311-sqlite3
     - pip install --user 'pyyaml==5.3.1' conan
     - ln -s /usr/local/bin/clang-format18 /usr/local/bin/clang-format
   script:
@@ -81,19 +81,19 @@ task:
     - cmake --build . --target install
   tests_script: cd build && cmake --build . --target test
 task:
-  name: freebsd-14-gcc
+  name: freebsd-13-gcc
   freebsd_instance:
-    image_family: freebsd-14-4
-  install_script: pkg install -y git gmake gcc
+    image_family: freebsd-13-4
+  install_script: pkg install -y git gmake gcc14
   submodules_script:
     - git submodule init
     - git submodule update
   script: CXX=g++ RANLIB=gcc-ranlib14 AR=gcc-ar14 gmake
   tests_script: CXX=g++ RANLIB=gcc-ranlib14 AR=gcc-ar14 gmake check
 task:
-  name: freebsd-14-clang
+  name: freebsd-13-clang
   freebsd_instance:
-    image_family: freebsd-14-4
+    image_family: freebsd-13-4
   install_script: pkg install -y git gmake binutils llvm18
   submodules_script:
     - git submodule init
