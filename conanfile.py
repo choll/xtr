@@ -9,8 +9,8 @@ class Conan(ConanFile):
         self.requires("fmt/10.1.1", transitive_headers=True, transitive_libs=True)
         if self.settings.os == "Linux":
             self.requires("liburing/2.4")
-        self.build_requires("benchmark/1.6.0")
-        self.build_requires("catch2/2.13.9")
+        self.requires("benchmark/1.6.0")
+        self.requires("catch2/2.13.9")
 
     def generate(self):
         make_toolchain = MakeDeps(self)
