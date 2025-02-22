@@ -1,23 +1,21 @@
+
+
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" data-content_root="./">
+<html class="writer-html5" lang="en">
 <head>
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>XTR Logger Quick-Start Guide &mdash; XTR Documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
   
-  <!--[if lt IE 9]>
-    <script src="_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script src="_static/jquery.js?v=5d32c60e"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script src="_static/documentation_options.js?v=5929fcd5"></script>
-        <script src="_static/doctools.js?v=9a2dae69"></script>
-        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js?v=b3ba4146"></script>
+      <script src="_static/doctools.js?v=888ff710"></script>
+      <script src="_static/sphinx_highlight.js?v=4825356b"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -84,16 +82,16 @@
            <div itemprop="articleBody">
              
   <section id="quick-start-guide">
-<h1>Quick-Start Guide<a class="headerlink" href="#quick-start-guide" title="Link to this heading"></a></h1>
+<h1>Quick-Start Guide<a class="headerlink" href="#quick-start-guide" title="Permalink to this heading"></a></h1>
 <section id="installing">
-<h2>Installing<a class="headerlink" href="#installing" title="Link to this heading"></a></h2>
+<h2>Installing<a class="headerlink" href="#installing" title="Permalink to this heading"></a></h2>
 <p>The easiest way to install XTR is via Conan. If you are not using Conan, see the
 <a class="reference external" href="https://github.com/choll/xtr/blob/master/INSTALL.md">INSTALL</a> guide, or for the
 truly impatient there is a single-include file
 <a class="reference external" href="https://github.com/choll/xtr/blob/master/single_include/xtr/logger.hpp">here</a>.</p>
 </section>
 <section id="overview">
-<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h2>
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this heading"></a></h2>
 <p>The logger is split into two main components, the <a class="reference internal" href="api.html#logger"><span class="std std-ref">logger</span></a> class
 and the <a class="reference internal" href="api.html#sink"><span class="std std-ref">sink</span></a> class. The logger takes care of opening and closing the log file,
 and is thread-safe. The sink class is used to write to the log. Sinks are
@@ -107,7 +105,7 @@ style format string. The <a class="reference external" href="https://fmt.dev">{f
 formatting.</p>
 </section>
 <section id="examples">
-<h2>Examples<a class="headerlink" href="#examples" title="Link to this heading"></a></h2>
+<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this heading"></a></h2>
 <p>Creating a sink:</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;xtr/logger.hpp&gt;</span>
 
