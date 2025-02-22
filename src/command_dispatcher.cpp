@@ -106,7 +106,7 @@ xtr::detail::command_dispatcher::command_dispatcher(std::string path)
         return;
     }
 
-    pollfds_.push_back(pollfd{std::move(fd), POLLIN, 0});
+    pollfds_.emplace_back(std::move(fd), POLLIN, 0);
 }
 
 XTR_FUNC
@@ -157,7 +157,7 @@ void xtr::detail::command_dispatcher::process_commands(int timeout) noexcept
 
     for (std::size_t i = 1; i < pollfds_.size() && nfds > 0; ++i)
     {
-        const int fd = pollfds_[i].fd.get();
+        const std::size_t n = pollfds_.size();
         if ((pollfds_[i].revents & POLLOUT) != 0)
         {
             process_socket_write(pollfds_[i]);
@@ -168,7 +168,8 @@ void xtr::detail::command_dispatcher::process_commands(int timeout) noexcept
             process_socket_read(pollfds_[i]);
             --nfds;
         }
-        if (fd != pollfds_[i].fd.get())
+        assert(pollfds_.size() <= n);
+        if (pollfds_.size() < n)
             --i; // Adjust for erased item
     }
 }
