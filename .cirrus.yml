@@ -14,7 +14,7 @@ task:
     image_family: freebsd-14-2
   install_script:
     - pkg install -y git gmake cmake gcc14 llvm18 devel/py-pip py311-sqlite3
-    - pip install --user 'pyyaml==5.3.1' conan
+    - pip install --user conan
     - ln -s /usr/local/bin/clang-format18 /usr/local/bin/clang-format
   script:
     - export CC=gcc14 CXX=g++14 RANLIB=gcc-ranlib14 AR=gcc-ar14 PATH=~/.local/bin:$PATH
@@ -28,7 +28,7 @@ task:
     image_family: freebsd-14-2
   install_script:
     - pkg install -y git gmake cmake gcc14 llvm18 devel/py-pip py311-sqlite3
-    - pip install --user 'pyyaml==5.3.1' conan
+    - pip install --user conan
     - ln -s /usr/local/bin/clang-format18 /usr/local/bin/clang-format
   script:
     - export CC=gcc14 CXX=g++14 RANLIB=gcc-ranlib14 AR=gcc-ar14 PATH=~/.local/bin:$PATH
@@ -55,7 +55,7 @@ task:
     image_family: freebsd-14-2
   install_script:
     - pkg install -y git gmake cmake llvm18 binutils devel/py-pip py311-sqlite3
-    - pip install --user 'pyyaml==5.3.1' conan
+    - pip install --user conan
     - ln -s /usr/local/bin/clang-format18 /usr/bin/clang-format
   script:
     - export CC=clang18 CXX=clang++18 RANLIB=llvm-ranlib18 AR=llvm-ar18 PATH=~/.local/bin:$PATH
@@ -69,7 +69,7 @@ task:
     image_family: freebsd-14-2
   install_script:
     - pkg install -y git gmake cmake llvm18 binutils devel/py-pip py311-sqlite3
-    - pip install --user 'pyyaml==5.3.1' conan
+    - pip install --user conan
     - ln -s /usr/local/bin/clang-format18 /usr/bin/clang-format
   script:
     - export CC=clang18 CXX=clang++18 RANLIB=llvm-ranlib18 AR=llvm-ar18 PATH=~/.local/bin:$PATH
