@@ -31,7 +31,7 @@ jobs:
     - name: install conan
       run: |
         pip install --user conan
-        conan profile detect
+        CC=clang CXX=clang++ conan profile detect
     - name: install dependencies
       run: CC=clang CXX=clang++ conan install . --build missing -s compiler=clang -s compiler.libcxx=libstdc++11
     - name: make
