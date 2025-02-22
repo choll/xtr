@@ -6,8 +6,8 @@ task:
   submodules_script:
     - git submodule init
     - git submodule update
-  script: CXX=g++ RANLIB=gcc-ranlib14 AR=gcc-ar14 gmake
-  tests_script: CXX=g++ RANLIB=gcc-ranlib14 AR=gcc-ar14 gmake check
+  script: CXX=g++14 RANLIB=gcc-ranlib14 AR=gcc-ar14 gmake
+  tests_script: CXX=g++14 RANLIB=gcc-ranlib14 AR=gcc-ar14 gmake check
 task:
   name: freebsd-14-gcc-conan
   freebsd_instance:
@@ -17,11 +17,11 @@ task:
     - pip install --user 'pyyaml==5.3.1' conan
     - ln -s /usr/local/bin/clang-format18 /usr/local/bin/clang-format
   script:
-    - export CC=gcc CXX=g++ RANLIB=gcc-ranlib14 AR=gcc-ar14 PATH=~/.local/bin:$PATH
+    - export CC=gcc14 CXX=g++14 RANLIB=gcc-ranlib14 AR=gcc-ar14 PATH=~/.local/bin:$PATH
     - conan profile detect
     - conan install . --build missing -s compiler.libcxx=libstdc++11
     - gmake all
-  tests_script: CXX=g++ RANLIB=gcc-ranlib14 AR=gcc-ar14 gmake check
+  tests_script: CXX=g++14 RANLIB=gcc-ranlib14 AR=gcc-ar14 gmake check
 task:
   name: freebsd-14-gcc-cmake
   freebsd_instance:
@@ -31,7 +31,7 @@ task:
     - pip install --user 'pyyaml==5.3.1' conan
     - ln -s /usr/local/bin/clang-format18 /usr/local/bin/clang-format
   script:
-    - export CC=gcc CXX=g++ RANLIB=gcc-ranlib14 AR=gcc-ar14 PATH=~/.local/bin:$PATH
+    - export CC=gcc14 CXX=g++14 RANLIB=gcc-ranlib14 AR=gcc-ar14 PATH=~/.local/bin:$PATH
     - mkdir build && cd build
     - conan profile detect
     - conan install .. -g CMakeDeps -g CMakeToolchain --output-folder=${PWD} --build missing -s compiler.libcxx=libstdc++11
@@ -88,8 +88,8 @@ task:
   submodules_script:
     - git submodule init
     - git submodule update
-  script: CXX=g++ RANLIB=gcc-ranlib14 AR=gcc-ar14 gmake
-  tests_script: CXX=g++ RANLIB=gcc-ranlib14 AR=gcc-ar14 gmake check
+  script: CXX=g++14 RANLIB=gcc-ranlib14 AR=gcc-ar14 gmake
+  tests_script: CXX=g++14 RANLIB=gcc-ranlib14 AR=gcc-ar14 gmake check
 task:
   name: freebsd-13-clang
   freebsd_instance:
