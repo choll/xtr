@@ -16,14 +16,12 @@ jobs:
         rtti: [1, 0]
     steps:
     - uses: actions/checkout@v2
-
     - name: install conan
       run: |
         pip install --user conan
         conan profile detect
     - name: install dependencies
       run: conan install . --build missing -s compiler.libcxx=libstdc++11
-
     - name: make
       run: URING=0 make -j2 EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}} RTTI=${{matrix.rtti}} all
     - name: test

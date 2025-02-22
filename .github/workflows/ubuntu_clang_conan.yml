@@ -16,7 +16,6 @@ jobs:
         rtti: [1, 0]
     steps:
     - uses: actions/checkout@v2
-
     - name: setup clang
       run: |
         sudo update-alternatives \
@@ -29,12 +28,12 @@ jobs:
           --install /usr/bin/clang++ clang++ /usr/bin/clang++-18 1000
         sudo update-alternatives \
           --install /usr/bin/clang-format clang-format /usr/bin/clang-format-18 1000
-
     - name: install conan
-      run: sudo pip install conan
+      run: |
+        pip install --user conan
+        conan profile detect
     - name: install dependencies
       run: CC=clang CXX=clang++ conan install . --build missing -s compiler=clang -s compiler.libcxx=libstdc++11
-
     - name: make
       run: URING=0 CXX=clang++ AR=llvm-ar RANLIB=llvm-ranlib make -j2 EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}} RTTI=${{matrix.rtti}} all
     - name: test
