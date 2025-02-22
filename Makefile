@@ -1,4 +1,4 @@
--include conandeps.mak
+-include conandeps.mk
 
 PREFIX ?= /usr/local
 EXCEPTIONS ?= 1
