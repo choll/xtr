@@ -1,7 +1,7 @@
 task:
   name: freebsd-14-gcc
   freebsd_instance:
-    image_family: freebsd-14-0
+    image_family: freebsd-14-2
   install_script: pkg install -y git gmake gcc
   submodules_script:
     - git submodule init
@@ -11,7 +11,7 @@ task:
 task:
   name: freebsd-14-gcc-conan
   freebsd_instance:
-    image_family: freebsd-14-0
+    image_family: freebsd-14-2
   install_script:
     - pkg install -y git gmake cmake gcc llvm15 devel/py-pip py311-sqlite3
     - pip install --user 'pyyaml==5.3.1' 'conan<2'
@@ -24,7 +24,7 @@ task:
 task:
   name: freebsd-14-gcc-cmake
   freebsd_instance:
-    image_family: freebsd-14-0
+    image_family: freebsd-14-2
   install_script:
     - pkg install -y git gmake cmake gcc llvm15 devel/py-pip py311-sqlite3
     - pip install --user 'pyyaml==5.3.1' 'conan<2'
@@ -40,7 +40,7 @@ task:
 task:
   name: freebsd-14-clang
   freebsd_instance:
-    image_family: freebsd-14-0
+    image_family: freebsd-14-2
   install_script: pkg install -y git gmake binutils llvm15
   submodules_script:
     - git submodule init
@@ -50,7 +50,7 @@ task:
 task:
   name: freebsd-14-clang-conan
   freebsd_instance:
-    image_family: freebsd-14-0
+    image_family: freebsd-14-2
   install_script:
     - pkg install -y git gmake cmake llvm15 binutils devel/py-pip py311-sqlite3
     - pip install --user 'pyyaml==5.3.1' 'conan<2'
@@ -63,7 +63,7 @@ task:
 task:
   name: freebsd-14-clang-cmake
   freebsd_instance:
-    image_family: freebsd-14-0
+    image_family: freebsd-14-2
   install_script:
     - pkg install -y git gmake cmake llvm15 binutils devel/py-pip py311-sqlite3
     - pip install --user 'pyyaml==5.3.1' 'conan<2'
@@ -79,7 +79,7 @@ task:
 task:
   name: freebsd-13-gcc
   freebsd_instance:
-    image_family: freebsd-13-3
+    image_family: freebsd-13-4
   install_script: pkg install -y git gmake gcc
   submodules_script:
     - git submodule init
@@ -89,7 +89,7 @@ task:
 task:
   name: freebsd-13-clang
   freebsd_instance:
-    image_family: freebsd-13-3
+    image_family: freebsd-13-4
   install_script: pkg install -y git gmake binutils llvm15
   submodules_script:
     - git submodule init
