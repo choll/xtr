@@ -113,13 +113,13 @@ namespace xtr
 namespace xtr::detail
 {
     [[noreturn, gnu::cold]] void throw_runtime_error(const char* what);
-    [[noreturn, gnu::cold, gnu::format(printf, 1, 2)]] void throw_runtime_error_fmt(
-        const char* format, ...);
+    [[noreturn, gnu::cold, gnu::format(printf, 1, 2)]]
+    void throw_runtime_error_fmt(const char* format, ...);
 
     [[noreturn, gnu::cold]] void throw_system_error(int errnum, const char* what);
 
-    [[noreturn, gnu::cold, gnu::format(printf, 2, 3)]] void throw_system_error_fmt(
-        int errnum, const char* format, ...);
+    [[noreturn, gnu::cold, gnu::format(printf, 2, 3)]]
+    void throw_system_error_fmt(int errnum, const char* format, ...);
 
     [[noreturn, gnu::cold]] void throw_invalid_argument(const char* what);
 
@@ -479,9 +479,9 @@ namespace xtr::detail
         const char* str;
     };
 
-    string_ref(const char*)->string_ref<const char*>;
-    string_ref(const std::string&)->string_ref<const char*>;
-    string_ref(const std::string_view&)->string_ref<std::string_view>;
+    string_ref(const char*) -> string_ref<const char*>;
+    string_ref(const std::string&) -> string_ref<const char*>;
+    string_ref(const std::string_view&) -> string_ref<std::string_view>;
 
     template<>
     struct string_ref<std::string_view>
@@ -727,7 +727,7 @@ public:
 #if defined(__cpp_lib_int_pow2) && __cpp_lib_int_pow2 >= 202002L
                std::bit_ceil(min_capacity)),
 #else
-                std::ceil2(min_capacity)),
+               std::ceil2(min_capacity)),
 #endif
            fd,
            offset,
@@ -1548,13 +1548,11 @@ namespace xtr
 class xtr::sink
 {
 private:
-    using fptr_t =
-        std::byte* (*)(
-            detail::buffer& buf, // output buffer
-            std::byte* record, // pointer to log record
-            detail::consumer&,
-            const char* timestamp,
-            std::string& name) noexcept;
+    using fptr_t = std::byte* (*)(detail::buffer& buf, // output buffer
+                                  std::byte* record,   // pointer to log record
+                                  detail::consumer&,
+                                  const char* timestamp,
+                                  std::string& name) noexcept;
 
 public:
     explicit sink(log_level_t level = log_level_t::info);
@@ -3347,7 +3345,7 @@ inline xtr::detail::command_dispatcher::command_dispatcher(std::string path)
         return;
     }
 
-    pollfds_.push_back(pollfd{std::move(fd), POLLIN, 0});
+    pollfds_.emplace_back(std::move(fd), POLLIN, 0);
 }
 
 inline xtr::detail::command_dispatcher::~command_dispatcher()
@@ -3390,7 +3388,7 @@ inline void xtr::detail::command_dispatcher::process_commands(int timeout) noexc
 
     for (std::size_t i = 1; i < pollfds_.size() && nfds > 0; ++i)
     {
-        const int fd = pollfds_[i].fd.get();
+        const std::size_t n = pollfds_.size();
         if ((pollfds_[i].revents & POLLOUT) != 0)
         {
             process_socket_write(pollfds_[i]);
@@ -3401,7 +3399,8 @@ inline void xtr::detail::command_dispatcher::process_commands(int timeout) noexc
             process_socket_read(pollfds_[i]);
             --nfds;
         }
-        if (fd != pollfds_[i].fd.get())
+        assert(pollfds_.size() <= n);
+        if (pollfds_.size() < n)
             --i; // Adjust for erased item
     }
 }

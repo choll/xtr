@@ -11,25 +11,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-
-    - name: setup gcc
-      run: |
-        sudo update-alternatives \
-          --install /usr/bin/gcc gcc /usr/bin/gcc-10 1000 \
-          --slave /usr/bin/g++ g++ /usr/bin/g++-10 \
-          --slave /usr/bin/gcc-ar gcc-ar /usr/bin/gcc-ar-10 \
-          --slave /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib-10
-        sudo update-alternatives \
-          --install /usr/bin/clang-format clang-format /usr/bin/clang-format-15 1000
-
     - name: install conan
-      run: sudo pip install 'conan<2'
-
+      run: |
+        pip install --user conan
+        conan profile detect
     - name: build with cmake
       run: |
         mkdir build && cd build
-        conan install .. -g cmake_find_package --build missing -s compiler.libcxx=libstdc++11
-        cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_MODULE_PATH=${PWD} -DBUILD_TESTING=ON -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INSTALL_PREFIX=/tmp/install
+        conan install .. -g CMakeDeps -g CMakeToolchain --output-folder=${PWD} --build missing -s compiler.libcxx=libstdc++11
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake -DBUILD_TESTING=ON -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INSTALL_PREFIX=/tmp/install
         cmake --build .
     - name: test
       run: cd build/ && cmake --build . --target test

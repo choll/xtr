@@ -1,4 +1,4 @@
--include conanbuildinfo.mak
+-include conandeps.mk
 
 PREFIX ?= /usr/local
 EXCEPTIONS ?= 1

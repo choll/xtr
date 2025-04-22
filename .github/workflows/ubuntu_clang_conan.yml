@@ -16,25 +16,24 @@ jobs:
         rtti: [1, 0]
     steps:
     - uses: actions/checkout@v2
-
     - name: setup clang
       run: |
         sudo update-alternatives \
-          --install /usr/lib/llvm llvm /usr/lib/llvm-15 1000 \
-          --slave /usr/bin/llvm-ar llvm-ar /usr/bin/llvm-ar-15 \
-          --slave /usr/bin/llvm-ranlib llvm-ranlib /usr/bin/llvm-ranlib-15
+          --install /usr/lib/llvm llvm /usr/lib/llvm-18 1000 \
+          --slave /usr/bin/llvm-ar llvm-ar /usr/bin/llvm-ar-18 \
+          --slave /usr/bin/llvm-ranlib llvm-ranlib /usr/bin/llvm-ranlib-18
         sudo update-alternatives \
-          --install /usr/bin/clang clang /usr/bin/clang-15 1000
+          --install /usr/bin/clang clang /usr/bin/clang-18 1000
         sudo update-alternatives \
-          --install /usr/bin/clang++ clang++ /usr/bin/clang++-15 1000
+          --install /usr/bin/clang++ clang++ /usr/bin/clang++-18 1000
         sudo update-alternatives \
-          --install /usr/bin/clang-format clang-format /usr/bin/clang-format-15 1000
-
+          --install /usr/bin/clang-format clang-format /usr/bin/clang-format-18 1000
     - name: install conan
-      run: sudo pip install 'conan<2'
+      run: |
+        pip install --user conan
+        CC=clang CXX=clang++ conan profile detect
     - name: install dependencies
       run: CC=clang CXX=clang++ conan install . --build missing -s compiler=clang -s compiler.libcxx=libstdc++11
-
     - name: make
       run: URING=0 CXX=clang++ AR=llvm-ar RANLIB=llvm-ranlib make -j2 EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}} RTTI=${{matrix.rtti}} all
     - name: test

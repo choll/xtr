@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" data-content_root="./">
 <head>
@@ -6,18 +8,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>XTR Logger API Reference &mdash; XTR Documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
   
-  <!--[if lt IE 9]>
-    <script src="_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script src="_static/jquery.js?v=5d32c60e"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script src="_static/documentation_options.js?v=5929fcd5"></script>
-        <script src="_static/doctools.js?v=9a2dae69"></script>
-        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -50,42 +48,66 @@
 <li class="toctree-l1"><a class="reference internal" href="guide.html">User Guide</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">API Reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#log-macros">Log Macros</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#basic-macros">Basic Macros</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#time-stamp-counter-timestamped-macros">Time-Stamp Counter Timestamped Macros</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#real-time-clock-timestamped-macros">Real-Time Clock Timestamped Macros</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#user-supplied-timestamp-macros">User-Supplied Timestamp Macros</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#basic-macros">Basic Macros</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#c.XTR_LOG"><code class="docutils literal notranslate"><span class="pre">XTR_LOG</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.XTR_LOGL"><code class="docutils literal notranslate"><span class="pre">XTR_LOGL</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.XTR_TRY_LOG"><code class="docutils literal notranslate"><span class="pre">XTR_TRY_LOG</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.XTR_TRY_LOGL"><code class="docutils literal notranslate"><span class="pre">XTR_TRY_LOGL</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#time-stamp-counter-timestamped-macros">Time-Stamp Counter Timestamped Macros</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#c.XTR_LOG_TSC"><code class="docutils literal notranslate"><span class="pre">XTR_LOG_TSC</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.XTR_LOGL_TSC"><code class="docutils literal notranslate"><span class="pre">XTR_LOGL_TSC</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.XTR_TRY_LOG_TSC"><code class="docutils literal notranslate"><span class="pre">XTR_TRY_LOG_TSC</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.XTR_TRY_LOGL_TSC"><code class="docutils literal notranslate"><span class="pre">XTR_TRY_LOGL_TSC</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#real-time-clock-timestamped-macros">Real-Time Clock Timestamped Macros</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#c.XTR_LOG_RTC"><code class="docutils literal notranslate"><span class="pre">XTR_LOG_RTC</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.XTR_LOGL_RTC"><code class="docutils literal notranslate"><span class="pre">XTR_LOGL_RTC</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.XTR_TRY_LOG_RTC"><code class="docutils literal notranslate"><span class="pre">XTR_TRY_LOG_RTC</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.XTR_TRY_LOGL_RTC"><code class="docutils literal notranslate"><span class="pre">XTR_TRY_LOGL_RTC</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#user-supplied-timestamp-macros">User-Supplied Timestamp Macros</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#c.XTR_LOG_TS"><code class="docutils literal notranslate"><span class="pre">XTR_LOG_TS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.XTR_LOGL_TS"><code class="docutils literal notranslate"><span class="pre">XTR_LOGL_TS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.XTR_TRY_LOG_TS"><code class="docutils literal notranslate"><span class="pre">XTR_TRY_LOG_TS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.XTR_TRY_LOGL_TS"><code class="docutils literal notranslate"><span class="pre">XTR_TRY_LOGL_TS</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#logger">Logger</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#_CPPv4N3xtr6loggerE"><code class="docutils literal notranslate"><span class="pre">logger</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4I0EN3xtr6logger6loggerEPKcRR5ClockNSt6stringE17log_level_style_t"><code class="docutils literal notranslate"><span class="pre">logger::logger()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4I0EN3xtr6logger6loggerEP4FILERR5ClockNSt6stringE17log_level_style_t"><code class="docutils literal notranslate"><span class="pre">logger::logger()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4I0EN3xtr6logger6loggerENSt6stringEP4FILERR5ClockNSt6stringE17log_level_style_t"><code class="docutils literal notranslate"><span class="pre">logger::logger()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4I0EN3xtr6logger6loggerE21storage_interface_ptrRR5ClockNSt6stringE17log_level_style_t"><code class="docutils literal notranslate"><span class="pre">logger::logger()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr6loggerD0Ev"><code class="docutils literal notranslate"><span class="pre">logger::~logger()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr6logger29consumer_thread_native_handleEv"><code class="docutils literal notranslate"><span class="pre">logger::consumer_thread_native_handle()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr6logger8get_sinkENSt6stringE"><code class="docutils literal notranslate"><span class="pre">logger::get_sink()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr6logger13register_sinkER4sinkNSt6stringE"><code class="docutils literal notranslate"><span class="pre">logger::register_sink()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr6logger16set_command_pathENSt6stringE"><code class="docutils literal notranslate"><span class="pre">logger::set_command_path()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr6logger19set_log_level_styleE17log_level_style_t"><code class="docutils literal notranslate"><span class="pre">logger::set_log_level_style()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr6logger21set_default_log_levelE11log_level_t"><code class="docutils literal notranslate"><span class="pre">logger::set_default_log_level()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#_CPPv4N3xtr6loggerE"><code class="docutils literal notranslate"><span class="pre">xtr::logger</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4I0EN3xtr6logger6loggerEPKcRR5ClockNSt6stringE17log_level_style_t"><code class="docutils literal notranslate"><span class="pre">logger()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4I0EN3xtr6logger6loggerEP4FILERR5ClockNSt6stringE17log_level_style_t"><code class="docutils literal notranslate"><span class="pre">logger()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4I0EN3xtr6logger6loggerENSt6stringEP4FILERR5ClockNSt6stringE17log_level_style_t"><code class="docutils literal notranslate"><span class="pre">logger()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4I0EN3xtr6logger6loggerE21storage_interface_ptrRR5ClockNSt6stringE17log_level_style_t"><code class="docutils literal notranslate"><span class="pre">logger()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr6loggerD0Ev"><code class="docutils literal notranslate"><span class="pre">~logger()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr6logger29consumer_thread_native_handleEv"><code class="docutils literal notranslate"><span class="pre">consumer_thread_native_handle()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr6logger8get_sinkENSt6stringE"><code class="docutils literal notranslate"><span class="pre">get_sink()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr6logger13register_sinkER4sinkNSt6stringE"><code class="docutils literal notranslate"><span class="pre">register_sink()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr6logger16set_command_pathENSt6stringE"><code class="docutils literal notranslate"><span class="pre">set_command_path()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr6logger19set_log_level_styleE17log_level_style_t"><code class="docutils literal notranslate"><span class="pre">set_log_level_style()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr6logger21set_default_log_levelE11log_level_t"><code class="docutils literal notranslate"><span class="pre">set_default_log_level()</span></code></a></li>
 </ul>
 </li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#sink">Sink</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#_CPPv4N3xtr4sinkE"><code class="docutils literal notranslate"><span class="pre">sink</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr4sink4sinkERK4sink"><code class="docutils literal notranslate"><span class="pre">sink::sink()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr4sinkaSERK4sink"><code class="docutils literal notranslate"><span class="pre">sink::operator=()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr4sinkD0Ev"><code class="docutils literal notranslate"><span class="pre">sink::~sink()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr4sink5closeEv"><code class="docutils literal notranslate"><span class="pre">sink::close()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xtr4sink7is_openEv"><code class="docutils literal notranslate"><span class="pre">sink::is_open()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr4sink4syncEv"><code class="docutils literal notranslate"><span class="pre">sink::sync()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr4sink8set_nameENSt6stringE"><code class="docutils literal notranslate"><span class="pre">sink::set_name()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4I_Da_Da0DpEN3xtr4sink3logEvDpRR4Args"><code class="docutils literal notranslate"><span class="pre">sink::log()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr4sink9set_levelE11log_level_t"><code class="docutils literal notranslate"><span class="pre">sink::set_level()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xtr4sink5levelEv"><code class="docutils literal notranslate"><span class="pre">sink::level()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xtr4sink8capacityEv"><code class="docutils literal notranslate"><span class="pre">sink::capacity()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#_CPPv4N3xtr4sinkE"><code class="docutils literal notranslate"><span class="pre">xtr::sink</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr4sink4sinkERK4sink"><code class="docutils literal notranslate"><span class="pre">sink()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr4sinkaSERK4sink"><code class="docutils literal notranslate"><span class="pre">operator=()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr4sinkD0Ev"><code class="docutils literal notranslate"><span class="pre">~sink()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr4sink5closeEv"><code class="docutils literal notranslate"><span class="pre">close()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xtr4sink7is_openEv"><code class="docutils literal notranslate"><span class="pre">is_open()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr4sink4syncEv"><code class="docutils literal notranslate"><span class="pre">sync()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr4sink8set_nameENSt6stringE"><code class="docutils literal notranslate"><span class="pre">set_name()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4I_Da_Da0DpEN3xtr4sink3logEvDpRR4Args"><code class="docutils literal notranslate"><span class="pre">log()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr4sink9set_levelE11log_level_t"><code class="docutils literal notranslate"><span class="pre">set_level()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xtr4sink5levelEv"><code class="docutils literal notranslate"><span class="pre">level()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xtr4sink8capacityEv"><code class="docutils literal notranslate"><span class="pre">capacity()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -96,12 +118,12 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#log-levels">Log Levels</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#_CPPv4N3xtr11log_level_tE"><code class="docutils literal notranslate"><span class="pre">log_level_t</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr11log_level_t4noneE"><code class="docutils literal notranslate"><span class="pre">log_level_t::none</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr11log_level_t5fatalE"><code class="docutils literal notranslate"><span class="pre">log_level_t::fatal</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr11log_level_t5errorE"><code class="docutils literal notranslate"><span class="pre">log_level_t::error</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr11log_level_t7warningE"><code class="docutils literal notranslate"><span class="pre">log_level_t::warning</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr11log_level_t4infoE"><code class="docutils literal notranslate"><span class="pre">log_level_t::info</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr11log_level_t5debugE"><code class="docutils literal notranslate"><span class="pre">log_level_t::debug</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr11log_level_t4noneE"><code class="docutils literal notranslate"><span class="pre">none</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr11log_level_t5fatalE"><code class="docutils literal notranslate"><span class="pre">fatal</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr11log_level_t5errorE"><code class="docutils literal notranslate"><span class="pre">error</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr11log_level_t7warningE"><code class="docutils literal notranslate"><span class="pre">warning</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr11log_level_t4infoE"><code class="docutils literal notranslate"><span class="pre">info</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr11log_level_t5debugE"><code class="docutils literal notranslate"><span class="pre">debug</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#_CPPv4N3xtr21log_level_from_stringENSt11string_viewE"><code class="docutils literal notranslate"><span class="pre">log_level_from_string()</span></code></a></li>
@@ -114,25 +136,25 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#storage-interfaces">Storage Interfaces</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#_CPPv4N3xtr17storage_interfaceE"><code class="docutils literal notranslate"><span class="pre">storage_interface</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr17storage_interface15allocate_bufferEv"><code class="docutils literal notranslate"><span class="pre">storage_interface::allocate_buffer()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr17storage_interface13submit_bufferEPcNSt6size_tE"><code class="docutils literal notranslate"><span class="pre">storage_interface::submit_buffer()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr17storage_interface5flushEv"><code class="docutils literal notranslate"><span class="pre">storage_interface::flush()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr17storage_interface4syncEv"><code class="docutils literal notranslate"><span class="pre">storage_interface::sync()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr17storage_interface6reopenEv"><code class="docutils literal notranslate"><span class="pre">storage_interface::reopen()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#_CPPv4N3xtr17storage_interfaceE"><code class="docutils literal notranslate"><span class="pre">xtr::storage_interface</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr17storage_interface15allocate_bufferEv"><code class="docutils literal notranslate"><span class="pre">allocate_buffer()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr17storage_interface13submit_bufferEPcNSt6size_tE"><code class="docutils literal notranslate"><span class="pre">submit_buffer()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr17storage_interface5flushEv"><code class="docutils literal notranslate"><span class="pre">flush()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr17storage_interface4syncEv"><code class="docutils literal notranslate"><span class="pre">sync()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr17storage_interface6reopenEv"><code class="docutils literal notranslate"><span class="pre">reopen()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#_CPPv4N3xtr21storage_interface_ptrE"><code class="docutils literal notranslate"><span class="pre">storage_interface_ptr</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#_CPPv4N3xtr19io_uring_fd_storageE"><code class="docutils literal notranslate"><span class="pre">io_uring_fd_storage</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr19io_uring_fd_storage19io_uring_fd_storageEiNSt6stringENSt6size_tENSt6size_tENSt6size_tE"><code class="docutils literal notranslate"><span class="pre">io_uring_fd_storage::io_uring_fd_storage()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr19io_uring_fd_storage23default_buffer_capacityE"><code class="docutils literal notranslate"><span class="pre">io_uring_fd_storage::default_buffer_capacity</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr19io_uring_fd_storage18default_queue_sizeE"><code class="docutils literal notranslate"><span class="pre">io_uring_fd_storage::default_queue_size</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr19io_uring_fd_storage18default_batch_sizeE"><code class="docutils literal notranslate"><span class="pre">io_uring_fd_storage::default_batch_size</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#_CPPv4N3xtr19io_uring_fd_storageE"><code class="docutils literal notranslate"><span class="pre">xtr::io_uring_fd_storage</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr19io_uring_fd_storage19io_uring_fd_storageEiNSt6stringENSt6size_tENSt6size_tENSt6size_tE"><code class="docutils literal notranslate"><span class="pre">io_uring_fd_storage()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr19io_uring_fd_storage23default_buffer_capacityE"><code class="docutils literal notranslate"><span class="pre">default_buffer_capacity</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr19io_uring_fd_storage18default_queue_sizeE"><code class="docutils literal notranslate"><span class="pre">default_queue_size</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr19io_uring_fd_storage18default_batch_sizeE"><code class="docutils literal notranslate"><span class="pre">default_batch_size</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#_CPPv4N3xtr16posix_fd_storageE"><code class="docutils literal notranslate"><span class="pre">posix_fd_storage</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr16posix_fd_storage16posix_fd_storageEiNSt6stringENSt6size_tE"><code class="docutils literal notranslate"><span class="pre">posix_fd_storage::posix_fd_storage()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr16posix_fd_storage23default_buffer_capacityE"><code class="docutils literal notranslate"><span class="pre">posix_fd_storage::default_buffer_capacity</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#_CPPv4N3xtr16posix_fd_storageE"><code class="docutils literal notranslate"><span class="pre">xtr::posix_fd_storage</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr16posix_fd_storage16posix_fd_storageEiNSt6stringENSt6size_tE"><code class="docutils literal notranslate"><span class="pre">posix_fd_storage()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr16posix_fd_storage23default_buffer_capacityE"><code class="docutils literal notranslate"><span class="pre">default_buffer_capacity</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#_CPPv4N3xtr15make_fd_storageEPKc"><code class="docutils literal notranslate"><span class="pre">make_fd_storage()</span></code></a></li>
@@ -149,7 +171,12 @@
 <li class="toctree-l3"><a class="reference internal" href="#_CPPv4N3xtr17null_command_pathE"><code class="docutils literal notranslate"><span class="pre">null_command_path</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#configuration-variables">Configuration Variables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#configuration-variables">Configuration Variables</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#c.XTR_SINK_CAPACITY"><code class="docutils literal notranslate"><span class="pre">XTR_SINK_CAPACITY</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#c.XTR_USE_IO_URING"><code class="docutils literal notranslate"><span class="pre">XTR_USE_IO_URING</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#c.XTR_IO_URING_POLL"><code class="docutils literal notranslate"><span class="pre">XTR_IO_URING_POLL</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="xtrctl.html">xtrctl</a></li>
@@ -523,7 +550,7 @@ logging. Use these macros if accurate timestamps are required.</p>
 
 <dl class="cpp function">
 <dt class="sig sig-object cpp" id="_CPPv4N3xtr4sinkaSERK4sink">
-<span id="_CPPv3N3xtr4sinkaSERK4sink"></span><span id="_CPPv2N3xtr4sinkaSERK4sink"></span><span id="xtr::sink::assign-operator__sinkCR"></span><span class="target" id="classxtr_1_1sink_1a0c7ab01c3d0b15a138a7be2b94f454a4"></span><a class="reference internal" href="#_CPPv4N3xtr4sinkE" title="xtr::sink"><span class="n"><span class="pre">sink</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="k"><span class="pre">operator</span></span><span class="o"><span class="pre">=</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N3xtr4sinkE" title="xtr::sink"><span class="n"><span class="pre">sink</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">other</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xtr4sinkaSERK4sink" title="Link to this definition"></a><br /></dt>
+<span id="_CPPv3N3xtr4sinkaSERK4sink"></span><span id="_CPPv2N3xtr4sinkaSERK4sink"></span><span id="xtr::sink::assign-operator__sinkCR"></span><span class="target" id="classxtr_1_1sink_1a1bfef25370b9e0609f27129660f7ac9f"></span><a class="reference internal" href="#_CPPv4N3xtr4sinkE" title="xtr::sink"><span class="n"><span class="pre">sink</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="k"><span class="pre">operator</span></span><span class="o"><span class="pre">=</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N3xtr4sinkE" title="xtr::sink"><span class="n"><span class="pre">sink</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">other</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xtr4sinkaSERK4sink" title="Link to this definition"></a><br /></dt>
 <dd><p>Sink copy assignment operator. When a sink is copy assigned it is closed in order to disconnect it from any existing logger object and is then automatically registered with the same logger object as the source sink, using the same sink name. The sink name may be modified by calling <a class="reference internal" href="#classxtr_1_1sink_1ac65b4bb092ca9f543985cfc1e05bcc41"><span class="std std-ref">set_name</span></a>. </p>
 </dd></dl>
 
@@ -653,18 +680,18 @@ disabled. Fatal log statements will still call
 <dl class="cpp type">
 <dt class="sig sig-object cpp" id="_CPPv4N3xtr17log_level_style_tE">
 <span id="_CPPv3N3xtr17log_level_style_tE"></span><span id="_CPPv2N3xtr17log_level_style_tE"></span><span class="target" id="namespacextr_1adc7f88f1bb8a0b81ac9dfe9822800ddb"></span><span class="k"><span class="pre">using</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">xtr</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">log_level_style_t</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="p"><span class="pre">(</span></span><span class="p"><span class="pre">*</span></span><span class="p"><span class="pre">)</span></span><span class="p"><span class="pre">(</span></span><a class="reference internal" href="#_CPPv4N3xtr11log_level_tE" title="xtr::log_level_t"><span class="n"><span class="pre">log_level_t</span></span></a><span class="p"><span class="pre">)</span></span><a class="headerlink" href="#_CPPv4N3xtr17log_level_style_tE" title="Link to this definition"></a><br /></dt>
-<dd><p>Log level styles are used to customise the formatting used when prefixing log statements with their associated log level (see <a class="reference internal" href="#namespacextr_1afb0918f4447c35720ed0eb78fbd054b5"><span class="std std-ref">log_level_t</span></a>). Styles are simply function pointers—to provide a custom style, define a function returning a string literal and accepting a single argument of type <a class="reference internal" href="#namespacextr_1afb0918f4447c35720ed0eb78fbd054b5"><span class="std std-ref">log_level_t</span></a> and pass the function to <a class="reference internal" href="#classxtr_1_1logger_1a6a1f023ec9af2389a0ac41f66c98534a"><span class="std std-ref">logger::logger</span></a> or <a class="reference internal" href="#classxtr_1_1logger_1a03c976cd4f6ee9c55ab42adc512fe55e"><span class="std std-ref">logger::set_log_level_style</span></a>. The values returned by the function will be prefixed to log statements produced by the logger. Two formatters are provided, the default formatter <a class="reference internal" href="#namespacextr_1afcf04ca933bb3a685dd84b93fd6e04d2"><span class="std std-ref">default_log_level_style</span></a> and a Systemd compatible style <a class="reference internal" href="#namespacextr_1abed82be8fddadc7f5909afea9d7534ec"><span class="std std-ref">systemd_log_level_style</span></a>. </p>
+<dd><p>Log level styles are used to customise the formatting used when prefixing log statements with their associated log level (see <a class="reference internal" href="#namespacextr_1afb0918f4447c35720ed0eb78fbd054b5"><span class="std std-ref">log_level_t</span></a>). Styles are simply function pointers—to provide a custom style, define a function returning a string literal and accepting a single argument of type <a class="reference internal" href="#namespacextr_1afb0918f4447c35720ed0eb78fbd054b5"><span class="std std-ref">log_level_t</span></a> and pass the function to <a class="reference internal" href="#classxtr_1_1logger_1a6a1f023ec9af2389a0ac41f66c98534a"><span class="std std-ref">logger::logger</span></a> or <a class="reference internal" href="#classxtr_1_1logger_1a03c976cd4f6ee9c55ab42adc512fe55e"><span class="std std-ref">logger::set_log_level_style</span></a>. The values returned by the function will be prefixed to log statements produced by the logger. Two formatters are provided, the default formatter <a class="reference internal" href="#namespacextr_1ae01b200b11d63e0e9215a547ac1f8f33"><span class="std std-ref">default_log_level_style</span></a> and a Systemd compatible style <a class="reference internal" href="#namespacextr_1aa03b79e09dfe31bccb7658e20dbbcac8"><span class="std std-ref">systemd_log_level_style</span></a>. </p>
 </dd></dl>
 
 <dl class="cpp function">
 <dt class="sig sig-object cpp" id="_CPPv4N3xtr23default_log_level_styleE11log_level_t">
-<span id="_CPPv3N3xtr23default_log_level_styleE11log_level_t"></span><span id="_CPPv2N3xtr23default_log_level_styleE11log_level_t"></span><span id="xtr::default_log_level_style__log_level_t"></span><span class="target" id="namespacextr_1afcf04ca933bb3a685dd84b93fd6e04d2"></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-prename descclassname"><span class="n"><span class="pre">xtr</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">default_log_level_style</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4N3xtr11log_level_tE" title="xtr::log_level_t"><span class="n"><span class="pre">log_level_t</span></span></a><span class="w"> </span><span class="n sig-param"><span class="pre">level</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xtr23default_log_level_styleE11log_level_t" title="Link to this definition"></a><br /></dt>
+<span id="_CPPv3N3xtr23default_log_level_styleE11log_level_t"></span><span id="_CPPv2N3xtr23default_log_level_styleE11log_level_t"></span><span id="xtr::default_log_level_style__log_level_t"></span><span class="target" id="namespacextr_1ae01b200b11d63e0e9215a547ac1f8f33"></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-prename descclassname"><span class="n"><span class="pre">xtr</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">default_log_level_style</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4N3xtr11log_level_tE" title="xtr::log_level_t"><span class="n"><span class="pre">log_level_t</span></span></a><span class="w"> </span><span class="n sig-param"><span class="pre">level</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xtr23default_log_level_styleE11log_level_t" title="Link to this definition"></a><br /></dt>
 <dd><p>The default log level style (see <a class="reference internal" href="#namespacextr_1adc7f88f1bb8a0b81ac9dfe9822800ddb"><span class="std std-ref">log_level_style_t</span></a>). Returns a single upper-case character representing the log level followed by a space, e.g. “E “, “W “, “I “ for <a class="reference internal" href="#namespacextr_1afb0918f4447c35720ed0eb78fbd054b5acb5e100e5a9a3e7f6d1fd97512215282"><span class="std std-ref">log_level_t::error</span></a>, <a class="reference internal" href="#namespacextr_1afb0918f4447c35720ed0eb78fbd054b5a7b83d3f08fa392b79e3f553b585971cd"><span class="std std-ref">log_level_t::warning</span></a>, <a class="reference internal" href="#namespacextr_1afb0918f4447c35720ed0eb78fbd054b5acaf9b6b99962bf5c2264824231d7a40c"><span class="std std-ref">log_level_t::info</span></a> and so on. </p>
 </dd></dl>
 
 <dl class="cpp function">
 <dt class="sig sig-object cpp" id="_CPPv4N3xtr23systemd_log_level_styleE11log_level_t">
-<span id="_CPPv3N3xtr23systemd_log_level_styleE11log_level_t"></span><span id="_CPPv2N3xtr23systemd_log_level_styleE11log_level_t"></span><span id="xtr::systemd_log_level_style__log_level_t"></span><span class="target" id="namespacextr_1abed82be8fddadc7f5909afea9d7534ec"></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-prename descclassname"><span class="n"><span class="pre">xtr</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">systemd_log_level_style</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4N3xtr11log_level_tE" title="xtr::log_level_t"><span class="n"><span class="pre">log_level_t</span></span></a><span class="w"> </span><span class="n sig-param"><span class="pre">level</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xtr23systemd_log_level_styleE11log_level_t" title="Link to this definition"></a><br /></dt>
+<span id="_CPPv3N3xtr23systemd_log_level_styleE11log_level_t"></span><span id="_CPPv2N3xtr23systemd_log_level_styleE11log_level_t"></span><span id="xtr::systemd_log_level_style__log_level_t"></span><span class="target" id="namespacextr_1aa03b79e09dfe31bccb7658e20dbbcac8"></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-prename descclassname"><span class="n"><span class="pre">xtr</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">systemd_log_level_style</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4N3xtr11log_level_tE" title="xtr::log_level_t"><span class="n"><span class="pre">log_level_t</span></span></a><span class="w"> </span><span class="n sig-param"><span class="pre">level</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xtr23systemd_log_level_styleE11log_level_t" title="Link to this definition"></a><br /></dt>
 <dd><p>Systemd log level style (see <a class="reference internal" href="#namespacextr_1adc7f88f1bb8a0b81ac9dfe9822800ddb"><span class="std std-ref">log_level_style_t</span></a>). Returns strings as described in <a class="reference external" href="https://man7.org/linux/man-pages/man3/sd-daemon.3.html">sd-daemon(3)</a>, e.g. “&lt;0&gt;”, “&lt;1&gt;”, “&lt;2&gt;” etc. </p>
 </dd></dl>
 
@@ -679,7 +706,7 @@ disabled. Fatal log statements will still call
 <p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
 <dl class="cpp function">
 <dt class="sig sig-object cpp" id="_CPPv4N3xtr17storage_interface15allocate_bufferEv">
-<span id="_CPPv3N3xtr17storage_interface15allocate_bufferEv"></span><span id="_CPPv2N3xtr17storage_interface15allocate_bufferEv"></span><span id="xtr::storage_interface::allocate_buffer"></span><span class="target" id="structxtr_1_1storage__interface_1aa4ca6b8fa95ffd252c81dbea79b254a9"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">span</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">char</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">allocate_buffer</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N3xtr17storage_interface15allocate_bufferEv" title="Link to this definition"></a><br /></dt>
+<span id="_CPPv3N3xtr17storage_interface15allocate_bufferEv"></span><span id="_CPPv2N3xtr17storage_interface15allocate_bufferEv"></span><span id="xtr::storage_interface::allocate_buffer"></span><span class="target" id="structxtr_1_1storage__interface_1a5a58e99d6f2b10945e61ee252dade59d"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">span</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">char</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">allocate_buffer</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N3xtr17storage_interface15allocate_bufferEv" title="Link to this definition"></a><br /></dt>
 <dd><p>Allocates a buffer for formatted log data to be written to. Once a buffer has been allocated, allocate_buffer will not be called again until the buffer has been submitted via <a class="reference internal" href="#structxtr_1_1storage__interface_1acf8ac9eceebefd95b4f2389baaa17978"><span class="std std-ref">submit_buffer</span></a>. </p>
 </dd></dl>
 

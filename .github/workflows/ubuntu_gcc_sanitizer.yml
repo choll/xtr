@@ -15,13 +15,6 @@ jobs:
         except: [1, 0]
     steps:
     - uses: actions/checkout@v2
-    - name: install gcc
-      run: |
-        sudo update-alternatives \
-          --install /usr/bin/gcc gcc /usr/bin/gcc-10 1000 \
-          --slave /usr/bin/g++ g++ /usr/bin/g++-10 \
-          --slave /usr/bin/gcc-ar gcc-ar /usr/bin/gcc-ar-10 \
-          --slave /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib-10
     - name: init submodules
       run: git submodule init
     - name: update submodules

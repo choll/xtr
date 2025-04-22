@@ -11,28 +11,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-
     - name: setup clang
       run: |
         sudo update-alternatives \
-          --install /usr/lib/llvm llvm /usr/lib/llvm-15 1000 \
-          --slave /usr/bin/llvm-ar llvm-ar /usr/bin/llvm-ar-15 \
-          --slave /usr/bin/llvm-ranlib llvm-ranlib /usr/bin/llvm-ranlib-15
+          --install /usr/lib/llvm llvm /usr/lib/llvm-18 1000 \
+          --slave /usr/bin/llvm-ar llvm-ar /usr/bin/llvm-ar-18 \
+          --slave /usr/bin/llvm-ranlib llvm-ranlib /usr/bin/llvm-ranlib-18
         sudo update-alternatives \
-          --install /usr/bin/clang clang /usr/bin/clang-15 1000
+          --install /usr/bin/clang clang /usr/bin/clang-18 1000
         sudo update-alternatives \
-          --install /usr/bin/clang++ clang++ /usr/bin/clang++-15 1000
+          --install /usr/bin/clang++ clang++ /usr/bin/clang++-18 1000
         sudo update-alternatives \
-          --install /usr/bin/clang-format clang-format /usr/bin/clang-format-15 1000
-
+          --install /usr/bin/clang-format clang-format /usr/bin/clang-format-18 1000
     - name: install conan
-      run: sudo pip install 'conan<2'
-
+      run: |
+        pip install --user conan
+        CC=clang CXX=clang++ conan profile detect
     - name: build with cmake
       run: |
         mkdir build && cd build
-        CC=clang CXX=clang++ conan install .. -g cmake_find_package --build missing -s compiler=clang -s compiler.version=12 -s compiler.libcxx=libstdc++11
-        CC=clang CXX=clang++ cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_MODULE_PATH=${PWD} -DBUILD_TESTING=ON -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INSTALL_PREFIX=/tmp/install
+        CC=clang CXX=clang++ conan install .. -g CMakeDeps -g CMakeToolchain --output-folder=${PWD} --build missing -s compiler=clang -s compiler.version=12 -s compiler.libcxx=libstdc++11
+        CC=clang CXX=clang++ cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake -DBUILD_TESTING=ON -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INSTALL_PREFIX=/tmp/install
         cmake --build .
     - name: test
       run: cd build/ && cmake --build . --target test
