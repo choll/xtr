@@ -62,7 +62,6 @@ void xtr::logger::set_log_level_style(log_level_style_t level_style) noexcept
     control_.sync();
 }
 
-
 XTR_FUNC
 void xtr::logger::set_default_log_level(log_level_t level)
 {
