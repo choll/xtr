@@ -1160,6 +1160,7 @@ private:
     char* end_ = nullptr;
 };
 
+#include <fmt/compile.h>
 #include <fmt/format.h>
 
 #include <iterator>
@@ -1169,10 +1170,10 @@ private:
 
 namespace xtr::detail
 {
-    template<typename Timestamp, typename... Args>
+    template<typename Format, typename Timestamp, typename... Args>
     void print(
         buffer& buf,
-        std::string_view fmt,
+        const Format& fmt,
         log_level_t level,
         Timestamp ts,
         const std::string& name,
@@ -1184,11 +1185,7 @@ namespace xtr::detail
 #endif
             fmt::format_to(
                 std::back_inserter(buf.line),
-#if FMT_VERSION >= 80000
-                fmt::runtime(fmt),
-#else
-            fmt,
-#endif
+                fmt,
                 buf.lstyle(level),
                 ts,
                 name,
@@ -1202,7 +1199,7 @@ namespace xtr::detail
             using namespace std::literals::string_view_literals;
             fmt::print(
                 stderr,
-                "{}{}: Error writing log: {}\n"sv,
+                FMT_COMPILE("{}{}: Error writing log: {}\n"),
                 buf.lstyle(log_level_t::error),
                 ts,
                 e.what());
@@ -1211,10 +1208,10 @@ namespace xtr::detail
 #endif
     }
 
-    template<typename Timestamp, typename... Args>
+    template<typename Format, typename Timestamp, typename... Args>
     void print_ts(
         buffer& buf,
-        std::string_view fmt,
+        const Format& fmt,
         log_level_t level,
         const std::string& name,
         Timestamp ts,
@@ -1232,11 +1229,6 @@ namespace xtr::detail
     template<std::size_t N>
     struct string
     {
-        constexpr operator std::string_view() const noexcept
-        {
-            return std::string_view{str, N};
-        }
-
         char str[N + 1];
     };
 
@@ -1432,7 +1424,7 @@ namespace xtr::detail
         const char* timestamp,
         std::string& name) noexcept
     {
-        print(buf, *Format, Level, timestamp, name);
+        print(buf, Format, Level, timestamp, name);
         return record + sizeof(void (*)());
     }
 
@@ -1456,7 +1448,7 @@ namespace xtr::detail
         if constexpr (std::is_same_v<decltype(Format), std::nullptr_t>)
             func(st, name);
         else
-            func(buf, record, *Format, Level, timestamp, name);
+            func(buf, record, Format, Level, timestamp, name);
 
         static_assert(noexcept(func.~Func()));
         std::destroy_at(std::addressof(func));
@@ -1481,7 +1473,7 @@ namespace xtr::detail
 
         auto& func = *reinterpret_cast<Func*>(func_pos);
         record = func_pos + sizeof(Func);
-        func(buf, record, *Format, Level, timestamp, name);
+        func(buf, record, Format, Level, timestamp, name);
 
         static_assert(noexcept(func.~Func()));
         std::destroy_at(std::addressof(func));
@@ -1812,10 +1804,10 @@ template<typename Tags, typename... Args>
 auto xtr::sink::make_lambda(Args&&... args) noexcept(
     (XTR_NOTHROW_INGESTIBLE(Args, args) && ...))
 {
-    return [... args = std::forward<Args>(args)](
+    return [... args = std::forward<Args>(args)]<typename Format>(
                detail::buffer& buf,
                std::byte*& record,
-               std::string_view fmt,
+               const Format& fmt,
                log_level_t level,
                [[maybe_unused]] const char* ts,
                const std::string& name) mutable noexcept
@@ -2338,6 +2330,8 @@ namespace xtr
     std::string default_command_path();
 }
 
+#include <fmt/compile.h>
+
 #if defined(XTR_NDEBUG)
 #undef XTR_NDEBUG
 #define XTR_NDEBUG 1
@@ -2597,17 +2591,20 @@ namespace xtr
 #define XTR_LOG_TAGS(TAGS, LEVEL, SINK, ...) \
     (__extension__({ XTR_LOG_TAGS_IMPL(TAGS, LEVEL, SINK, __VA_ARGS__); }))
 
-#define XTR_LOG_TAGS_IMPL(TAGS, LEVEL, SINK, FORMAT, ...)                   \
-    (__extension__({                                                        \
-        static constexpr auto xtr_fmt =                                     \
-            xtr::detail::string{"{}{} {} "} +                               \
-            xtr::detail::rcut<xtr::detail::rindex(__FILE__, '/') + 1>(      \
-                __FILE__) +                                                 \
-            xtr::detail::string{":"} +                                      \
-            xtr::detail::string{XTR_XSTR(__LINE__) ": " FORMAT "\n"};       \
-        using xtr::nocopy;                                                  \
-        (SINK).template log<&xtr_fmt, xtr::log_level_t::LEVEL, void(TAGS)>( \
-            __VA_ARGS__);                                                   \
+#define XTR_LOG_TAGS_IMPL(TAGS, LEVEL, SINK, FORMAT, ...)              \
+    (__extension__({                                                   \
+        static constexpr auto xtr_fmt =                                \
+            xtr::detail::string{"{}{} {} "} +                          \
+            xtr::detail::rcut<xtr::detail::rindex(__FILE__, '/') + 1>( \
+                __FILE__) +                                            \
+            xtr::detail::string{":"} +                                 \
+            xtr::detail::string{XTR_XSTR(__LINE__) ": " FORMAT "\n"};  \
+        using xtr::nocopy;                                             \
+        (SINK)                                                         \
+            .template log<                                             \
+                FMT_COMPILE(xtr_fmt.str),                              \
+                xtr::log_level_t::LEVEL,                               \
+                void(TAGS)>(__VA_ARGS__);                              \
     }))
 
 #include <string>
@@ -3193,6 +3190,131 @@ private:
     friend sink;
 };
 
+#include <concepts>
+#include <cstddef>
+#include <utility>
+
+#include <fmt/format.h>
+
+template<typename T>
+concept iterable = requires(T t) {
+    std::begin(t);
+    std::end(t);
+};
+
+template<typename T>
+concept associative_container = requires(T t) { typename T::mapped_type; };
+
+template<typename T>
+concept tuple_like = requires(T t) { std::tuple_size<T>(); };
+
+namespace fmt
+{
+
+    template<typename T>
+        requires tuple_like<T> && (!iterable<T>)
+    struct formatter<T>
+    {
+        template<typename ParseContext>
+        constexpr auto parse(ParseContext& ctx)
+        {
+            return ctx.begin();
+        }
+
+        template<typename FormatContext>
+        auto format(const T& value, FormatContext& ctx) const
+        {
+            return format_impl(
+                value,
+                ctx,
+                std::make_index_sequence<std::tuple_size_v<T>>{});
+        }
+
+        template<typename FormatContext, std::size_t Index, std::size_t... Indexes>
+        auto format_impl(
+            const T& value,
+            FormatContext& ctx,
+            std::index_sequence<Index, Indexes...>) const
+        {
+            fmt::format_to(ctx.out(), "(");
+            if (std::tuple_size_v<T> > 0)
+            {
+                fmt::format_to(ctx.out(), FMT_COMPILE("{}"), std::get<0>(value));
+                ((fmt::format_to(
+                     ctx.out(),
+                     FMT_COMPILE(", {}"),
+                     std::get<Indexes>(value))),
+                 ...);
+            }
+            return fmt::format_to(ctx.out(), ")");
+        }
+    };
+
+    template<associative_container T>
+    struct formatter<T>
+    {
+        template<typename ParseContext>
+        constexpr auto parse(ParseContext& ctx)
+        {
+            return ctx.begin();
+        }
+
+        template<typename FormatContext>
+        auto format(const T& value, FormatContext& ctx) const
+        {
+            fmt::format_to(ctx.out(), "{{");
+            if (!value.empty())
+            {
+                auto it = std::begin(value);
+                ;
+                fmt::format_to(
+                    ctx.out(),
+                    FMT_COMPILE("{}: {}"),
+                    it->first,
+                    it->second);
+                ++it;
+                while (it != std::end(value))
+                {
+                    fmt::format_to(
+                        ctx.out(),
+                        FMT_COMPILE(", {}: {}"),
+                        it->first,
+                        it->second);
+                    ++it;
+                }
+            }
+            return fmt::format_to(ctx.out(), "}}");
+        }
+    };
+
+    template<typename T>
+        requires iterable<T> && (!std::is_constructible_v<T, const char*>) &&
+                 (!associative_container<T>)
+    struct formatter<T>
+    {
+        template<typename ParseContext>
+        constexpr auto parse(ParseContext& ctx)
+        {
+            return ctx.begin();
+        }
+
+        template<typename FormatContext>
+        auto format(const T& value, FormatContext& ctx) const
+        {
+            fmt::format_to(ctx.out(), "[");
+            if (!value.empty())
+            {
+                auto it = std::begin(value);
+                ;
+                fmt::format_to(ctx.out(), FMT_COMPILE("{}"), *it++);
+                while (it != std::end(value))
+                    fmt::format_to(ctx.out(), FMT_COMPILE(", {}"), *it++);
+            }
+            return fmt::format_to(ctx.out(), "]");
+        }
+    };
+}
+
 #include <fmt/format.h>
 
 #include <span>
@@ -3547,6 +3669,7 @@ inline std::string xtr::default_command_path()
 }
 
 #include <fmt/chrono.h>
+#include <fmt/compile.h>
 #include <fmt/format.h>
 
 #include <algorithm>
@@ -3584,7 +3707,7 @@ inline void xtr::detail::consumer::run(std::function<::timespec()>&& clock) noex
 
         if (ts_stale)
         {
-            fmt::format_to(ts, "{}", xtr::timespec{clock()});
+            fmt::format_to(ts, FMT_COMPILE("{}"), xtr::timespec{clock()});
             ts_stale = false;
         }
 
@@ -3616,7 +3739,7 @@ inline void xtr::detail::consumer::run(std::function<::timespec()>&& clock) noex
         {
             detail::print(
                 buf,
-                "{}{} {}: {} messages dropped\n",
+                FMT_COMPILE("{}{} {}: {} messages dropped\n"),
                 log_level_t::warning,
                 ts,
                 sinks_[n].name,
