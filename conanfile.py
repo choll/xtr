@@ -6,7 +6,7 @@ class Conan(ConanFile):
     settings = "os", "arch", "compiler", "build_type"
 
     def requirements(self):
-        self.requires("fmt/10.1.1", transitive_headers=True, transitive_libs=True)
+        self.requires("fmt/11.1.4", transitive_headers=True, transitive_libs=True)
         if self.settings.os == "Linux":
             self.requires("liburing/2.4")
         self.requires("benchmark/1.6.0")
