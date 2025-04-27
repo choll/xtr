@@ -371,10 +371,10 @@ auto xtr::sink::make_lambda(Args&&... args)
     // there is a mismatch between Args and args, due to args becoming const
     // if the lambda is not mutable.
     return
-        [... args = std::forward<Args>(args)](
+        [... args = std::forward<Args>(args)]<typename Format>(
             detail::buffer& buf,
             std::byte*& record,
-            std::string_view fmt,
+            const Format& fmt,
             log_level_t level,
             [[maybe_unused]] const char* ts,
             const std::string& name) mutable noexcept

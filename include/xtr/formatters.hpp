@@ -66,8 +66,8 @@ namespace fmt
             fmt::format_to(ctx.out(), "(");
             if (std::tuple_size_v<T> > 0)
             {
-                fmt::format_to(ctx.out(), "{}", std::get<0>(value));
-                ((fmt::format_to(ctx.out(), ", {}", std::get<Indexes>(value))), ...);
+                fmt::format_to(ctx.out(), FMT_COMPILE("{}"), std::get<0>(value));
+                ((fmt::format_to(ctx.out(), FMT_COMPILE(", {}"), std::get<Indexes>(value))), ...);
             }
             return fmt::format_to(ctx.out(), ")");
         }
@@ -89,11 +89,11 @@ namespace fmt
             if (!value.empty())
             {
                 auto it = std::begin(value);;
-                fmt::format_to(ctx.out(), "{}: {}", it->first, it->second);
+                fmt::format_to(ctx.out(), FMT_COMPILE("{}: {}"), it->first, it->second);
                 ++it;
                 while (it != std::end(value))
                 {
-                    fmt::format_to(ctx.out(), ", {}: {}", it->first, it->second);
+                    fmt::format_to(ctx.out(), FMT_COMPILE(", {}: {}"), it->first, it->second);
                     ++it;
                 }
             }
@@ -121,9 +121,9 @@ namespace fmt
             if (!value.empty())
             {
                 auto it = std::begin(value);;
-                fmt::format_to(ctx.out(), "{}", *it++);
+                fmt::format_to(ctx.out(), FMT_COMPILE("{}"), *it++);
                 while (it != std::end(value))
-                    fmt::format_to(ctx.out(), ", {}", *it++);
+                    fmt::format_to(ctx.out(), FMT_COMPILE(", {}"), *it++);
             }
             return fmt::format_to(ctx.out(), "]");
         }

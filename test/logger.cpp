@@ -1112,12 +1112,12 @@ TEST_CASE_METHOD(fixture, "logger sink change name test", "[logger]")
 
 TEST_CASE_METHOD(fixture, "logger no macro test", "[logger]")
 {
-    static constexpr xtrd::string test1{"{}{} {} Test\n"};
-    s_.log<&test1, xtr::log_level_t::info>();
+    static constexpr auto test1 = FMT_COMPILE("{}{} {} Test\n");
+    s_.log<test1, xtr::log_level_t::info>();
     REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name Test", line_));
 
-    static constexpr xtrd::string test2{"{}{} {} Test {}\n"};
-    s_.log<&test2, xtr::log_level_t::info>(42);
+    static constexpr auto test2 = FMT_COMPILE("{}{} {} Test {}\n");
+    s_.log<test2, xtr::log_level_t::info>(42);
     REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name Test 42", line_));
 }
 
@@ -1336,45 +1336,75 @@ TEST_CASE("logger storage destructor test", "[logger]")
     REQUIRE(destructed);
 }
 
-TEST_CASE_METHOD(path_fixture, "logger throughput", "[.logger]")
+TEST_CASE("logger throughput", "[.logger]")
 {
     using clock = std::chrono::high_resolution_clock;
 
-    constexpr std::size_t n = 1'000'000'000;
-
-    static constexpr char fmt[] =
-        "{}{} Test message of length 80 chars Test message of length 80 chars Test message of\n";
+    constexpr std::size_t n = 100'000'000;
 
     const auto print_result =
-        [](auto t0, auto t1, const char* name)
+        [](auto t0, auto t1, FILE* fp, const char* name)
         {
+            struct ::stat sb;
+            REQUIRE(::fstat(::fileno(fp), &sb) == 0);
+
             const std::chrono::duration<double> delta = t1 - t0;
             const double messages_sec = n / delta.count();
-            // 33 is # of chars in timestamp and name
-            const double bytes_per_message = double(sizeof(fmt) - 1 + 33);
-            const double mb_sec = (messages_sec * bytes_per_message) / (1024 * 1024);
+            const double mb_sec = (double(sb.st_size) / delta.count()) / (1024 * 1024);
+
             std::cout
                 << name << " messages/s: " << std::size_t(messages_sec) << ", "
-                << "MB/s: " << mb_sec << "\n";
+                << "MB/s: " << mb_sec << ", time: " << delta << ", bytes: "
+                << sb.st_size << "\n";
         };
 
     {
+        path_fixture f;
         const auto t0 = clock::now();
-        for (std::size_t i = 0; i < n; ++i)
-            s_.log<&fmt, xtr::log_level_t::info>();
-        s_.sync();
+        for (std::size_t i = 0; i != n; ++i)
+        {
+            XTR_LOG(
+                f.s_,
+                "Iteration: {} int: {} double: {}",
+                i, i * 2, double(i) / 2.0);
+        }
+        f.s_.sync();
         const auto t1 = clock::now();
-        print_result(t0, t1, "Logger");
+        print_result(t0, t1, f.fp_, "xtr_log");
     }
 
     {
-        // This isn't printing exactly what the logger does, but it's close enough
+        path_fixture f;
         const auto t0 = clock::now();
-        for (std::size_t i = 0; i < n; ++i)
-            fmt::print(fp_, fmt, "2019-10-17 20:59:03: Name   ", i);
-        s_.sync();
+        for (std::size_t i = 0; i != n; ++i)
+        {
+            XTR_LOG_TSC(
+                f.s_,
+                "Iteration: {} int: {} double: {}",
+                i, i * 2, double(i) / 2.0);
+        }
+        f.s_.sync();
         const auto t1 = clock::now();
-        print_result(t0, t1, "Fmt");
+        print_result(t0, t1, f.fp_, "xtr_log_tsc");
+    }
+
+    {
+        path_fixture f;
+        const auto t0 = clock::now();
+        for (std::size_t i = 0; i != n; ++i)
+        {
+            // This isn't printing exactly what the logger does but is close enough
+            fmt::print(
+                f.fp_,
+                FMT_COMPILE(
+                    "I 2019-10-17 20:59:03.123456 Name logger.cpp:1000: "
+                    "Iteration: {} int: {} double: {}\n"),
+                i, i * 2, double(i) / 2.0);
+        }
+        std::fflush(f.fp_);
+        ::fsync(::fileno(f.fp_));
+        const auto t1 = clock::now();
+        print_result(t0, t1, f.fp_, "fmt_print");
     }
 }
 
@@ -2226,33 +2256,36 @@ TEST_CASE("logger open path test", "[logger]")
 
 TEST_CASE_METHOD(fixture, "logger noexcept test", "[logger]")
 {
-    static_assert(noexcept(XTR_LOG(s_, "Hello world")));
-    static_assert(noexcept(XTR_LOG(s_, "Hello world {}", 123)));
-    static_assert(noexcept(XTR_LOG(s_, "Hello {}", "world")));
+    static constexpr auto fmt1 = FMT_COMPILE("{}{} {} Hello world\n");
+    static constexpr auto fmt2 = FMT_COMPILE("{}{} {} Hello {}\n");
+
+    static_assert(noexcept(s_.log<fmt1, xtr::log_level_t::info>()));
+    static_assert(noexcept(s_.log<fmt2, xtr::log_level_t::info>(123)));
+    static_assert(noexcept(s_.log<fmt2, xtr::log_level_t::info>("world")));
 
     std::string s1("world");
-    CHECK(noexcept(XTR_LOG(s_, "Hello {}", s1)));
-    CHECK(noexcept(XTR_LOG(s_, "Hello {}", std::move(s1))));
+    CHECK(noexcept(s_.log<fmt2, xtr::log_level_t::info>(s1)));
+    CHECK(noexcept(s_.log<fmt2, xtr::log_level_t::info>(std::move(s1))));
 
     std::string_view s2("world");
-    CHECK(noexcept(XTR_LOG(s_, "Hello {}", s2)));
-    CHECK(noexcept(XTR_LOG(s_, "Hello {}", std::move(s2))));
+    CHECK(noexcept(s_.log<fmt2, xtr::log_level_t::info>(s2)));
+    CHECK(noexcept(s_.log<fmt2, xtr::log_level_t::info>(std::move(s2))));
 
     const char* s3 = "world";
-    CHECK(noexcept(XTR_LOG(s_, "Hello {}", s3)));
-    CHECK(noexcept(XTR_LOG(s_, "Hello {}", std::move(s3))));
+    CHECK(noexcept(s_.log<fmt2, xtr::log_level_t::info>(s3)));
+    CHECK(noexcept(s_.log<fmt2, xtr::log_level_t::info>(std::move(s3))));
 
     const char s4[] = "world";
-    CHECK(noexcept(XTR_LOG(s_, "Hello {}", s4)));
-    CHECK(noexcept(XTR_LOG(s_, "Hello {}", std::move(s4))));
+    CHECK(noexcept(s_.log<fmt2, xtr::log_level_t::info>(s4)));
+    CHECK(noexcept(s_.log<fmt2, xtr::log_level_t::info>(std::move(s4))));
 
     move_thrower mt;
-    CHECK(noexcept(XTR_LOG(s_, "Hello {}", mt)));
-    CHECK(!noexcept(XTR_LOG(s_, "Hello {}", std::move(mt))));
+    CHECK(noexcept(s_.log<fmt2, xtr::log_level_t::info>(mt)));
+    CHECK(!noexcept(s_.log<fmt2, xtr::log_level_t::info>(std::move(mt))));
 
     copy_thrower ct;
-    CHECK(!noexcept(XTR_LOG(s_, "Hello {}", ct)));
-    CHECK(noexcept(XTR_LOG(s_, "Hello {}", std::move(ct))));
+    CHECK(!noexcept(s_.log<fmt2, xtr::log_level_t::info>(ct)));
+    CHECK(noexcept(s_.log<fmt2, xtr::log_level_t::info>(std::move(ct))));
 }
 
 TEST_CASE_METHOD(fixture, "logger re-register sink test", "[logger]")
@@ -2505,8 +2538,12 @@ TEST_CASE_METHOD(fixture, "logger formatter helpers test", "[logger]")
     XTR_LOG(s_, "{}", l), line_ = __LINE__;
     REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: [1, 2, 3]", line_));
 
-    std::vector<int> v{1, 2, 3};
-    XTR_LOG(s_, "{}", v), line_ = __LINE__;
+    std::vector<int> v1{1, 2, 3};
+    XTR_LOG(s_, "{}", v1), line_ = __LINE__;
+    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: [1, 2, 3]", line_));
+
+    const std::vector<std::string> v2{"1", "2", "3"};
+    XTR_LOG(s_, "{}", v2), line_ = __LINE__;
     REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: [1, 2, 3]", line_));
 
     std::array a{1, 2, 3};

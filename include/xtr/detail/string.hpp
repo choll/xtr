@@ -29,11 +29,6 @@ namespace xtr::detail
     template<std::size_t N>
     struct string
     {
-        constexpr operator std::string_view() const noexcept
-        {
-            return std::string_view{str, N};
-        }
-
         char str[N + 1];
     };
 

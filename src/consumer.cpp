@@ -30,6 +30,7 @@
 #include "xtr/timespec.hpp"
 
 #include <fmt/chrono.h>
+#include <fmt/compile.h>
 #include <fmt/format.h>
 
 #include <algorithm>
@@ -71,7 +72,7 @@ void xtr::detail::consumer::run(std::function<::timespec()>&& clock) noexcept
 
         if (ts_stale)
         {
-            fmt::format_to(ts, "{}", xtr::timespec{clock()});
+            fmt::format_to(ts, FMT_COMPILE("{}"), xtr::timespec{clock()});
             ts_stale = false;
         }
 
@@ -110,7 +111,7 @@ void xtr::detail::consumer::run(std::function<::timespec()>&& clock) noexcept
         {
             detail::print(
                 buf,
-                "{}{} {}: {} messages dropped\n",
+                FMT_COMPILE("{}{} {}: {} messages dropped\n"),
                 log_level_t::warning,
                 ts,
                 sinks_[n].name,
