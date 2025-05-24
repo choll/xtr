@@ -26,6 +26,7 @@
 #include "xtr/detail/retry.hpp"
 #include "xtr/detail/throw.hpp"
 
+#include <fmt/compile.h>
 #include <fmt/format.h>
 
 #include <cerrno>
@@ -78,8 +79,10 @@ xtr::storage_interface_ptr xtr::make_fd_storage(int fd, std::string reopen_path)
         catch (const std::exception& e)
         {
             fmt::print(
-                "Falling back to posix_fd_storage due to io_uring_fd_storage "
-                "error: {}\n", e.what());
+                FMT_COMPILE("Falling back to posix_fd_storage due to "
+                            "io_uring_fd_storage "
+                            "error: {}\n"),
+                e.what());
         }
 #endif
     }

@@ -22,10 +22,11 @@
 #include "xtr/detail/clock_ids.hpp"
 #include "xtr/detail/get_time.hpp"
 
+#include <fmt/compile.h>
 #include <fmt/format.h>
 
+#include <exception>
 #include <span>
-#include <stdexcept>
 #include <utility>
 
 XTR_FUNC
@@ -62,7 +63,7 @@ void xtr::detail::buffer::flush() noexcept
     {
         fmt::print(
             stderr,
-            "{}{}: Error flushing log: {}\n",
+            FMT_COMPILE("{}{}: Error flushing log: {}\n"),
             lstyle(log_level_t::error),
             detail::get_time<XTR_CLOCK_WALL>(),
             e.what());

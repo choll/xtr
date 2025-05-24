@@ -53,7 +53,10 @@ xtr::detail::consumer::~consumer()
     }
     catch(const std::exception& e)
     {
-        fmt::print(stderr, "Error destructing consumer: {}\n", e.what());
+        fmt::print(
+            stderr,
+            FMT_COMPILE("Error destructing consumer: {}\n"),
+            e.what());
     }
 #endif
 }
