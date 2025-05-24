@@ -24,6 +24,7 @@
 #include "buffer.hpp"
 #include "xtr/log_level.hpp"
 
+#include <fmt/compile.h>
 #include <fmt/format.h>
 
 #include <iterator>
@@ -33,10 +34,10 @@
 
 namespace xtr::detail
 {
-    template<typename Timestamp, typename... Args>
+    template<typename Format, typename Timestamp, typename... Args>
     void print(
         buffer& buf,
-        std::string_view fmt,
+        const Format& fmt,
         log_level_t level,
         Timestamp ts,
         const std::string& name,
@@ -48,11 +49,7 @@ namespace xtr::detail
 #endif
             fmt::format_to(
                 std::back_inserter(buf.line),
-#if FMT_VERSION >= 80000
-                fmt::runtime(fmt),
-#else
                 fmt,
-#endif
                 buf.lstyle(level),
                 ts,
                 name,
@@ -66,7 +63,7 @@ namespace xtr::detail
             using namespace std::literals::string_view_literals;
             fmt::print(
                 stderr,
-                "{}{}: Error writing log: {}\n"sv,
+                FMT_COMPILE("{}{}: Error writing log: {}\n"),
                 buf.lstyle(log_level_t::error),
                 ts,
                 e.what());
@@ -75,10 +72,10 @@ namespace xtr::detail
 #endif
     }
 
-    template<typename Timestamp, typename... Args>
+    template<typename Format, typename Timestamp, typename... Args>
     void print_ts(
         buffer& buf,
-        std::string_view fmt,
+        const Format& fmt,
         log_level_t level,
         const std::string& name,
         Timestamp ts,

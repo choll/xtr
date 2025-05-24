@@ -45,7 +45,7 @@ namespace xtr::detail
         const char* timestamp,
         std::string& name) noexcept
     {
-        print(buf, *Format, Level, timestamp, name);
+        print(buf, Format, Level, timestamp, name);
         return record + sizeof(void(*)());
     }
 
@@ -83,7 +83,7 @@ namespace xtr::detail
         if constexpr (std::is_same_v<decltype(Format), std::nullptr_t>)
             func(st, name);
         else
-            func(buf, record, *Format, Level, timestamp, name);
+            func(buf, record, Format, Level, timestamp, name);
 
         static_assert(noexcept(func.~Func()));
         std::destroy_at(std::addressof(func));
@@ -126,7 +126,7 @@ namespace xtr::detail
         auto& func = *reinterpret_cast<Func*>(func_pos);
         record = func_pos + sizeof(Func);
         // record is modified by the lambda to point to the end of the string table
-        func(buf, record, *Format, Level, timestamp, name);
+        func(buf, record, Format, Level, timestamp, name);
 
         static_assert(noexcept(func.~Func()));
         std::destroy_at(std::addressof(func));

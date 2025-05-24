@@ -27,6 +27,8 @@
 #include "detail/tags.hpp"
 #include "detail/tsc.hpp"
 
+#include <fmt/compile.h>
+
 #if defined(XTR_NDEBUG)
 #undef XTR_NDEBUG
 #define XTR_NDEBUG 1
@@ -304,7 +306,8 @@
                 xtr::detail::string{XTR_XSTR(__LINE__) ": " FORMAT "\n"};           \
             using xtr::nocopy;                                                      \
             (SINK).template                                                         \
-                log<&xtr_fmt, xtr::log_level_t::LEVEL, void(TAGS)>(__VA_ARGS__);    \
+                log<FMT_COMPILE(xtr_fmt.str), xtr::log_level_t::LEVEL, void(TAGS)>( \
+                    __VA_ARGS__);                                                   \
         }))
 
 #endif

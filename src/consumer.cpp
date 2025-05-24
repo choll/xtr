@@ -30,6 +30,7 @@
 #include "xtr/timespec.hpp"
 
 #include <fmt/chrono.h>
+#include <fmt/compile.h>
 #include <fmt/format.h>
 
 #include <algorithm>
@@ -93,7 +94,7 @@ bool xtr::detail::consumer::run_once() noexcept
         // Read the clock once per loop over sinks
         if (ts_stale)
         {
-            fmt::format_to(ts, "{}", xtr::timespec{clock_()});
+            fmt::format_to(ts, FMT_COMPILE("{}"), xtr::timespec{clock()});
             ts_stale = false;
         }
 
@@ -133,7 +134,7 @@ bool xtr::detail::consumer::run_once() noexcept
         {
             detail::print(
                 buf,
-                "{}{} {}: {} messages dropped\n",
+                FMT_COMPILE("{}{} {}: {} messages dropped\n"),
                 log_level_t::warning,
                 ts,
                 sinks_[i].name,

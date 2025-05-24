@@ -81,7 +81,7 @@ ifeq ($(PIC), 1)
 endif
 
 ifeq ($(LTO), 1)
-	CXXFLAGS += -flto
+	CXXFLAGS += -flto=auto
 	BUILD_DIR := $(BUILD_DIR)-lto
 endif
 

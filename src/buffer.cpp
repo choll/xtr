@@ -95,7 +95,7 @@ void xtr::detail::buffer::append(InputIterator first, InputIterator last)
 // faster than push_back. This is because fmt inspects the iterator passed to
 // it, then if it is a std::back_insert_iterator containing a certain type like
 // std::string, it extracts the string object and writes to it in a way that is
-// more efficient than using push_back. There is also type trait that can be
+// more efficient than using push_back. There is also a type trait that can be
 // defined declaring the input type as contiguous, however the interface to it
 // is incompatible with io_uring_fd_storage because it expects to be able to
 // resize the buffer, while io_uring_fd_storage operates on a sequence of

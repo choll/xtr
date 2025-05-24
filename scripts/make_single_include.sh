@@ -58,7 +58,8 @@ for file in \
     include/xtr/io/posix_fd_storage.hpp \
     include/xtr/io/io_uring_fd_storage.hpp \
     include/xtr/io/fd_storage.hpp \
-    include/xtr/logger.hpp;
+    include/xtr/logger.hpp \
+    include/xtr/formatters.hpp;
 do
     sed '$d' $file|grep -Ev '^ *//|^#include "|^#ifndef XTR_.*HPP|^#define XTR_.*HPP' >> $target
 done
