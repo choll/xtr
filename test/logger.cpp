@@ -53,6 +53,7 @@
 #include <cstring>
 #include <ctime>
 #include <deque>
+#include <filesystem>
 #include <forward_list>
 #include <functional>
 #include <list>
@@ -67,7 +68,6 @@
 #include <sstream>
 #include <string>
 #include <string_view>
-#include <system_error>
 #include <tuple>
 #include <utility>
 #include <vector>
@@ -312,9 +312,20 @@ private:
         }
     };
 
-    struct path_fixture
+    struct path_fixture_impl
     {
-        ~path_fixture()
+        template<typename Clock>
+        path_fixture_impl(Clock&& clock)
+        :
+            log_(
+                tmp_.path_,
+                fp_,
+                std::forward<Clock>(clock),
+                xtr::null_command_path)
+        {
+        }
+
+        ~path_fixture_impl()
         {
             std::fclose(fp_);
         }
@@ -322,12 +333,26 @@ private:
         temp_file tmp_;
         FILE* fp_ = ::fdopen(tmp_.fd_.release(), "w"); // fclose will close the fd
         std::atomic<std::int64_t> clock_nanos_{946688523123456789L};
-        xtr::logger log_{
-            tmp_.path_.c_str(),
-            fp_,
-            test_clock{&clock_nanos_},
-            xtr::null_command_path};
+        xtr::logger log_;
         xtr::sink s_ = log_.get_sink("Name");
+    };
+
+    struct path_fixture : path_fixture_impl
+    {
+        path_fixture()
+        :
+            path_fixture_impl(test_clock{&clock_nanos_})
+        {
+        }
+    };
+
+    struct path_fixture_default_clock : path_fixture_impl
+    {
+        path_fixture_default_clock()
+        :
+            path_fixture_impl(std::chrono::system_clock())
+        {
+        }
     };
 
     template<typename Fixture = fixture>
@@ -1343,23 +1368,20 @@ TEST_CASE("logger throughput", "[.logger]")
     constexpr std::size_t n = 100'000'000;
 
     const auto print_result =
-        [](auto t0, auto t1, FILE* fp, const char* name)
+        [](auto t0, auto t1, const std::string& path, const char* name)
         {
-            struct ::stat sb;
-            REQUIRE(::fstat(::fileno(fp), &sb) == 0);
-
+            const std::size_t size = std::filesystem::file_size(path);
             const std::chrono::duration<double> delta = t1 - t0;
             const double messages_sec = n / delta.count();
-            const double mb_sec = (double(sb.st_size) / delta.count()) / (1024 * 1024);
-
+            const double mb_sec = (double(size) / delta.count()) / (1024 * 1024);
             std::cout
                 << name << " messages/s: " << std::size_t(messages_sec) << ", "
                 << "MB/s: " << mb_sec << ", time: " << delta << ", bytes: "
-                << sb.st_size << "\n";
+                << size << "\n";
         };
 
     {
-        path_fixture f;
+        path_fixture_default_clock f;
         const auto t0 = clock::now();
         for (std::size_t i = 0; i != n; ++i)
         {
@@ -1370,30 +1392,30 @@ TEST_CASE("logger throughput", "[.logger]")
         }
         f.s_.sync();
         const auto t1 = clock::now();
-        print_result(t0, t1, f.fp_, "xtr_log");
+        print_result(t0, t1, f.tmp_.path_, "xtr_log");
     }
 
     {
-        path_fixture f;
+        path_fixture_default_clock f;
         const auto t0 = clock::now();
         for (std::size_t i = 0; i != n; ++i)
         {
-            XTR_LOG_TSC(
+            XTR_LOGL_TSC(
+                info,
                 f.s_,
                 "Iteration: {} int: {} double: {}",
                 i, i * 2, double(i) / 2.0);
         }
         f.s_.sync();
         const auto t1 = clock::now();
-        print_result(t0, t1, f.fp_, "xtr_log_tsc");
+        print_result(t0, t1, f.tmp_.path_, "xtr_log_tsc");
     }
 
     {
-        path_fixture f;
+        path_fixture_default_clock f;
         const auto t0 = clock::now();
         for (std::size_t i = 0; i != n; ++i)
         {
-            // This isn't printing exactly what the logger does but is close enough
             fmt::print(
                 f.fp_,
                 FMT_COMPILE(
@@ -1404,7 +1426,7 @@ TEST_CASE("logger throughput", "[.logger]")
         std::fflush(f.fp_);
         ::fsync(::fileno(f.fp_));
         const auto t1 = clock::now();
-        print_result(t0, t1, f.fp_, "fmt_print");
+        print_result(t0, t1, f.tmp_.path_, "fmt_print");
     }
 }
 

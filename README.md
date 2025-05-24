@@ -97,6 +97,27 @@ logger_benchmark_non_blocking                2.01 ns         2.01 ns    34931240
 
 ```
 
+## Throughput
+
+Below is the result of running the 'logger throughput' unit test on a stock
+Ryzen 5950X with no core isolation or other tuning, writing to a 4TB 990 PRO
+SSD with io\_uring enabled.
+
+The test involves writing a log message with int and double arguments
+100'000'000 times. Afterwards `sync()` is called on the sink (which will drain
+the sink's queue, wait for all io\_uring requests to complete then call
+`fsync(2)`). The timing ends after `sync()` returns.
+
+Timings for fmt::print are included for comparison. Note that the fmt::print
+call just prints static data and doesn't do any timestamp reading or
+formatting (i.e. real world use would be slower).
+
+| Function       | Messages/s | MiB/s   | Time     |
+|----------------|------------|---------|----------|
+| XTR\_LOG       | 13532135   | 1330.67 | 7.38982s |
+| XTR\_LOGL\_TSC | 9082393    | 893.112 | 11.0103s |
+| fmt::print     | 12514662   | 1230.62 | 7.99063s |
+
 ## Benchmarks Comparing Against Other loggers
 
 ### Integer Benchmark, One Thread

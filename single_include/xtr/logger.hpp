@@ -67,9 +67,12 @@ SOFTWARE.
 #define XTR_IO_URING_POLL 0
 #endif
 
+#include <algorithm>
 #include <ctime>
+#include <iterator>
 
 #include <fmt/chrono.h>
+#include <fmt/compile.h>
 
 namespace xtr
 {
@@ -81,6 +84,20 @@ namespace xtr
         {
         }
     };
+
+    namespace detail
+    {
+        template<typename OutputIterator, typename T>
+        inline void format_micros(OutputIterator out, T value)
+        {
+#pragma GCC unroll 6
+            for (std::size_t i = 0; i != 6; ++i)
+            {
+                *--out = static_cast<char>('0' + value % 10);
+                value /= 10;
+            }
+        }
+    }
 }
 
 template<>
@@ -93,14 +110,26 @@ struct fmt::formatter<xtr::timespec>
     }
 
     template<typename FormatContext>
-    auto format(const xtr::timespec ts, FormatContext& ctx) const
+    auto format(const timespec& ts, FormatContext& ctx) const
     {
-        std::tm temp;
-        return fmt::format_to(
-            ctx.out(),
-            "{:%Y-%m-%d %T}.{:06}",
-            *::gmtime_r(&ts.tv_sec, &temp),
-            ts.tv_nsec / 1000);
+        thread_local struct
+        {
+            std::time_t sec;
+            char buf[26] = {"1970-01-01 00:00:00."};
+        } last;
+
+        if (ts.tv_sec != last.sec) [[unlikely]]
+        {
+            fmt::format_to(
+                last.buf,
+                FMT_COMPILE("{:%Y-%m-%d %T}."),
+                fmt::gmtime(ts.tv_sec));
+            last.sec = ts.tv_sec;
+        }
+
+        xtr::detail::format_micros(std::end(last.buf), ts.tv_nsec / 1000);
+
+        return std::copy(std::begin(last.buf), std::end(last.buf), ctx.out());
     }
 };
 
@@ -113,13 +142,13 @@ namespace xtr
 namespace xtr::detail
 {
     [[noreturn, gnu::cold]] void throw_runtime_error(const char* what);
-    [[noreturn, gnu::cold, gnu::format(printf, 1, 2)]]
-    void throw_runtime_error_fmt(const char* format, ...);
+    [[noreturn, gnu::cold, gnu::format(printf, 1, 2)]] void throw_runtime_error_fmt(
+        const char* format, ...);
 
     [[noreturn, gnu::cold]] void throw_system_error(int errnum, const char* what);
 
-    [[noreturn, gnu::cold, gnu::format(printf, 2, 3)]]
-    void throw_system_error_fmt(int errnum, const char* format, ...);
+    [[noreturn, gnu::cold, gnu::format(printf, 2, 3)]] void throw_system_error_fmt(
+        int errnum, const char* format, ...);
 
     [[noreturn, gnu::cold]] void throw_invalid_argument(const char* what);
 
@@ -128,14 +157,15 @@ namespace xtr::detail
 
 #include <cerrno>
 
-#define XTR_TEMP_FAILURE_RETRY(expr)                \
-    (__extension__({                                \
-        decltype(expr) xtr_result;                  \
-        do                                          \
-            xtr_result = (expr);                    \
-        while (xtr_result == -1 && errno == EINTR); \
-        xtr_result;                                 \
-    }))
+#define XTR_TEMP_FAILURE_RETRY(expr)                    \
+    (__extension__(                                     \
+        {                                               \
+            decltype(expr) xtr_result;                  \
+            do                                          \
+                xtr_result = (expr);                    \
+            while (xtr_result == -1 && errno == EINTR); \
+            xtr_result;                                 \
+        }))
 
 #include <bit>
 #include <cassert>
@@ -479,9 +509,9 @@ namespace xtr::detail
         const char* str;
     };
 
-    string_ref(const char*) -> string_ref<const char*>;
-    string_ref(const std::string&) -> string_ref<const char*>;
-    string_ref(const std::string_view&) -> string_ref<std::string_view>;
+    string_ref(const char*)->string_ref<const char*>;
+    string_ref(const std::string&)->string_ref<const char*>;
+    string_ref(const std::string_view&)->string_ref<std::string_view>;
 
     template<>
     struct string_ref<std::string_view>
@@ -708,8 +738,9 @@ public:
 
 public:
     synchronized_ring_buffer(
-        int fd = -1, std::size_t offset = 0, int flags = srb_flags)
-        requires(!is_dynamic)
+        int fd = -1,
+        std::size_t offset = 0,
+        int flags = srb_flags) requires(!is_dynamic)
     {
         m_ = mirrored_memory_mapping{capacity(), fd, offset, flags};
         nread_plus_capacity_ = wrnread_plus_capacity_ = capacity();
@@ -720,9 +751,7 @@ public:
         size_type min_capacity,
         int fd = -1,
         std::size_t offset = 0,
-        int flags = srb_flags)
-        requires is_dynamic
-        :
+        int flags = srb_flags) requires is_dynamic :
         m_(align_to_page_size(
 #if defined(__cpp_lib_int_pow2) && __cpp_lib_int_pow2 >= 202002L
                std::bit_ceil(min_capacity)),
@@ -770,18 +799,19 @@ public:
         size_type sz = wrnread_plus_capacity_ - wrnwritten_;
         const auto b = wrbase_ + clamp(wrnwritten_, wrcapacity());
 
-        while (sz < minsize) [[unlikely]]
-        {
-            if constexpr (!is_non_blocking_v<Tags>)
-                pause();
+        while (sz < minsize)
+            [[unlikely]]
+            {
+                if constexpr (!is_non_blocking_v<Tags>)
+                    pause();
 
-            wrnread_plus_capacity_ =
-                nread_plus_capacity_.load(std::memory_order_acquire);
-            sz = wrnread_plus_capacity_ - wrnwritten_;
+                wrnread_plus_capacity_ =
+                    nread_plus_capacity_.load(std::memory_order_acquire);
+                sz = wrnread_plus_capacity_ - wrnwritten_;
 
-            if constexpr (is_non_blocking_v<Tags>)
-                break;
-        }
+                if constexpr (is_non_blocking_v<Tags>)
+                    break;
+            }
 
         if (is_non_blocking_v<Tags> && sz < minsize) [[unlikely]]
         {
@@ -1327,8 +1357,8 @@ namespace xtr::detail
     };
 
     template<typename T>
-        requires(!std::same_as<std::remove_cvref_t<T>, string_table_entry>)
-    T&& transform_string_table_entry(const std::byte*, T&& value)
+    requires(!std::same_as<std::remove_cvref_t<T>, string_table_entry>) T &&
+        transform_string_table_entry(const std::byte*, T&& value)
     {
         return std::forward<T>(value);
     }
@@ -1346,35 +1376,36 @@ namespace xtr::detail
     }
 
     template<typename Tags, typename T, typename Buffer>
-        requires(std::is_rvalue_reference_v<
-                     decltype(std::forward<T>(std::declval<T>()))> &&
-                 std::same_as<std::remove_cvref_t<T>, std::string>) ||
-                (!is_c_string<T>::value &&
-                 !std::same_as<std::remove_cvref_t<T>, std::string> &&
-                 !std::same_as<std::remove_cvref_t<T>, std::string_view>)
-    T&& build_string_table(std::byte*&, std::byte*&, Buffer&, T&& value)
+    requires(
+        std::is_rvalue_reference_v<decltype(std::forward<T>(std::declval<T>()))>&&
+            std::same_as<std::remove_cvref_t<T>, std::string>) ||
+        (!is_c_string<T>::value &&
+         !std::same_as<std::remove_cvref_t<T>, std::string> &&
+         !std::same_as<std::remove_cvref_t<T>, std::string_view>)
+            T&& build_string_table(std::byte*&, std::byte*&, Buffer&, T&& value)
     {
         return std::forward<T>(value);
     }
 
     template<typename Tags, typename Buffer, typename String>
-        requires std::same_as<String, std::string> ||
-                 std::same_as<String, std::string_view>
-    string_table_entry build_string_table(
-        std::byte*& pos, std::byte*& end, Buffer& buf, const String& sv)
+    requires std::same_as<String, std::string> ||
+        std::same_as<String, std::string_view>
+            string_table_entry build_string_table(
+                std::byte*& pos, std::byte*& end, Buffer& buf, const String& sv)
     {
         std::byte* str_end = pos + sv.length();
-        while (end < str_end) [[unlikely]]
-        {
-            pause();
-            const auto s = buf.write_span();
-            if (s.end() < str_end) [[unlikely]]
+        while (end < str_end)
+            [[unlikely]]
             {
-                if (s.size() == buf.capacity() || is_non_blocking_v<Tags>)
-                    return string_table_entry{string_table_entry::truncated};
+                pause();
+                const auto s = buf.write_span();
+                if (s.end() < str_end) [[unlikely]]
+                {
+                    if (s.size() == buf.capacity() || is_non_blocking_v<Tags>)
+                        return string_table_entry{string_table_entry::truncated};
+                }
+                end = s.end();
             }
-            end = s.end();
-        }
 
         std::memcpy(pos, sv.data(), sv.length());
         pos += sv.length();
@@ -1389,20 +1420,23 @@ namespace xtr::detail
         std::byte* begin = pos;
         while (*str != '\0')
         {
-            while (pos == end) [[unlikely]]
-            {
-                pause();
-                const auto s = buf.write_span();
-                if (s.end() == end) [[unlikely]]
+            while (pos == end)
+                [[unlikely]]
                 {
-                    if (s.size() == buf.capacity() || is_non_blocking_v<Tags>)
+                    pause();
+                    const auto s = buf.write_span();
+                    if (s.end() == end) [[unlikely]]
                     {
-                        pos = begin;
-                        return string_table_entry{string_table_entry::truncated};
+                        if (s.size() == buf.capacity() ||
+                            is_non_blocking_v<Tags>)
+                        {
+                            pos = begin;
+                            return string_table_entry{
+                                string_table_entry::truncated};
+                        }
                     }
+                    end = s.end();
                 }
-                end = s.end();
-            }
             ::new (pos++) char(*str++);
         }
         return string_table_entry(std::size_t(pos - begin));
@@ -1540,11 +1574,13 @@ namespace xtr
 class xtr::sink
 {
 private:
-    using fptr_t = std::byte* (*)(detail::buffer& buf, // output buffer
-                                  std::byte* record,   // pointer to log record
-                                  detail::consumer&,
-                                  const char* timestamp,
-                                  std::string& name) noexcept;
+    using fptr_t =
+        std::byte* (*)(
+            detail::buffer& buf, // output buffer
+            std::byte* record, // pointer to log record
+            detail::consumer&,
+            const char* timestamp,
+            std::string& name) noexcept;
 
 public:
     explicit sink(log_level_t level = log_level_t::info);
@@ -2574,38 +2610,40 @@ namespace xtr
 #define XTR_XSTR(s) XTR_STR(s)
 #define XTR_STR(s)  #s
 
-#define XTR_LOGL_TAGS(TAGS, LEVEL, SINK, ...)                                            \
-    (__extension__({                                                                     \
-        if constexpr (xtr::log_level_t::LEVEL != xtr::log_level_t::debug || !XTR_NDEBUG) \
-        {                                                                                \
-            if ((SINK).level() >= xtr::log_level_t::LEVEL)                               \
-                XTR_LOG_TAGS(TAGS, LEVEL, SINK, __VA_ARGS__);                            \
-            if constexpr (xtr::log_level_t::LEVEL == xtr::log_level_t::fatal)            \
-            {                                                                            \
-                (SINK).sync();                                                           \
-                std::abort();                                                            \
-            }                                                                            \
-        }                                                                                \
-    }))
+#define XTR_LOGL_TAGS(TAGS, LEVEL, SINK, ...)                                                \
+    (__extension__(                                                                          \
+        {                                                                                    \
+            if constexpr (xtr::log_level_t::LEVEL != xtr::log_level_t::debug || !XTR_NDEBUG) \
+            {                                                                                \
+                if ((SINK).level() >= xtr::log_level_t::LEVEL)                               \
+                    XTR_LOG_TAGS(TAGS, LEVEL, SINK, __VA_ARGS__);                            \
+                if constexpr (xtr::log_level_t::LEVEL == xtr::log_level_t::fatal)            \
+                {                                                                            \
+                    (SINK).sync();                                                           \
+                    std::abort();                                                            \
+                }                                                                            \
+            }                                                                                \
+        }))
 
 #define XTR_LOG_TAGS(TAGS, LEVEL, SINK, ...) \
     (__extension__({ XTR_LOG_TAGS_IMPL(TAGS, LEVEL, SINK, __VA_ARGS__); }))
 
-#define XTR_LOG_TAGS_IMPL(TAGS, LEVEL, SINK, FORMAT, ...)              \
-    (__extension__({                                                   \
-        static constexpr auto xtr_fmt =                                \
-            xtr::detail::string{"{}{} {} "} +                          \
-            xtr::detail::rcut<xtr::detail::rindex(__FILE__, '/') + 1>( \
-                __FILE__) +                                            \
-            xtr::detail::string{":"} +                                 \
-            xtr::detail::string{XTR_XSTR(__LINE__) ": " FORMAT "\n"};  \
-        using xtr::nocopy;                                             \
-        (SINK)                                                         \
-            .template log<                                             \
-                FMT_COMPILE(xtr_fmt.str),                              \
-                xtr::log_level_t::LEVEL,                               \
-                void(TAGS)>(__VA_ARGS__);                              \
-    }))
+#define XTR_LOG_TAGS_IMPL(TAGS, LEVEL, SINK, FORMAT, ...)                  \
+    (__extension__(                                                        \
+        {                                                                  \
+            static constexpr auto xtr_fmt =                                \
+                xtr::detail::string{"{}{} {} "} +                          \
+                xtr::detail::rcut<xtr::detail::rindex(__FILE__, '/') + 1>( \
+                    __FILE__) +                                            \
+                xtr::detail::string{":"} +                                 \
+                xtr::detail::string{XTR_XSTR(__LINE__) ": " FORMAT "\n"};  \
+            using xtr::nocopy;                                             \
+            (SINK)                                                         \
+                .template log<                                             \
+                    FMT_COMPILE(xtr_fmt.str),                              \
+                    xtr::log_level_t::LEVEL,                               \
+                    void(TAGS)>(__VA_ARGS__);                              \
+        }))
 
 #include <string>
 
@@ -3197,23 +3235,29 @@ private:
 #include <fmt/format.h>
 
 template<typename T>
-concept iterable = requires(T t) {
+concept iterable = requires(T t)
+{
     std::begin(t);
     std::end(t);
 };
 
 template<typename T>
-concept associative_container = requires(T t) { typename T::mapped_type; };
+concept associative_container = requires(T t)
+{
+    typename T::mapped_type;
+};
 
 template<typename T>
-concept tuple_like = requires(T t) { std::tuple_size<T>(); };
+concept tuple_like = requires(T t)
+{
+    std::tuple_size<T>();
+};
 
 namespace fmt
 {
 
     template<typename T>
-        requires tuple_like<T> && (!iterable<T>)
-    struct formatter<T>
+    requires tuple_like<T> &&(!iterable<T>)struct formatter<T>
     {
         template<typename ParseContext>
         constexpr auto parse(ParseContext& ctx)
@@ -3237,7 +3281,7 @@ namespace fmt
             std::index_sequence<Index, Indexes...>) const
         {
             fmt::format_to(ctx.out(), "(");
-            if (std::tuple_size_v<T> > 0)
+            if (std::tuple_size_v < T >> 0)
             {
                 fmt::format_to(ctx.out(), FMT_COMPILE("{}"), std::get<0>(value));
                 ((fmt::format_to(
@@ -3288,9 +3332,8 @@ namespace fmt
     };
 
     template<typename T>
-        requires iterable<T> && (!std::is_constructible_v<T, const char*>) &&
-                 (!associative_container<T>)
-    struct formatter<T>
+    requires iterable<T> &&(!std::is_constructible_v<T, const char*>)&&(
+        !associative_container<T>)struct formatter<T>
     {
         template<typename ParseContext>
         constexpr auto parse(ParseContext& ctx)
