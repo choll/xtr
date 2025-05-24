@@ -315,7 +315,7 @@ private:
     struct path_fixture_impl
     {
         template<typename Clock>
-        path_fixture_impl(Clock&& clock)
+        explicit path_fixture_impl(Clock&& clock)
         :
             log_(
                 tmp_.path_,
