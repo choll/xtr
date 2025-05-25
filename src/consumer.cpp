@@ -97,7 +97,7 @@ bool xtr::detail::consumer::run_once() noexcept
         // Read the clock once per loop over sinks
         if (ts_stale)
         {
-            fmt::format_to(ts, FMT_COMPILE("{}"), xtr::timespec{clock()});
+            fmt::format_to(ts, FMT_COMPILE("{}"), xtr::timespec{clock_()});
             ts_stale = false;
         }
 
