@@ -72,6 +72,11 @@ Logger
 
 .. _sink:
 
+Option Flags
+------------
+
+.. doxygenenum:: xtr::option_flags_t
+
 Sink
 ----
 

@@ -252,7 +252,7 @@ The main logger class. When constructed a background thread will be created whic
 Public Functions
 .INDENT 7.0
 .TP
-.B template<typename Clock = std::chrono::system_clock> inline explicit logger(const char *path, \fI\%Clock\fP &&clock = \fI\%Clock\fP(), std::string command_path = \fI\%default_command_path\fP(), \fI\%log_level_style_t\fP level_style = \fI\%default_log_level_style\fP) 
+.B template<typename Clock = std::chrono::system_clock> inline explicit logger(const char *path, \fI\%Clock\fP &&clock = \fI\%Clock\fP(), std::string command_path = \fI\%default_command_path\fP(), \fI\%log_level_style_t\fP level_style = \fI\%default_log_level_style\fP, \fI\%option_flags_t\fP options = \fI\%option_flags_t\fP::\fI\%none\fP) 
 Path constructor. The first argument is the path to a file which should be opened and logged to. The file will be opened in append mode, and will be created if it does not exist. Errors will be written to stdout.
 .sp
 .INDENT 7.0
@@ -264,12 +264,14 @@ clock: A function returning the current time of day as a std::timespec. This fun
 command_path: The path where the local domain socket used to communicate with \fI\%xtrctl\fP <\fBxtrctl.html\fP> should be created. The default behaviour is to create sockets in $XDG_RUNTIME_DIR (if set, otherwise \(dq/run/user/<uid>\(dq). If that directory does not exist or is inaccessible then $TMPDIR (if set, otherwise \(dq/tmp\(dq) will be used instead. See \fI\%default_command_path\fP for further details. To prevent a socket from being created, pass \fI\%null_command_path\fP\&. 
 .IP \(bu 2
 level_style: The log level style that will be used to prefix each log statement\-\-\-please refer to the \fI\%log_level_style_t\fP documentation for details. 
+.IP \(bu 2
+options: Logger options, see \fI\%option_flags_t\fP\&. 
 .UNINDENT
 
 .UNINDENT
 .INDENT 7.0
 .TP
-.B template<typename Clock = std::chrono::system_clock> inline explicit logger(FILE *stream = stderr, \fI\%Clock\fP &&clock = \fI\%Clock\fP(), std::string command_path = \fI\%default_command_path\fP(), \fI\%log_level_style_t\fP level_style = \fI\%default_log_level_style\fP) 
+.B template<typename Clock = std::chrono::system_clock> inline explicit logger(FILE *stream = stderr, \fI\%Clock\fP &&clock = \fI\%Clock\fP(), std::string command_path = \fI\%default_command_path\fP(), \fI\%log_level_style_t\fP level_style = \fI\%default_log_level_style\fP, \fI\%option_flags_t\fP options = \fI\%option_flags_t\fP::\fI\%none\fP) 
 Stream constructor.
 .sp
 It is expected that this constructor will be used with streams such as stdout or stderr. If a stream that has been opened by the user is to be passed to the logger then the \fI\%stream constructor with reopen path\fP constructor is recommended instead, as this will mean that the log file can be rotated\-\-\-please refer to the xtrctl documentation for the \fI\%reopening log files\fP <\fBxtrctl.html#reopening-log-files\fP> command for details.
@@ -283,6 +285,8 @@ clock: Please refer to the \fI\%description\fP above.
 command_path: Please refer to the \fI\%description\fP above. 
 .IP \(bu 2
 level_style: The log level style that will be used to prefix each log statement\-\-\-please refer to the \fI\%log_level_style_t\fP documentation for details. 
+.IP \(bu 2
+options: Logger options, see \fI\%option_flags_t\fP\&. 
 .UNINDENT
 
 .sp
@@ -295,7 +299,7 @@ Reopening the log file via the \fI\%xtrctl\fP <\fBxtrctl.html#rotating-log-files
 .UNINDENT
 .INDENT 7.0
 .TP
-.B template<typename Clock = std::chrono::system_clock> inline logger(std::string reopen_path, FILE *stream, \fI\%Clock\fP &&clock = \fI\%Clock\fP(), std::string command_path = \fI\%default_command_path\fP(), \fI\%log_level_style_t\fP level_style = \fI\%default_log_level_style\fP) 
+.B template<typename Clock = std::chrono::system_clock> inline logger(std::string reopen_path, FILE *stream, \fI\%Clock\fP &&clock = \fI\%Clock\fP(), std::string command_path = \fI\%default_command_path\fP(), \fI\%log_level_style_t\fP level_style = \fI\%default_log_level_style\fP, \fI\%option_flags_t\fP options = \fI\%option_flags_t\fP::\fI\%none\fP) 
  Stream constructor with reopen path.
 .sp
 .INDENT 7.0
@@ -309,6 +313,8 @@ clock: Please refer to the \fI\%description\fP above.
 command_path: Please refer to the \fI\%description\fP above. 
 .IP \(bu 2
 level_style: The log level style that will be used to prefix each log statement\-\-\-please refer to the \fI\%log_level_style_t\fP documentation for details. 
+.IP \(bu 2
+options: Logger options, see \fI\%option_flags_t\fP\&. 
 .UNINDENT
 
 .sp
@@ -321,7 +327,7 @@ Reopening the log file via the \fI\%xtrctl\fP <\fBxtrctl.html#rotating-log-files
 .UNINDENT
 .INDENT 7.0
 .TP
-.B template<typename Clock = std::chrono::system_clock> inline explicit logger(\fI\%storage_interface_ptr\fP storage, \fI\%Clock\fP &&clock = \fI\%Clock\fP(), std::string command_path = \fI\%default_command_path\fP(), \fI\%log_level_style_t\fP level_style = \fI\%default_log_level_style\fP) 
+.B template<typename Clock = std::chrono::system_clock> inline explicit logger(\fI\%storage_interface_ptr\fP storage, \fI\%Clock\fP &&clock = \fI\%Clock\fP(), std::string command_path = \fI\%default_command_path\fP(), \fI\%log_level_style_t\fP level_style = \fI\%default_log_level_style\fP, \fI\%option_flags_t\fP options = \fI\%option_flags_t\fP::\fI\%none\fP) 
  Custom back\-end constructor (please refer to the \fI\%custom back\-ends\fP <\fBguide.html#custom-back-ends\fP> section of the user guide for further details on implementing a custom back\-end).
 .sp
 .INDENT 7.0
@@ -333,13 +339,15 @@ clock: Please refer to the \fI\%description\fP above.
 command_path: Please refer to the \fI\%description\fP above. 
 .IP \(bu 2
 level_style: The log level style that will be used to prefix each log statement\-\-\-please refer to the \fI\%log_level_style_t\fP documentation for details. 
+.IP \(bu 2
+options: Logger options, see \fI\%option_flags_t\fP\&. 
 .UNINDENT
 
 .UNINDENT
 .INDENT 7.0
 .TP
 .B ~logger() = default 
-Logger destructor. This function will join the consumer thread. If sinks are still connected to the logger then the consumer thread will not terminate until the sinks disconnect, i.e. the destructor will block until all connected sinks disconnect from the logger. 
+Logger destructor. This function will join the consumer thread if it is in use. If sinks are still connected to the logger then the consumer thread will not terminate until the sinks disconnect, i.e. the destructor will block until all connected sinks disconnect from the logger. If the consumer thread has been disabled via \fI\%option_flags_t::disable_worker_thread\fP then the destructor will similarly block until \fI\%logger::pump_io\fP returns false. 
 .UNINDENT
 .INDENT 7.0
 .TP
@@ -388,6 +396,42 @@ Sets the logger log level style\-\-\-please refer to the \fI\%log_level_style_t\
 .TP
 .B void set_default_log_level(\fI\%log_level_t\fP level) 
 Sets the default log level. Sinks created via future calls to \fI\%get_sink\fP will be created with the given log level. 
+.UNINDENT
+.INDENT 7.0
+.TP
+.B bool pump_io() 
+If the \fI\%option_flags_t::disable_worker_thread\fP option has been passed to \fI\%logger::logger\fP then this function must be called in order to process messages written to the logger. Users may call this function from a thread of their choosing and may interleave calls with other background tasks that their program needs to perform.
+.sp
+For best results when interleaving with other tasks ensure that io_uring mode is enabled (so that I/O will be performed asynchronously leaving more time for other tasks to run). See \fI\%XTR_USE_IO_URING\fP for details on enabling io_uring.
+.sp
+\fBNOTE:\fP
+.INDENT 7.0
+.INDENT 3.5
+In order to shut down the logger pump_io must be called until it returns false. If pump_io has not yet returned false then logger::~logger will block until it returns false. Do not call pump_io again after it has returned false. 
+.UNINDENT
+.UNINDENT
+.INDENT 7.0
+.TP
+.B Returns
+True if any sinks or the logger are still active, false if no sinks are active and the logger has shut down. Once false has been returned pump_io should not be called again.
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.SH OPTION FLAGS
+.INDENT 0.0
+.TP
+.B enum class xtr::option_flags_t 
+Passed to \fI\%logger::logger\fP to control logger behaviour. 
+.sp
+\fIValues:\fP
+.INDENT 7.0
+.TP
+.B enumerator none 
+.UNINDENT
+.INDENT 7.0
+.TP
+.B enumerator disable_worker_thread 
+Disables the background worker thread. Users must call \fI\%logger::pump_io\fP to process log messages. 
 .UNINDENT
 .UNINDENT
 .SH SINK

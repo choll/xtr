@@ -1,3 +1,4 @@
+'\" t
 .\" Man page generated from reStructuredText.
 .
 .
@@ -41,8 +42,7 @@ to disk or passes it to a custom back\-end if one is in use.
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 +\-\-\-\-\-\-+
 | Sink |\-\-\-[queue]\-\-\-+
 +\-\-\-\-\-\-+             |
@@ -54,8 +54,7 @@ to disk or passes it to a custom back\-end if one is in use.
 +\-\-\-\-\-\-+             |
 | Sink |\-\-\-[queue]\-\-\-+
 +\-\-\-\-\-\-+
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
@@ -76,8 +75,7 @@ Sink creation via \fI\%xtr::logger::get_sink()\fP:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 #include <xtr/logger.hpp>
 
 xtr::logger log;
@@ -85,8 +83,7 @@ xtr::logger log;
 xtr::sink s = log.get_sink(\(dqMain\(dq);
 
 XTR_LOG(s, \(dqHello world\(dq);
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
@@ -96,8 +93,7 @@ Sink creation via \fI\%xtr::logger::register_sink()\fP:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 #include <xtr/logger.hpp>
 
 xtr::logger log;
@@ -106,8 +102,7 @@ xtr::sink s;
 log.register_sink(s, \(dqMain\(dq);
 
 XTR_LOG(s, \(dqHello world\(dq);
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
@@ -117,8 +112,7 @@ Sink creation via copying:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 #include <xtr/logger.hpp>
 
 xtr::logger log;
@@ -130,8 +124,7 @@ s2.set_name(\(dqCopy\(dq);
 
 XTR_LOG(s1, \(dqHello world\(dq);
 XTR_LOG(s2, \(dqHello world\(dq);
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
@@ -146,8 +139,7 @@ style formatting as found in {fmt}. The {fmt} format string documentation can be
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 #include <xtr/logger.hpp>
 
 xtr::logger log;
@@ -157,8 +149,7 @@ xtr::sink s = log.get_sink(\(dqMain\(dq);
 XTR_LOG(s, \(dqHello {}\(dq, 123); // Hello 123
 XTR_LOG(s, \(dqHello {}\(dq, 123.456); // Hello 123.456
 XTR_LOG(s, \(dqHello {:.1f}\(dq, 123.456); // Hello 123.1
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
@@ -173,8 +164,7 @@ passed by reference by wrapping them in a call to \fI\%xtr::nocopy()\fP\&.
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 #include <xtr/logger.hpp>
 
 xtr::logger log;
@@ -188,8 +178,7 @@ XTR_LOG(s, \(dqHello {}\(dq, nocopy(arg));
 
 // Here \(aqarg\(aq is passed by value:
 XTR_LOG(s, \(dqHello {}\(dq, arg);
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
@@ -202,11 +191,9 @@ following log statement:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 XTR_LOG(s, \(dq{}\(dq, str);
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
@@ -221,11 +208,9 @@ string arguments may be wrapped in a call to \fI\%xtr::nocopy()\fP:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 XTR_LOG(sink, \(dq{}\(dq, nocopy(str));
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
@@ -256,8 +241,7 @@ so in the following example the function \fBfoo()\fP is not called:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 #include <xtr/logger.hpp>
 
 xtr::logger log;
@@ -267,8 +251,7 @@ xtr::sink s = log.get_sink(\(dqMain\(dq);
 s.set_level(xtr::log_level_t::error);
 
 XTR_LOGL(info, s, \(dqHello {}\(dq, foo());
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
@@ -312,8 +295,7 @@ Formatting a custom type via operator<<:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 #include <xtr/logger.hpp>
 
 #include <fmt/ostream.h>
@@ -340,8 +322,7 @@ int main()
 
     return 0;
 }
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
@@ -351,8 +332,7 @@ Formatting a custom type via fmt::formatter:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 #include <xtr/logger.hpp>
 
 namespace
@@ -386,8 +366,7 @@ int main()
 
     return 0;
 }
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
@@ -420,9 +399,8 @@ Any tuple\-like type\-\-\-specifically any type for which a
 The logger provides a choice of time\-sources when logging messages, each with
 varying levels of accuracy and performance. The options are listed below.
 .TS
-center;
-|l|l|l|.
-_
+box center;
+l|l|l.
 T{
 Source
 T}	T{
@@ -466,7 +444,6 @@ T}	T{
 .IP \(bu 2
 .UNINDENT
 T}
-_
 .TE
 .sp
 The performance of the TSC source is listed as either low or medium as it depends
@@ -510,8 +487,7 @@ argument. Any type may be passed as long as it has a formatter defined
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 #include <xtr/logger.hpp>
 
     template<>
@@ -540,8 +516,7 @@ argument. Any type may be passed as long as it has a formatter defined
 
             return 0;
     }
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
@@ -577,8 +552,7 @@ on Linux.
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 #include <xtr/logger.hpp>
 
 #include <cerrno>
@@ -608,8 +582,7 @@ int main()
 
     return 0;
 }
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
@@ -639,8 +612,7 @@ The logger allows custom back\-ends to be used. This is done by implementing the
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 struct xtr::storage_interface
 {
     virtual std::span<char> allocate_buffer() = 0;
@@ -657,8 +629,7 @@ struct xtr::storage_interface
 };
 
 using storage_interface_ptr = std::unique_ptr<storage_interface>;
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
@@ -723,8 +694,7 @@ to create a logger with a storage back\-end that discards all input:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 #include <xtr/logger.hpp>
 
 #include <span>
@@ -770,8 +740,7 @@ int main()
 
     return 0;
 }
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
@@ -792,19 +761,16 @@ The following example will output:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 info: 2021\-09\-17 23:36:39.043028 Main <source>:18: Hello world
 not\-info: 2021\-09\-17 23:36:39.043028 Main <source>:19: Hello world
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 #include <xtr/logger.hpp>
 
 xtr::logger log;
@@ -822,8 +788,7 @@ log.set_log_level_style(
 
 XTR_LOGL(info, s, \(dqHello world\(dq);
 XTR_LOGL(error, s, \(dqHello world\(dq);
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
@@ -840,8 +805,7 @@ level styles.
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 #include <xtr/logger.hpp>
 
 xtr::logger log;
@@ -858,8 +822,7 @@ XTR_LOGL(debug, s, \(dqDebug\(dq);
 XTR_LOGL(info, s, \(dqInfo\(dq);
 XTR_LOGL(warning, s, \(dqWarning\(dq);
 XTR_LOGL(error, s, \(dqError\(dq);
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
@@ -869,14 +832,12 @@ The output of the above example will be something like:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 <7>2022\-12\-18 16:01:16.205253 Main xtrdemo.cpp:12: Debug
 <6>2022\-12\-18 16:01:16.205259 Main xtrdemo.cpp:13: Info
 <4>2022\-12\-18 16:01:16.205259 Main xtrdemo.cpp:14: Warning
 <3>2022\-12\-18 16:01:16.205259 Main xtrdemo.cpp:15: Error
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
@@ -886,14 +847,12 @@ the messages logged to the journal can be viewed via e.g.
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 Dec 18 16:01:16 xtrdemo[1008402]: 2022\-12\-18 16:01:16.205253 Main xtrdemo.cpp:13: Debug
 Dec 18 16:01:16 xtrdemo[1008402]: 2022\-12\-18 16:01:16.205259 Main xtrdemo.cpp:14: Info
 Dec 18 16:01:16 xtrdemo[1008402]: 2022\-12\-18 16:01:16.205259 Main xtrdemo.cpp:15: Warning
 Dec 18 16:01:16 xtrdemo[1008402]: 2022\-12\-18 16:01:16.205259 Main xtrdemo.cpp:16: Error
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .SH DISABLING EXCEPTIONS

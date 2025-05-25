@@ -281,7 +281,7 @@ private:
                 test_clock{&clock_nanos_},
                 xtr::null_command_path,
                 xtr::default_log_level_style,
-                xtr::option_flags::disable_worker_thread)
+                xtr::option_flags_t::disable_worker_thread)
         {
             worker_ =
                 std::thread(

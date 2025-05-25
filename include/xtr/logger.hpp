@@ -34,11 +34,9 @@
 #include <chrono>
 #include <cstdio>
 #include <ctime>
-#include <memory>
 #include <mutex>
 #include <string>
 #include <thread>
-#include <type_traits>
 #include <utility>
 
 #include <stdio.h>
@@ -47,7 +45,18 @@ namespace xtr
 {
     class logger;
 
-    enum class option_flags {none, disable_worker_thread};
+    /**
+     * Passed to @ref logger::logger to control logger behaviour.
+     */
+    enum class option_flags_t
+    {
+        none,
+        /**
+         * Disables the background worker thread. Users must call @ref
+         * logger::pump_io to process log messages.
+         */
+        disable_worker_thread
+    };
 
     // This can be replaced with a template alias once clang supports it:
     // template<typename T> using nocopy = detail::string_ref<T>;
@@ -127,7 +136,7 @@ public:
      * @arg level_style: The log level style that will be used to prefix each log
      *                   statement\---please refer to the @ref log_level_style_t
      *                   documentation for details.
-     * @arg options: XXX TODO
+     * @arg options: Logger options, see @ref option_flags_t.
      */
     template<typename Clock = std::chrono::system_clock>
     explicit logger(
@@ -135,7 +144,7 @@ public:
         Clock&& clock = Clock(),
         std::string command_path = default_command_path(),
         log_level_style_t level_style = default_log_level_style,
-        option_flags options = option_flags::none)
+        option_flags_t options = option_flags_t::none)
     :
         logger(
             make_fd_storage(path),
@@ -170,7 +179,7 @@ public:
      * @arg level_style: The log level style that will be used to prefix each log
      *                   statement\---please refer to the @ref log_level_style_t
      *                   documentation for details.
-     * @arg options: XXX TODO
+     * @arg options: Logger options, see @ref option_flags_t.
      */
     template<typename Clock = std::chrono::system_clock>
     explicit logger(
@@ -178,7 +187,7 @@ public:
         Clock&& clock = Clock(),
         std::string command_path = default_command_path(),
         log_level_style_t level_style = default_log_level_style,
-        option_flags options = option_flags::none)
+        option_flags_t options = option_flags_t::none)
     :
         logger(
             make_fd_storage(stream, null_reopen_path),
@@ -210,7 +219,7 @@ public:
      * @arg level_style: The log level style that will be used to prefix each log
      *                   statement\---please refer to the @ref log_level_style_t
      *                   documentation for details.
-     * @arg options: XXX TODO
+     * @arg options: Logger options, see @ref option_flags_t.
      */
     template<typename Clock = std::chrono::system_clock>
     logger(
@@ -219,7 +228,7 @@ public:
         Clock&& clock = Clock(),
         std::string command_path = default_command_path(),
         log_level_style_t level_style = default_log_level_style,
-        option_flags options = option_flags::none)
+        option_flags_t options = option_flags_t::none)
     :
         logger(
             make_fd_storage(stream, std::move(reopen_path)),
@@ -250,7 +259,7 @@ public:
      * @arg level_style: The log level style that will be used to prefix each log
      *                   statement\---please refer to the @ref log_level_style_t
      *                   documentation for details.
-     * @arg options: XXX TODO
+     * @arg options: Logger options, see @ref option_flags_t.
      */
     template<typename Clock = std::chrono::system_clock>
     explicit logger(
@@ -258,7 +267,7 @@ public:
         Clock&& clock = Clock(),
         std::string command_path = default_command_path(),
         log_level_style_t level_style = default_log_level_style,
-        option_flags options = option_flags::none)
+        option_flags_t options = option_flags_t::none)
     :
         consumer_(
             detail::buffer(std::move(storage), level_style),
@@ -266,7 +275,7 @@ public:
             std::move(command_path),
             make_clock(std::forward<Clock>(clock)))
     {
-        if (options != option_flags::disable_worker_thread)
+        if (options != option_flags_t::disable_worker_thread)
         {
             // The consumer thread must be started after control_ has been
             // constructed
@@ -283,10 +292,13 @@ public:
     }
 
     /**
-     * Logger destructor. This function will join the consumer thread. If
-     * sinks are still connected to the logger then the consumer thread
-     * will not terminate until the sinks disconnect, i.e. the destructor
-     * will block until all connected sinks disconnect from the logger.
+     * Logger destructor. This function will join the consumer thread if it is
+     * in use. If sinks are still connected to the logger then the consumer
+     * thread will not terminate until the sinks disconnect, i.e. the destructor
+     * will block until all connected sinks disconnect from the logger. If the
+     * consumer thread has been disabled via @ref
+     * option_flags_t::disable_worker_thread then the destructor will similarly
+     * block until @ref logger::pump_io returns false.
      */
     ~logger() = default;
 
@@ -300,23 +312,23 @@ public:
     }
 
     /**
-     *  Creates a sink with the specified name. Note that each call to this
-     *  function creates a new sink; if repeated calls are made with the
-     *  same name, separate sinks with the name name are created.
+     * Creates a sink with the specified name. Note that each call to this
+     * function creates a new sink; if repeated calls are made with the
+     * same name, separate sinks with the name name are created.
      *
-     *  @param name: The name for the given sink.
+     * @param name: The name for the given sink.
      */
     [[nodiscard]] sink get_sink(std::string name);
 
     /**
-     *  Registers the sink with the logger. Note that the sink name does not
-     *  need to be unique; if repeated calls are made with the same name,
-     *  separate sinks with the same name are registered.
+     * Registers the sink with the logger. Note that the sink name does not
+     * need to be unique; if repeated calls are made with the same name,
+     * separate sinks with the same name are registered.
      *
-     *  @param s: The sink to register.
-     *  @param name: The name for the given sink.
+     * @param s: The sink to register.
+     * @param name: The name for the given sink.
      *
-     *  @pre The sink must be closed.
+     * @pre The sink must be closed.
      */
     void register_sink(sink& s, std::string name) noexcept;
 
@@ -339,12 +351,25 @@ public:
     void set_default_log_level(log_level_t level);
 
     /**
-     * XXX ADD NOTES TO DESTRUCTOR, ADD NOTES TO NO THREAD OPTION
-     * COMMENT THAT IT WILL HAVE TO BE CALLED ON ANOTHER THREAD
-     * COMMENT THAT IT MUST BE CALLED UNTIL IT RETURNS FALSE
-     * COMMENT THAT AFTER IT RETURNS FALSE IT MUST NOT BE CALLED
-     * COMMENT ON RETURN FALSE WHEN ALL SINKS AND LOGGER HAVE DESTRUCTED
-     * COMMENT THAT LOGGER DESTRUCTOR WILL NOT COMPLETE IF IT IS NOT CALLED
+     * If the @ref option_flags_t::disable_worker_thread option has been passed
+     * to @ref logger::logger then this function must be called in order to
+     * process messages written to the logger. Users may call this function from
+     * a thread of their choosing and may interleave calls with other background
+     * tasks that their program needs to perform.
+     *
+     * For best results when interleaving with other tasks ensure that io_uring
+     * mode is enabled (so that I/O will be performed asynchronously leaving
+     * more time for other tasks to run). See @ref XTR_USE_IO_URING for details
+     * on enabling io_uring.
+     *
+     * @return True if any sinks or the logger are still active, false if no
+     * sinks are active and the logger has shut down. Once false has been
+     * returned pump_io should not be called again.
+     *
+     * @note In order to shut down the logger pump_io must be called until it
+     * returns false. If pump_io has not yet returned false then @ref
+     * logger::~logger will block until it returns false. Do not call pump_io
+     * again after it has returned false.
      */
     bool pump_io();
 
