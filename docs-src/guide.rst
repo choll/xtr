@@ -521,7 +521,7 @@ Disabling the Background Consumer Thread
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The consumer thread can be disabled by passing the
-:cpp:enum:`xtr::option_flags_t::disable_worker_thread` flag to
+:cpp:enumerator:`xtr::option_flags_t::disable_worker_thread` flag to
 :cpp:func:`xtr::logger::logger`. Users should then run
 :cpp:func:`xtr::logger::pump_io` on a thread of their choosing in order to
 process messages written to the logger.
