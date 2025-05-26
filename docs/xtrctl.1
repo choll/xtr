@@ -50,9 +50,11 @@ log messages are displayed. For example:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.EX
+.nf
+.ft C
 ExampleName (info) 64K capacity, 0K used, 0 dropped
-.EE
+.ft P
+.fi
 .UNINDENT
 .UNINDENT
 .sp
@@ -77,7 +79,8 @@ the \fIpostrotate\fP script defined in logrotate\(aqs configuration file:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.EX
+.nf
+.ft C
 /path/to/your/log {
     rotate 5
     weekly
@@ -85,7 +88,8 @@ the \fIpostrotate\fP script defined in logrotate\(aqs configuration file:
         xtrctl reopen /path/to/xtrctl/socket
     endscript
 }
-.EE
+.ft P
+.fi
 .UNINDENT
 .UNINDENT
 .SH PATTERNS
@@ -124,14 +128,16 @@ Querying the status of all sinks:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.EX
+.nf
+.ft C
 > xtrctl status /run/user/1000/xtrctl.7852.0
 Test0 (info) 64K capacity, 0K used, 0 dropped
 Test1 (info) 64K capacity, 0K used, 0 dropped
 Test2 (info) 64K capacity, 0K used, 0 dropped
 Test3 (info) 64K capacity, 0K used, 0 dropped
 Test4 (info) 64K capacity, 0K used, 0 dropped
-.EE
+.ft P
+.fi
 .UNINDENT
 .UNINDENT
 .sp
@@ -139,10 +145,12 @@ Setting the level of all sinks to \(aqerror\(aq:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.EX
+.nf
+.ft C
 > xtrctl level error /run/user/1000/xtrctl.7852.0
 Success
-.EE
+.ft P
+.fi
 .UNINDENT
 .UNINDENT
 .sp
@@ -150,10 +158,12 @@ Setting the level of sinks matching a pattern to \(aqwarning\(aq:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.EX
+.nf
+.ft C
 > xtrctl level warning \(aqTest[0\-2]\(aq /run/user/1000/xtrctl.7852.0
 Success
-.EE
+.ft P
+.fi
 .UNINDENT
 .UNINDENT
 .sp
@@ -161,12 +171,14 @@ Querying the status of sinks matching a pattern:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.EX
+.nf
+.ft C
 > xtrctl status \(aqTest[0\-2]\(aq /run/user/1000/xtrctl.7852.0
 Test0 (warning) 64K capacity, 0K used, 0 dropped
 Test1 (warning) 64K capacity, 0K used, 0 dropped
 Test2 (warning) 64K capacity, 0K used, 0 dropped
-.EE
+.ft P
+.fi
 .UNINDENT
 .UNINDENT
 .SH ACCESSING XTRCTL VIA CONAN
@@ -175,11 +187,13 @@ Add a \fIvirtualenv\fP generator, for example if using conanfile.txt:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.EX
+.nf
+.ft C
 [generators]
 virtualenv
 \&...etc..
-.EE
+.ft P
+.fi
 .UNINDENT
 .UNINDENT
 .sp
