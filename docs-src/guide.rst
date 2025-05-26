@@ -517,6 +517,57 @@ Example
 
 View this example on `Compiler Explorer <https://godbolt.org/z/1vh5exK4K>`__.
 
+Disabling the Background Consumer Thread
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The consumer thread can be disabled by passing the
+:cpp:enum:`xtr::option_flags_t::disable_worker_thread` flag to
+:cpp:func:`xtr::logger::logger`. Users should then run
+:cpp:func:`xtr::logger::pump_io` on a thread of their choosing in order to
+process messages written to the logger.
+
+Example
+^^^^^^^
+
+.. code-block:: c++
+
+    #include <xtr/logger.hpp>
+
+    #include <chrono>
+    #include <cstdio>
+    #include <thread>
+
+    int main()
+    {
+        std::jthread thread;
+        xtr::logger log(
+            stderr,
+            std::chrono::system_clock(),
+            xtr::default_command_path(),
+            xtr::default_log_level_style,
+            xtr::option_flags_t::disable_worker_thread);
+
+        thread = std::jthread(
+            [&log]()
+            {
+                while (log.pump_io())
+                    ;
+            });
+
+        xtr::sink s = log.get_sink("Main");
+
+        XTR_LOG(s, "Hello world");
+
+        return 0;
+    }
+
+View this example on `Compiler Explorer <https://godbolt.org/z/G6v5G1MrG>`__.
+
+Note that :cpp:func:`xtr::logger::pump_io` will only return false after all
+sinks have been closed and the logger has destructed, in order to ensure no log
+data is lost. This means that the logger should be destructed before attempting
+to join the background thread (otherwise a deadlock would occur).
+
 Log Message Sanitizing
 ----------------------
 
