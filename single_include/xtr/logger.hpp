@@ -3282,10 +3282,11 @@ private:
     friend sink;
 };
 
-#include <concepts>
 #include <cstddef>
+#include <type_traits>
 #include <utility>
 
+#include <fmt/compile.h>
 #include <fmt/format.h>
 
 template<typename T>
