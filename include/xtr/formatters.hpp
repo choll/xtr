@@ -21,6 +21,8 @@
 #ifndef XTR_FORMATTERS_HPP
 #define XTR_FORMATTERS_HPP
 
+#include "detail/concepts.hpp"
+
 #include <cstddef>
 #include <type_traits>
 #include <utility>
@@ -28,22 +30,13 @@
 #include <fmt/compile.h>
 #include <fmt/format.h>
 
-template<typename T>
-concept iterable = requires(T t) { std::begin(t); std::end(t); };
-
-template<typename T>
-concept associative_container = requires(T t) { typename T::mapped_type; };
-
-template<typename T>
-concept tuple_like = requires(T t) { std::tuple_size<T>(); };
-
 namespace fmt
 {
     // Note that https://gcc.gnu.org/bugzilla/show_bug.cgi?id=92944 prevents
     // writing fmt::formatter
 
     template<typename T>
-    requires tuple_like<T> && (!iterable<T>)
+    requires xtr::detail::tuple_like<T> && (!xtr::detail::iterable<T>)
     struct formatter<T>
     {
         template<typename ParseContext>
@@ -74,7 +67,7 @@ namespace fmt
         }
     };
 
-    template<associative_container T>
+    template<xtr::detail::associative_container T>
     struct formatter<T>
     {
         template<typename ParseContext>
@@ -104,9 +97,9 @@ namespace fmt
 
     template<typename T>
     requires
-        iterable<T> &&
+        xtr::detail::iterable<T> &&
         (!std::is_constructible_v<T, const char*>) &&
-        (!associative_container<T>)
+        (!xtr::detail::associative_container<T>)
     struct formatter<T>
     {
         template<typename ParseContext>

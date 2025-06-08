@@ -207,7 +207,7 @@ private:
     void post(Func&& func) noexcept(XTR_NOTHROW_INGESTIBLE(Func, func));
 
     template<auto Format, auto Level, typename Tags, typename... Args>
-    void post_with_str_table(Args&&... args)
+    void post_variable_len(Args&&... args)
         noexcept((XTR_NOTHROW_INGESTIBLE(Args, args) && ...));
 
     template<typename Func>
@@ -263,13 +263,13 @@ void xtr::sink::log_impl(Args&&... args)
             std::is_same<std::remove_cvref_t<Args>, std::string_view>...,
             std::is_same<std::remove_cvref_t<Args>, std::string>...>;
     if constexpr (is_str)
-        post_with_str_table<Format, Level, Tags>(std::forward<Args>(args)...);
+        post_variable_len<Format, Level, Tags>(std::forward<Args>(args)...);
     else
         post<Format, Level, Tags>(make_lambda<Tags>(std::forward<Args>(args)...));
 }
 
 template<auto Format, auto Level, typename Tags, typename... Args>
-void xtr::sink::post_with_str_table(Args&&... args)
+void xtr::sink::post_variable_len(Args&&... args)
     noexcept((XTR_NOTHROW_INGESTIBLE(Args, args) && ...))
 {
     using lambda_t =
@@ -302,7 +302,7 @@ void xtr::sink::post_with_str_table(Args&&... args)
     auto str_cur = str_pos;
     auto str_end = s.end();
 
-    copy(s.begin(), &detail::trampolineS<Format, Level, detail::consumer, lambda_t>);
+    copy(s.begin(), &detail::trampolineV<Format, Level, detail::consumer, lambda_t>);
     copy(
         func_pos,
         make_lambda<Tags>(

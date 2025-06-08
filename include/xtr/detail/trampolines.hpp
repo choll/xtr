@@ -109,7 +109,7 @@ namespace xtr::detail
     //                   |                           |
     //                   +---------------------------+
     template<auto Format, auto Level, typename State, typename Func>
-    std::byte* trampolineS(
+    std::byte* trampolineV(
         buffer& buf,
         std::byte* record,
         State&,
