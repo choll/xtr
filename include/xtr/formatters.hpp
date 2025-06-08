@@ -21,10 +21,11 @@
 #ifndef XTR_FORMATTERS_HPP
 #define XTR_FORMATTERS_HPP
 
-#include <concepts>
 #include <cstddef>
+#include <type_traits>
 #include <utility>
 
+#include <fmt/compile.h>
 #include <fmt/format.h>
 
 template<typename T>
