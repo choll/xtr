@@ -13,7 +13,7 @@
  * requires rebuilding libxtr if set.
  */
 #if !defined(XTR_SINK_CAPACITY)
-#define XTR_SINK_CAPACITY (256 * 1024)
+#define XTR_SINK_CAPACITY (256UL * 1024UL)
 #endif
 
 /**
