@@ -56,13 +56,15 @@ Creating a sink:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.EX
+.nf
+.ft C
 #include <xtr/logger.hpp>
 
 xtr::logger log;
 
 xtr::sink s = log.get_sink(\(dqMain\(dq);
-.EE
+.ft P
+.fi
 .UNINDENT
 .UNINDENT
 .sp
@@ -71,9 +73,11 @@ in the background thread [1]:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.EX
+.nf
+.ft C
 XTR_LOG(s, \(dqHello world\(dq);
-.EE
+.ft P
+.fi
 .UNINDENT
 .UNINDENT
 .sp
@@ -82,9 +86,11 @@ timestamp in the background thread:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.EX
+.nf
+.ft C
 XTR_TRY_LOG(s, \(dqHello world\(dq);
-.EE
+.ft P
+.fi
 .UNINDENT
 .UNINDENT
 .sp
@@ -92,9 +98,11 @@ Write to the log, immediately reading the timestamp from the TSC:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.EX
+.nf
+.ft C
 XTR_LOG_TSC(s, \(dqHello world\(dq);
-.EE
+.ft P
+.fi
 .UNINDENT
 .UNINDENT
 .sp
@@ -105,9 +113,11 @@ on FreeBSD:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.EX
+.nf
+.ft C
 XTR_LOG_RTC(s, \(dqHello world\(dq);
-.EE
+.ft P
+.fi
 .UNINDENT
 .UNINDENT
 .sp
@@ -117,9 +127,11 @@ message will be logged:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.EX
+.nf
+.ft C
 XTR_LOGL(info, s, \(dqHello world\(dq);
-.EE
+.ft P
+.fi
 .UNINDENT
 .UNINDENT
 .sp
@@ -129,11 +141,13 @@ error and fatal\-\-\-see \fI\%xtr::log_level_t\fP\&.
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.EX
+.nf
+.ft C
 s.set_level(xtr::log_level_t::error);
 
 XTR_LOGL(info, s, \(dqHello world\(dq); // Dropped
-.EE
+.ft P
+.fi
 .UNINDENT
 .UNINDENT
 .sp
@@ -142,10 +156,12 @@ Fatal errors will log and then terminate the program using
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.EX
+.nf
+.ft C
 XTR_LOGL(fatal, s, \(dqGoodbye cruel world\(dq);
 // NOTREACHED
-.EE
+.ft P
+.fi
 .UNINDENT
 .UNINDENT
 .sp
@@ -156,11 +172,13 @@ arguments:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.EX
+.nf
+.ft C
 const std::string str1 = \(dqHello\(dq;
 const char* str2 = \(dqworld\(dq;
 XTR_LOG(\(dq{} {}\(dq, str1, str2);
-.EE
+.ft P
+.fi
 .UNINDENT
 .UNINDENT
 .sp
@@ -168,9 +186,11 @@ To avoid copying, wrap arguments in a call to \fI\%xtr::nocopy()\fP:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.EX
+.nf
+.ft C
 XTR_LOG(\(dq{} {}\(dq, nocopy(str1), nocopy(str2));
-.EE
+.ft P
+.fi
 .UNINDENT
 .UNINDENT
 .sp
@@ -178,10 +198,12 @@ Arguments may also be moved in to the logger:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.EX
+.nf
+.ft C
 std::string str3 = \(dqworld\(dq;
 XTR_LOG(\(dqHello {}\(dq, std::move(str3));
-.EE
+.ft P
+.fi
 .UNINDENT
 .UNINDENT
 .SH FOOTNOTES
