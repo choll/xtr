@@ -244,7 +244,8 @@ Custom formatters are implemented the same as in `{fmt} <https://fmt.dev>`__,
 which is done either by:
 
 * Providing a :cpp:func:`std::stream& operator<<(std::stream&, T&)` overload. Note
-  that fmt/ostream.h must be included.
+  that arguments must be wrapped with either :cpp:func:`xtr::streamed_copy` or
+  :cpp:func:`xtr::streamed_ref` (from `xtr/streamed.hpp`).
 * Specializing :cpp:expr:`fmt::formatter<T>` and implementing the `parse` and
   `format` methods as described by the `{fmt}` documentation
   `here <https://fmt.dev/latest/api.html#formatting-user-defined-types>`__.
@@ -278,7 +279,7 @@ Formatting a custom type via operator<<:
 
         xtr::sink s = log.get_sink("Main");
 
-        XTR_LOG(s, "Hello {}", custom());
+        XTR_LOG(s, "Hello {}", fmt::streamed_copy(custom()));
 
         return 0;
     }

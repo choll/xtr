@@ -69,7 +69,7 @@ void xtr::logger::set_default_log_level(log_level_t level)
 }
 
 XTR_FUNC
-bool xtr::logger::pump_io()
+bool xtr::logger::pump_io(pump_io_stats* stats)
 {
-    return consumer_.run_once();
+    return consumer_.run_once(stats);
 }

@@ -58,10 +58,8 @@ namespace xtr
         disable_worker_thread
     };
 
-    // This can be replaced with a template alias once clang supports it:
-    // template<typename T> using nocopy = detail::string_ref<T>;
     /**
-     * nocopy is used to specify that a log argument should be passed by
+     * nocopy is used to specify that a string argument should be passed by
      * reference instead of by value, so that `arg` becomes `nocopy(arg)`.
      * Note that by default, all strings including C strings and
      * std::string_view are copied. In order to pass strings by reference
@@ -76,6 +74,26 @@ namespace xtr
     {
         return detail::string_ref(arg);
     }
+
+    /**
+     * Statistics struct yielded by @ref xtr::logger::pump_io.
+     */
+    struct pump_io_stats
+    {
+        /**
+         * Number of messages processed.
+         */
+        std::size_t n_messages;
+        /**
+         * Number of messages dropped.
+         */
+        std::size_t n_messages_dropped;
+        /**
+         * Number of active sinks. Note that the logger object holds a sink open
+         * which will be included in the count.
+         */
+        std::size_t n_active_sinks;
+    };
 }
 
 /**
@@ -371,7 +389,7 @@ public:
      * logger::~logger will block until it returns false. Do not call pump_io
      * again after it has returned false.
      */
-    bool pump_io();
+    bool pump_io(pump_io_stats* stats = nullptr);
 
 private:
     template<typename Func>

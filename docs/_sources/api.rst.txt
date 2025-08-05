@@ -88,6 +88,13 @@ Nocopy
 
 .. doxygenfunction:: xtr::nocopy
 
+Stream Formatting Wrappers
+--------------------------
+
+.. doxygenfunction:: xtr::streamed_copy
+
+.. doxygenfunction:: xtr::streamed_ref
+
 .. _log-levels:
 
 Log Levels
@@ -129,6 +136,12 @@ Storage Interfaces
 .. doxygenfunction:: xtr::make_fd_storage(int fd, std::string reopen_path)
 
 .. doxygenvariable:: null_reopen_path
+
+I/O Pump Statistics
+-------------------
+
+.. doxygenstruct:: xtr::pump_io_stats
+    :members:
 
 Default Command Path
 --------------------

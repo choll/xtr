@@ -27,7 +27,7 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .in \\n[rst2man-indent\\n[rst2man-indent-level]]u
 ..
-.TH "LIBXTR" "3" "June 2025" "" "xtr"
+.TH "LIBXTR" "3" "July 2025" "" "xtr"
 .SH NAME
 libxtr \- C++ logging library API reference
 .SH LOG MACROS
@@ -508,7 +508,40 @@ Returns the capacity (in bytes) of the queue that the sink uses to send log data
 .INDENT 0.0
 .TP
 .B template<typename T> inline auto xtr::nocopy(const \fI\%T\fP &arg) 
-nocopy is used to specify that a log argument should be passed by reference instead of by value, so that \fBarg\fP becomes \fBnocopy(arg)\fP\&. Note that by default, all strings including C strings and std::string_view are copied. In order to pass strings by reference they must be wrapped in a call to nocopy. Please see the \fI\%passing arguments by value or reference\fP <\fBguide.html#passing-arguments-by-value-or-reference\fP> and \fI\%string arguments\fP <\fBguide.html#string-arguments\fP> sections of the user guide for further details. 
+nocopy is used to specify that a string argument should be passed by reference instead of by value, so that \fBarg\fP becomes \fBnocopy(arg)\fP\&. Note that by default, all strings including C strings and std::string_view are copied. In order to pass strings by reference they must be wrapped in a call to nocopy. Please see the \fI\%passing arguments by value or reference\fP <\fBguide.html#passing-arguments-by-value-or-reference\fP> and \fI\%string arguments\fP <\fBguide.html#string-arguments\fP> sections of the user guide for further details. 
+.UNINDENT
+.SH STREAM FORMATTING WRAPPERS
+.INDENT 0.0
+.TP
+.B template<typename T> constexpr detail::streamed_wrapper<std::remove_cv_t<std::remove_reference_t<\fI\%T\fP>>> xtr::streamed_copy(\fI\%T\fP &&value) 
+Returns a wrapper that formats the given argument using its ostream stream insertion operator (operator<<). The value is copied into the wrapper.
+.sp
+
+Refer to the \fI\%custom formatters\fP <\fBguide.html#custom-formatters\fP> section of the user guide for example use. 
+.INDENT 7.0
+.TP
+.B Parameters
+\fBvalue\fP \-\- The value to copy and wrap for stream\-based formatting. 
+.TP
+.B Returns
+A wrapper object suitable for passing as an argument to a log macro such as \fI\%XTR_LOG\fP\&.
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.TP
+.B template<typename T> constexpr detail::streamed_wrapper<const \fI\%T\fP&> xtr::streamed_ref(const \fI\%T\fP &value) 
+Returns a wrapper that formats the given argument using its ostream stream insertion operator (operator<<). The wrapper stores a reference to the argument so callers must ensure that it remains valid until formatting is completed.
+.sp
+
+Refer to the \fI\%custom formatters\fP <\fBguide.html#custom-formatters\fP> section of the user guide for example use. 
+.INDENT 7.0
+.TP
+.B Parameters
+\fBvalue\fP \-\- The value to copy and wrap for stream\-based formatting. 
+.TP
+.B Returns
+A wrapper object suitable for passing as an argument to a log macro such as \fI\%XTR_LOG\fP\&.
+.UNINDENT
 .UNINDENT
 .SH LOG LEVELS
 .INDENT 0.0
@@ -712,6 +745,24 @@ reopen_path: The path of the file associated with the fd argument. This path wil
 .TP
 .B constexpr auto xtr::null_reopen_path = \(dq\(dq 
 When passed to the reopen_path argument of \fI\%make_fd_storage\fP, \fI\%posix_fd_storage::posix_fd_storage\fP, \fI\%io_uring_fd_storage\fP or \fI\%logger::logger\fP indicates that the output file handle has no associated filename and so should not be reopened if requested by the xtrctl \fI\%reopen command\fP <\fBxtrctl.html#reopening-log-files\fP>\&. 
+.UNINDENT
+.SH I/O PUMP STATISTICS
+.INDENT 0.0
+.TP
+.B struct pump_io_stats 
+Statistics struct yielded by \fI\%xtr::logger::pump_io\fP\&. 
+.sp
+Public Members
+.INDENT 7.0
+.TP
+.B std::size_t n_messages 
+Number of messages processed 
+.UNINDENT
+.INDENT 7.0
+.TP
+.B std::size_t n_messages_dropped 
+Number of messages dropped 
+.UNINDENT
 .UNINDENT
 .SH DEFAULT COMMAND PATH
 .INDENT 0.0

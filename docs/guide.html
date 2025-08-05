@@ -346,7 +346,8 @@ This is because each thread is expected to have its own sink(s).</p></li>
 which is done either by:</p>
 <ul class="simple">
 <li><p>Providing a <code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">std::stream&amp;</span> <span class="pre">operator&lt;&lt;(std::stream&amp;,</span> <span class="pre">T&amp;)()</span></code> overload. Note
-that fmt/ostream.h must be included.</p></li>
+that arguments must be wrapped with either <a class="reference internal" href="api.html#_CPPv4I0EN3xtr13streamed_copyEN6detail16streamed_wrapperINSt11remove_cv_tINSt18remove_reference_tI1TEEEEEERR1T" title="xtr::streamed_copy"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">xtr::streamed_copy()</span></code></a> or
+<a class="reference internal" href="api.html#_CPPv4I0EN3xtr12streamed_refEN6detail16streamed_wrapperIRK1TEERK1T" title="xtr::streamed_ref"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">xtr::streamed_ref()</span></code></a> (from <cite>xtr/streamed.hpp</cite>).</p></li>
 <li><p>Specializing <span class="cpp-expr sig sig-inline cpp"><span class="n">fmt</span><span class="p">::</span><span class="n">formatter</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span></span> and implementing the <cite>parse</cite> and
 <cite>format</cite> methods as described by the <cite>{fmt}</cite> documentation
 <a class="reference external" href="https://fmt.dev/latest/api.html#formatting-user-defined-types">here</a>.</p></li>
@@ -376,7 +377,7 @@ that fmt/ostream.h must be included.</p></li>
 
 <span class="w">    </span><span class="n">xtr</span><span class="o">::</span><span class="n">sink</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">log</span><span class="p">.</span><span class="n">get_sink</span><span class="p">(</span><span class="s">&quot;Main&quot;</span><span class="p">);</span>
 
-<span class="w">    </span><span class="n">XTR_LOG</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Hello {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">custom</span><span class="p">());</span>
+<span class="w">    </span><span class="n">XTR_LOG</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Hello {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">fmt</span><span class="o">::</span><span class="n">streamed_copy</span><span class="p">(</span><span class="n">custom</span><span class="p">()));</span>
 
 <span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
 <span class="p">}</span>
