@@ -121,7 +121,13 @@ xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping(
         // m_ then an mremap of length with target address m_.get() + length
         // for mirror. I have not done this just to make the rest of the class
         // cleaner, as with the below method we don't have to deal with the
-        // first mapping's length being length * 2.
+        // first mapping's length being length * 2. When destroying mappings
+        // care must be taken not to accidentally unmap the same region twice
+        // due to munmap removing all mappings for the given range. e.g. if
+        // munmap(base + len, len, length) and munmap(base, len * 2) are called
+        // then the second half of the mapping is unmapped twice, so if an mmap
+        // call occurs between the two munmaps (on another thread) it could be
+        // incorrectly unmapped.
         memory_mapping mirror(
             static_cast<std::byte*>(reserve.get()) + length,
             length,
