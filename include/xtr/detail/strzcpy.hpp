@@ -31,7 +31,8 @@ namespace xtr::detail
     void strzcpy(char (&dst)[DstSz], const Src& src)
     {
         const std::size_t n = std::min(DstSz - 1, std::size(src));
-        std::memcpy(dst, &src[0], n);
+        if (std::size(src) > 0) [[likely]]
+            std::memcpy(dst, &src[0], n);
         dst[n] = '\0';
     }
 }

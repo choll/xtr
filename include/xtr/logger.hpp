@@ -31,6 +31,7 @@
 #include "log_level.hpp"
 #include "sink.hpp"
 
+#include <atomic>
 #include <chrono>
 #include <cstdio>
 #include <ctime>
@@ -394,7 +395,7 @@ private:
                 const auto now = clock_.now();
                 auto sec = time_point_cast<seconds>(now);
                 if (sec > now)
-                    sec - seconds{1};
+                    sec -= seconds{1};
                 return std::timespec{
                     .tv_sec=sec.time_since_epoch().count(),
                     .tv_nsec=duration_cast<nanoseconds>(now - sec).count()};
@@ -405,7 +406,7 @@ private:
     jthread consumer_thread_;
     sink control_;
     std::mutex control_mutex_;
-    log_level_t default_log_level_ = log_level_t::info;
+    std::atomic<log_level_t> default_log_level_ = log_level_t::info;
 
     friend sink;
 };

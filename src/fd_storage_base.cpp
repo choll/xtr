@@ -49,7 +49,7 @@ xtr::detail::fd_storage_base::fd_storage_base(int fd, std::string reopen_path)
 XTR_FUNC
 void xtr::detail::fd_storage_base::sync() noexcept
 {
-    ::fsync(fd_.get());
+    XTR_TEMP_FAILURE_RETRY(::fsync(fd_.get()));
 }
 
 XTR_FUNC
