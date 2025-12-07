@@ -69,7 +69,7 @@ void xtr::detail::consumer::run() noexcept
 }
 
 XTR_FUNC
-bool xtr::detail::consumer::run_once() noexcept
+bool xtr::detail::consumer::run_once(pump_io_stats* stats) noexcept
 {
     char ts[32] = {};
     bool ts_stale = true;

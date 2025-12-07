@@ -62,7 +62,7 @@ private:
 
 public:
     void run() noexcept;
-    bool run_once() noexcept;
+    bool run_once(pump_io_stats* stats) noexcept;
     void set_command_path(std::string path) noexcept;
 
     consumer(
