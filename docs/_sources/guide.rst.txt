@@ -214,7 +214,7 @@ so in the following example the function :cpp:func:`foo` is not called:
 
     XTR_LOGL(info, s, "Hello {}", foo());
 
-View this example on `Compiler Explorer <https://godbolt.org/z/ss36qzo1c>`__.
+View this example on `Compiler Explorer <https://godbolt.org/z/PxfhfTn8v>`__.
 
 Debug Log Statements
 ~~~~~~~~~~~~~~~~~~~~
@@ -284,7 +284,7 @@ Formatting a custom type via operator<<:
         return 0;
     }
 
-View this example on `Compiler Explorer <https://godbolt.org/z/cK14z5Kr6>`__.
+View this example on `Compiler Explorer <https://godbolt.org/z/b71h3d38x>`__.
 
 Formatting a custom type via fmt::formatter:
 
