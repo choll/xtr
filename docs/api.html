@@ -48,51 +48,75 @@
 <li class="toctree-l1"><a class="reference internal" href="guide.html">User Guide</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">API Reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#log-macros">Log Macros</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#basic-macros">Basic Macros</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#time-stamp-counter-timestamped-macros">Time-Stamp Counter Timestamped Macros</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#real-time-clock-timestamped-macros">Real-Time Clock Timestamped Macros</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#user-supplied-timestamp-macros">User-Supplied Timestamp Macros</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#basic-macros">Basic Macros</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#c.XTR_LOG"><code class="docutils literal notranslate"><span class="pre">XTR_LOG</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.XTR_LOGL"><code class="docutils literal notranslate"><span class="pre">XTR_LOGL</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.XTR_TRY_LOG"><code class="docutils literal notranslate"><span class="pre">XTR_TRY_LOG</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.XTR_TRY_LOGL"><code class="docutils literal notranslate"><span class="pre">XTR_TRY_LOGL</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#time-stamp-counter-timestamped-macros">Time-Stamp Counter Timestamped Macros</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#c.XTR_LOG_TSC"><code class="docutils literal notranslate"><span class="pre">XTR_LOG_TSC</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.XTR_LOGL_TSC"><code class="docutils literal notranslate"><span class="pre">XTR_LOGL_TSC</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.XTR_TRY_LOG_TSC"><code class="docutils literal notranslate"><span class="pre">XTR_TRY_LOG_TSC</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.XTR_TRY_LOGL_TSC"><code class="docutils literal notranslate"><span class="pre">XTR_TRY_LOGL_TSC</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#real-time-clock-timestamped-macros">Real-Time Clock Timestamped Macros</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#c.XTR_LOG_RTC"><code class="docutils literal notranslate"><span class="pre">XTR_LOG_RTC</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.XTR_LOGL_RTC"><code class="docutils literal notranslate"><span class="pre">XTR_LOGL_RTC</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.XTR_TRY_LOG_RTC"><code class="docutils literal notranslate"><span class="pre">XTR_TRY_LOG_RTC</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.XTR_TRY_LOGL_RTC"><code class="docutils literal notranslate"><span class="pre">XTR_TRY_LOGL_RTC</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#user-supplied-timestamp-macros">User-Supplied Timestamp Macros</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#c.XTR_LOG_TS"><code class="docutils literal notranslate"><span class="pre">XTR_LOG_TS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.XTR_LOGL_TS"><code class="docutils literal notranslate"><span class="pre">XTR_LOGL_TS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.XTR_TRY_LOG_TS"><code class="docutils literal notranslate"><span class="pre">XTR_TRY_LOG_TS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.XTR_TRY_LOGL_TS"><code class="docutils literal notranslate"><span class="pre">XTR_TRY_LOGL_TS</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#logger">Logger</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#_CPPv4N3xtr6loggerE"><code class="docutils literal notranslate"><span class="pre">logger</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4I0EN3xtr6logger6loggerEPKcRR5ClockNSt6stringE17log_level_style_t14option_flags_t"><code class="docutils literal notranslate"><span class="pre">logger::logger()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4I0EN3xtr6logger6loggerEP4FILERR5ClockNSt6stringE17log_level_style_t14option_flags_t"><code class="docutils literal notranslate"><span class="pre">logger::logger()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4I0EN3xtr6logger6loggerENSt6stringEP4FILERR5ClockNSt6stringE17log_level_style_t14option_flags_t"><code class="docutils literal notranslate"><span class="pre">logger::logger()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4I0EN3xtr6logger6loggerE21storage_interface_ptrRR5ClockNSt6stringE17log_level_style_t14option_flags_t"><code class="docutils literal notranslate"><span class="pre">logger::logger()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr6loggerD0Ev"><code class="docutils literal notranslate"><span class="pre">logger::~logger()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr6logger29consumer_thread_native_handleEv"><code class="docutils literal notranslate"><span class="pre">logger::consumer_thread_native_handle()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr6logger8get_sinkENSt6stringE"><code class="docutils literal notranslate"><span class="pre">logger::get_sink()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr6logger13register_sinkER4sinkNSt6stringE"><code class="docutils literal notranslate"><span class="pre">logger::register_sink()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr6logger16set_command_pathENSt6stringE"><code class="docutils literal notranslate"><span class="pre">logger::set_command_path()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr6logger19set_log_level_styleE17log_level_style_t"><code class="docutils literal notranslate"><span class="pre">logger::set_log_level_style()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr6logger21set_default_log_levelE11log_level_t"><code class="docutils literal notranslate"><span class="pre">logger::set_default_log_level()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr6logger7pump_ioEv"><code class="docutils literal notranslate"><span class="pre">logger::pump_io()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#_CPPv4N3xtr6loggerE"><code class="docutils literal notranslate"><span class="pre">xtr::logger</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4I0EN3xtr6logger6loggerEPKcRR5ClockNSt6stringE17log_level_style_t14option_flags_t"><code class="docutils literal notranslate"><span class="pre">logger()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4I0EN3xtr6logger6loggerEP4FILERR5ClockNSt6stringE17log_level_style_t14option_flags_t"><code class="docutils literal notranslate"><span class="pre">logger()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4I0EN3xtr6logger6loggerENSt6stringEP4FILERR5ClockNSt6stringE17log_level_style_t14option_flags_t"><code class="docutils literal notranslate"><span class="pre">logger()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4I0EN3xtr6logger6loggerE21storage_interface_ptrRR5ClockNSt6stringE17log_level_style_t14option_flags_t"><code class="docutils literal notranslate"><span class="pre">logger()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr6loggerD0Ev"><code class="docutils literal notranslate"><span class="pre">~logger()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr6logger29consumer_thread_native_handleEv"><code class="docutils literal notranslate"><span class="pre">consumer_thread_native_handle()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr6logger8get_sinkENSt6stringE"><code class="docutils literal notranslate"><span class="pre">get_sink()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr6logger13register_sinkER4sinkNSt6stringE"><code class="docutils literal notranslate"><span class="pre">register_sink()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr6logger16set_command_pathENSt6stringE"><code class="docutils literal notranslate"><span class="pre">set_command_path()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr6logger19set_log_level_styleE17log_level_style_t"><code class="docutils literal notranslate"><span class="pre">set_log_level_style()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr6logger21set_default_log_levelE11log_level_t"><code class="docutils literal notranslate"><span class="pre">set_default_log_level()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr6logger7pump_ioEP13pump_io_stats"><code class="docutils literal notranslate"><span class="pre">pump_io()</span></code></a></li>
 </ul>
 </li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#option-flags">Option Flags</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#_CPPv4N3xtr14option_flags_tE"><code class="docutils literal notranslate"><span class="pre">option_flags_t</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr14option_flags_t4noneE"><code class="docutils literal notranslate"><span class="pre">option_flags_t::none</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr14option_flags_t21disable_worker_threadE"><code class="docutils literal notranslate"><span class="pre">option_flags_t::disable_worker_thread</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr14option_flags_t4noneE"><code class="docutils literal notranslate"><span class="pre">none</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr14option_flags_t21disable_worker_threadE"><code class="docutils literal notranslate"><span class="pre">disable_worker_thread</span></code></a></li>
 </ul>
 </li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#id5">Sink</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#_CPPv4N3xtr4sinkE"><code class="docutils literal notranslate"><span class="pre">sink</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr4sink4sinkERK4sink"><code class="docutils literal notranslate"><span class="pre">sink::sink()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr4sinkaSERK4sink"><code class="docutils literal notranslate"><span class="pre">sink::operator=()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr4sinkD0Ev"><code class="docutils literal notranslate"><span class="pre">sink::~sink()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr4sink5closeEv"><code class="docutils literal notranslate"><span class="pre">sink::close()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xtr4sink7is_openEv"><code class="docutils literal notranslate"><span class="pre">sink::is_open()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr4sink4syncEv"><code class="docutils literal notranslate"><span class="pre">sink::sync()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr4sink8set_nameENSt6stringE"><code class="docutils literal notranslate"><span class="pre">sink::set_name()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4I_Da_Da0DpEN3xtr4sink3logEvDpRR4Args"><code class="docutils literal notranslate"><span class="pre">sink::log()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr4sink9set_levelE11log_level_t"><code class="docutils literal notranslate"><span class="pre">sink::set_level()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xtr4sink5levelEv"><code class="docutils literal notranslate"><span class="pre">sink::level()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xtr4sink8capacityEv"><code class="docutils literal notranslate"><span class="pre">sink::capacity()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#_CPPv4N3xtr4sinkE"><code class="docutils literal notranslate"><span class="pre">xtr::sink</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr4sink4sinkERK4sink"><code class="docutils literal notranslate"><span class="pre">sink()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr4sinkaSERK4sink"><code class="docutils literal notranslate"><span class="pre">operator=()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr4sinkD0Ev"><code class="docutils literal notranslate"><span class="pre">~sink()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr4sink5closeEv"><code class="docutils literal notranslate"><span class="pre">close()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xtr4sink7is_openEv"><code class="docutils literal notranslate"><span class="pre">is_open()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr4sink4syncEv"><code class="docutils literal notranslate"><span class="pre">sync()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr4sink8set_nameENSt6stringE"><code class="docutils literal notranslate"><span class="pre">set_name()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4I_Da_Da0DpEN3xtr4sink3logEvDpRR4Args"><code class="docutils literal notranslate"><span class="pre">log()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr4sink9set_levelE11log_level_t"><code class="docutils literal notranslate"><span class="pre">set_level()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xtr4sink5levelEv"><code class="docutils literal notranslate"><span class="pre">level()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xtr4sink8capacityEv"><code class="docutils literal notranslate"><span class="pre">capacity()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -108,12 +132,12 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#log-levels">Log Levels</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#_CPPv4N3xtr11log_level_tE"><code class="docutils literal notranslate"><span class="pre">log_level_t</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr11log_level_t4noneE"><code class="docutils literal notranslate"><span class="pre">log_level_t::none</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr11log_level_t5fatalE"><code class="docutils literal notranslate"><span class="pre">log_level_t::fatal</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr11log_level_t5errorE"><code class="docutils literal notranslate"><span class="pre">log_level_t::error</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr11log_level_t7warningE"><code class="docutils literal notranslate"><span class="pre">log_level_t::warning</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr11log_level_t4infoE"><code class="docutils literal notranslate"><span class="pre">log_level_t::info</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr11log_level_t5debugE"><code class="docutils literal notranslate"><span class="pre">log_level_t::debug</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr11log_level_t4noneE"><code class="docutils literal notranslate"><span class="pre">none</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr11log_level_t5fatalE"><code class="docutils literal notranslate"><span class="pre">fatal</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr11log_level_t5errorE"><code class="docutils literal notranslate"><span class="pre">error</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr11log_level_t7warningE"><code class="docutils literal notranslate"><span class="pre">warning</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr11log_level_t4infoE"><code class="docutils literal notranslate"><span class="pre">info</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr11log_level_t5debugE"><code class="docutils literal notranslate"><span class="pre">debug</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#_CPPv4N3xtr21log_level_from_stringENSt11string_viewE"><code class="docutils literal notranslate"><span class="pre">log_level_from_string()</span></code></a></li>
@@ -126,25 +150,25 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#storage-interfaces">Storage Interfaces</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#_CPPv4N3xtr17storage_interfaceE"><code class="docutils literal notranslate"><span class="pre">storage_interface</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr17storage_interface15allocate_bufferEv"><code class="docutils literal notranslate"><span class="pre">storage_interface::allocate_buffer()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr17storage_interface13submit_bufferEPcNSt6size_tE"><code class="docutils literal notranslate"><span class="pre">storage_interface::submit_buffer()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr17storage_interface5flushEv"><code class="docutils literal notranslate"><span class="pre">storage_interface::flush()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr17storage_interface4syncEv"><code class="docutils literal notranslate"><span class="pre">storage_interface::sync()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr17storage_interface6reopenEv"><code class="docutils literal notranslate"><span class="pre">storage_interface::reopen()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#_CPPv4N3xtr17storage_interfaceE"><code class="docutils literal notranslate"><span class="pre">xtr::storage_interface</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr17storage_interface15allocate_bufferEv"><code class="docutils literal notranslate"><span class="pre">allocate_buffer()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr17storage_interface13submit_bufferEPcNSt6size_tE"><code class="docutils literal notranslate"><span class="pre">submit_buffer()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr17storage_interface5flushEv"><code class="docutils literal notranslate"><span class="pre">flush()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr17storage_interface4syncEv"><code class="docutils literal notranslate"><span class="pre">sync()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr17storage_interface6reopenEv"><code class="docutils literal notranslate"><span class="pre">reopen()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#_CPPv4N3xtr21storage_interface_ptrE"><code class="docutils literal notranslate"><span class="pre">storage_interface_ptr</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#_CPPv4N3xtr19io_uring_fd_storageE"><code class="docutils literal notranslate"><span class="pre">io_uring_fd_storage</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr19io_uring_fd_storage19io_uring_fd_storageEiNSt6stringENSt6size_tENSt6size_tENSt6size_tE"><code class="docutils literal notranslate"><span class="pre">io_uring_fd_storage::io_uring_fd_storage()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr19io_uring_fd_storage23default_buffer_capacityE"><code class="docutils literal notranslate"><span class="pre">io_uring_fd_storage::default_buffer_capacity</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr19io_uring_fd_storage18default_queue_sizeE"><code class="docutils literal notranslate"><span class="pre">io_uring_fd_storage::default_queue_size</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr19io_uring_fd_storage18default_batch_sizeE"><code class="docutils literal notranslate"><span class="pre">io_uring_fd_storage::default_batch_size</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#_CPPv4N3xtr19io_uring_fd_storageE"><code class="docutils literal notranslate"><span class="pre">xtr::io_uring_fd_storage</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr19io_uring_fd_storage19io_uring_fd_storageEiNSt6stringENSt6size_tENSt6size_tENSt6size_tE"><code class="docutils literal notranslate"><span class="pre">io_uring_fd_storage()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr19io_uring_fd_storage23default_buffer_capacityE"><code class="docutils literal notranslate"><span class="pre">default_buffer_capacity</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr19io_uring_fd_storage18default_queue_sizeE"><code class="docutils literal notranslate"><span class="pre">default_queue_size</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr19io_uring_fd_storage18default_batch_sizeE"><code class="docutils literal notranslate"><span class="pre">default_batch_size</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#_CPPv4N3xtr16posix_fd_storageE"><code class="docutils literal notranslate"><span class="pre">posix_fd_storage</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr16posix_fd_storage16posix_fd_storageEiNSt6stringENSt6size_tE"><code class="docutils literal notranslate"><span class="pre">posix_fd_storage::posix_fd_storage()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr16posix_fd_storage23default_buffer_capacityE"><code class="docutils literal notranslate"><span class="pre">posix_fd_storage::default_buffer_capacity</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#_CPPv4N3xtr16posix_fd_storageE"><code class="docutils literal notranslate"><span class="pre">xtr::posix_fd_storage</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr16posix_fd_storage16posix_fd_storageEiNSt6stringENSt6size_tE"><code class="docutils literal notranslate"><span class="pre">posix_fd_storage()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr16posix_fd_storage23default_buffer_capacityE"><code class="docutils literal notranslate"><span class="pre">default_buffer_capacity</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#_CPPv4N3xtr15make_fd_storageEPKc"><code class="docutils literal notranslate"><span class="pre">make_fd_storage()</span></code></a></li>
@@ -154,9 +178,8 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#i-o-pump-statistics">I/O Pump Statistics</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#_CPPv4N3xtr13pump_io_statsE"><code class="docutils literal notranslate"><span class="pre">pump_io_stats</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr13pump_io_stats10n_messagesE"><code class="docutils literal notranslate"><span class="pre">pump_io_stats::n_messages</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr13pump_io_stats18n_messages_droppedE"><code class="docutils literal notranslate"><span class="pre">pump_io_stats::n_messages_dropped</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#_CPPv4N3xtr13pump_io_statsE"><code class="docutils literal notranslate"><span class="pre">xtr::pump_io_stats</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr13pump_io_stats8n_eventsE"><code class="docutils literal notranslate"><span class="pre">n_events</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -169,7 +192,12 @@
 <li class="toctree-l3"><a class="reference internal" href="#_CPPv4N3xtr17null_command_pathE"><code class="docutils literal notranslate"><span class="pre">null_command_path</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#configuration-variables">Configuration Variables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#configuration-variables">Configuration Variables</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#c.XTR_SINK_CAPACITY"><code class="docutils literal notranslate"><span class="pre">XTR_SINK_CAPACITY</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#c.XTR_USE_IO_URING"><code class="docutils literal notranslate"><span class="pre">XTR_USE_IO_URING</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#c.XTR_IO_URING_POLL"><code class="docutils literal notranslate"><span class="pre">XTR_IO_URING_POLL</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="xtrctl.html">xtrctl</a></li>
@@ -471,7 +499,7 @@ logging. Use these macros if accurate timestamps are required.</p>
 <dl class="cpp function">
 <dt class="sig sig-object cpp" id="_CPPv4N3xtr6loggerD0Ev">
 <span id="_CPPv3N3xtr6loggerD0Ev"></span><span id="_CPPv2N3xtr6loggerD0Ev"></span><span id="xtr::logger::~logger"></span><span class="target" id="classxtr_1_1logger_1a2ac116ede8b5daf674bfbb5033f64dc4"></span><span class="sig-name descname"><span class="n"><span class="pre">~logger</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">default</span></span><a class="headerlink" href="#_CPPv4N3xtr6loggerD0Ev" title="Link to this definition"></a><br /></dt>
-<dd><p>Logger destructor. This function will join the consumer thread if it is in use. If sinks are still connected to the logger then the consumer thread will not terminate until the sinks disconnect, i.e. the destructor will block until all connected sinks disconnect from the logger. If the consumer thread has been disabled via <a class="reference internal" href="#namespacextr_1aad8b41fb64bc0427ecf9bd7e8ab4dedea164b7eea8511988bb04ec5f851c2a3f6"><span class="std std-ref">option_flags_t::disable_worker_thread</span></a> then the destructor will similarly block until <a class="reference internal" href="#classxtr_1_1logger_1abca940236193555def12c88c40882e84"><span class="std std-ref">logger::pump_io</span></a> returns false. </p>
+<dd><p>Logger destructor. This function will join the consumer thread if it is in use. If sinks are still connected to the logger then the consumer thread will not terminate until the sinks disconnect, i.e. the destructor will block until all connected sinks disconnect from the logger. If the consumer thread has been disabled via <a class="reference internal" href="#namespacextr_1aad8b41fb64bc0427ecf9bd7e8ab4dedea164b7eea8511988bb04ec5f851c2a3f6"><span class="std std-ref">option_flags_t::disable_worker_thread</span></a> then the destructor will similarly block until <a class="reference internal" href="#classxtr_1_1logger_1a599104eaad4dc59bb53c72f1f0bfe44e"><span class="std std-ref">logger::pump_io</span></a> returns false. </p>
 </dd></dl>
 
 <dl class="cpp function">
@@ -527,13 +555,13 @@ logging. Use these macros if accurate timestamps are required.</p>
 </dd></dl>
 
 <dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4N3xtr6logger7pump_ioEv">
-<span id="_CPPv3N3xtr6logger7pump_ioEv"></span><span id="_CPPv2N3xtr6logger7pump_ioEv"></span><span id="xtr::logger::pump_io"></span><span class="target" id="classxtr_1_1logger_1abca940236193555def12c88c40882e84"></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">pump_io</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xtr6logger7pump_ioEv" title="Link to this definition"></a><br /></dt>
+<dt class="sig sig-object cpp" id="_CPPv4N3xtr6logger7pump_ioEP13pump_io_stats">
+<span id="_CPPv3N3xtr6logger7pump_ioEP13pump_io_stats"></span><span id="_CPPv2N3xtr6logger7pump_ioEP13pump_io_stats"></span><span id="xtr::logger::pump_io__pump_io_statsP"></span><span class="target" id="classxtr_1_1logger_1a599104eaad4dc59bb53c72f1f0bfe44e"></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">pump_io</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4N3xtr13pump_io_statsE" title="xtr::pump_io_stats"><span class="n"><span class="pre">pump_io_stats</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n sig-param"><span class="pre">stats</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">nullptr</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xtr6logger7pump_ioEP13pump_io_stats" title="Link to this definition"></a><br /></dt>
 <dd><p>If the <a class="reference internal" href="#namespacextr_1aad8b41fb64bc0427ecf9bd7e8ab4dedea164b7eea8511988bb04ec5f851c2a3f6"><span class="std std-ref">option_flags_t::disable_worker_thread</span></a> option has been passed to <a class="reference internal" href="#classxtr_1_1logger_1a89f22af07a8ea88e13cedc7e36a4b78f"><span class="std std-ref">logger::logger</span></a> then this function must be called in order to process messages written to the logger. Users may call this function from a thread of their choosing and may interleave calls with other background tasks that their program needs to perform.</p>
 <p>For best results when interleaving with other tasks ensure that io_uring mode is enabled (so that I/O will be performed asynchronously leaving more time for other tasks to run). See <a class="reference internal" href="#config_8hpp_1a628cf123cd3a18fc1bea77b1548669b8"><span class="std std-ref">XTR_USE_IO_URING</span></a> for details on enabling io_uring.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>In order to shut down the logger pump_io must be called until it returns false. If pump_io has not yet returned false then logger::~logger will block until it returns false. Do not call pump_io again after it has returned false. </p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>If the option_flags_t::disable_worker thread option is enabled then in order to shut down the logger pump_io must be called until it returns false. If pump_io has not yet returned false then logger::~logger will block until it returns false. Do not call pump_io again after it has returned false. </p>
 </div>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -561,7 +589,15 @@ logging. Use these macros if accurate timestamps are required.</p>
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N3xtr14option_flags_t21disable_worker_threadE">
 <span id="_CPPv3N3xtr14option_flags_t21disable_worker_threadE"></span><span id="_CPPv2N3xtr14option_flags_t21disable_worker_threadE"></span><span class="target" id="namespacextr_1aad8b41fb64bc0427ecf9bd7e8ab4dedea164b7eea8511988bb04ec5f851c2a3f6"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">disable_worker_thread</span></span></span><a class="headerlink" href="#_CPPv4N3xtr14option_flags_t21disable_worker_threadE" title="Link to this definition"></a><br /></dt>
-<dd><p>Disables the background worker thread. Users must call <a class="reference internal" href="#classxtr_1_1logger_1abca940236193555def12c88c40882e84"><span class="std std-ref">logger::pump_io</span></a> to process log messages. </p>
+<dd><p>Disables the background worker thread. Users must call <a class="reference internal" href="#classxtr_1_1logger_1a599104eaad4dc59bb53c72f1f0bfe44e"><span class="std std-ref">logger::pump_io</span></a> to process log messages.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>If <a class="reference internal" href="#classxtr_1_1logger_1a599104eaad4dc59bb53c72f1f0bfe44e"><span class="std std-ref">logger::pump_io</span></a> is not regularly invoked by a worker thread then <a class="reference internal" href="#classxtr_1_1logger"><span class="std std-ref">logger</span></a> operations may block until <a class="reference internal" href="#classxtr_1_1logger_1a599104eaad4dc59bb53c72f1f0bfe44e"><span class="std std-ref">logger::pump_io</span></a> is called. In particular <a class="reference internal" href="#classxtr_1_1logger_1ab0f0ab136ca6458f43406ce1167cdfc5"><span class="std std-ref">logger::set_command_path</span></a> and <a class="reference internal" href="#classxtr_1_1logger_1a03c976cd4f6ee9c55ab42adc512fe55e"><span class="std std-ref">logger::set_log_level_style</span></a> will block as they do not return until the worker thread has fully processed the request. It is recommended to construct the logger and then immediately begin invoking <a class="reference internal" href="#classxtr_1_1logger_1a599104eaad4dc59bb53c72f1f0bfe44e"><span class="std std-ref">logger::pump_io</span></a> in a separate thread.</p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>See notes attached to <a class="reference internal" href="#classxtr_1_1logger_1a599104eaad4dc59bb53c72f1f0bfe44e"><span class="std std-ref">logger::pump_io</span></a> on shutting the logger down when this option is enabled. </p>
+</div>
 </dd></dl>
 
 </dd></dl>
@@ -926,19 +962,13 @@ disabled. Fatal log statements will still call
 <dl class="cpp struct">
 <dt class="sig sig-object cpp" id="_CPPv4N3xtr13pump_io_statsE">
 <span id="_CPPv3N3xtr13pump_io_statsE"></span><span id="_CPPv2N3xtr13pump_io_statsE"></span><span id="xtr::pump_io_stats"></span><span class="target" id="structxtr_1_1pump__io__stats"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">pump_io_stats</span></span></span><a class="headerlink" href="#_CPPv4N3xtr13pump_io_statsE" title="Link to this definition"></a><br /></dt>
-<dd><p>Statistics struct yielded by <a class="reference internal" href="#classxtr_1_1logger_1abca940236193555def12c88c40882e84"><span class="std std-ref">xtr::logger::pump_io</span></a>. </p>
+<dd><p>Statistics struct yielded by <a class="reference internal" href="#classxtr_1_1logger_1a599104eaad4dc59bb53c72f1f0bfe44e"><span class="std std-ref">xtr::logger::pump_io</span></a>. </p>
 <div class="breathe-sectiondef docutils container">
 <p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-members">Public Members</p>
 <dl class="cpp var">
-<dt class="sig sig-object cpp" id="_CPPv4N3xtr13pump_io_stats10n_messagesE">
-<span id="_CPPv3N3xtr13pump_io_stats10n_messagesE"></span><span id="_CPPv2N3xtr13pump_io_stats10n_messagesE"></span><span id="xtr::pump_io_stats::n_messages__std::s"></span><span class="target" id="structxtr_1_1pump__io__stats_1a20b6feb9ca359f2e67d5b13d733c49c2"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">n_messages</span></span></span><a class="headerlink" href="#_CPPv4N3xtr13pump_io_stats10n_messagesE" title="Link to this definition"></a><br /></dt>
-<dd><p>Number of messages processed </p>
-</dd></dl>
-
-<dl class="cpp var">
-<dt class="sig sig-object cpp" id="_CPPv4N3xtr13pump_io_stats18n_messages_droppedE">
-<span id="_CPPv3N3xtr13pump_io_stats18n_messages_droppedE"></span><span id="_CPPv2N3xtr13pump_io_stats18n_messages_droppedE"></span><span id="xtr::pump_io_stats::n_messages_dropped__std::s"></span><span class="target" id="structxtr_1_1pump__io__stats_1a53e5ec7be51d9f140d4ce6f2fb2cec72"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">n_messages_dropped</span></span></span><a class="headerlink" href="#_CPPv4N3xtr13pump_io_stats18n_messages_droppedE" title="Link to this definition"></a><br /></dt>
-<dd><p>Number of messages dropped </p>
+<dt class="sig sig-object cpp" id="_CPPv4N3xtr13pump_io_stats8n_eventsE">
+<span id="_CPPv3N3xtr13pump_io_stats8n_eventsE"></span><span id="_CPPv2N3xtr13pump_io_stats8n_eventsE"></span><span id="xtr::pump_io_stats::n_events__std::s"></span><span class="target" id="structxtr_1_1pump__io__stats_1ab34abd94598381b86d5d48345a56a407"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">n_events</span></span></span><a class="headerlink" href="#_CPPv4N3xtr13pump_io_stats8n_eventsE" title="Link to this definition"></a><br /></dt>
+<dd><p>Number of events processed. This includes log statements, sink construction and destruction events, sync requests etc. </p>
 </dd></dl>
 
 </div>

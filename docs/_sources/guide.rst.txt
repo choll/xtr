@@ -279,7 +279,7 @@ Formatting a custom type via operator<<:
 
         xtr::sink s = log.get_sink("Main");
 
-        XTR_LOG(s, "Hello {}", fmt::streamed_copy(custom()));
+        XTR_LOG(s, "Hello {}", xtr::streamed_copy(custom()));
 
         return 0;
     }

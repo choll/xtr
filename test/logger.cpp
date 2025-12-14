@@ -284,14 +284,16 @@ private:
                 xtr::default_log_level_style,
                 xtr::option_flags_t::disable_worker_thread)
         {
-            worker_ =
-                std::thread(
-                    [&]()
-                    {
-                        while (log_.pump_io())
-                            ;
-                    });
+            worker_ = std::thread(
+                [&]()
+                {
+                    xtr::pump_io_stats io_stats;
+                    while (log_.pump_io(&io_stats))
+                        n_events += io_stats.n_events;
+                });
         }
+
+        std::size_t n_events{};
     };
 
     struct file_fixture_base
@@ -2659,4 +2661,5 @@ TEST_CASE_METHOD(pump_io_fixture, "logger pump_io test", "[logger]")
 {
     XTR_LOG(s_, "Test"), line_ = __LINE__;
     REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
+    REQUIRE(n_events >= 1); // Sink creation, sync() create events
 }

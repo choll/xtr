@@ -78,6 +78,8 @@ bool xtr::detail::consumer::run_once(pump_io_stats* stats) noexcept
     if (cmds_ && cmds_->is_open())
         cmds_->process_commands(/* timeout= */0);
 
+    std::size_t n_events = 0;
+
     // The inner do/while loop below can modify sinks_ so references to sinks_
     // cannot be taken here (i.e. no range-based for).
     for (std::size_t i = 0; i != sinks_.size(); ++i)
@@ -117,6 +119,7 @@ bool xtr::detail::consumer::run_once(pump_io_stats* stats) noexcept
             assert(!destroy);
             const sink::fptr_t fptr = *reinterpret_cast<const sink::fptr_t*>(pos);
             pos = fptr(buf, pos, *this, ts, sinks_[i].name);
+            ++n_events;
         } while (pos < end);
 
         if (destroy)
@@ -153,6 +156,9 @@ bool xtr::detail::consumer::run_once(pump_io_stats* stats) noexcept
     // called again after it returns false).
     if (sinks_.empty())
         destruct_latch_.count_down();
+
+    if (stats != nullptr)
+        stats->n_events = n_events;
 
     return !sinks_.empty();
 }

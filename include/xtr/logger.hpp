@@ -22,14 +22,15 @@
 #define XTR_LOGGER_HPP
 
 #include "command_path.hpp"
+#include "detail/consumer.hpp"
+#include "pump_io_stats.hpp"
+#include "detail/string_ref.hpp"
 #include "io/fd_storage.hpp"
 #include "io/storage_interface.hpp"
-#include "detail/consumer.hpp"
-#include "detail/string_ref.hpp"
-#include "xtr/detail/tsc.hpp"
-#include "log_macros.hpp"
 #include "log_level.hpp"
+#include "log_macros.hpp"
 #include "sink.hpp"
+#include "xtr/detail/tsc.hpp"
 
 #include <atomic>
 #include <chrono>
@@ -55,6 +56,17 @@ namespace xtr
         /**
          * Disables the background worker thread. Users must call @ref
          * logger::pump_io to process log messages.
+         *
+         * @warning If @ref logger::pump_io is not regularly invoked by a worker
+         * thread then @ref logger operations may block until @ref logger::pump_io
+         * is called. In particular @ref logger::set_command_path and @ref
+         * logger::set_log_level_style will block as they do not return until the
+         * worker thread has fully processed the request. It is recommended to
+         * construct the logger and then immediately begin invoking @ref logger::pump_io
+         * in a separate thread.
+         *
+         * @warning See notes attached to @ref logger::pump_io on shutting the logger
+         * down when this option is enabled.
          */
         disable_worker_thread
     };
@@ -75,26 +87,6 @@ namespace xtr
     {
         return detail::string_ref(arg);
     }
-
-    /**
-     * Statistics struct yielded by @ref xtr::logger::pump_io.
-     */
-    struct pump_io_stats
-    {
-        /**
-         * Number of messages processed.
-         */
-        std::size_t n_messages;
-        /**
-         * Number of messages dropped.
-         */
-        std::size_t n_messages_dropped;
-        /**
-         * Number of active sinks. Note that the logger object holds a sink open
-         * which will be included in the count.
-         */
-        std::size_t n_active_sinks;
-    };
 }
 
 /**
@@ -385,8 +377,9 @@ public:
      * sinks are active and the logger has shut down. Once false has been
      * returned pump_io should not be called again.
      *
-     * @note In order to shut down the logger pump_io must be called until it
-     * returns false. If pump_io has not yet returned false then @ref
+     * @warning If the @ref option_flags_t::disable_worker thread option is
+     * enabled then in order to shut down the logger pump_io must be called
+     * until it returns false. If pump_io has not yet returned false then @ref
      * logger::~logger will block until it returns false. Do not call pump_io
      * again after it has returned false.
      */

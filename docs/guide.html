@@ -377,7 +377,7 @@ that arguments must be wrapped with either <a class="reference internal" href="a
 
 <span class="w">    </span><span class="n">xtr</span><span class="o">::</span><span class="n">sink</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">log</span><span class="p">.</span><span class="n">get_sink</span><span class="p">(</span><span class="s">&quot;Main&quot;</span><span class="p">);</span>
 
-<span class="w">    </span><span class="n">XTR_LOG</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Hello {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">fmt</span><span class="o">::</span><span class="n">streamed_copy</span><span class="p">(</span><span class="n">custom</span><span class="p">()));</span>
+<span class="w">    </span><span class="n">XTR_LOG</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Hello {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">xtr</span><span class="o">::</span><span class="n">streamed_copy</span><span class="p">(</span><span class="n">custom</span><span class="p">()));</span>
 
 <span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
 <span class="p">}</span>
@@ -621,7 +621,7 @@ on Linux.</p>
 <p>The consumer thread can be disabled by passing the
 <a class="reference internal" href="api.html#_CPPv4N3xtr14option_flags_t21disable_worker_threadE" title="xtr::option_flags_t::disable_worker_thread"><code class="xref cpp cpp-enumerator docutils literal notranslate"><span class="pre">xtr::option_flags_t::disable_worker_thread</span></code></a> flag to
 <a class="reference internal" href="api.html#_CPPv4I0EN3xtr6logger6loggerEPKcRR5ClockNSt6stringE17log_level_style_t14option_flags_t" title="xtr::logger::logger"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">xtr::logger::logger()</span></code></a>. Users should then run
-<a class="reference internal" href="api.html#_CPPv4N3xtr6logger7pump_ioEv" title="xtr::logger::pump_io"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">xtr::logger::pump_io()</span></code></a> on a thread of their choosing in order to
+<a class="reference internal" href="api.html#_CPPv4N3xtr6logger7pump_ioEP13pump_io_stats" title="xtr::logger::pump_io"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">xtr::logger::pump_io()</span></code></a> on a thread of their choosing in order to
 process messages written to the logger.</p>
 <section id="id8">
 <h4>Example<a class="headerlink" href="#id8" title="Link to this heading"></a></h4>
@@ -657,7 +657,7 @@ process messages written to the logger.</p>
 </pre></div>
 </div>
 <p>View this example on <a class="reference external" href="https://godbolt.org/z/G6v5G1MrG">Compiler Explorer</a>.</p>
-<p>Note that <a class="reference internal" href="api.html#_CPPv4N3xtr6logger7pump_ioEv" title="xtr::logger::pump_io"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">xtr::logger::pump_io()</span></code></a> will only return false after all
+<p>Note that <a class="reference internal" href="api.html#_CPPv4N3xtr6logger7pump_ioEP13pump_io_stats" title="xtr::logger::pump_io"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">xtr::logger::pump_io()</span></code></a> will only return false after all
 sinks have been closed and the logger has destructed, in order to ensure no log
 data is lost. This means that the logger should be destructed before attempting
 to join the background thread (otherwise a deadlock would occur).</p>
