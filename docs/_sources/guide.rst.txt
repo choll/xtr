@@ -56,7 +56,7 @@ Sink creation via :cpp:func:`xtr::logger::get_sink`:
 
     XTR_LOG(s, "Hello world");
 
-View this example on `Compiler Explorer <https://godbolt.org/z/1GWbEPq8T>`__.
+View this example on `Compiler Explorer <https://godbolt.org/z/6MYYWzG4b>`__.
 
 Sink creation via :cpp:func:`xtr::logger::register_sink`:
 
@@ -71,7 +71,7 @@ Sink creation via :cpp:func:`xtr::logger::register_sink`:
 
     XTR_LOG(s, "Hello world");
 
-View this example on `Compiler Explorer <https://godbolt.org/z/cobj4n3Gx>`__.
+View this example on `Compiler Explorer <https://godbolt.org/z/qzqeMbGas>`__.
 
 Sink creation via copying:
 
@@ -89,7 +89,7 @@ Sink creation via copying:
     XTR_LOG(s1, "Hello world");
     XTR_LOG(s2, "Hello world");
 
-View this example on `Compiler Explorer <https://godbolt.org/z/9bGTG38ez>`__.
+View this example on `Compiler Explorer <https://godbolt.org/z/oTGqK4q4j>`__.
 
 Format String Syntax
 --------------------
@@ -147,7 +147,7 @@ Example
     // Here 'arg' is passed by value:
     XTR_LOG(s, "Hello {}", arg);
 
-View this example on `Compiler Explorer <https://godbolt.org/z/j5ebhWfdT>`__.
+View this example on `Compiler Explorer <https://godbolt.org/z/TaT3nv61K>`__.
 
 .. _string_args:
 
@@ -324,7 +324,7 @@ Formatting a custom type via fmt::formatter:
         return 0;
     }
 
-View this example on `Compiler Explorer <https://godbolt.org/z/W56zdWEh1>`__.
+View this example on `Compiler Explorer <https://godbolt.org/z/1aEeaKn5c>`__.
 
 Formatting Containers, Tuples and Pairs
 ---------------------------------------
@@ -446,7 +446,7 @@ Example
 		return 0;
 	}
 
-View this example on `Compiler Explorer <https://godbolt.org/z/GcffPWjvz>`__.
+View this example on `Compiler Explorer <https://godbolt.org/z/h1Pqnhz6Y>`__.
 
 Background Consumer Thread Details
 ----------------------------------
@@ -516,7 +516,7 @@ Example
         return 0;
     }
 
-View this example on `Compiler Explorer <https://godbolt.org/z/1vh5exK4K>`__.
+View this example on `Compiler Explorer <https://godbolt.org/z/MP9bosffb>`__.
 
 Disabling the Background Consumer Thread
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -562,7 +562,7 @@ Example
         return 0;
     }
 
-View this example on `Compiler Explorer <https://godbolt.org/z/G6v5G1MrG>`__.
+View this example on `Compiler Explorer <https://godbolt.org/z/ezsceP49c>`__.
 
 Note that :cpp:func:`xtr::logger::pump_io` will only return false after all
 sinks have been closed and the logger has destructed, in order to ensure no log
@@ -715,7 +715,7 @@ to create a logger with a storage back-end that discards all input:
         return 0;
     }
 
-View this example on `Compiler Explorer <https://godbolt.org/z/W4YE7YqPr>`__.
+View this example on `Compiler Explorer <https://godbolt.org/z/fvf1o1cjK>`__.
 
 .. _custom-log-level-styles:
 
@@ -759,7 +759,7 @@ The following example will output::
     XTR_LOGL(info, s, "Hello world");
     XTR_LOGL(error, s, "Hello world");
 
-View this example on `Compiler Explorer <https://godbolt.org/z/ohcW6ndoz>`__.
+View this example on `Compiler Explorer <https://godbolt.org/z/4s9q4bad8>`__.
 
 Logging to the Systemd Journal
 ------------------------------
@@ -793,7 +793,7 @@ Example
     XTR_LOGL(warning, s, "Warning");
     XTR_LOGL(error, s, "Error");
 
-View this example on `Compiler Explorer <https://godbolt.org/z/zvsjech4a>`__.
+View this example on `Compiler Explorer <https://godbolt.org/z/xMYevEjfW>`__.
 
 The output of the above example will be something like::
 

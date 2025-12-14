@@ -187,7 +187,7 @@ log macros which are described in the <a class="reference internal" href="api.ht
 <span class="n">XTR_LOG</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Hello world&quot;</span><span class="p">);</span>
 </pre></div>
 </div>
-<p>View this example on <a class="reference external" href="https://godbolt.org/z/1GWbEPq8T">Compiler Explorer</a>.</p>
+<p>View this example on <a class="reference external" href="https://godbolt.org/z/6MYYWzG4b">Compiler Explorer</a>.</p>
 <p>Sink creation via <a class="reference internal" href="api.html#_CPPv4N3xtr6logger13register_sinkER4sinkNSt6stringE" title="xtr::logger::register_sink"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">xtr::logger::register_sink()</span></code></a>:</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;xtr/logger.hpp&gt;</span>
 
@@ -199,7 +199,7 @@ log macros which are described in the <a class="reference internal" href="api.ht
 <span class="n">XTR_LOG</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Hello world&quot;</span><span class="p">);</span>
 </pre></div>
 </div>
-<p>View this example on <a class="reference external" href="https://godbolt.org/z/cobj4n3Gx">Compiler Explorer</a>.</p>
+<p>View this example on <a class="reference external" href="https://godbolt.org/z/qzqeMbGas">Compiler Explorer</a>.</p>
 <p>Sink creation via copying:</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;xtr/logger.hpp&gt;</span>
 
@@ -214,7 +214,7 @@ log macros which are described in the <a class="reference internal" href="api.ht
 <span class="n">XTR_LOG</span><span class="p">(</span><span class="n">s2</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Hello world&quot;</span><span class="p">);</span>
 </pre></div>
 </div>
-<p>View this example on <a class="reference external" href="https://godbolt.org/z/9bGTG38ez">Compiler Explorer</a>.</p>
+<p>View this example on <a class="reference external" href="https://godbolt.org/z/oTGqK4q4j">Compiler Explorer</a>.</p>
 </section>
 </section>
 <section id="format-string-syntax">
@@ -262,7 +262,7 @@ passed by reference by wrapping them in a call to <a class="reference internal" 
 <span class="n">XTR_LOG</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Hello {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">arg</span><span class="p">);</span>
 </pre></div>
 </div>
-<p>View this example on <a class="reference external" href="https://godbolt.org/z/j5ebhWfdT">Compiler Explorer</a>.</p>
+<p>View this example on <a class="reference external" href="https://godbolt.org/z/TaT3nv61K">Compiler Explorer</a>.</p>
 </section>
 </section>
 <section id="string-arguments">
@@ -420,7 +420,7 @@ that arguments must be wrapped with either <a class="reference internal" href="a
 <span class="p">}</span>
 </pre></div>
 </div>
-<p>View this example on <a class="reference external" href="https://godbolt.org/z/W56zdWEh1">Compiler Explorer</a>.</p>
+<p>View this example on <a class="reference external" href="https://godbolt.org/z/1aEeaKn5c">Compiler Explorer</a>.</p>
 </section>
 </section>
 <section id="formatting-containers-tuples-and-pairs">
@@ -549,7 +549,7 @@ argument. Any type may be passed as long as it has a formatter defined
 <span class="w">    </span><span class="p">}</span>
 </pre></div>
 </div>
-<p>View this example on <a class="reference external" href="https://godbolt.org/z/GcffPWjvz">Compiler Explorer</a>.</p>
+<p>View this example on <a class="reference external" href="https://godbolt.org/z/h1Pqnhz6Y">Compiler Explorer</a>.</p>
 </section>
 </section>
 </section>
@@ -613,7 +613,7 @@ on Linux.</p>
 <span class="p">}</span>
 </pre></div>
 </div>
-<p>View this example on <a class="reference external" href="https://godbolt.org/z/1vh5exK4K">Compiler Explorer</a>.</p>
+<p>View this example on <a class="reference external" href="https://godbolt.org/z/MP9bosffb">Compiler Explorer</a>.</p>
 </section>
 </section>
 <section id="disabling-the-background-consumer-thread">
@@ -656,7 +656,7 @@ process messages written to the logger.</p>
 <span class="p">}</span>
 </pre></div>
 </div>
-<p>View this example on <a class="reference external" href="https://godbolt.org/z/G6v5G1MrG">Compiler Explorer</a>.</p>
+<p>View this example on <a class="reference external" href="https://godbolt.org/z/ezsceP49c">Compiler Explorer</a>.</p>
 <p>Note that <a class="reference internal" href="api.html#_CPPv4N3xtr6logger7pump_ioEP13pump_io_stats" title="xtr::logger::pump_io"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">xtr::logger::pump_io()</span></code></a> will only return false after all
 sinks have been closed and the logger has destructed, in order to ensure no log
 data is lost. This means that the logger should be destructed before attempting
@@ -804,7 +804,7 @@ to create a logger with a storage back-end that discards all input:</p>
 <span class="p">}</span>
 </pre></div>
 </div>
-<p>View this example on <a class="reference external" href="https://godbolt.org/z/W4YE7YqPr">Compiler Explorer</a>.</p>
+<p>View this example on <a class="reference external" href="https://godbolt.org/z/fvf1o1cjK">Compiler Explorer</a>.</p>
 </section>
 </section>
 <section id="custom-log-level-styles">
@@ -843,7 +843,7 @@ further details.</p>
 <span class="n">XTR_LOGL</span><span class="p">(</span><span class="n">error</span><span class="p">,</span><span class="w"> </span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Hello world&quot;</span><span class="p">);</span>
 </pre></div>
 </div>
-<p>View this example on <a class="reference external" href="https://godbolt.org/z/ohcW6ndoz">Compiler Explorer</a>.</p>
+<p>View this example on <a class="reference external" href="https://godbolt.org/z/4s9q4bad8">Compiler Explorer</a>.</p>
 </section>
 </section>
 <section id="logging-to-the-systemd-journal">
@@ -874,7 +874,7 @@ level styles.</p>
 <span class="n">XTR_LOGL</span><span class="p">(</span><span class="n">error</span><span class="p">,</span><span class="w"> </span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Error&quot;</span><span class="p">);</span>
 </pre></div>
 </div>
-<p>View this example on <a class="reference external" href="https://godbolt.org/z/zvsjech4a">Compiler Explorer</a>.</p>
+<p>View this example on <a class="reference external" href="https://godbolt.org/z/xMYevEjfW">Compiler Explorer</a>.</p>
 <p>The output of the above example will be something like:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="mi">7</span><span class="o">&gt;</span><span class="mi">2022</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">18</span> <span class="mi">16</span><span class="p">:</span><span class="mi">01</span><span class="p">:</span><span class="mf">16.205253</span> <span class="n">Main</span> <span class="n">xtrdemo</span><span class="o">.</span><span class="n">cpp</span><span class="p">:</span><span class="mi">12</span><span class="p">:</span> <span class="n">Debug</span>
 <span class="o">&lt;</span><span class="mi">6</span><span class="o">&gt;</span><span class="mi">2022</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">18</span> <span class="mi">16</span><span class="p">:</span><span class="mi">01</span><span class="p">:</span><span class="mf">16.205259</span> <span class="n">Main</span> <span class="n">xtrdemo</span><span class="o">.</span><span class="n">cpp</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span> <span class="n">Info</span>
