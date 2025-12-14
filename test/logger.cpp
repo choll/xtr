@@ -271,7 +271,7 @@ private:
         }
 
         std::thread worker_;
-        std::size_t n_events{};
+        std::atomic<std::size_t> n_events{};
     };
 
     struct pump_io_fixture : pump_io_fixture_base, fixture
