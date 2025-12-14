@@ -55,20 +55,22 @@ namespace fmt
         template<typename FormatContext>
         auto format(const T& value, FormatContext& ctx) const
         {
-            return format_impl(value, ctx, std::make_index_sequence<std::tuple_size_v<T>>{});
+            constexpr auto tail_size =
+                std::max<std::size_t>(std::tuple_size_v<T>, 1) - 1;
+            return format_impl(value, ctx, std::make_index_sequence<tail_size>{});
         }
 
-        template<typename FormatContext, std::size_t Index, std::size_t... Indexes>
+        template<typename FormatContext, std::size_t... Indexes>
         auto format_impl(
             const T& value,
             FormatContext& ctx,
-            std::index_sequence<Index, Indexes...>) const
+            std::index_sequence<Indexes...>) const
         {
             fmt::format_to(ctx.out(), "(");
-            if (std::tuple_size_v<T> > 0)
+            if constexpr (std::tuple_size_v<T> > 0)
             {
                 fmt::format_to(ctx.out(), FMT_COMPILE("{}"), std::get<0>(value));
-                ((fmt::format_to(ctx.out(), FMT_COMPILE(", {}"), std::get<Indexes>(value))), ...);
+                ((fmt::format_to(ctx.out(), FMT_COMPILE(", {}"), std::get<Indexes + 1>(value))), ...);
             }
             return fmt::format_to(ctx.out(), ")");
         }

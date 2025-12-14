@@ -56,7 +56,7 @@ namespace xtr::detail
 XTR_FUNC
 xtr::detail::command_dispatcher::command_dispatcher(std::string path)
 {
-    sockaddr_un addr;
+    sockaddr_un addr{};
 
     // Exceptions aren't thrown here for errors relating to the user supplied
     // path to avoid blowing up if exceptions are disabled (as the throw
@@ -139,10 +139,20 @@ XTR_FUNC
 void xtr::detail::command_dispatcher::process_commands(int timeout) noexcept
 {
     int nfds =
-        ::poll(
-            reinterpret_cast<::pollfd*>(&pollfds_[0]),
-            ::nfds_t(pollfds_.size()),
-            timeout);
+        XTR_TEMP_FAILURE_RETRY(
+            ::poll(
+                reinterpret_cast<::pollfd*>(&pollfds_[0]),
+                ::nfds_t(pollfds_.size()),
+                timeout));
+
+    if (nfds == -1)
+    {
+        err("Error: command socket poll failed");
+        // Clear pollfds to avoid spamming the above error message---is_open
+        // will return false and process_commands will not be called again.
+        pollfds_.clear();
+        return;
+    }
 
     if ((pollfds_[0].revents & POLLIN) != 0)
     {

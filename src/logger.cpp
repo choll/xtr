@@ -25,7 +25,10 @@
 XTR_FUNC
 xtr::sink xtr::logger::get_sink(std::string name)
 {
-    return sink(*this, std::move(name), default_log_level_);
+    return sink(
+        *this,
+        std::move(name),
+        default_log_level_.load(std::memory_order_relaxed));
 }
 
 XTR_FUNC
@@ -65,7 +68,7 @@ void xtr::logger::set_log_level_style(log_level_style_t level_style) noexcept
 XTR_FUNC
 void xtr::logger::set_default_log_level(log_level_t level)
 {
-    default_log_level_ = level;
+    default_log_level_.store(level, std::memory_order_relaxed);
 }
 
 XTR_FUNC

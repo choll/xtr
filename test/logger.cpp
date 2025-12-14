@@ -2611,6 +2611,10 @@ TEST_CASE_METHOD(fixture, "logger formatter helpers test", "[logger]")
     XTR_LOG(s_, "{}", t), line_ = __LINE__;
     REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: (1, 2, 3)", line_));
 
+    std::tuple<> empty_t{};
+    XTR_LOG(s_, "{}", empty_t), line_ = __LINE__;
+    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: ()", line_));
+
     const int ca[] = {1, 2, 3};
     XTR_LOG(s_, "{}", std::span(std::begin(ca), std::end(ca))), line_ = __LINE__;
     REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: [1, 2, 3]", line_));

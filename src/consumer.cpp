@@ -75,7 +75,7 @@ bool xtr::detail::consumer::run_once(pump_io_stats* stats) noexcept
     bool ts_stale = true;
 
     // Read commands once per loop over sinks
-    if (cmds_)
+    if (cmds_ && cmds_->is_open())
         cmds_->process_commands(/* timeout= */0);
 
     // The inner do/while loop below can modify sinks_ so references to sinks_
@@ -167,7 +167,10 @@ XTR_FUNC
 void xtr::detail::consumer::set_command_path(std::string path) noexcept
 {
     if (path == null_command_path)
+    {
+        cmds_.reset();
         return;
+    }
 
     cmds_.reset(new detail::command_dispatcher(std::move(path)));
 
