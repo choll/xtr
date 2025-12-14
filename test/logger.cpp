@@ -271,6 +271,7 @@ private:
         }
 
         std::thread worker_;
+        std::size_t n_events{};
     };
 
     struct pump_io_fixture : pump_io_fixture_base, fixture
@@ -292,8 +293,6 @@ private:
                         n_events += io_stats.n_events;
                 });
         }
-
-        std::size_t n_events{};
     };
 
     struct file_fixture_base
