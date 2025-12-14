@@ -1,5 +1,4 @@
-.\" Man page generated from reStructuredText
-.\" by the Docutils 0.22.3 manpage writer.
+.\" Man page generated from reStructuredText.
 .
 .
 .nr rst2man-indent-level 0
@@ -34,22 +33,22 @@ libxtr-quickstart \- C++ logging library quick-start guide
 .SH INSTALLING
 .sp
 The easiest way to install XTR is via Conan. If you are not using Conan, see the
-INSTALL \%<https://\:github\:.com/\:choll/\:xtr/\:blob/\:master/\:INSTALL\:.md> guide, or for the
+\X'tty: link https://github.com/choll/xtr/blob/master/INSTALL.md'\fI\%INSTALL\fP <\fBhttps://github.com/choll/xtr/blob/master/INSTALL.md\fP>\X'tty: link' guide, or for the
 truly impatient there is a single\-include file
-here \%<https://\:github\:.com/\:choll/\:xtr/\:blob/\:master/\:single_include/\:xtr/\:logger\:.hpp>\&.
+\X'tty: link https://github.com/choll/xtr/blob/master/single_include/xtr/logger.hpp'\fI\%here\fP <\fBhttps://github.com/choll/xtr/blob/master/single_include/xtr/logger.hpp\fP>\X'tty: link'\&.
 .SH OVERVIEW
 .sp
-The logger is split into two main components, the logger \%<#\:logger> class
-and the sink \%<#\:sink> class. The logger takes care of opening and closing the log file,
+The logger is split into two main components, the \fI\%logger\fP class
+and the \fI\%sink\fP class. The logger takes care of opening and closing the log file,
 and is thread\-safe. The sink class is used to write to the log. Sinks are
-created by calling \fBxtr::logger::get_sink()\fP \%<#\:_CPPv4N3xtr6logger8get_sinkENSt6stringE> and are not thread
+created by calling \fI\%xtr::logger::get_sink()\fP and are not thread
 safe\-\-\-the idea is that applications have many sinks, so threads should each
 have their own set of separate sinks.
 .sp
-Log messages are written using various macros \%<#\:log-macros> which accept
+Log messages are written using various \fI\%macros\fP which accept
 a sink as their first argument, followed by a Python
-str.format \%<https://\:docs\:.python\:.org/\:3/\:library/\:string\:.html#\:formatstrings>
-style format string. The {fmt} \%<https://\:fmt\:.dev> library is used for
+\X'tty: link https://docs.python.org/3/library/string.html#formatstrings'\fI\%str.format\fP <\fBhttps://docs.python.org/3/library/string.html#formatstrings\fP>\X'tty: link'
+style format string. The \X'tty: link https://fmt.dev'\fI\%{fmt}\fP <\fBhttps://fmt.dev\fP>\X'tty: link' library is used for
 formatting.
 .SH EXAMPLES
 .sp
@@ -57,13 +56,15 @@ Creating a sink:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.EX
+.nf
+.ft C
 #include <xtr/logger.hpp>
 
 xtr::logger log;
 
 xtr::sink s = log.get_sink(\(dqMain\(dq);
-.EE
+.ft P
+.fi
 .UNINDENT
 .UNINDENT
 .sp
@@ -72,9 +73,11 @@ in the background thread [1]:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.EX
+.nf
+.ft C
 XTR_LOG(s, \(dqHello world\(dq);
-.EE
+.ft P
+.fi
 .UNINDENT
 .UNINDENT
 .sp
@@ -83,9 +86,11 @@ timestamp in the background thread:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.EX
+.nf
+.ft C
 XTR_TRY_LOG(s, \(dqHello world\(dq);
-.EE
+.ft P
+.fi
 .UNINDENT
 .UNINDENT
 .sp
@@ -93,22 +98,26 @@ Write to the log, immediately reading the timestamp from the TSC:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.EX
+.nf
+.ft C
 XTR_LOG_TSC(s, \(dqHello world\(dq);
-.EE
+.ft P
+.fi
 .UNINDENT
 .UNINDENT
 .sp
 Write to the log, immediately reading the timestamp using
-clock_gettime(3) \%<https://\:www\:.man7\:.org/\:linux/\:man-pages/\:man3/\:clock_gettime\:.3\:.html>
+\X'tty: link https://www.man7.org/linux/man-pages/man3/clock_gettime.3.html'\fI\%clock_gettime(3)\fP <\fBhttps://www.man7.org/linux/man-pages/man3/clock_gettime.3.html\fP>\X'tty: link'
 with a clock source of either CLOCK_REALTIME_COARSE on Linux or CLOCK_REALTIME_FAST
 on FreeBSD:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.EX
+.nf
+.ft C
 XTR_LOG_RTC(s, \(dqHello world\(dq);
-.EE
+.ft P
+.fi
 .UNINDENT
 .UNINDENT
 .sp
@@ -118,35 +127,41 @@ message will be logged:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.EX
+.nf
+.ft C
 XTR_LOGL(info, s, \(dqHello world\(dq);
-.EE
+.ft P
+.fi
 .UNINDENT
 .UNINDENT
 .sp
 Set the log level of the sink \(aqs\(aq to \(aqerror\(aq, causing messages with importance
 lower than \(aqerror\(aq to be dropped. Available log levels are debug, info, warning,
-error and fatal\-\-\-see \fBxtr::log_level_t\fP \%<#\:_CPPv4N3xtr11log_level_tE>\&.
+error and fatal\-\-\-see \fI\%xtr::log_level_t\fP\&.
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.EX
+.nf
+.ft C
 s.set_level(xtr::log_level_t::error);
 
 XTR_LOGL(info, s, \(dqHello world\(dq); // Dropped
-.EE
+.ft P
+.fi
 .UNINDENT
 .UNINDENT
 .sp
 Fatal errors will log and then terminate the program using
-abort(3) \%<https://\:www\:.man7\:.org/\:linux/\:man-pages/\:man3/\:abort\:.3\:.html>:
+\X'tty: link https://www.man7.org/linux/man-pages/man3/abort.3.html'\fI\%abort(3)\fP <\fBhttps://www.man7.org/linux/man-pages/man3/abort.3.html\fP>\X'tty: link':
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.EX
+.nf
+.ft C
 XTR_LOGL(fatal, s, \(dqGoodbye cruel world\(dq);
 // NOTREACHED
-.EE
+.ft P
+.fi
 .UNINDENT
 .UNINDENT
 .sp
@@ -157,21 +172,25 @@ arguments:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.EX
+.nf
+.ft C
 const std::string str1 = \(dqHello\(dq;
 const char* str2 = \(dqworld\(dq;
 XTR_LOG(\(dq{} {}\(dq, str1, str2);
-.EE
+.ft P
+.fi
 .UNINDENT
 .UNINDENT
 .sp
-To avoid copying, wrap arguments in a call to \fBxtr::nocopy()\fP \%<#\:_CPPv4I0EN3xtr6nocopyEDaRK1T>:
+To avoid copying, wrap arguments in a call to \fI\%xtr::nocopy()\fP:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.EX
+.nf
+.ft C
 XTR_LOG(\(dq{} {}\(dq, nocopy(str1), nocopy(str2));
-.EE
+.ft P
+.fi
 .UNINDENT
 .UNINDENT
 .sp
@@ -179,10 +198,12 @@ Arguments may also be moved in to the logger:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.EX
+.nf
+.ft C
 std::string str3 = \(dqworld\(dq;
 XTR_LOG(\(dqHello {}\(dq, std::move(str3));
-.EE
+.ft P
+.fi
 .UNINDENT
 .UNINDENT
 .SH FOOTNOTES
@@ -192,10 +213,11 @@ the background thread reads the event from the sink. This is
 less accurate, but faster than reading the time at the log
 call\-site. If reading the time at the call\-site is preferred,
 use XTR_LOG_TSC or XTR_LOG_RTC. See the
-time sources \%<#\:time-sources> section of the user guide
+\fI\%time sources\fP section of the user guide
 for further information.
-.SH Author
+.SH AUTHOR
 Chris E. Holloway
-.SH Copyright
+.SH COPYRIGHT
 2022, Chris E. Holloway
-.\" End of generated man page.
+.\" Generated by docutils manpage writer.
+.
