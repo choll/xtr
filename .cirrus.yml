@@ -1,7 +1,7 @@
 task:
   name: freebsd-14-gcc
   freebsd_instance:
-    image_family: freebsd-14-2
+    image_family: freebsd-14-3
   install_script: pkg install -y git gmake gcc14
   submodules_script:
     - git submodule init
@@ -11,7 +11,7 @@ task:
 task:
   name: freebsd-14-gcc-conan
   freebsd_instance:
-    image_family: freebsd-14-2
+    image_family: freebsd-14-3
   install_script:
     - pkg install -y git gmake cmake gcc14 llvm18 devel/py-pip py311-sqlite3
     - pip install --user conan
@@ -25,7 +25,7 @@ task:
 task:
   name: freebsd-14-gcc-cmake
   freebsd_instance:
-    image_family: freebsd-14-2
+    image_family: freebsd-14-3
   install_script:
     - pkg install -y git gmake cmake gcc14 llvm18 devel/py-pip py311-sqlite3
     - pip install --user conan
@@ -42,7 +42,7 @@ task:
 task:
   name: freebsd-14-clang
   freebsd_instance:
-    image_family: freebsd-14-2
+    image_family: freebsd-14-3
   install_script: pkg install -y git gmake binutils llvm18
   submodules_script:
     - git submodule init
@@ -52,7 +52,7 @@ task:
 task:
   name: freebsd-14-clang-conan
   freebsd_instance:
-    image_family: freebsd-14-2
+    image_family: freebsd-14-3
   install_script:
     - pkg install -y git gmake cmake llvm18 binutils devel/py-pip py311-sqlite3
     - pip install --user conan
@@ -66,7 +66,7 @@ task:
 task:
   name: freebsd-14-clang-cmake
   freebsd_instance:
-    image_family: freebsd-14-2
+    image_family: freebsd-14-3
   install_script:
     - pkg install -y git gmake cmake llvm18 binutils devel/py-pip py311-sqlite3
     - pip install --user conan
@@ -83,7 +83,7 @@ task:
 task:
   name: freebsd-13-gcc
   freebsd_instance:
-    image_family: freebsd-13-4
+    image_family: freebsd-13-5
   install_script: pkg install -y git gmake gcc14
   submodules_script:
     - git submodule init
@@ -93,7 +93,7 @@ task:
 task:
   name: freebsd-13-clang
   freebsd_instance:
-    image_family: freebsd-13-4
+    image_family: freebsd-13-5
   install_script: pkg install -y git gmake binutils llvm18
   submodules_script:
     - git submodule init
