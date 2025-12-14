@@ -79,9 +79,9 @@ xtr::storage_interface_ptr xtr::make_fd_storage(int fd, std::string reopen_path)
         catch (const std::exception& e)
         {
             fmt::print(
+                stderr,
                 FMT_COMPILE("Falling back to posix_fd_storage due to "
-                            "io_uring_fd_storage "
-                            "error: {}\n"),
+                            "io_uring_fd_storage error: {}\n"),
                 e.what());
         }
 #endif

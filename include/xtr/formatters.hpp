@@ -21,6 +21,7 @@
 #ifndef XTR_FORMATTERS_HPP
 #define XTR_FORMATTERS_HPP
 
+#include <algorithm>
 #include <cstddef>
 #include <type_traits>
 #include <utility>

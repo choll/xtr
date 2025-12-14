@@ -34,9 +34,9 @@
 #include <fmt/format.h>
 
 #include <algorithm>
-#include <climits>
-#include <cstring>
 #include <cstdio>
+#include <cstring>
+#include <exception>
 #include <version>
 
 XTR_FUNC
