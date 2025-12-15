@@ -7,8 +7,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 //
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 //
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -183,8 +183,7 @@ private:
     void log_impl() noexcept;
 
     template<auto Format, auto Level, typename Tags, typename... Args>
-    void log_impl(Args&&... args) noexcept(
-        (XTR_NOTHROW_INGESTIBLE(Args, args) && ...));
+    void log_impl(Args&&... args) noexcept((XTR_NOTHROW_INGESTIBLE(Args, args) && ...));
 
     template<typename T>
     void copy(std::byte* pos, T&& value) noexcept(XTR_NOTHROW_INGESTIBLE(T, value));
@@ -219,8 +218,7 @@ private:
 };
 
 template<auto Format, auto Level, typename Tags, typename... Args>
-void xtr::sink::log(Args&&... args) noexcept(
-    (XTR_NOTHROW_INGESTIBLE(Args, args) && ...))
+void xtr::sink::log(Args&&... args) noexcept((XTR_NOTHROW_INGESTIBLE(Args, args) && ...))
 {
     log_impl<Format, Level, Tags>(std::forward<Args>(args)...);
 }
@@ -283,9 +281,7 @@ void xtr::sink::post_with_str_table(Args&&... args) noexcept(
     auto str_cur = str_pos;
     auto str_end = s.end();
 
-    copy(
-        s.begin(),
-        &detail::trampolineS<Format, Level, detail::consumer, lambda_t>);
+    copy(s.begin(), &detail::trampolineS<Format, Level, detail::consumer, lambda_t>);
     copy(
         func_pos,
         make_lambda<Tags>(detail::build_string_table<Tags>(
@@ -301,8 +297,7 @@ void xtr::sink::post_with_str_table(Args&&... args) noexcept(
 }
 
 template<typename T>
-void xtr::sink::copy(std::byte* pos, T&& value) noexcept(
-    XTR_NOTHROW_INGESTIBLE(T, value))
+void xtr::sink::copy(std::byte* pos, T&& value) noexcept(XTR_NOTHROW_INGESTIBLE(T, value))
 {
     assert(std::uintptr_t(pos) % alignof(T) == 0);
 #if defined(__cpp_lib_assume_aligned)

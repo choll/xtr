@@ -7,8 +7,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 //
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 //
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -209,12 +209,8 @@
  * @note Log statements with the 'debug' level can be disabled at build time by
  * defining @ref XTR_NDEBUG.
  */
-#define XTR_LOGL_RTC(LEVEL, SINK, ...)                    \
-    XTR_LOGL_TS(                                          \
-        LEVEL,                                            \
-        SINK,                                             \
-        xtr::detail::get_time<XTR_CLOCK_REALTIME_FAST>(), \
-        __VA_ARGS__)
+#define XTR_LOGL_RTC(LEVEL, SINK, ...) \
+    XTR_LOGL_TS(LEVEL, SINK, xtr::detail::get_time<XTR_CLOCK_REALTIME_FAST>(), __VA_ARGS__)
 
 /**
  * Non-blocking variant of @ref XTR_LOG_RTC. The message will be discarded if

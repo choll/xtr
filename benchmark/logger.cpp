@@ -90,7 +90,6 @@ LOG_BENCH(logger_benchmark_int, XTR_LOG(p, "Test {}", 42), 16)
 LOG_BENCH(logger_benchmark_long, XTR_LOG(p, "Test {}", 42L), 16)
 LOG_BENCH(logger_benchmark_double, XTR_LOG(p, "Test {}", 42.0), 16)
 LOG_BENCH(logger_benchmark_c_str, XTR_LOG(p, "Test {}", "Hello"), 32)
-LOG_BENCH(
-    logger_benchmark_str_view, XTR_LOG(p, "Test {}", std::string_view{"Hello"}), 32)
+LOG_BENCH(logger_benchmark_str_view, XTR_LOG(p, "Test {}", std::string_view{"Hello"}), 32)
 LOG_BENCH(logger_benchmark_str, XTR_LOG(p, "Test {}", s), 32)
 LOG_BENCH(logger_benchmark_non_blocking, XTR_TRY_LOG(p, "Test"), 8)

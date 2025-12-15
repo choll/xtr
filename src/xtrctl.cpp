@@ -7,8 +7,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 //
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 //
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -41,8 +41,7 @@ namespace xtrd = xtr::detail;
 
 namespace
 {
-    [[noreturn]] void usage(
-        const char* progname, int status, const char* reason = nullptr)
+    [[noreturn]] void usage(const char* progname, int status, const char* reason = nullptr)
     {
         if (reason != nullptr)
             std::cout << reason << "\n\n";
@@ -259,9 +258,7 @@ int main(int argc, char* argv[])
             std::cout << "Success\n";
             break;
         case xtrd::error::frame_id:
-            errx(
-                "Error: ",
-                frame_cast<xtrd::error>(&buf, std::size_t(nbytes))->reason);
+            errx("Error: ", frame_cast<xtrd::error>(&buf, std::size_t(nbytes))->reason);
         default:
             errx("Invalid frame id");
         }

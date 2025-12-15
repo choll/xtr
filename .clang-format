@@ -46,5 +46,5 @@ Standard: c++20
 UseTab: Never
 ColumnLimit: 80
 PenaltyReturnTypeOnItsOwnLine: 1000
-PenaltyExcessCharacter: 10
+PenaltyExcessCharacter: 5
 ...

@@ -7,8 +7,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 //
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 //
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -53,10 +53,7 @@ xtr::detail::consumer::~consumer()
     }
     catch (const std::exception& e)
     {
-        fmt::print(
-            stderr,
-            FMT_COMPILE("Error destructing consumer: {}\n"),
-            e.what());
+        fmt::print(stderr, FMT_COMPILE("Error destructing consumer: {}\n"), e.what());
     }
 #endif
 }
@@ -218,10 +215,8 @@ void xtr::detail::consumer::status_handler(int fd, detail::status& st)
 {
     st.pattern.text[sizeof(st.pattern.text) - 1] = '\0';
 
-    const auto matcher = detail::make_matcher(
-        st.pattern.type,
-        st.pattern.text,
-        st.pattern.ignore_case);
+    const auto matcher =
+        detail::make_matcher(st.pattern.type, st.pattern.text, st.pattern.ignore_case);
 
     if (!matcher->valid())
     {
@@ -261,10 +256,8 @@ void xtr::detail::consumer::set_level_handler(int fd, detail::set_level& sl)
         return;
     }
 
-    const auto matcher = detail::make_matcher(
-        sl.pattern.type,
-        sl.pattern.text,
-        sl.pattern.ignore_case);
+    const auto matcher =
+        detail::make_matcher(sl.pattern.type, sl.pattern.text, sl.pattern.ignore_case);
 
     if (!matcher->valid())
     {

@@ -7,8 +7,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 //
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 //
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -78,8 +78,7 @@ namespace xtr::detail
     // C string and string_view r-value references are not forwarded because
     // they are non-owning so being moved is meaningless.
     template<typename Tags, typename T, typename Buffer>
-        requires(std::is_rvalue_reference_v<
-                     decltype(std::forward<T>(std::declval<T>()))> &&
+        requires(std::is_rvalue_reference_v<decltype(std::forward<T>(std::declval<T>()))> &&
                  std::same_as<std::remove_cvref_t<T>, std::string>) ||
                 (!is_c_string<T>::value &&
                  !std::same_as<std::remove_cvref_t<T>, std::string> &&

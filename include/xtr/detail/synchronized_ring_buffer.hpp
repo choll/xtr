@@ -7,8 +7,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 //
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 //
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -112,8 +112,7 @@ namespace xtr::detail
             size_(size_type(end - begin))
         {
             assert(begin <= end);
-            assert(
-                size_type(end - begin) <= std::numeric_limits<size_type>::max());
+            assert(size_type(end - begin) <= std::numeric_limits<size_type>::max());
         }
 
         [[nodiscard]] constexpr size_type size() const noexcept
@@ -164,10 +163,7 @@ public:
     }
 
     explicit synchronized_ring_buffer(
-        size_type min_capacity,
-        int fd = -1,
-        std::size_t offset = 0,
-        int flags = srb_flags)
+        size_type min_capacity, int fd = -1, std::size_t offset = 0, int flags = srb_flags)
         requires is_dynamic
         :
         m_(align_to_page_size(
