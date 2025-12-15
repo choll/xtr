@@ -51,9 +51,9 @@ SOFTWARE.
  * do not have io_uring support, as a run-time check will be performed before
  * attempting to use any io_uring system calls.
  *
- * Note that if the single header include file is not used then this setting
- * may only be defined in either config.hpp or by overriding CXXFLAGS, and
- * requires rebuilding libxtr if set.
+ * Note that if the single header include file is not used then this setting may
+ * only be defined in either config.hpp or by overriding CXXFLAGS, and requires
+ * rebuilding libxtr if set.
  */
 #if !defined(XTR_USE_IO_URING) || defined(DOXYGEN)
 #define XTR_USE_IO_URING __has_include(<liburing.h>)
@@ -63,9 +63,9 @@ SOFTWARE.
  * Set to 1 to enable submission queue polling when using io_uring. If enabled
  * the IORING_SETUP_SQPOLL flag will be passed to io_uring_setup(2).
  *
- * Note that if the single header include file is not used then this setting
- * may only be defined in either config.hpp or by overriding CXXFLAGS, and
- * requires rebuilding libxtr if set.
+ * Note that if the single header include file is not used then this setting may
+ * only be defined in either config.hpp or by overriding CXXFLAGS, and requires
+ * rebuilding libxtr if set.
  */
 #if !defined(XTR_IO_URING_POLL)
 #define XTR_IO_URING_POLL 0
@@ -84,7 +84,8 @@ namespace xtr
     {
         timespec() = default;
 
-        timespec(std::timespec ts) : std::timespec(ts)
+        timespec(std::timespec ts) :
+            std::timespec(ts)
         {
         }
     };
@@ -285,7 +286,8 @@ class xtr::detail::file_descriptor
 public:
     file_descriptor() = default;
 
-    explicit file_descriptor(int fd) : fd_(fd)
+    explicit file_descriptor(int fd) :
+        fd_(fd)
     {
     }
 
@@ -293,7 +295,8 @@ public:
 
     file_descriptor(const file_descriptor&) = delete;
 
-    file_descriptor(file_descriptor&& other) noexcept : fd_(other.fd_)
+    file_descriptor(file_descriptor&& other) noexcept :
+        fd_(other.fd_)
     {
         other.release();
     }
@@ -501,11 +504,13 @@ namespace xtr::detail
     template<>
     struct string_ref<const char*>
     {
-        explicit string_ref(const char* s) : str(s)
+        explicit string_ref(const char* s) :
+            str(s)
         {
         }
 
-        explicit string_ref(const std::string& s) : str(s.c_str())
+        explicit string_ref(const std::string& s) :
+            str(s.c_str())
         {
         }
 
@@ -519,7 +524,8 @@ namespace xtr::detail
     template<>
     struct string_ref<std::string_view>
     {
-        explicit string_ref(std::string_view s) : str(s)
+        explicit string_ref(std::string_view s) :
+            str(s)
         {
         }
 
@@ -539,8 +545,7 @@ namespace fmt
         }
 
         template<typename FormatContext>
-        auto format(
-            xtr::detail::string_ref<const char*> ref, FormatContext& ctx) const
+        auto format(xtr::detail::string_ref<const char*> ref, FormatContext& ctx) const
         {
             auto pos = ctx.out();
             while (*ref.str != '\0')
@@ -607,8 +612,7 @@ namespace xtr::detail
         detect_tag<speculative_tag, Tags>::value;
 
     template<typename Tags>
-    inline constexpr bool is_timestamp_v =
-        detect_tag<timestamp_tag, Tags>::value;
+    inline constexpr bool is_timestamp_v = detect_tag<timestamp_tag, Tags>::value;
 }
 
 #include <atomic>
@@ -636,7 +640,7 @@ namespace xtr::detail
     template<std::size_t N>
     struct least_uint
     {
-        typedef std::conditional_t<
+        using type = std::conditional_t<
             N <= std::size_t{std::numeric_limits<std::uint8_t>::max()},
             std::uint8_t,
             std::conditional_t<
@@ -645,8 +649,7 @@ namespace xtr::detail
                 std::conditional_t<
                     N <= std::size_t{std::numeric_limits<std::uint32_t>::max()},
                     std::uint32_t,
-                    std::uint64_t>>>
-            type;
+                    std::uint64_t>>>;
     };
 
     template<std::size_t N>
@@ -697,8 +700,7 @@ namespace xtr::detail
             size_(size_type(end - begin))
         {
             assert(begin <= end);
-            assert(
-                size_type(end - begin) <= std::numeric_limits<size_type>::max());
+            assert(size_type(end - begin) <= std::numeric_limits<size_type>::max());
         }
 
         [[nodiscard]] constexpr size_type size() const noexcept
@@ -740,8 +742,7 @@ public:
     static constexpr bool is_dynamic = Capacity == dynamic_capacity;
 
 public:
-    synchronized_ring_buffer(
-        int fd = -1, std::size_t offset = 0, int flags = srb_flags)
+    synchronized_ring_buffer(int fd = -1, std::size_t offset = 0, int flags = srb_flags)
         requires(!is_dynamic)
     {
         m_ = mirrored_memory_mapping{capacity(), fd, offset, flags};
@@ -750,10 +751,7 @@ public:
     }
 
     explicit synchronized_ring_buffer(
-        size_type min_capacity,
-        int fd = -1,
-        std::size_t offset = 0,
-        int flags = srb_flags)
+        size_type min_capacity, int fd = -1, std::size_t offset = 0, int flags = srb_flags)
         requires is_dynamic
         :
         m_(align_to_page_size(
@@ -955,8 +953,7 @@ struct xtr::detail::tsc
     {
         std::uint32_t a, d;
         asm volatile("rdtsc;" : "=a"(a), "=d"(d)); // output, a=eax, d=edx
-        return {
-            static_cast<std::uint64_t>(a) | (static_cast<uint64_t>(d) << 32)};
+        return {static_cast<std::uint64_t>(a) | (static_cast<uint64_t>(d) << 32)};
     }
 
     static std::timespec to_timespec(tsc ts);
@@ -1044,9 +1041,9 @@ namespace xtr
     };
 
     /**
-     * Converts a string containing a log level name to the corresponding
-     * @ref log_level_t enum value. Throws std::invalid_argument if the given
-     * string does not correspond to any log level.
+     * Converts a string containing a log level name to the corresponding @ref
+     * log_level_t enum value. Throws std::invalid_argument if the given string
+     * does not correspond to any log level.
      */
     log_level_t log_level_from_string(std::string_view str);
 
@@ -1074,8 +1071,7 @@ namespace xtr
     /**
      * Systemd log level style (see @ref log_level_style_t). Returns strings as
      * described in
-     * <a
-     * href="https://man7.org/linux/man-pages/man3/sd-daemon.3.html">sd-daemon(3)</a>,
+     * <a href="https://man7.org/linux/man-pages/man3/sd-daemon.3.html">sd-daemon(3)</a>,
      * e.g. "<0>", "<1>", "<2>" etc.
      */
     const char* systemd_log_level_style(log_level_t level);
@@ -1103,7 +1099,6 @@ struct xtr::pump_io_stats
 #include <cstddef>
 #include <memory>
 #include <span>
-#include <string_view>
 
 namespace xtr
 {
@@ -1115,12 +1110,12 @@ namespace xtr
     using storage_interface_ptr = std::unique_ptr<storage_interface>;
 
     /**
-     * When passed to the reopen_path argument of @ref make_fd_storage,
-     * @ref posix_fd_storage::posix_fd_storage, @ref io_uring_fd_storage or
-     * @ref stream-with-reopen-ctor "logger::logger" indicates that
-     * the output file handle has no associated filename and so should not be
-     * reopened if requested by the
-     * xtrctl <a href="xtrctl.html#reopening-log-files">reopen command</a>.
+     * When passed to the reopen_path argument of @ref make_fd_storage, @ref
+     * posix_fd_storage::posix_fd_storage, @ref io_uring_fd_storage or @ref
+     * stream-with-reopen-ctor "logger::logger" indicates that the output file
+     * handle has no associated filename and so should not be reopened if
+     * requested by the xtrctl <a href="xtrctl.html#reopening-log-files">reopen
+     * command</a>.
      */
     inline constexpr auto null_reopen_path = "";
 }
@@ -1134,9 +1129,9 @@ namespace xtr
 struct xtr::storage_interface
 {
     /**
-     * Allocates a buffer for formatted log data to be written to. Once a
-     * buffer has been allocated, allocate_buffer will not be called again
-     * until the buffer has been submitted via @ref submit_buffer.
+     * Allocates a buffer for formatted log data to be written to. Once a buffer
+     * has been allocated, allocate_buffer will not be called again until the
+     * buffer has been submitted via @ref submit_buffer.
      */
     virtual std::span<char> allocate_buffer() = 0;
 
@@ -1152,8 +1147,8 @@ struct xtr::storage_interface
     virtual void flush() = 0;
 
     /**
-     * Invoked to indicate that the back-end should ensure that all data
-     * written to the associated backing store has reached permanent storage.
+     * Invoked to indicate that the back-end should ensure that all data written
+     * to the associated backing store has reached permanent storage.
      */
     virtual void sync() noexcept = 0;
 
@@ -1373,7 +1368,8 @@ namespace xtr::detail
         static constexpr auto truncated =
             std::numeric_limits<std::uint32_t>::max();
 
-        explicit string_table_entry(std::size_t sz) : size(std::uint32_t(sz))
+        explicit string_table_entry(std::size_t sz) :
+            size(std::uint32_t(sz))
         {
         }
 
@@ -1392,16 +1388,13 @@ namespace xtr::detail
     {
         if (entry.size == string_table_entry::truncated) [[unlikely]]
             return string_ref<std::string_view>("<truncated>");
-        const std::string_view str(
-            reinterpret_cast<const char*>(pos),
-            entry.size);
+        const std::string_view str(reinterpret_cast<const char*>(pos), entry.size);
         pos += entry.size;
         return string_ref<std::string_view>(str);
     }
 
     template<typename Tags, typename T, typename Buffer>
-        requires(std::is_rvalue_reference_v<
-                     decltype(std::forward<T>(std::declval<T>()))> &&
+        requires(std::is_rvalue_reference_v<decltype(std::forward<T>(std::declval<T>()))> &&
                  std::same_as<std::remove_cvref_t<T>, std::string>) ||
                 (!is_c_string<T>::value &&
                  !std::same_as<std::remove_cvref_t<T>, std::string> &&
@@ -1490,7 +1483,7 @@ namespace xtr::detail
         [[maybe_unused]] const char* timestamp,
         std::string& name) noexcept
     {
-        typedef void (*fptr_t)();
+        using fptr_t = void (*)();
 
         auto func_pos = record + sizeof(fptr_t);
         if constexpr (alignof(Func) > alignof(fptr_t))
@@ -1518,7 +1511,7 @@ namespace xtr::detail
         const char* timestamp,
         std::string& name) noexcept
     {
-        typedef void (*fptr_t)();
+        using fptr_t = void (*)();
 
         auto func_pos = record + sizeof(fptr_t);
         if constexpr (alignof(Func) > alignof(fptr_t))
@@ -1579,17 +1572,15 @@ namespace xtr
      std::is_same_v<std::remove_cvref_t<TYPE>, std::string>)
 
 /**
- * Log sink class. A sink is how log messages are written to a log.
- * Each sink has its own queue which is used to send log messages
- * to the logger. Sink operations are not thread safe, with the
- * exception of @ref set_level and @ref level.
+ * Log sink class. A sink is how log messages are written to a log. Each sink has
+ * its own queue which is used to send log messages to the logger. Sink operations
+ * are not thread safe, with the exception of @ref set_level and @ref level.
  *
- * It is expected that an application will have many sinks, such
- * as a sink per thread or sink per component. A sink that is connected
- * to a logger may be created by calling @ref logger::get_sink. A sink
- * that is not connected to a logger may be created simply by default
- * construction, then the sink may be connected to a logger by calling
- * @ref logger::register_sink.
+ * It is expected that an application will have many sinks, such as a sink per
+ * thread or sink per component. A sink that is connected to a logger may be created
+ * by calling @ref logger::get_sink. A sink that is not connected to a logger may
+ * be created simply by default construction, then the sink may be connected to
+ * a logger by calling @ref logger::register_sink.
  */
 class xtr::sink
 {
@@ -1605,50 +1596,46 @@ public:
 
     /**
      * Sink copy constructor. When a sink is copied it is automatically
-     * registered with the same logger object as the source sink, using
-     * the same sink name. The sink name may be modified by calling @ref
-     * set_name.
+     * registered with the same logger object as the source sink, using the same
+     * sink name. The sink name may be modified by calling @ref set_name.
      */
     sink(const sink& other);
 
     /**
-     * Sink copy assignment operator. When a sink is copy assigned it
-     * is closed in order to disconnect it from any existing logger object
-     * and is then automatically registered with the same logger object as
-     * the source sink, using the same sink name. The sink name may be
-     * modified by calling @ref set_name.
+     * Sink copy assignment operator. When a sink is copy assigned it is closed
+     * in order to disconnect it from any existing logger object and is then automatically
+     * registered with the same logger object as the source sink, using the same
+     * sink name. The sink name may be modified by calling @ref set_name.
      */
     sink& operator=(const sink& other);
 
     /**
-     * Sink destructor. When a sink is destructed it is automatically
-     * closed.
+     * Sink destructor. When a sink is destructed it is automatically closed.
      */
     ~sink();
 
     /**
-     *  Closes the sink. After this function returns the sink is closed and
-     *  log() functions may not be called on the sink. The sink may be
-     *  re-opened by calling @ref logger::register_sink.
+     * Closes the sink. After this function returns the sink is closed and log()
+     * functions may not be called on the sink. The sink may be re-opened by
+     * calling @ref logger::register_sink.
      */
     void close();
 
     /**
-     * Returns true if the sink is open (connected to a logger), or false if
-     * the sink is closed (not connected to a logger). Log messages may only
-     * be written to a sink that is open.
+     * Returns true if the sink is open (connected to a logger), or false if the
+     * sink is closed (not connected to a logger). Log messages may only be
+     * written to a sink that is open.
      */
     bool is_open() const noexcept;
 
     /**
-     *  Synchronizes all log calls previously made by this sink with the
-     *  background thread and syncs all data to back-end storage.
+     * Synchronizes all log calls previously made by this sink with the
+     * background thread and syncs all data to back-end storage.
      *
-     *  @post All entries in the sink's queue have been processed by the
-     *        background thread, buffers have been flushed and the sync()
-     *        function on the storage interface has been called. For the
-     *        default (disk) storage this means fsync(2) (if available) has
-     *        been called.
+     * @post All entries in the sink's queue have been processed by the
+     * background thread, buffers have been flushed and the sync() function on
+     * the storage interface has been called. For the default (disk) storage
+     * this means fsync(2) (if available) has been called.
      */
     void sync();
 
@@ -1658,20 +1645,18 @@ public:
     void set_name(std::string name);
 
     /**
-     *  Logs the given format string and arguments. This function is not
-     *  intended to be used directly, instead one of the XTR_LOG macros
-     *  should be used. It is provided for use in situations where use of
-     *  a macro may be undesirable.
+     * Logs the given format string and arguments. This function is not intended
+     * to be used directly, instead one of the XTR_LOG macros should be used. It
+     * is provided for use in situations where use of a macro may be undesirable.
      */
     template<auto Format, auto Level, typename Tags = void(), typename... Args>
     void log(Args&&... args) noexcept((XTR_NOTHROW_INGESTIBLE(Args, args) && ...));
 
     /**
-     *  Sets the log level of the sink to the specified level (see @ref
-     * log_level_t). Any log statement made with a log level with lower
-     * importance than the current level will be dropped\---please see the <a
-     * href="guide.html#log-levels"> log levels</a> section of the user guide
-     * for details.
+     * Sets the log level of the sink to the specified level (see @ref log_level_t).
+     * Any log statement made with a log level with lower importance than the current
+     * level will be dropped\---please see the <a href="guide.html#log-levels">
+     * log levels</a> section of the user guide for details.
      */
     void set_level(log_level_t level)
     {
@@ -1679,7 +1664,7 @@ public:
     }
 
     /**
-     *  Returns the current log level (see @ref log_level_t).
+     * Returns the current log level (see @ref log_level_t).
      */
     log_level_t level() const
     {
@@ -1688,8 +1673,8 @@ public:
 
     /**
      * Returns the capacity (in bytes) of the queue that the sink uses to send
-     * log data to the background thread. To override the sink capacity set
-     * @ref XTR_SINK_CAPACITY in xtr/config.hpp.
+     * log data to the background thread. To override the sink capacity set @ref
+     * XTR_SINK_CAPACITY in xtr/config.hpp.
      */
     std::size_t capacity() const
     {
@@ -1703,12 +1688,10 @@ private:
     void log_impl() noexcept;
 
     template<auto Format, auto Level, typename Tags, typename... Args>
-    void log_impl(Args&&... args) noexcept(
-        (XTR_NOTHROW_INGESTIBLE(Args, args) && ...));
+    void log_impl(Args&&... args) noexcept((XTR_NOTHROW_INGESTIBLE(Args, args) && ...));
 
     template<typename T>
-    void copy(std::byte* pos, T&& value) noexcept(
-        XTR_NOTHROW_INGESTIBLE(T, value));
+    void copy(std::byte* pos, T&& value) noexcept(XTR_NOTHROW_INGESTIBLE(T, value));
 
     template<auto Format = nullptr, auto Level = 0, typename Tags = void(), typename Func>
     void post(Func&& func) noexcept(XTR_NOTHROW_INGESTIBLE(Func, func));
@@ -1740,8 +1723,7 @@ private:
 };
 
 template<auto Format, auto Level, typename Tags, typename... Args>
-void xtr::sink::log(Args&&... args) noexcept(
-    (XTR_NOTHROW_INGESTIBLE(Args, args) && ...))
+void xtr::sink::log(Args&&... args) noexcept((XTR_NOTHROW_INGESTIBLE(Args, args) && ...))
 {
     log_impl<Format, Level, Tags>(std::forward<Args>(args)...);
 }
@@ -1768,8 +1750,7 @@ void xtr::sink::log_impl(Args&&... args) noexcept(
     if constexpr (is_str)
         post_with_str_table<Format, Level, Tags>(std::forward<Args>(args)...);
     else
-        post<Format, Level, Tags>(
-            make_lambda<Tags>(std::forward<Args>(args)...));
+        post<Format, Level, Tags>(make_lambda<Tags>(std::forward<Args>(args)...));
 }
 
 template<auto Format, auto Level, typename Tags, typename... Args>
@@ -1801,9 +1782,7 @@ void xtr::sink::post_with_str_table(Args&&... args) noexcept(
     auto str_cur = str_pos;
     auto str_end = s.end();
 
-    copy(
-        s.begin(),
-        &detail::trampolineS<Format, Level, detail::consumer, lambda_t>);
+    copy(s.begin(), &detail::trampolineS<Format, Level, detail::consumer, lambda_t>);
     copy(
         func_pos,
         make_lambda<Tags>(detail::build_string_table<Tags>(
@@ -1819,8 +1798,7 @@ void xtr::sink::post_with_str_table(Args&&... args) noexcept(
 }
 
 template<typename T>
-void xtr::sink::copy(std::byte* pos, T&& value) noexcept(
-    XTR_NOTHROW_INGESTIBLE(T, value))
+void xtr::sink::copy(std::byte* pos, T&& value) noexcept(XTR_NOTHROW_INGESTIBLE(T, value))
 {
     assert(std::uintptr_t(pos) % alignof(T) == 0);
 #if defined(__cpp_lib_assume_aligned)
@@ -1991,8 +1969,6 @@ namespace xtr::detail
     };
 }
 
-#include <ostream>
-
 namespace xtr::detail
 {
     struct sink_info
@@ -2029,8 +2005,7 @@ namespace xtr::detail
     [[nodiscard]] file_descriptor command_connect(std::string_view path);
 }
 
-inline xtr::detail::file_descriptor xtr::detail::command_connect(
-    std::string_view path)
+inline xtr::detail::file_descriptor xtr::detail::command_connect(std::string_view path)
 {
     file_descriptor fd(::socket(AF_LOCAL, SOCK_SEQPACKET, 0));
 
@@ -2058,8 +2033,7 @@ inline xtr::detail::file_descriptor xtr::detail::command_connect(
     }
 #endif
 
-    if (::connect(fd.get(), reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) !=
-        0)
+    if (::connect(fd.get(), reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) != 0)
         return {};
 
     return fd;
@@ -2070,12 +2044,10 @@ inline xtr::detail::file_descriptor xtr::detail::command_connect(
 
 namespace xtr::detail
 {
-    [[nodiscard]] ::ssize_t command_send(
-        int fd, const void* buf, std::size_t nbytes);
+    [[nodiscard]] ::ssize_t command_send(int fd, const void* buf, std::size_t nbytes);
 }
 
-inline ::ssize_t xtr::detail::command_send(
-    int fd, const void* buf, std::size_t nbytes)
+inline ::ssize_t xtr::detail::command_send(int fd, const void* buf, std::size_t nbytes)
 {
     ::msghdr hdr{};
     ::iovec iov;
@@ -2262,7 +2234,7 @@ class xtr::detail::regex_matcher final : public matcher
 public:
     regex_matcher(const char* pattern, bool ignore_case, bool extended);
 
-    ~regex_matcher();
+    ~regex_matcher() override;
 
     regex_matcher(const regex_matcher&) = delete;
     regex_matcher& operator=(const regex_matcher&) = delete;
@@ -2367,8 +2339,7 @@ private:
 
     std::function<std::timespec()> clock_;
     std::vector<sink_handle> sinks_;
-    std::unique_ptr<detail::command_dispatcher, detail::command_dispatcher_deleter>
-        cmds_;
+    std::unique_ptr<detail::command_dispatcher, detail::command_dispatcher_deleter> cmds_;
     std::size_t flush_count_ = 0;
     std::latch destruct_latch_{1};
 };
@@ -2378,21 +2349,20 @@ private:
 namespace xtr
 {
     /**
-     * When passed to the @ref command_path_arg "command_path" argument of
-     * @ref logger::logger (or other logger constructors) indicates that no
-     * command socket should be created.
+     * When passed to the @ref command_path_arg "command_path" argument of @ref
+     * logger::logger (or other logger constructors) indicates that no command
+     * socket should be created.
      */
     inline constexpr auto null_command_path = "";
 
     /**
-     * Returns the default command path used for the @ref command_path_arg
-     * "command_path" argument of @ref logger::logger (and other logger
-     * constructors). A string with the format
-     * "$XDG_RUNTIME_DIR/xtrctl.<pid>.<N>" is returned, where N begins at 0 and
-     * increases for each call to the function. If the directory specified by
-     * $XDG_RUNTIME_DIR does not exist or is inaccessible then $TMPDIR is used
-     * instead. If $XDG_RUNTIME_DIR or $TMPDIR are not set then
-     * "/run/user/<uid>" and "/tmp" are used instead, respectively.
+     * Returns the default command path used for the @ref command_path_arg "command_path"
+     * argument of @ref logger::logger (and other logger constructors). A string
+     * with the format "$XDG_RUNTIME_DIR/xtrctl.<pid>.<N>" is returned, where N
+     * begins at 0 and increases for each call to the function. If the directory
+     * specified by $XDG_RUNTIME_DIR does not exist or is inaccessible then $TMPDIR
+     * is used instead. If $XDG_RUNTIME_DIR or $TMPDIR are not set then "/run/user/<uid>"
+     * and "/tmp" are used instead, respectively.
      */
     std::string default_command_path();
 }
@@ -2410,25 +2380,29 @@ namespace xtr
  * Basic log macro, logs the specified format string and arguments to the given
  * sink, blocking if the sink is full. Timestamps are read in the background
  * thread\---if this is undesirable use @ref XTR_LOG_RTC or @ref XTR_LOG_TSC
- * which read timestamps at the point of logging. This macro will log
- * regardless of the sink's log level.
+ * which read timestamps at the point of logging. This macro will log regardless
+ * of the sink's log level.
+ *
+ * @param SINK: The @ref xtr::sink to log to.
  */
 #define XTR_LOG(SINK, ...) XTR_LOG_TAGS(void(), info, SINK, __VA_ARGS__)
 
 /**
  * Log level variant of @ref XTR_LOG. If the specified log level has lower
  * importance than the log level of the sink, then the message is dropped
- * (please see the <a href="guide.html#log-levels">log levels</a> section of
- * the user guide for details).
+ * (please see the <a href="guide.html#log-levels">log levels</a> section of the
+ * user guide for details).
  *
- * @arg LEVEL: The unqualified log level name, for example simply "info" or "error".
+ * @param LEVEL: The unqualified log level name, for example simply "info" or
+ * "error".
  *
- * @note If the 'fatal' level is passed then the log message is written,
- *       @ref xtr::sink::sync is invoked, then the program is terminated via
- *       abort(3).
+ * @param SINK: The @ref xtr::sink to log to.
+ *
+ * @note If the 'fatal' level is passed then the log message is written, @ref
+ * xtr::sink::sync is invoked, then the program is terminated via abort(3).
  *
  * @note Log statements with the 'debug' level can be disabled at build time by
- *       defining @ref XTR_NDEBUG.
+ * defining @ref XTR_NDEBUG.
  */
 #define XTR_LOGL(LEVEL, SINK, ...) \
     XTR_LOGL_TAGS(void(), LEVEL, SINK, __VA_ARGS__)
@@ -2436,6 +2410,8 @@ namespace xtr
 /**
  * Non-blocking variant of @ref XTR_LOG. The message will be discarded if the
  * sink is full. If a message is dropped a warning will appear in the log.
+ *
+ * @param SINK: The @ref xtr::sink to log to.
  */
 #define XTR_TRY_LOG(SINK, ...) \
     XTR_LOG_TAGS(xtr::non_blocking_tag, info, SINK, __VA_ARGS__)
@@ -2444,7 +2420,9 @@ namespace xtr
  * Non-blocking variant of @ref XTR_LOGL. The message will be discarded if the
  * sink is full. If a message is dropped a warning will appear in the log.
  *
- * @arg LEVEL: The unqualified log level name, for example simply "info" or "error".
+ * @param LEVEL: The unqualified log level name, for example simply "info" or "error".
+ *
+ * @param SINK: The @ref xtr::sink to log to.
  */
 #define XTR_TRY_LOGL(LEVEL, SINK, ...) \
     XTR_LOGL_TAGS(xtr::non_blocking_tag, LEVEL, SINK, __VA_ARGS__)
@@ -2452,57 +2430,56 @@ namespace xtr
 /**
  * User-supplied timestamp log macro, logs the specified format string and
  * arguments to the given sink along with the specified timestamp, blocking if
- * the sink is full. The timestamp may be any type as long as it has a
- * formatter defined\---please see the <a href="guide.html#custom-formatters">
- * custom formatters</a> section of the user guide for details.
- * xtr::timespec is provided as a convenience type which is compatible with
- * std::timespec and has a formatter pre-defined. A formatter for std::timespec
- * isn't defined in order to avoid conflict with user code that also defines
- * such a formatter. This macro will log regardless of the sink's log level.
+ * the sink is full. The timestamp may be any type as long as it has a formatter
+ * defined\---please see the <a href="guide.html#custom-formatters"> custom
+ * formatters</a> section of the user guide for details. xtr::timespec is
+ * provided as a convenience type which is compatible with std::timespec and has
+ * a formatter pre-defined. A formatter for std::timespec isn't defined in order
+ * to avoid conflict with user code that also defines such a formatter. This
+ * macro will log regardless of the sink's log level.
  *
- * @arg TS: The timestamp to apply to the log statement.
+ * @param SINK: The @ref xtr::sink to log to.
+ *
+ * @param TS: The timestamp to apply to the log statement.
  */
 #define XTR_LOG_TS(SINK, TS, ...) \
     (__extension__({ XTR_LOG_TS_IMPL(SINK, TS, __VA_ARGS__); }))
 
 #define XTR_LOG_TS_IMPL(SINK, TS, FMT, ...) \
-    XTR_LOG_TAGS(                           \
-        xtr::timestamp_tag,                 \
-        info,                               \
-        SINK,                               \
-        FMT,                                \
-        TS __VA_OPT__(, ) __VA_ARGS__)
+    XTR_LOG_TAGS(xtr::timestamp_tag, info, SINK, FMT, TS __VA_OPT__(, ) __VA_ARGS__)
 
 /**
  * Log level variant of @ref XTR_LOG_TS. If the specified log level has lower
  * importance than the log level of the sink, then the message is dropped
- * (please see the <a href="guide.html#log-levels">log levels</a> section of
- * the user guide for details).
+ * (please see the <a href="guide.html#log-levels">log levels</a> section of the
+ * user guide for details).
  *
- * @arg LEVEL: The unqualified log level name, for example simply "info" or "error".
- * @arg TS: The timestamp to apply to the log statement.
+ * @param LEVEL: The unqualified log level name, for example simply "info" or "error".
  *
- * @note If the 'fatal' level is passed then the log message is written,
- *       @ref xtr::sink::sync is invoked, then the program is terminated via
- *       abort(3).
+ * @param SINK: The @ref xtr::sink to log to.
+ *
+ * @param TS: The timestamp to apply to the log statement.
+ *
+ * @note If the 'fatal' level is passed then the log message is written, @ref
+ * xtr::sink::sync is invoked, then the program is terminated via abort(3).
  *
  * @note Log statements with the 'debug' level can be disabled at build time by
- *       defining @ref XTR_NDEBUG.
+ * defining @ref XTR_NDEBUG.
  */
 #define XTR_LOGL_TS(LEVEL, SINK, TS, ...) \
     (__extension__({ XTR_LOGL_TS_IMPL(LEVEL, SINK, TS, __VA_ARGS__); }))
 
 #define XTR_LOGL_TS_IMPL(LEVEL, SINK, TS, FMT, ...) \
-    XTR_LOGL_TAGS(                                  \
-        xtr::timestamp_tag,                         \
-        LEVEL,                                      \
-        SINK,                                       \
-        FMT,                                        \
-        (TS)__VA_OPT__(, ) __VA_ARGS__)
+    XTR_LOGL_TAGS(xtr::timestamp_tag, LEVEL, SINK, FMT, (TS)__VA_OPT__(, ) __VA_ARGS__)
 
 /**
  * Non-blocking variant of @ref XTR_LOG_TS. The message will be discarded if the
  * sink is full. If a message is dropped a warning will appear in the log.
+ *
+ * @param SINK: The @ref xtr::sink to log to.
+ *
+ * @param TS: The timestamp to apply to the log statement.
+ *
  */
 #define XTR_TRY_LOG_TS(SINK, TS, ...) \
     (__extension__({ XTR_TRY_LOG_TS_IMPL(SINK, TS, __VA_ARGS__); }))
@@ -2516,11 +2493,14 @@ namespace xtr
         TS __VA_OPT__(, ) __VA_ARGS__)
 
 /**
- * Non-blocking variant of @ref XTR_TRY_LOGL_TS. The message will be discarded if the
- * sink is full. If a message is dropped a warning will appear in the log.
+ * Non-blocking variant of @ref XTR_TRY_LOGL_TS. The message will be discarded
+ * if the sink is full. If a message is dropped a warning will appear in the log.
  *
- * @arg LEVEL: The unqualified log level name, for example simply "info" or "error".
- * @arg TS: The timestamp to apply to the log statement.
+ * @param LEVEL: The unqualified log level name, for example simply "info" or "error".
+ *
+ * @param SINK: The @ref xtr::sink to log to.
+ *
+ * @param TS: The timestamp to apply to the log statement.
  */
 #define XTR_TRY_LOGL_TS(LEVEL, SINK, TS, ...) \
     (__extension__({ XTR_TRY_LOGL_TS_IMPL(LEVEL, SINK, TS, __VA_ARGS__); }))
@@ -2534,59 +2514,54 @@ namespace xtr
         TS __VA_OPT__(, ) __VA_ARGS__)
 
 /**
- * Timestamped log macro, logs the specified format string and arguments to
- * the given sink along with a timestamp obtained by invoking
- * <a
- * href="https://www.man7.org/linux/man-pages/man3/clock_gettime.3.html">clock_gettime(3)</a>
+ * Timestamped log macro, logs the specified format string and arguments to the
+ * given sink along with a timestamp obtained by invoking
+ * <a href="https://www.man7.org/linux/man-pages/man3/clock_gettime.3.html">clock_gettime(3)</a>
  * with a clock source of CLOCK_REALTIME_COARSE on Linux or CLOCK_REALTIME_FAST
- * on FreeBSD. Depending on the host CPU this may be faster than @ref
- * XTR_LOG_TSC. The non-blocking variant of this macro is @ref XTR_TRY_LOG_RTC
- * which will discard the message if the sink is full. This macro will log
- * regardless of the sink's log level.
+ * on FreeBSD. Depending on the host CPU this may be faster than @ref XTR_LOG_TSC.
+ * The non-blocking variant of this macro is @ref XTR_TRY_LOG_RTC which will discard
+ * the message if the sink is full. This macro will log regardless of the sink's log level.
+ *
+ * @param SINK: The @ref xtr::sink to log to.
  */
-#define XTR_LOG_RTC(SINK, ...)                            \
-    XTR_LOG_TS(                                           \
-        SINK,                                             \
-        xtr::detail::get_time<XTR_CLOCK_REALTIME_FAST>(), \
-        __VA_ARGS__)
+#define XTR_LOG_RTC(SINK, ...) \
+    XTR_LOG_TS(SINK, xtr::detail::get_time<XTR_CLOCK_REALTIME_FAST>(), __VA_ARGS__)
 
 /**
  * Log level variant of @ref XTR_LOG_RTC. If the specified log level has lower
  * importance than the log level of the sink, then the message is dropped
- * (please see the <a href="guide.html#log-levels">log levels</a> section of
- * the user guide for details).
+ * (please see the <a href="guide.html#log-levels">log levels</a> section of the
+ * user guide for details).
  *
- * @arg LEVEL: The unqualified log level name, for example simply "info" or "error".
+ * @param LEVEL: The unqualified log level name, for example simply "info" or "error".
  *
- * @note If the 'fatal' level is passed then the log message is written,
- *       @ref xtr::sink::sync is invoked, then the program is terminated via
- *       abort(3).
+ * @param SINK: The @ref xtr::sink to log to.
+ *
+ * @note If the 'fatal' level is passed then the log message is written, @ref
+ * xtr::sink::sync is invoked, then the program is terminated via abort(3).
  *
  * @note Log statements with the 'debug' level can be disabled at build time by
- *       defining @ref XTR_NDEBUG.
+ * defining @ref XTR_NDEBUG.
  */
-#define XTR_LOGL_RTC(LEVEL, SINK, ...)                    \
-    XTR_LOGL_TS(                                          \
-        LEVEL,                                            \
-        SINK,                                             \
-        xtr::detail::get_time<XTR_CLOCK_REALTIME_FAST>(), \
-        __VA_ARGS__)
+#define XTR_LOGL_RTC(LEVEL, SINK, ...) \
+    XTR_LOGL_TS(LEVEL, SINK, xtr::detail::get_time<XTR_CLOCK_REALTIME_FAST>(), __VA_ARGS__)
 
 /**
  * Non-blocking variant of @ref XTR_LOG_RTC. The message will be discarded if
  * the sink is full. If a message is dropped a warning will appear in the log.
+ *
+ * @param SINK: The @ref xtr::sink to log to.
  */
-#define XTR_TRY_LOG_RTC(SINK, ...)                        \
-    XTR_TRY_LOG_TS(                                       \
-        SINK,                                             \
-        xtr::detail::get_time<XTR_CLOCK_REALTIME_FAST>(), \
-        __VA_ARGS__)
+#define XTR_TRY_LOG_RTC(SINK, ...) \
+    XTR_TRY_LOG_TS(SINK, xtr::detail::get_time<XTR_CLOCK_REALTIME_FAST>(), __VA_ARGS__)
 
 /**
- * Non-blocking variant of @ref XTR_TRY_LOGL_RTC. The message will be discarded if the
- * sink is full. If a message is dropped a warning will appear in the log.
+ * Non-blocking variant of @ref XTR_TRY_LOGL_RTC. The message will be discarded
+ * if the sink is full. If a message is dropped a warning will appear in the log.
  *
- * @arg LEVEL: The unqualified log level name, for example simply "info" or "error".
+ * @param LEVEL: The unqualified log level name, for example simply "info" or "error".
+ *
+ * @param SINK: The @ref xtr::sink to log to.
  */
 #define XTR_TRY_LOGL_RTC(LEVEL, SINK, ...)                \
     XTR_TRY_LOGL_TS(                                      \
@@ -2596,11 +2571,13 @@ namespace xtr
         __VA_ARGS__)
 
 /**
- * Timestamped log macro, logs the specified format string and arguments to
- * the given sink along with a timestamp obtained by reading the CPU timestamp
+ * Timestamped log macro, logs the specified format string and arguments to the
+ * given sink along with a timestamp obtained by reading the CPU timestamp
  * counter via the RDTSC instruction. The non-blocking variant of this macro is
  * @ref XTR_TRY_LOG_TSC which will discard the message if the sink is full. This
  * macro will log regardless of the sink's log level.
+ *
+ * @param SINK: The @ref xtr::sink to log to.
  */
 #define XTR_LOG_TSC(SINK, ...) \
     XTR_LOG_TS(SINK, xtr::detail::tsc::now(), __VA_ARGS__)
@@ -2608,17 +2585,18 @@ namespace xtr
 /**
  * Log level variant of @ref XTR_LOG_TSC. If the specified log level has lower
  * importance than the log level of the sink, then the message is dropped
- * (please see the <a href="guide.html#log-levels">log levels</a> section of
- * the user guide for details).
+ * (please see the <a href="guide.html#log-levels">log levels</a> section of the
+ * user guide for details).
  *
- * @arg LEVEL: The unqualified log level name, for example simply "info" or "error".
+ * @param LEVEL: The unqualified log level name, for example simply "info" or "error".
  *
- * @note If the 'fatal' level is passed then the log message is written,
- *       @ref xtr::sink::sync is invoked, then the program is terminated via
- *       abort(3).
+ * @param SINK: The @ref xtr::sink to log to.
+ *
+ * @note If the 'fatal' level is passed then the log message is written, @ref
+ * xtr::sink::sync is invoked, then the program is terminated via abort(3).
  *
  * @note Log statements with the 'debug' level can be disabled at build time by
- *       defining @ref XTR_NDEBUG.
+ * defining @ref XTR_NDEBUG.
  */
 #define XTR_LOGL_TSC(LEVEL, SINK, ...) \
     XTR_LOGL_TS(LEVEL, SINK, xtr::detail::tsc::now(), __VA_ARGS__)
@@ -2626,15 +2604,19 @@ namespace xtr
 /**
  * Non-blocking variant of @ref XTR_LOG_TSC. The message will be discarded if
  * the sink is full. If a message is dropped a warning will appear in the log.
+ *
+ * @param SINK: The @ref xtr::sink to log to.
  */
 #define XTR_TRY_LOG_TSC(SINK, ...) \
     XTR_TRY_LOG_TS(SINK, xtr::detail::tsc::now(), __VA_ARGS__)
 
 /**
- * Non-blocking variant of @ref XTR_TRY_LOGL_TSC. The message will be discarded if the
- * sink is full. If a message is dropped a warning will appear in the log.
+ * Non-blocking variant of @ref XTR_TRY_LOGL_TSC. The message will be discarded
+ * if the sink is full. If a message is dropped a warning will appear in the log.
  *
- * @arg LEVEL: The unqualified log level name, for example simply "info" or "error".
+ * @param LEVEL: The unqualified log level name, for example simply "info" or "error".
+ *
+ * @param SINK: The @ref xtr::sink to log to.
  */
 #define XTR_TRY_LOGL_TSC(LEVEL, SINK, ...) \
     XTR_TRY_LOGL_TS(LEVEL, SINK, xtr::detail::tsc::now(), __VA_ARGS__)
@@ -2659,20 +2641,16 @@ namespace xtr
 #define XTR_LOG_TAGS(TAGS, LEVEL, SINK, ...) \
     (__extension__({ XTR_LOG_TAGS_IMPL(TAGS, LEVEL, SINK, __VA_ARGS__); }))
 
-#define XTR_LOG_TAGS_IMPL(TAGS, LEVEL, SINK, FORMAT, ...)              \
-    (__extension__({                                                   \
-        static constexpr auto xtr_fmt =                                \
-            xtr::detail::string{"{}{} {} "} +                          \
-            xtr::detail::rcut<xtr::detail::rindex(__FILE__, '/') + 1>( \
-                __FILE__) +                                            \
-            xtr::detail::string{":"} +                                 \
-            xtr::detail::string{XTR_XSTR(__LINE__) ": " FORMAT "\n"};  \
-        using xtr::nocopy;                                             \
-        (SINK)                                                         \
-            .template log<                                             \
-                FMT_COMPILE(xtr_fmt.str),                              \
-                xtr::log_level_t::LEVEL,                               \
-                void(TAGS)>(__VA_ARGS__);                              \
+#define XTR_LOG_TAGS_IMPL(TAGS, LEVEL, SINK, FORMAT, ...)                                   \
+    (__extension__({                                                                        \
+        static constexpr auto xtr_fmt =                                                     \
+            xtr::detail::string{"{}{} {} "} +                                               \
+            xtr::detail::rcut<xtr::detail::rindex(__FILE__, '/') + 1>(__FILE__) +           \
+            xtr::detail::string{":"} +                                                      \
+            xtr::detail::string{XTR_XSTR(__LINE__) ": " FORMAT "\n"};                       \
+        using xtr::nocopy;                                                                  \
+        (SINK).template log<FMT_COMPILE(xtr_fmt.str), xtr::log_level_t::LEVEL, void(TAGS)>( \
+            __VA_ARGS__);                                                                   \
     }))
 
 #include <string>
@@ -2708,8 +2686,7 @@ namespace xtr
 
 /**
  * An implementation of @ref storage_interface that uses standard
- * <a
- * href="https://pubs.opengroup.org/onlinepubs/9699919799/functions/write.html">POSIX</a>
+ * <a href="https://pubs.opengroup.org/onlinepubs/9699919799/functions/write.html">POSIX</a>
  * functions to perform file I/O.
  */
 class xtr::posix_fd_storage : public detail::fd_storage_base
@@ -2718,33 +2695,34 @@ public:
     /**
      * Default value for the buffer_capacity constructor argument.
      */
-    static constexpr std::size_t default_buffer_capacity = 64 * 1024;
+    static constexpr std::size_t default_buffer_capacity = 64UL * 1024UL;
 
     /**
      * File descriptor constructor.
      *
-     * @arg fd: File descriptor to write to. This will be duplicated via a call
-     * to <a
-     * href="https://www.man7.org/linux/man-pages/man2/dup.2.html">dup(2)</a>,
-     *          so callers may close the file descriptor immediately after this
-     *          constructor returns if desired.
-     * @arg reopen_path: The path of the file associated with the fd argument.
-     *                   This path will be used to reopen the file if requested
-     * via the xtrctl <a href="xtrctl.html#reopening-log-files">reopen
-     * command</a>. Pass @ref null_reopen_path if no filename is associated with
-     * the file descriptor.
-     * @arg buffer_capacity: The size in bytes of the internal write buffer.
+     * @param fd: File descriptor to write to. This will be duplicated via a
+     * call to
+     * <a href="https://www.man7.org/linux/man-pages/man2/dup.2.html">dup(2)</a>,
+     * so callers may close the file descriptor immediately after this
+     * constructor returns if desired.
+     *
+     * @param reopen_path: The path of the file associated with the fd argument.
+     * This path will be used to reopen the file if requested via the xtrctl <a
+     * href="xtrctl.html#reopening-log-files">reopen command</a>. Pass @ref
+     * null_reopen_path if no filename is associated with the file descriptor.
+     *
+     * @param buffer_capacity: The size in bytes of the internal write buffer.
      */
     explicit posix_fd_storage(
         int fd,
         std::string reopen_path = null_reopen_path,
         std::size_t buffer_capacity = default_buffer_capacity);
 
-    std::span<char> allocate_buffer() override final;
+    std::span<char> allocate_buffer() final;
 
-    void submit_buffer(char* buf, std::size_t size) override final;
+    void submit_buffer(char* buf, std::size_t size) final;
 
-    void flush() override final
+    void flush() final
     {
     }
 
@@ -2761,7 +2739,6 @@ private:
 #include <memory>
 #include <span>
 #include <string>
-#include <vector>
 
 namespace xtr
 {
@@ -2769,8 +2746,8 @@ namespace xtr
 }
 
 /**
- * An implementation of @ref storage_interface that uses
- * <a href="https://www.man7.org/linux/man-pages/man7/io_uring.7.html">io_uring(7)</a>
+ * An implementation of @ref storage_interface that uses <a
+ * href="https://www.man7.org/linux/man-pages/man7/io_uring.7.html">io_uring(7)</a>
  * to perform file I/O (Linux only).
  */
 class xtr::io_uring_fd_storage : public detail::fd_storage_base
@@ -2779,17 +2756,17 @@ public:
     /**
      * Default value for the buffer_capacity constructor argument.
      */
-    static constexpr std::size_t default_buffer_capacity = 64 * 1024;
+    static constexpr std::size_t default_buffer_capacity = 64UL * 1024UL;
 
     /**
      * Default value for the queue_size constructor argument.
      */
-    static constexpr std::size_t default_queue_size = 1024;
+    static constexpr std::size_t default_queue_size = 1024UL;
 
     /**
      * Default value for the batch_size constructor argument.
      */
-    static constexpr std::size_t default_batch_size = 32;
+    static constexpr std::size_t default_batch_size = 32UL;
 
 private:
     struct buffer
@@ -2835,22 +2812,23 @@ public:
     /**
      * File descriptor constructor.
      *
-     * @arg fd: File descriptor to write to. This will be duplicated via a call
-     * to <a
-     * href="https://www.man7.org/linux/man-pages/man2/dup.2.html">dup(2)</a>,
-     *          so callers may close the file descriptor immediately after this
-     *          constructor returns if desired.
-     * @arg reopen_path: The path of the file associated with the fd argument.
-     *                   This path will be used to reopen the file if requested
-     * via the xtrctl <a href="xtrctl.html#reopening-log-files">reopen
-     * command</a>. Pass @ref null_reopen_path if no filename is associated with
-     * the file descriptor.
-     * @arg buffer_capacity: The size in bytes of a single io_uring buffer.
-     * @arg queue_size: The size of the io_uring submission queue.
-     * @arg batch_size: The number of buffers to collect before submitting the
-     *                  buffers to io_uring. If @ref XTR_IO_URING_POLL is set
-     *                  to 1 in xtr/config.hpp then this parameter has no
-     * effect.
+     * @param fd: File descriptor to write to. This will be duplicated via a
+     * call to <a href="https://www.man7.org/linux/man-pages/man2/dup.2.html">dup(2)</a>,
+     * so callers may close the file descriptor immediately after this
+     * constructor returns if desired.
+     *
+     * @param reopen_path: The path of the file associated with the fd argument.
+     * This path will be used to reopen the file if requested via the xtrctl
+     * <a href="xtrctl.html#reopening-log-files">reopen command</a>. Pass @ref
+     * null_reopen_path if no filename is associated with the file descriptor.
+     *
+     * @param buffer_capacity: The size in bytes of a single io_uring buffer.
+     *
+     * @param queue_size: The size of the io_uring submission queue.
+     *
+     * @param batch_size: The number of buffers to collect before submitting the
+     * buffers to io_uring. If @ref XTR_IO_URING_POLL is set to 1 in
+     * xtr/config.hpp then this parameter has no effect.
      */
     explicit io_uring_fd_storage(
         int fd,
@@ -2859,18 +2837,18 @@ public:
         std::size_t queue_size = default_queue_size,
         std::size_t batch_size = default_batch_size);
 
-    ~io_uring_fd_storage();
+    ~io_uring_fd_storage() override;
 
-    void sync() noexcept override final;
+    void sync() noexcept final;
 
-    void flush() override final;
+    void flush() final;
 
-    std::span<char> allocate_buffer() override final;
+    std::span<char> allocate_buffer() final;
 
-    void submit_buffer(char* data, std::size_t size) override final;
+    void submit_buffer(char* data, std::size_t size) final;
 
 protected:
-    void replace_fd(int newfd) noexcept override final;
+    void replace_fd(int newfd) noexcept final;
 
 private:
     void allocate_buffers(std::size_t queue_size);
@@ -2906,14 +2884,12 @@ private:
 namespace xtr
 {
     /**
-     * Creates a storage interface object from a path. If the host kernel
-     * supports <a
-     * href="https://www.man7.org/linux/man-pages/man7/io_uring.7.html">io_uring(7)</a>
-     * and libxtr was built on a machine with liburing header files available
-     * then an instance of @ref io_uring_fd_storage will be created, otherwise
-     * an instance of @ref posix_fd_storage will be created. To prevent @ref
-     * io_uring_fd_storage from being used define set XTR_USE_IO_URING to 0 in
-     * xtr/config.hpp.
+     * Creates a storage interface object from a path. If the host kernel supports
+     * <a href="https://www.man7.org/linux/man-pages/man7/io_uring.7.html">io_uring(7)</a>
+     * and libxtr was built on a machine with liburing header files available then
+     * an instance of @ref io_uring_fd_storage will be created, otherwise an instance
+     * of @ref posix_fd_storage will be created. To prevent @ref io_uring_fd_storage
+     * from being used define set XTR_USE_IO_URING to 0 in xtr/config.hpp.
      */
     storage_interface_ptr make_fd_storage(const char* path);
 
@@ -2923,37 +2899,33 @@ namespace xtr
      * posix_fd_storage will be created, refer to @ref make_fd_storage(const
      * char*) for details.
      *
-     * @arg fd: File handle to write to. The underlying file descriptor will be
-     *          duplicated via a call to
-     *          <a
+     * @param fd: File handle to write to. The underlying file descriptor will
+     * be duplicated via a call to <a
      * href="https://www.man7.org/linux/man-pages/man2/dup.2.html">dup(2)</a>,
-     *          so callers may close the file handle immediately after this
-     *          function returns if desired.
-     * @arg reopen_path: The path of the file associated with the fp argument.
-     *                   This path will be used to reopen the file if requested
-     * via the xtrctl <a href="xtrctl.html#reopening-log-files">reopen
-     * command</a>. Pass @ref null_reopen_path if no filename is associated with
-     * the file handle.
+     * so callers may close the file handle immediately after this function
+     * returns if desired.
+     *
+     * @param reopen_path: The path of the file associated with the fp argument.
+     * This path will be used to reopen the file if requested via the xtrctl <a
+     * href="xtrctl.html#reopening-log-files">reopen command</a>. Pass @ref
+     * null_reopen_path if no filename is associated with the file handle.
      */
     storage_interface_ptr make_fd_storage(
         FILE* fp, std::string reopen_path = null_reopen_path);
 
     /**
-     * Creates a storage interface object from a file descriptor and reopen
-     * path. Either an instance of @ref io_uring_fd_storage or @ref
-     * posix_fd_storage will be created, refer to @ref make_fd_storage(const
-     * char*) for details.
+     * Creates a storage interface object from a file descriptor and reopen path.
+     * Either an instance of @ref io_uring_fd_storage or @ref posix_fd_storage
+     * will be created, refer to @ref make_fd_storage(const char*) for details.
      *
-     * @arg fd: File descriptor to write to. This will be duplicated via a call
-     * to <a
-     * href="https://www.man7.org/linux/man-pages/man2/dup.2.html">dup(2)</a>,
-     *          so callers may close the file descriptor immediately after this
-     *          function returns if desired.
-     * @arg reopen_path: The path of the file associated with the fd argument.
-     *                   This path will be used to reopen the file if requested
-     * via the xtrctl <a href="xtrctl.html#reopening-log-files">reopen
-     * command</a>. Pass @ref null_reopen_path if no filename is associated with
-     * the file descriptor.
+     * @param fd: File descriptor to write to. This will be duplicated via a call
+     * to <a href="https://www.man7.org/linux/man-pages/man2/dup.2.html">dup(2)</a>,
+     * so callers may close the file descriptor immediately after this function returns if desired.
+     *
+     * @param reopen_path: The path of the file associated with the fd argument.
+     * This path will be used to reopen the file if requested via the xtrctl <a
+     * href="xtrctl.html#reopening-log-files">reopen command</a>. Pass @ref null_reopen_path
+     * if no filename is associated with the file descriptor.
      */
     storage_interface_ptr make_fd_storage(
         int fd, std::string reopen_path = null_reopen_path);
@@ -3001,14 +2973,13 @@ namespace xtr
 
     /**
      * nocopy is used to specify that a string argument should be passed by
-     * reference instead of by value, so that `arg` becomes `nocopy(arg)`.
-     * Note that by default, all strings including C strings and
-     * std::string_view are copied. In order to pass strings by reference
-     * they must be wrapped in a call to nocopy.
-     * Please see the <a href="guide.html#passing-arguments-by-value-or-reference">
-     * passing arguments by value or reference</a> and
-     * <a href="guide.html#string-arguments">string arguments</a> sections of
-     * the user guide for further details.
+     * reference instead of by value, so that `arg` becomes `nocopy(arg)`. Note
+     * that by default, all strings including C strings and std::string_view are
+     * copied. In order to pass strings by reference they must be wrapped in a
+     * call to nocopy. Please see the <a
+     * href="guide.html#passing-arguments-by-value-or-reference"> passing
+     * arguments by value or reference</a> and <a href="guide.html#string-arguments">string
+     * arguments</a> sections of the user guide for further details.
      */
     template<typename T>
     inline auto nocopy(const T& arg)
@@ -3020,10 +2991,10 @@ namespace xtr
 /**
  * The main logger class. When constructed a background thread will be created
  * which is used for formatting log messages and performing I/O. To write to the
- * logger call @ref logger::get_sink to create a sink, then pass the sink
- * to a macro such as @ref XTR_LOG
- * (see the <a href="guide.html#creating-and-writing-to-sinks">creating and
- * writing to sinks</a> section of the user guide for details).
+ * logger call @ref logger::get_sink to create a sink, then pass the sink to a
+ * macro such as @ref XTR_LOG (see the <a
+ * href="guide.html#creating-and-writing-to-sinks">creating and writing to
+ * sinks</a> section of the user guide for details).
  */
 class xtr::logger
 {
@@ -3047,35 +3018,33 @@ private:
 
 public:
     /**
-     * Path constructor. The first argument is the path to a file which
-     * should be opened and logged to. The file will be opened in append mode,
-     * and will be created if it does not exist. Errors will be written to
-     * stdout.
+     * Path constructor. The first argument is the path to a file which should
+     * be opened and logged to. The file will be opened in append mode, and will
+     * be created if it does not exist. Errors will be written to stdout.
      *
-     * @arg path: The path of a file to write log statements to.
-     * @arg clock: @anchor clock_arg
-     *             A function returning the current time of day as a
-     *             std::timespec. This function will be invoked when creating
-     *             timestamps for log statements produced by the basic log
-     *             macros\--- please see the
-     *             <a href="guide.html#basic-time-source">basic time source</a>
-     *             section of the user guide for details. The default clock is
-     *             std::chrono::system_clock.
-     * @arg command_path: @anchor command_path_arg
-     *                    The path where the local domain socket used to
-     *                    communicate with <a href="xtrctl.html">xtrctl</a>
-     *                    should be created. The default behaviour is to create
-     *                    sockets in $XDG_RUNTIME_DIR (if set, otherwise
-     *                    "/run/user/<uid>"). If that directory does not exist
-     *                    or is inaccessible then $TMPDIR (if set, otherwise
-     *                    "/tmp") will be used instead. See @ref
-     * default_command_path for further details. To prevent a socket from being
-     * created, pass
-     *                    @ref null_command_path.
-     * @arg level_style: The log level style that will be used to prefix each
+     * @param path: The path of a file to write log statements to.
+     *
+     * @anchor clock_arg
+     * @param clock:  A function returning the current time of day as a
+     * std::timespec. This function will be invoked when creating timestamps for
+     * log statements produced by the basic log macros\--- please see the <a
+     * href="guide.html#basic-time-source">basic time source</a> section of the
+     * user guide for details. The default clock is std::chrono::system_clock.
+     *
+     * @anchor command_path_arg
+     * @param command_path: The path where the local domain socket used to
+     * communicate with <a href="xtrctl.html">xtrctl</a> should be created. The
+     * default behaviour is to create sockets in $XDG_RUNTIME_DIR (if set,
+     * otherwise "/run/user/<uid>"). If that directory does not exist or is
+     * inaccessible then $TMPDIR (if set, otherwise "/tmp") will be used
+     * instead. See @ref default_command_path for further details. To prevent a
+     * socket from being created, pass @ref null_command_path.
+     *
+     * @param level_style: The log level style that will be used to prefix each
      * log statement\---please refer to the @ref log_level_style_t documentation
      * for details.
-     * @arg options: Logger options, see @ref option_flags_t.
+     *
+     * @param options: Logger options, see @ref option_flags_t.
      */
     template<typename Clock = std::chrono::system_clock>
     explicit logger(
@@ -3097,27 +3066,26 @@ public:
      * Stream constructor.
      *
      * It is expected that this constructor will be used with streams such as
-     * stdout or stderr. If a stream that has been opened by the user is to
-     * be passed to the logger then the
-     * @ref stream-with-reopen-ctor "stream constructor with reopen path"
-     * constructor is recommended instead, as this will mean that the log file
-     * can be rotated\---please refer to the xtrctl documentation for the
-     * <a href="xtrctl.html#reopening-log-files">reopening log files</a> command
-     * for details.
+     * stdout or stderr. If a stream that has been opened by the user is to be
+     * passed to the logger then the @ref stream-with-reopen-ctor "stream
+     * constructor with reopen path" constructor is recommended instead, as this
+     * will mean that the log file can be rotated\---please refer to the xtrctl
+     * documentation for the <a href="xtrctl.html#reopening-log-files">reopening
+     * log files</a> command for details.
      *
-     * @note Reopening the log file via the
-     *       <a href="xtrctl.html#rotating-log-files">xtrctl</a> tool is *not*
-     *       supported if this constructor is used.
+     * @note Reopening the log file via the <a href="xtrctl.html#rotating-log-files">xtrctl</a>
+     * tool is *not* supported if this constructor is used.
      *
-     * @arg stream: The stream to write log statements to.
-     * @arg clock: Please refer to the @ref clock_arg "description"
-     *             above.
-     * @arg command_path: Please refer to the @ref command_path_arg
-     *                    "description" above.
-     * @arg level_style: The log level style that will be used to prefix each log
-     *                   statement\---please refer to the @ref log_level_style_t
-     *                   documentation for details.
-     * @arg options: Logger options, see @ref option_flags_t.
+     * @param stream: The stream to write log statements to.
+     *
+     * @param clock: Please refer to the @ref clock_arg "description" above.
+     *
+     * @param command_path: Please refer to the @ref command_path_arg "description" above.
+     *
+     * @param level_style: The log level style that will be used to prefix each
+     * log statement\---please refer to the @ref log_level_style_t documentation for details.
+     *
+     * @param options: Logger options, see @ref option_flags_t.
      */
     template<typename Clock = std::chrono::system_clock>
     explicit logger(
@@ -3141,22 +3109,26 @@ public:
      * Stream constructor with reopen path.
      *
      * @note Reopening the log file via the
-     *       <a href="xtrctl.html#rotating-log-files">xtrctl</a> tool is
-     * supported, with the reopen_path argument specifying the path to reopen.
+     * <a href="xtrctl.html#rotating-log-files">xtrctl</a> tool is supported,
+     * with the reopen_path argument specifying the path to reopen.
      *
-     * @arg reopen_path: The path of the file associated with the stream
-     * argument. This path will be used to reopen the stream if requested via the
-     * xtrctl <a href="xtrctl.html#reopening-log-files">reopen command</a>. Pass
-     * @ref null_reopen_path if no filename is associated with the stream.
-     * @arg stream: The stream to write log statements to.
-     * @arg clock: Please refer to the @ref clock_arg "description"
-     *             above.
-     * @arg command_path: Please refer to the @ref command_path_arg
-     *                    "description" above.
-     * @arg level_style: The log level style that will be used to prefix each
+     * @param reopen_path: The path of the file associated with the stream
+     * argument. This path will be used to reopen the stream if requested via
+     * the xtrctl <a href="xtrctl.html#reopening-log-files">reopen command</a>.
+     * Pass @ref null_reopen_path if no filename is associated with the stream.
+     *
+     * @param stream: The stream to write log statements to.
+     *
+     * @param clock: Please refer to the @ref clock_arg "description" above.
+     *
+     * @param command_path: Please refer to the @ref command_path_arg
+     * "description" above.
+     *
+     * @param level_style: The log level style that will be used to prefix each
      * log statement\---please refer to the @ref log_level_style_t documentation
      * for details.
-     * @arg options: Logger options, see @ref option_flags_t.
+     *
+     * @param options: Logger options, see @ref option_flags_t.
      */
     template<typename Clock = std::chrono::system_clock>
     logger(
@@ -3179,23 +3151,22 @@ public:
      * @anchor back-end-ctor
      *
      * Custom back-end constructor (please refer to the
-     * <a href="guide.html#custom-back-ends">custom back-ends</a> section of
-     * the user guide for further details on implementing a custom back-end).
+     * <a href="guide.html#custom-back-ends">custom back-ends</a> section of the
+     * user guide for further details on implementing a custom back-end).
      *
-     * @arg storage: Unique pointer to an object implementing the
-     *               @ref storage_interface interface. The logger will invoke
-     *               methods on this object from the background thread in
-     *               order to write log data to whatever underlying storage
-     *               medium is implemented by the object, such as disk,
-     *               network, dot-matrix printer etc.
-     * @arg clock: Please refer to the @ref clock_arg "description"
-     *             above.
-     * @arg command_path: Please refer to the @ref command_path_arg
-     *                    "description" above.
-     * @arg level_style: The log level style that will be used to prefix each log
-     *                   statement\---please refer to the @ref log_level_style_t
-     *                   documentation for details.
-     * @arg options: Logger options, see @ref option_flags_t.
+     * @param storage: Unique pointer to an object implementing the @ref storage_interface
+     * interface. The logger will invoke methods on this object from the background
+     * thread in order to write log data to whatever underlying storage medium
+     * is implemented by the object, such as disk, network, dot-matrix printer etc.
+     *
+     * @param clock: Please refer to the @ref clock_arg "description" above.
+     *
+     * @param command_path: Please refer to the @ref command_path_arg "description" above.
+     *
+     * @param level_style: The log level style that will be used to prefix each
+     * log statement\---please refer to the @ref log_level_style_t documentation for details.
+     *
+     * @param options: Logger options, see @ref option_flags_t.
      */
     template<typename Clock = std::chrono::system_clock>
     explicit logger(
@@ -3220,18 +3191,17 @@ public:
 
     /**
      * Logger destructor. This function will join the consumer thread if it is
-     * in use. If sinks are still connected to the logger then the consumer
-     * thread will not terminate until the sinks disconnect, i.e. the destructor
-     * will block until all connected sinks disconnect from the logger. If the
-     * consumer thread has been disabled via @ref
-     * option_flags_t::disable_worker_thread then the destructor will similarly
-     * block until @ref logger::pump_io returns false.
+     * in use. If sinks are still connected to the logger then the consumer thread
+     * will not terminate until the sinks disconnect, i.e. the destructor will
+     * block until all connected sinks disconnect from the logger. If the consumer
+     * thread has been disabled via @ref option_flags_t::disable_worker_thread
+     * then the destructor will similarly block until @ref logger::pump_io returns false.
      */
     ~logger() = default;
 
     /**
-     *  Returns the native handle for the logger's consumer thread. This
-     *  may be used for setting thread affinities or other thread attributes.
+     * Returns the native handle for the logger's consumer thread. This may be
+     * used for setting thread affinities or other thread attributes.
      */
     std::thread::native_handle_type consumer_thread_native_handle()
     {
@@ -3240,19 +3210,20 @@ public:
 
     /**
      * Creates a sink with the specified name. Note that each call to this
-     * function creates a new sink; if repeated calls are made with the
-     * same name, separate sinks with the name name are created.
+     * function creates a new sink; if repeated calls are made with the same
+     * name, separate sinks with the name name are created.
      *
      * @param name: The name for the given sink.
      */
     [[nodiscard]] sink get_sink(std::string name);
 
     /**
-     * Registers the sink with the logger. Note that the sink name does not
-     * need to be unique; if repeated calls are made with the same name,
-     * separate sinks with the same name are registered.
+     * Registers the sink with the logger. Note that the sink name does not need
+     * to be unique; if repeated calls are made with the same name, separate
+     * sinks with the same name are registered.
      *
      * @param s: The sink to register.
+     *
      * @param name: The name for the given sink.
      *
      * @pre The sink must be closed.
@@ -3260,8 +3231,8 @@ public:
     void register_sink(sink& s, std::string name) noexcept;
 
     /**
-     * Sets the logger command path\---please refer to the 'command_path' argument
-     * @ref command_path_arg "description" above for details.
+     * Sets the logger command path\---please refer to the 'command_path'
+     * argument @ref command_path_arg "description" above for details.
      */
     void set_command_path(std::string path) noexcept;
 
@@ -3375,9 +3346,7 @@ namespace fmt
 
         template<typename FormatContext, std::size_t... Indexes>
         auto format_impl(
-            const T& value,
-            FormatContext& ctx,
-            std::index_sequence<Indexes...>) const
+            const T& value, FormatContext& ctx, std::index_sequence<Indexes...>) const
         {
             fmt::format_to(ctx.out(), "(");
             if constexpr (std::tuple_size_v<T> > 0)
@@ -3410,11 +3379,7 @@ namespace fmt
             {
                 auto it = std::begin(value);
                 ;
-                fmt::format_to(
-                    ctx.out(),
-                    FMT_COMPILE("{}: {}"),
-                    it->first,
-                    it->second);
+                fmt::format_to(ctx.out(), FMT_COMPILE("{}: {}"), it->first, it->second);
                 ++it;
                 while (it != std::end(value))
                 {
@@ -3479,15 +3444,16 @@ namespace xtr
      * insertion operator (operator<<). The value is copied into the wrapper.
      *
      * @param value: The value to copy and wrap for stream-based formatting.
-     * @return A wrapper object suitable for passing as an argument to
-     *         a log macro such as @ref XTR_LOG.
+     *
+     * @return A wrapper object suitable for passing as an argument to a log macro
+     * such as @ref XTR_LOG.
      *
      * Refer to the <a href="guide.html#custom-formatters">custom formatters</a>
      * section of the user guide for example use.
      */
     template<typename T>
-    constexpr detail::streamed_wrapper<std::remove_cv_t<std::remove_reference_t<T>>>
-    streamed_copy(T&& value)
+    constexpr detail::streamed_wrapper<std::remove_cv_t<std::remove_reference_t<T>>> streamed_copy(
+        T&& value)
     {
         return {std::forward<T>(value)};
     }
@@ -3499,8 +3465,9 @@ namespace xtr
      * formatting is completed.
      *
      * @param value: The value to copy and wrap for stream-based formatting.
-     * @return A wrapper object suitable for passing as an argument to
-     *         a log macro such as @ref XTR_LOG.
+     *
+     * @return A wrapper object suitable for passing as an argument to a log
+     * macro such as @ref XTR_LOG.
      *
      * Refer to the <a href="guide.html#custom-formatters">custom formatters</a>
      * section of the user guide for example use.
@@ -3513,8 +3480,7 @@ namespace xtr
 }
 
 template<typename T, typename Char>
-struct fmt::formatter<xtr::detail::streamed_wrapper<T>, Char> :
-    ostream_formatter
+struct fmt::formatter<xtr::detail::streamed_wrapper<T>, Char> : ostream_formatter
 {
     template<typename FormatContext>
     auto format(const xtr::detail::streamed_wrapper<T>& sc, FormatContext& ctx) const
@@ -3530,8 +3496,7 @@ struct fmt::formatter<xtr::detail::streamed_wrapper<T>, Char> :
 #include <span>
 #include <utility>
 
-inline xtr::detail::buffer::buffer(
-    storage_interface_ptr storage, log_level_style_t ls) :
+inline xtr::detail::buffer::buffer(storage_interface_ptr storage, log_level_style_t ls) :
     lstyle(ls),
     storage_(std::move(storage))
 {
@@ -3794,8 +3759,7 @@ inline void xtr::detail::command_dispatcher::process_socket_read(pollfd& pfd) no
 #endif
 }
 
-inline void xtr::detail::command_dispatcher::process_socket_write(
-    pollfd& pfd) noexcept
+inline void xtr::detail::command_dispatcher::process_socket_write(pollfd& pfd) noexcept
 {
     const int fd = pfd.fd.get();
 
@@ -3825,16 +3789,14 @@ inline void xtr::detail::command_dispatcher::disconnect(pollfd& pfd) noexcept
     pollfds_.pop_back();
 }
 
-inline void xtr::detail::command_dispatcher::send_error(
-    int fd, std::string_view reason)
+inline void xtr::detail::command_dispatcher::send_error(int fd, std::string_view reason)
 {
     frame<error> ef;
     strzcpy(ef->reason, reason);
     send(fd, ef);
 }
 
-inline void xtr::detail::command_dispatcher_deleter::operator()(
-    command_dispatcher* d) const
+inline void xtr::detail::command_dispatcher_deleter::operator()(command_dispatcher* d) const
 {
     delete d;
 }
@@ -3904,10 +3866,7 @@ inline xtr::detail::consumer::~consumer()
     }
     catch (const std::exception& e)
     {
-        fmt::print(
-            stderr,
-            FMT_COMPILE("Error destructing consumer: {}\n"),
-            e.what());
+        fmt::print(stderr, FMT_COMPILE("Error destructing consumer: {}\n"), e.what());
     }
 #endif
 }
@@ -3953,8 +3912,7 @@ inline bool xtr::detail::consumer::run_once(pump_io_stats* stats) noexcept
         {
             assert(std::uintptr_t(pos) % alignof(sink::fptr_t) == 0);
             assert(!destroy);
-            const sink::fptr_t fptr =
-                *reinterpret_cast<const sink::fptr_t*>(pos);
+            const sink::fptr_t fptr = *reinterpret_cast<const sink::fptr_t*>(pos);
             pos = fptr(buf, pos, *this, ts, sinks_[i].name);
             ++n_events;
         } while (pos < end);
@@ -4046,10 +4004,8 @@ inline void xtr::detail::consumer::status_handler(int fd, detail::status& st)
 {
     st.pattern.text[sizeof(st.pattern.text) - 1] = '\0';
 
-    const auto matcher = detail::make_matcher(
-        st.pattern.type,
-        st.pattern.text,
-        st.pattern.ignore_case);
+    const auto matcher =
+        detail::make_matcher(st.pattern.type, st.pattern.text, st.pattern.ignore_case);
 
     if (!matcher->valid())
     {
@@ -4088,10 +4044,8 @@ inline void xtr::detail::consumer::set_level_handler(int fd, detail::set_level& 
         return;
     }
 
-    const auto matcher = detail::make_matcher(
-        sl.pattern.type,
-        sl.pattern.text,
-        sl.pattern.ignore_case);
+    const auto matcher =
+        detail::make_matcher(sl.pattern.type, sl.pattern.text, sl.pattern.ignore_case);
 
     if (!matcher->valid())
     {
@@ -4114,8 +4068,7 @@ inline void xtr::detail::consumer::set_level_handler(int fd, detail::set_level& 
     cmds_->send(fd, detail::frame<detail::success>());
 }
 
-inline void xtr::detail::consumer::reopen_handler(
-    int fd, detail::reopen& /* unused */)
+inline void xtr::detail::consumer::reopen_handler(int fd, detail::reopen& /* unused */)
 {
     buf.flush();
     if (const int errnum = buf.storage().reopen())
@@ -4130,8 +4083,7 @@ inline void xtr::detail::consumer::reopen_handler(
 #include <sys/stat.h>
 #include <unistd.h>
 
-inline xtr::detail::fd_storage_base::fd_storage_base(
-    int fd, std::string reopen_path) :
+inline xtr::detail::fd_storage_base::fd_storage_base(int fd, std::string reopen_path) :
     reopen_path_(std::move(reopen_path)),
     fd_(::dup(fd))
 {
@@ -4196,14 +4148,12 @@ inline xtr::storage_interface_ptr xtr::make_fd_storage(const char* path)
     return make_fd_storage(fd, path);
 }
 
-inline xtr::storage_interface_ptr xtr::make_fd_storage(
-    FILE* fp, std::string reopen_path)
+inline xtr::storage_interface_ptr xtr::make_fd_storage(FILE* fp, std::string reopen_path)
 {
     return make_fd_storage(::fileno(fp), std::move(reopen_path));
 }
 
-inline xtr::storage_interface_ptr xtr::make_fd_storage(
-    int fd, std::string reopen_path)
+inline xtr::storage_interface_ptr xtr::make_fd_storage(int fd, std::string reopen_path)
 {
 #if XTR_USE_IO_URING
     errno = 0;
@@ -4215,9 +4165,7 @@ inline xtr::storage_interface_ptr xtr::make_fd_storage(
         try
         {
 #endif
-            return std::make_unique<io_uring_fd_storage>(
-                fd,
-                std::move(reopen_path));
+            return std::make_unique<io_uring_fd_storage>(fd, std::move(reopen_path));
 #if __cpp_exceptions
         }
         catch (const std::exception& e)
@@ -4278,6 +4226,7 @@ inline void xtr::detail::file_descriptor::reset(int fd) noexcept
 #include <cstdio>
 #include <cstring>
 #include <limits>
+#include <vector>
 
 inline xtr::io_uring_fd_storage::io_uring_fd_storage(
     int fd,
@@ -4299,8 +4248,7 @@ inline xtr::io_uring_fd_storage::io_uring_fd_storage(
     io_uring_sqring_wait_func_(io_uring_sqring_wait_func),
     io_uring_peek_cqe_func_(io_uring_peek_cqe_func)
 {
-    if (buffer_capacity >
-        std::numeric_limits<decltype(io_uring_cqe::res)>::max())
+    if (buffer_capacity > std::numeric_limits<decltype(io_uring_cqe::res)>::max())
         detail::throw_invalid_argument("buffer_capacity too large");
 
     if (queue_size > std::numeric_limits<decltype(buffer::index_)>::max())
@@ -4551,8 +4499,7 @@ retry:
     }
 }
 
-inline void xtr::io_uring_fd_storage::resubmit_buffer(
-    buffer* buf, unsigned nwritten)
+inline void xtr::io_uring_fd_storage::resubmit_buffer(buffer* buf, unsigned nwritten)
 {
     buf->size_ -= nwritten;
     buf->offset_ += nwritten;
@@ -4706,12 +4653,7 @@ inline std::unique_ptr<xtr::detail::matcher> xtr::detail::make_matcher(
 #include <cerrno>
 
 inline xtr::detail::memory_mapping::memory_mapping(
-    void* addr,
-    std::size_t length,
-    int prot,
-    int flags,
-    int fd,
-    std::size_t offset) :
+    void* addr, std::size_t length, int prot, int flags, int fd, std::size_t offset) :
     mem_(::mmap(addr, length, prot, flags, fd, ::off_t(offset))),
     length_(length)
 {
@@ -4743,8 +4685,7 @@ inline xtr::detail::memory_mapping::~memory_mapping()
     reset();
 }
 
-inline void xtr::detail::memory_mapping::reset(
-    void* addr, std::size_t length) noexcept
+inline void xtr::detail::memory_mapping::reset(void* addr, std::size_t length) noexcept
 {
     if (mem_ != MAP_FAILED)
     {
@@ -4979,8 +4920,7 @@ inline bool xtr::detail::regex_matcher::valid() const
     return errnum_ == 0;
 }
 
-inline void xtr::detail::regex_matcher::error_reason(
-    char* buf, std::size_t bufsz) const
+inline void xtr::detail::regex_matcher::error_reason(char* buf, std::size_t bufsz) const
 {
     assert(errnum_ != 0);
     ::regerror(errnum_, &regex_, buf, bufsz);
@@ -4994,7 +4934,8 @@ inline bool xtr::detail::regex_matcher::operator()(const char* str) const
 #include <condition_variable>
 #include <mutex>
 
-inline xtr::sink::sink(log_level_t level) : level_(level)
+inline xtr::sink::sink(log_level_t level) :
+    level_(level)
 {
 }
 
@@ -5014,9 +4955,8 @@ inline xtr::sink& xtr::sink::operator=(const sink& other)
 
     if (other.open_)
     {
-        const_cast<sink&>(other).post(
-            [this](detail::consumer& c, const auto& name)
-            { c.add_sink(*this, name); });
+        const_cast<sink&>(other).post([this](detail::consumer& c, const auto& name)
+                                      { c.add_sink(*this, name); });
         open_ = true;
     }
 
@@ -5124,17 +5064,14 @@ inline void xtr::detail::throw_runtime_error_fmt(const char* format, ...)
 inline void xtr::detail::throw_system_error(int errnum, const char* what)
 {
 #if __cpp_exceptions
-    throw std::system_error(
-        std::error_code(errnum, std::system_category()),
-        what);
+    throw std::system_error(std::error_code(errnum, std::system_category()), what);
 #else
     std::fprintf(stderr, "system error: %s: %s\n", what, std::strerror(errnum));
     std::abort();
 #endif
 }
 
-inline void xtr::detail::throw_system_error_fmt(
-    int errnum, const char* format, ...)
+inline void xtr::detail::throw_system_error_fmt(int errnum, const char* format, ...)
 {
     va_list args;
     va_start(args, format);
@@ -5179,8 +5116,7 @@ inline void xtr::detail::throw_bad_alloc()
 
 inline std::uint64_t xtr::detail::get_tsc_hz() noexcept
 {
-    __extension__ static std::uint64_t tsc_hz =
-        read_tsc_hz() ?: estimate_tsc_hz();
+    __extension__ static std::uint64_t tsc_hz = read_tsc_hz() ?: estimate_tsc_hz();
     return tsc_hz;
 }
 
@@ -5304,5 +5240,4 @@ inline bool xtr::detail::wildcard_matcher::operator()(const char* str) const
 {
     return ::fnmatch(pattern_, str, flags_) == 0;
 }
-
 #endif
