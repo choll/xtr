@@ -7,8 +7,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 //
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 //
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -30,12 +30,9 @@ namespace xtr::detail
     // to use remove_pointer before applying remove_cv. decay turns arrays
     // into pointers and removes references.
     template<typename T>
-    using is_c_string =
-        std::conjunction<
-            std::is_pointer<std::decay_t<T>>,
-            std::is_same<
-                char,
-                std::remove_cv_t<std::remove_pointer_t<std::decay_t<T>>>>>;
+    using is_c_string = std::conjunction<
+        std::is_pointer<std::decay_t<T>>,
+        std::is_same<char, std::remove_cv_t<std::remove_pointer_t<std::decay_t<T>>>>>;
 
 #if defined(XTR_ENABLE_TEST_STATIC_ASSERTIONS)
     static_assert(is_c_string<char*>::value);

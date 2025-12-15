@@ -27,9 +27,9 @@
  * do not have io_uring support, as a run-time check will be performed before
  * attempting to use any io_uring system calls.
  *
- * Note that if the single header include file is not used then this setting
- * may only be defined in either config.hpp or by overriding CXXFLAGS, and
- * requires rebuilding libxtr if set.
+ * Note that if the single header include file is not used then this setting may
+ * only be defined in either config.hpp or by overriding CXXFLAGS, and requires
+ * rebuilding libxtr if set.
  */
 #if !defined(XTR_USE_IO_URING) || defined(DOXYGEN)
 #define XTR_USE_IO_URING __has_include(<liburing.h>)
@@ -39,9 +39,9 @@
  * Set to 1 to enable submission queue polling when using io_uring. If enabled
  * the IORING_SETUP_SQPOLL flag will be passed to io_uring_setup(2).
  *
- * Note that if the single header include file is not used then this setting
- * may only be defined in either config.hpp or by overriding CXXFLAGS, and
- * requires rebuilding libxtr if set.
+ * Note that if the single header include file is not used then this setting may
+ * only be defined in either config.hpp or by overriding CXXFLAGS, and requires
+ * rebuilding libxtr if set.
  */
 #if !defined(XTR_IO_URING_POLL)
 #define XTR_IO_URING_POLL 0

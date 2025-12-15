@@ -7,8 +7,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 //
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 //
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -21,18 +21,12 @@
 #include "xtr/detail/memory_mapping.hpp"
 #include "xtr/detail/throw.hpp"
 
-#include <cerrno>
 #include <cassert>
+#include <cerrno>
 
 XTR_FUNC
 xtr::detail::memory_mapping::memory_mapping(
-    void* addr,
-    std::size_t length,
-    int prot,
-    int flags,
-    int fd,
-    std::size_t offset)
-:
+    void* addr, std::size_t length, int prot, int flags, int fd, std::size_t offset) :
     mem_(::mmap(addr, length, prot, flags, fd, ::off_t(offset))),
     length_(length)
 {
@@ -45,8 +39,7 @@ xtr::detail::memory_mapping::memory_mapping(
 }
 
 XTR_FUNC
-xtr::detail::memory_mapping::memory_mapping(memory_mapping&& other) noexcept
-:
+xtr::detail::memory_mapping::memory_mapping(memory_mapping&& other) noexcept :
     mem_(other.mem_),
     length_(other.length_)
 {
@@ -80,4 +73,3 @@ void xtr::detail::memory_mapping::reset(void* addr, std::size_t length) noexcept
     mem_ = addr;
     length_ = length;
 }
-

@@ -7,8 +7,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 //
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 //
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -30,26 +30,23 @@
 #include <span>
 #include <thread>
 
-#define XTR_ASSERT_ALWAYS(expr) \
-    (__builtin_expect(!(expr), 0) ? \
-        (static_cast<void>(std::printf( \
-            "Assertion failed: (%s), function %s, file %s, line %u.\n", \
-            __STRING(expr), \
-            __PRETTY_FUNCTION__, \
-            __FILE__, \
-            __LINE__)), \
-            abort()) : \
-        static_cast<void>(0))
+#define XTR_ASSERT_ALWAYS(expr)                                             \
+    (__builtin_expect(!(expr), 0)                                           \
+         ? (static_cast<void>(std::printf(                                  \
+                "Assertion failed: (%s), function %s, file %s, line %u.\n", \
+                __STRING(expr),                                             \
+                __PRETTY_FUNCTION__,                                        \
+                __FILE__,                                                   \
+                __LINE__)),                                                 \
+            abort())                                                        \
+         : static_cast<void>(0))
 
 namespace xtrd = xtr::detail;
 
 namespace
 {
     template<typename RingBuffer>
-    void alternating_test(
-        RingBuffer& rb,
-        std::size_t small_size,
-        std::size_t rounds)
+    void alternating_test(RingBuffer& rb, std::size_t small_size, std::size_t rounds)
     {
         const std::size_t nbytes = small_size;
 
@@ -75,7 +72,7 @@ namespace
             // Check write span is reduced
             wr = rb.write_span();
             REQUIRE(wr.size() == rb.capacity() - nbytes);
-            REQUIRE(wr.begin() +rb.capacity() - nbytes == wr.end());
+            REQUIRE(wr.begin() + rb.capacity() - nbytes == wr.end());
 
             // Check read span has data available
             rr = rb.read_span();
@@ -120,7 +117,9 @@ namespace
     }
 }
 
-TEST_CASE("synchronized_ring_buffer small/full alternating test", "[synchronized_ring_buffer]")
+TEST_CASE(
+    "synchronized_ring_buffer small/full alternating test",
+    "[synchronized_ring_buffer]")
 {
     // Number of rounds is sized so that the buffer is ran through
     // twice or more.
@@ -136,14 +135,18 @@ TEST_CASE("synchronized_ring_buffer small/full alternating test", "[synchronized
     alternating_test(rb, 4096, 16);
 }
 
-TEST_CASE("synchronized_ring_buffer small/full alternating test static capacity", "[synchronized_ring_buffer]")
+TEST_CASE(
+    "synchronized_ring_buffer small/full alternating test static capacity",
+    "[synchronized_ring_buffer]")
 {
     xtrd::synchronized_ring_buffer<64 * 1024> rb;
 
     alternating_test(rb, 64, 128);
 }
 
-TEST_CASE("synchronized_ring_buffer mirror boundary test", "[synchronized_ring_buffer]")
+TEST_CASE(
+    "synchronized_ring_buffer mirror boundary test",
+    "[synchronized_ring_buffer]")
 {
     xtrd::synchronized_ring_buffer<xtrd::dynamic_capacity> rb(1);
 
@@ -196,7 +199,9 @@ TEST_CASE("synchronized_ring_buffer capacity test", "[synchronized_ring_buffer]"
     REQUIRE(std::size_t(std::distance(wr.begin(), wr.end())) == wr.size());
 }
 
-TEST_CASE("synchronized_ring_buffer static capacity test", "[synchronized_ring_buffer]")
+TEST_CASE(
+    "synchronized_ring_buffer static capacity test",
+    "[synchronized_ring_buffer]")
 {
     constexpr std::size_t size = 64 * 1024;
 
@@ -212,7 +217,9 @@ TEST_CASE("synchronized_ring_buffer static capacity test", "[synchronized_ring_b
     REQUIRE(std::size_t(std::distance(wr.begin(), wr.end())) == wr.size());
 }
 
-TEST_CASE("synchronized_ring_buffer producer consumer test", "[synchronized_ring_buffer]")
+TEST_CASE(
+    "synchronized_ring_buffer producer consumer test",
+    "[synchronized_ring_buffer]")
 {
     typedef xtrd::synchronized_ring_buffer<xtrd::dynamic_capacity> ring_buf;
     ring_buf rb(16 * 1024);
@@ -280,7 +287,9 @@ TEST_CASE("synchronized_ring_buffer producer consumer test", "[synchronized_ring
     consumer.join();
 }
 
-TEST_CASE("synchronized_ring_buffer const read_span dynamic capacity test", "[synchronized_ring_buffer]")
+TEST_CASE(
+    "synchronized_ring_buffer const read_span dynamic capacity test",
+    "[synchronized_ring_buffer]")
 {
     typedef xtrd::synchronized_ring_buffer<xtrd::dynamic_capacity> ring_buf;
     const ring_buf rb(1);
@@ -288,11 +297,12 @@ TEST_CASE("synchronized_ring_buffer const read_span dynamic capacity test", "[sy
     REQUIRE(s.empty());
 }
 
-TEST_CASE("synchronized_ring_buffer const read_span test", "[synchronized_ring_buffer]")
+TEST_CASE(
+    "synchronized_ring_buffer const read_span test",
+    "[synchronized_ring_buffer]")
 {
     typedef xtrd::synchronized_ring_buffer<64 * 1024> ring_buf;
     const ring_buf rb;
     ring_buf::const_span s = rb.read_span();
     REQUIRE(s.empty());
 }
-

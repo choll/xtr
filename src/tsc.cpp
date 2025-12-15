@@ -7,8 +7,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 //
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 //
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -63,7 +63,7 @@ std::uint64_t xtr::detail::read_tsc_hz() noexcept
         // Core crystal clock frequency not provided, must infer
         // from CPU model number.
         const std::uint16_t model = get_family_model()[1];
-        switch(model)
+        switch (model)
         {
         case intel_fam6_skylake_l:
         case intel_fam6_skylake:
@@ -75,9 +75,9 @@ std::uint64_t xtr::detail::read_tsc_hz() noexcept
             break;
         case intel_fam6_atom_tremont_d:
         case intel_fam6_atom_goldmont_d:
-        // Skylake-X is not included as the crystal clock may be either 24 MHz
-        // or 25 MHz, with further issues on the 25 MHz variant, for details
-        // see: // https://bugzilla.kernel.org/show_bug.cgi?id=197299
+            // Skylake-X is not included as the crystal clock may be either 24 MHz
+            // or 25 MHz, with further issues on the 25 MHz variant, for details
+            // see: // https://bugzilla.kernel.org/show_bug.cgi?id=197299
             ccc_hz = 25000000; // 25 MHz
             break;
         case intel_fam6_atom_goldmont:
@@ -132,7 +132,7 @@ std::uint64_t xtr::detail::estimate_tsc_hz() noexcept
 
         const auto elapsed_nanos =
             std::uint64_t(ts1.tv_sec - ts0.tv_sec) * 1000000000UL +
-                std::uint64_t(ts1.tv_nsec) - std::uint64_t(ts0.tv_nsec);
+            std::uint64_t(ts1.tv_nsec) - std::uint64_t(ts0.tv_nsec);
 
         const std::uint64_t elapsed_ticks = tsc1 - tsc0;
 

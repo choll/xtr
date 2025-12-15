@@ -7,8 +7,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 //
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 //
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -30,10 +30,7 @@
 
 XTR_FUNC
 xtr::posix_fd_storage::posix_fd_storage(
-    int fd,
-    std::string reopen_path,
-    std::size_t buffer_capacity)
-:
+    int fd, std::string reopen_path, std::size_t buffer_capacity) :
     fd_storage_base(fd, std::move(reopen_path)),
     buf_(new char[buffer_capacity]),
     buffer_capacity_(buffer_capacity)

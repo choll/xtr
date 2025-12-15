@@ -7,8 +7,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 //
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 //
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -70,8 +70,7 @@ public:
         buffer bf,
         sink* control,
         std::string command_path,
-        std::function<std::timespec()> clock)
-    :
+        std::function<std::timespec()> clock) :
         buf(std::move(bf)),
         clock_(std::move(clock)),
         sinks_({{control, "control", 0}})
@@ -99,9 +98,7 @@ private:
 
     std::function<std::timespec()> clock_;
     std::vector<sink_handle> sinks_;
-    std::unique_ptr<
-        detail::command_dispatcher,
-        detail::command_dispatcher_deleter> cmds_;
+    std::unique_ptr<detail::command_dispatcher, detail::command_dispatcher_deleter> cmds_;
     std::size_t flush_count_ = 0;
     std::latch destruct_latch_{1};
 };

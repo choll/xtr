@@ -7,8 +7,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 //
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 //
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -26,8 +26,7 @@
 #include <mutex>
 
 XTR_FUNC
-xtr::sink::sink(log_level_t level)
-:
+xtr::sink::sink(log_level_t level) :
     level_(level)
 {
 }
@@ -50,8 +49,8 @@ xtr::sink& xtr::sink::operator=(const sink& other)
 
     if (other.open_)
     {
-        const_cast<sink&>(other).post(
-            [this](detail::consumer& c, const auto& name) { c.add_sink(*this, name); });
+        const_cast<sink&>(other).post([this](detail::consumer& c, const auto& name)
+                                      { c.add_sink(*this, name); });
         open_ = true;
     }
 
@@ -59,8 +58,7 @@ xtr::sink& xtr::sink::operator=(const sink& other)
 }
 
 XTR_FUNC
-xtr::sink::sink(logger& owner, std::string name, log_level_t level)
-:
+xtr::sink::sink(logger& owner, std::string name, log_level_t level) :
     level_(level)
 {
     owner.register_sink(*this, std::move(name));
@@ -148,11 +146,8 @@ void xtr::sink::sync_post(Func func)
 XTR_FUNC
 void xtr::sink::set_name(std::string name)
 {
-    post(
-        [name = std::move(name)](auto&, auto& oldname) mutable
-        {
-            oldname = std::move(name);
-        });
+    post([name = std::move(name)](auto&, auto& oldname) mutable
+         { oldname = std::move(name); });
 }
 
 XTR_FUNC

@@ -7,8 +7,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 //
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 //
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -21,19 +21,19 @@
 #include "xtr/log_level.hpp"
 #include "xtr/detail/throw.hpp"
 
-#define XTR_LOG_LEVELS  \
-    X(none)             \
-    X(fatal)            \
-    X(error)            \
-    X(warning)          \
-    X(info)             \
+#define XTR_LOG_LEVELS \
+    X(none)            \
+    X(fatal)           \
+    X(error)           \
+    X(warning)         \
+    X(info)            \
     X(debug)
 
 XTR_FUNC
 xtr::log_level_t xtr::log_level_from_string(std::string_view str)
 {
-#define X(LEVEL)        \
-    if (str == #LEVEL)  \
+#define X(LEVEL)       \
+    if (str == #LEVEL) \
         return log_level_t::LEVEL;
     XTR_LOG_LEVELS
 #undef X

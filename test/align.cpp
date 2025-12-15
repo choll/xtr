@@ -7,8 +7,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 //
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 //
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -54,14 +54,22 @@ TEST_CASE("align", "[align]")
 
 TEST_CASE("ptr align", "[align]")
 {
-    REQUIRE(xtrd::align<2>(reinterpret_cast<char*>(0)) == reinterpret_cast<char*>(0));
-    REQUIRE(xtrd::align<4>(reinterpret_cast<char*>(0)) == reinterpret_cast<char*>(0));
-    REQUIRE(xtrd::align<8>(reinterpret_cast<char*>(0)) == reinterpret_cast<char*>(0));
-    REQUIRE(xtrd::align<16>(reinterpret_cast<char*>(0)) == reinterpret_cast<char*>(0));
+    REQUIRE(
+        xtrd::align<2>(reinterpret_cast<char*>(0)) == reinterpret_cast<char*>(0));
+    REQUIRE(
+        xtrd::align<4>(reinterpret_cast<char*>(0)) == reinterpret_cast<char*>(0));
+    REQUIRE(
+        xtrd::align<8>(reinterpret_cast<char*>(0)) == reinterpret_cast<char*>(0));
+    REQUIRE(
+        xtrd::align<16>(reinterpret_cast<char*>(0)) == reinterpret_cast<char*>(0));
 
-    REQUIRE(xtrd::align<2>(reinterpret_cast<char*>(3)) == reinterpret_cast<char*>(4));
-    REQUIRE(xtrd::align<4>(reinterpret_cast<char*>(5)) == reinterpret_cast<char*>(8));
-    REQUIRE(xtrd::align<8>(reinterpret_cast<char*>(9)) == reinterpret_cast<char*>(16));
-    REQUIRE(xtrd::align<16>(reinterpret_cast<char*>(17)) == reinterpret_cast<char*>(32));
+    REQUIRE(
+        xtrd::align<2>(reinterpret_cast<char*>(3)) == reinterpret_cast<char*>(4));
+    REQUIRE(
+        xtrd::align<4>(reinterpret_cast<char*>(5)) == reinterpret_cast<char*>(8));
+    REQUIRE(
+        xtrd::align<8>(reinterpret_cast<char*>(9)) == reinterpret_cast<char*>(16));
+    REQUIRE(
+        xtrd::align<16>(reinterpret_cast<char*>(17)) ==
+        reinterpret_cast<char*>(32));
 }
-

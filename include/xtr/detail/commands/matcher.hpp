@@ -7,8 +7,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 //
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 //
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -31,9 +31,7 @@ namespace xtr::detail
     class matcher;
 
     std::unique_ptr<matcher> make_matcher(
-        pattern_type_t pattern_type,
-        const char* pattern,
-        bool ignore_case);
+        pattern_type_t pattern_type, const char* pattern, bool ignore_case);
 }
 
 class xtr::detail::matcher
@@ -53,9 +51,7 @@ public:
     {
     }
 
-    virtual ~matcher()
-    {
-    };
+    virtual ~matcher() {};
 };
 
 #endif

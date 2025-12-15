@@ -7,8 +7,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 //
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 //
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -46,7 +46,7 @@ namespace xtr::detail
         std::string& name) noexcept
     {
         print(buf, Format, Level, timestamp, name);
-        return record + sizeof(void(*)());
+        return record + sizeof(void (*)());
     }
 
     // Fixed-size capture trampoline---log has arguments but the sizes of all
@@ -69,7 +69,7 @@ namespace xtr::detail
         [[maybe_unused]] const char* timestamp,
         std::string& name) noexcept
     {
-        typedef void(*fptr_t)();
+        using fptr_t = void (*)();
 
         auto func_pos = record + sizeof(fptr_t);
         if constexpr (alignof(Func) > alignof(fptr_t))
@@ -116,7 +116,7 @@ namespace xtr::detail
         const char* timestamp,
         std::string& name) noexcept
     {
-        typedef void(*fptr_t)();
+        using fptr_t = void (*)();
 
         auto func_pos = record + sizeof(fptr_t);
         if constexpr (alignof(Func) > alignof(fptr_t))

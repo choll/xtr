@@ -7,8 +7,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 //
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 //
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -22,8 +22,8 @@
 #define XTR_DETAIL_COMMAND_CLIENT_HPP
 
 #include "xtr/detail/commands/frame.hpp"
-#include "xtr/detail/commands/send.hpp"
 #include "xtr/detail/commands/recv.hpp"
+#include "xtr/detail/commands/send.hpp"
 #include "xtr/detail/file_descriptor.hpp"
 #include "xtr/detail/throw.hpp"
 
@@ -44,7 +44,8 @@ namespace xtr::detail
         template<typename Frame>
         void send_frame(const Frame& frame)
         {
-            const ::ssize_t nwritten = command_send(fd_.get(), &frame, sizeof(frame));
+            const ::ssize_t nwritten =
+                command_send(fd_.get(), &frame, sizeof(frame));
             if (nwritten != sizeof(frame))
                 throw_system_error(errno, "Error writing to socket");
         }
@@ -62,7 +63,8 @@ namespace xtr::detail
                 {
                     throw_runtime_error_fmt(
                         "Unexpected frame id, expected %u, received %u",
-                        Reply::frame_id, buf.hdr.frame_id);
+                        Reply::frame_id,
+                        buf.hdr.frame_id);
                 }
                 replies.push_back(reinterpret_cast<frame<Reply>&>(buf).payload);
             }
@@ -73,8 +75,10 @@ namespace xtr::detail
             if (nread != 0)
             {
                 throw_runtime_error_fmt(
-                    "Error reading from socket: Expected %zu bytes, received %zu",
-                    sizeof(frame<Reply>), nread);
+                    "Error reading from socket: Expected %zu bytes, received "
+                    "%zu",
+                    sizeof(frame<Reply>),
+                    nread);
             }
 
             return replies;

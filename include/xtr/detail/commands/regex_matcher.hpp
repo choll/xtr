@@ -7,8 +7,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 //
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 //
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -37,7 +37,7 @@ class xtr::detail::regex_matcher final : public matcher
 public:
     regex_matcher(const char* pattern, bool ignore_case, bool extended);
 
-    ~regex_matcher();
+    ~regex_matcher() override;
 
     regex_matcher(const regex_matcher&) = delete;
     regex_matcher& operator=(const regex_matcher&) = delete;
