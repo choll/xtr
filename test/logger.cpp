@@ -995,8 +995,9 @@ TEST_CASE_METHOD(fixture, "logger string table test", "[logger]")
     const std::string_view s5{"blopBADCODE", 4};
     const char* s6 = "";
     const char* s7 = "slightly longer string";
-    XTR_LOG(s_, "Test {} {} {} {} {} {} {}", s1, s2, s3, s4, s5, s6, s7),
-        line_ = __LINE__;
+    // clang-format off
+    XTR_LOG(s_, "Test {} {} {} {} {} {} {}", s1, s2, s3, s4, s5, s6, s7), line_ = __LINE__;
+    // clang-format on
     REQUIRE(
         last_line() == fmt::format(
                            "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: "
@@ -1344,35 +1345,32 @@ TEST_CASE_METHOD(fixture, "logger no macro test", "[logger]")
 
 TEST_CASE_METHOD(fixture, "logger alignment test", "[logger]")
 {
-    XTR_LOG(s_, "Test {}", xtr::streamed_copy(align_format<4>{42})),
-        line_ = __LINE__;
+    // clang-format off
+    XTR_LOG(s_, "Test {}", xtr::streamed_copy(align_format<4>{42})), line_ = __LINE__;
     REQUIRE(
         last_line() ==
         fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42", line_));
 
-    XTR_LOG(s_, "Test {}", xtr::streamed_copy(align_format<8>{42})),
-        line_ = __LINE__;
+    XTR_LOG(s_, "Test {}", xtr::streamed_copy(align_format<8>{42})), line_ = __LINE__;
     REQUIRE(
         last_line() ==
         fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42", line_));
 
-    XTR_LOG(s_, "Test {}", xtr::streamed_copy(align_format<16>{42})),
-        line_ = __LINE__;
+    XTR_LOG(s_, "Test {}", xtr::streamed_copy(align_format<16>{42})), line_ = __LINE__;
     REQUIRE(
         last_line() ==
         fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42", line_));
 
-    XTR_LOG(s_, "Test {}", xtr::streamed_copy(align_format<32>{42})),
-        line_ = __LINE__;
+    XTR_LOG(s_, "Test {}", xtr::streamed_copy(align_format<32>{42})), line_ = __LINE__;
     REQUIRE(
         last_line() ==
         fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42", line_));
 
-    XTR_LOG(s_, "Test {}", xtr::streamed_copy(align_format<64>{42})),
-        line_ = __LINE__;
+    XTR_LOG(s_, "Test {}", xtr::streamed_copy(align_format<64>{42})), line_ = __LINE__;
     REQUIRE(
         last_line() ==
         fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42", line_));
+    // clang-format on
 }
 
 TEST_CASE_METHOD(fixture, "logger argument move test", "[logger]")
