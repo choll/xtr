@@ -29,17 +29,23 @@ to disk or passes it to a custom back-end if one is in use.
 
 An application is expected to use multiple sinks, for example a sink per thread, or
 sink per component. To support this sinks have a name associated with them which
-is included in the output log message. Sink names do not need to be unique.
+is included in the output log message. Sink names do not need to be unique and sink
+log levels can be set individually.
 
 Creating and Writing to Sinks
 -----------------------------
 
-Sinks are created either by calling :cpp:func:`xtr::logger::get_sink`, via normal
-construction followed by a call to :cpp:func:`xtr::logger::register_sink`, or by
-copying another sink. Copied sinks are registered to the same logger and have the
-same name as the source sink. Sinks may be renamed by calling :cpp:func:`xtr::sink::set_name`.
-Once a sink has been created or registered, it may be written to using one of several
-log macros which are described in the :ref:`log macros <log-macros>` section.
+Sinks are created by either:
+
+* Calling :cpp:func:`xtr::logger::get_sink`.
+* Default construction followed by a call to :cpp:func:`xtr::logger::register_sink`.
+* Copying another sink.
+
+Copied sinks are registered to the same logger and have the same name as the
+source sink. Sinks may be renamed by calling :cpp:func:`xtr::sink::set_name`.
+Once a sink has been created or registered, it may be written to using one of
+several log macros which are described in the :ref:`log macros <log-macros>`
+section.
 
 Examples
 ~~~~~~~~
