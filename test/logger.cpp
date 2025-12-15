@@ -21,6 +21,7 @@
 #include "xtr/config.hpp"
 #include "xtr/logger.hpp"
 #include "xtr/formatters.hpp"
+#include "xtr/streamed.hpp"
 
 #include "xtr/detail/commands/frame.hpp"
 #include "xtr/detail/commands/message_id.hpp"
@@ -270,6 +271,7 @@ private:
         }
 
         std::thread worker_;
+        std::atomic<std::size_t> n_events{};
     };
 
     struct pump_io_fixture : pump_io_fixture_base, fixture
@@ -283,13 +285,13 @@ private:
                 xtr::default_log_level_style,
                 xtr::option_flags_t::disable_worker_thread)
         {
-            worker_ =
-                std::thread(
-                    [&]()
-                    {
-                        while (log_.pump_io())
-                            ;
-                    });
+            worker_ = std::thread(
+                [&]()
+                {
+                    xtr::pump_io_stats io_stats;
+                    while (log_.pump_io(&io_stats))
+                        n_events += io_stats.n_events;
+                });
         }
     };
 
@@ -552,25 +554,6 @@ namespace fmt
             return fmt::format_to(ctx.out(), "<blocker>");
         }
     };
-
-#if FMT_VERSION >= 90000
-    template<>
-    struct formatter<streams_format> : ostream_formatter {};
-
-    template<std::size_t Align>
-    struct formatter<align_format<Align>> : ostream_formatter {};
-
-    template<>
-    struct formatter<non_copyable> : ostream_formatter {};
-
-#if __cpp_exceptions
-    template<>
-    struct formatter<thrower> : ostream_formatter {};
-#endif
-
-    template<typename T>
-    struct formatter<std::shared_ptr<T>> : ostream_formatter {};
-#endif
 }
 
 using namespace fmt::literals;
@@ -979,7 +962,9 @@ TEST_CASE_METHOD(fixture, "logger c string overflow followed by c string test", 
 TEST_CASE_METHOD(fixture, "logger streams formatter test", "[logger]")
 {
     streams_format s{10, 20};
-    XTR_LOG(s_, "Streams {}", s), line_ = __LINE__;
+    XTR_LOG(s_, "Streams {}", xtr::streamed_copy(s)), line_ = __LINE__;
+    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Streams (10, 20)", line_));
+    XTR_LOG(s_, "Streams {}", xtr::streamed_ref(s)), line_ = __LINE__;
     REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Streams (10, 20)", line_));
 }
 
@@ -1087,7 +1072,7 @@ TEST_CASE_METHOD(fixture, "logger error handling test", "[logger]")
     xtrd::file_descriptor saved_stderr(::dup(STDERR_FILENO));
     REQUIRE(dup2(errbuf.fd_.get(), STDERR_FILENO) == STDERR_FILENO);
 
-    XTR_LOG(s_, "Test {}", thrower{});
+    XTR_LOG(s_, "Test {}", xtr::streamed_copy(thrower{}));
     s_.sync();
 
     errbuf.push_lines(errors);
@@ -1145,7 +1130,7 @@ TEST_CASE_METHOD(fixture, "logger argument destruction test", "[logger]")
     {
         auto p{std::make_shared<int>(42)};
         w = p;
-        XTR_LOG(s_, "Test {}", p), line_ = __LINE__;
+        XTR_LOG(s_, "Test {}", xtr::streamed_copy(p)), line_ = __LINE__;
         sync();
         REQUIRE(!lines_.empty());
     }
@@ -1179,26 +1164,26 @@ TEST_CASE_METHOD(fixture, "logger no macro test", "[logger]")
 
 TEST_CASE_METHOD(fixture, "logger alignment test", "[logger]")
 {
-    XTR_LOG(s_, "Test {}", align_format<4>{42}), line_ = __LINE__;
+    XTR_LOG(s_, "Test {}", xtr::streamed_copy(align_format<4>{42})), line_ = __LINE__;
     REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42", line_));
 
-    XTR_LOG(s_, "Test {}", align_format<8>{42}), line_ = __LINE__;
+    XTR_LOG(s_, "Test {}", xtr::streamed_copy(align_format<8>{42})), line_ = __LINE__;
     REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42", line_));
 
-    XTR_LOG(s_, "Test {}", align_format<16>{42}), line_ = __LINE__;
+    XTR_LOG(s_, "Test {}", xtr::streamed_copy(align_format<16>{42})), line_ = __LINE__;
     REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42", line_));
 
-    XTR_LOG(s_, "Test {}", align_format<32>{42}), line_ = __LINE__;
+    XTR_LOG(s_, "Test {}", xtr::streamed_copy(align_format<32>{42})), line_ = __LINE__;
     REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42", line_));
 
-    XTR_LOG(s_, "Test {}", align_format<64>{42}), line_ = __LINE__;
+    XTR_LOG(s_, "Test {}", xtr::streamed_copy(align_format<64>{42})), line_ = __LINE__;
     REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42", line_));
 }
 
 TEST_CASE_METHOD(fixture, "logger argument move test", "[logger]")
 {
     non_copyable nc(42);
-    XTR_LOG(s_, "Test {}", std::move(nc)), line_ = __LINE__;
+    XTR_LOG(s_, "Test {}", xtr::streamed_copy(std::move(nc))), line_ = __LINE__;
     REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42", line_));
 }
 
@@ -2627,6 +2612,10 @@ TEST_CASE_METHOD(fixture, "logger formatter helpers test", "[logger]")
     XTR_LOG(s_, "{}", t), line_ = __LINE__;
     REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: (1, 2, 3)", line_));
 
+    std::tuple<> empty_t{};
+    XTR_LOG(s_, "{}", empty_t), line_ = __LINE__;
+    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: ()", line_));
+
     const int ca[] = {1, 2, 3};
     XTR_LOG(s_, "{}", std::span(std::begin(ca), std::end(ca))), line_ = __LINE__;
     REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: [1, 2, 3]", line_));
@@ -2671,4 +2660,5 @@ TEST_CASE_METHOD(pump_io_fixture, "logger pump_io test", "[logger]")
 {
     XTR_LOG(s_, "Test"), line_ = __LINE__;
     REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
+    REQUIRE(n_events >= 1); // Sink creation, sync() create events
 }

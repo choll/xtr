@@ -22,15 +22,17 @@
 #define XTR_LOGGER_HPP
 
 #include "command_path.hpp"
+#include "detail/consumer.hpp"
+#include "pump_io_stats.hpp"
+#include "detail/string_ref.hpp"
 #include "io/fd_storage.hpp"
 #include "io/storage_interface.hpp"
-#include "detail/consumer.hpp"
-#include "detail/string_ref.hpp"
-#include "xtr/detail/tsc.hpp"
-#include "log_macros.hpp"
 #include "log_level.hpp"
+#include "log_macros.hpp"
 #include "sink.hpp"
+#include "xtr/detail/tsc.hpp"
 
+#include <atomic>
 #include <chrono>
 #include <cstdio>
 #include <ctime>
@@ -54,14 +56,23 @@ namespace xtr
         /**
          * Disables the background worker thread. Users must call @ref
          * logger::pump_io to process log messages.
+         *
+         * @warning If @ref logger::pump_io is not regularly invoked by a worker
+         * thread then @ref logger operations may block until @ref logger::pump_io
+         * is called. In particular @ref logger::set_command_path and @ref
+         * logger::set_log_level_style will block as they do not return until the
+         * worker thread has fully processed the request. It is recommended to
+         * construct the logger and then immediately begin invoking @ref logger::pump_io
+         * in a separate thread.
+         *
+         * @warning See notes attached to @ref logger::pump_io on shutting the logger
+         * down when this option is enabled.
          */
         disable_worker_thread
     };
 
-    // This can be replaced with a template alias once clang supports it:
-    // template<typename T> using nocopy = detail::string_ref<T>;
     /**
-     * nocopy is used to specify that a log argument should be passed by
+     * nocopy is used to specify that a string argument should be passed by
      * reference instead of by value, so that `arg` becomes `nocopy(arg)`.
      * Note that by default, all strings including C strings and
      * std::string_view are copied. In order to pass strings by reference
@@ -366,12 +377,13 @@ public:
      * sinks are active and the logger has shut down. Once false has been
      * returned pump_io should not be called again.
      *
-     * @note In order to shut down the logger pump_io must be called until it
-     * returns false. If pump_io has not yet returned false then @ref
+     * @warning If the @ref option_flags_t::disable_worker thread option is
+     * enabled then in order to shut down the logger pump_io must be called
+     * until it returns false. If pump_io has not yet returned false then @ref
      * logger::~logger will block until it returns false. Do not call pump_io
      * again after it has returned false.
      */
-    bool pump_io();
+    bool pump_io(pump_io_stats* stats = nullptr);
 
 private:
     template<typename Func>
@@ -387,17 +399,12 @@ private:
         return
             [clock_{std::forward<Clock>(clock)}]() -> std::timespec
             {
-                // Note: to_time_t would be useful here except it is unspecified
-                // whether time_t rounds up or truncates if time_t has a lower
-                // precision than the input time_point.
                 using namespace std::chrono;
                 const auto now = clock_.now();
-                auto sec = time_point_cast<seconds>(now);
-                if (sec > now)
-                    sec - seconds{1};
+                const auto sec = floor<seconds>(now);
                 return std::timespec{
-                    .tv_sec=sec.time_since_epoch().count(),
-                    .tv_nsec=duration_cast<nanoseconds>(now - sec).count()};
+                    .tv_sec = sec.time_since_epoch().count(),
+                    .tv_nsec = duration_cast<nanoseconds>(now - sec).count()};
             };
     }
 
@@ -405,7 +412,7 @@ private:
     jthread consumer_thread_;
     sink control_;
     std::mutex control_mutex_;
-    log_level_t default_log_level_ = log_level_t::info;
+    std::atomic<log_level_t> default_log_level_ = log_level_t::info;
 
     friend sink;
 };

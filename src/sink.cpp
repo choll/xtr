@@ -102,14 +102,14 @@ void xtr::sink::sync()
 }
 
 template<typename Func>
-void xtr::sink::sync_post(Func&& func)
+void xtr::sink::sync_post(Func func)
 {
     std::condition_variable cv;
     std::mutex m;
     bool notified = false; // protected by m
 
     post(
-        [&cv, &m, &notified, &func](detail::consumer& c, auto&)
+        [&](detail::consumer& c, auto&)
         {
             func(c);
 

@@ -31,6 +31,7 @@
 
 #include <cerrno>
 #include <functional>
+#include <iostream>
 
 #include <dlfcn.h>
 #include <sys/stat.h>
@@ -352,6 +353,8 @@ TEST_CASE_METHOD(fixture, "short write test", "[fd_storage]")
 
 TEST_CASE_METHOD(fixture, "EAGAIN test", "[fd_storage]")
 {
+    std::cerr << "Note: Log message to stderr is expected\n";
+
     std::size_t sqe_count = 0;
     std::size_t cqe_count = 0;
     std::size_t submit_count = 0;
@@ -399,6 +402,8 @@ TEST_CASE_METHOD(fixture, "EAGAIN test", "[fd_storage]")
 
 TEST_CASE_METHOD(fixture, "close fail test", "[fd_storage]")
 {
+    std::cerr << "Note: Log message to stderr is expected\n";
+
     std::size_t sqe_count = 0;
     std::size_t cqe_count = 0;
     std::size_t submit_count = 0;

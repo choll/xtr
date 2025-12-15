@@ -16,6 +16,10 @@
 #define XTR_SINK_CAPACITY (256UL * 1024UL)
 #endif
 
+#if XTR_SINK_CAPACITY < 4096UL
+#error "Sink capacity should be at least one page"
+#endif
+
 /**
  * Set to 1 to enable io_uring support. If this setting is not manually defined
  * then io_uring support will be automatically detected. If libxtr is built with

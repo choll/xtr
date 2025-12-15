@@ -30,7 +30,7 @@ FixNamespaceComments: 'false'
 IndentWidth: '4'
 NamespaceIndentation: All
 PointerAlignment: Left
-ReflowComments: 'false'
+ReflowComments: 'true'
 SortIncludes: 'true'
 SortUsingDeclarations: 'true'
 SpaceAfterCStyleCast: 'false'

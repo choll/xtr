@@ -30,6 +30,7 @@ for file in \
     include/xtr/detail/clock_ids.hpp \
     include/xtr/detail/get_time.hpp \
     include/xtr/log_level.hpp \
+    include/xtr/pump_io_stats.hpp \
     include/xtr/io/storage_interface.hpp \
     include/xtr/detail/buffer.hpp \
     include/xtr/detail/print.hpp \
@@ -59,7 +60,8 @@ for file in \
     include/xtr/io/io_uring_fd_storage.hpp \
     include/xtr/io/fd_storage.hpp \
     include/xtr/logger.hpp \
-    include/xtr/formatters.hpp;
+    include/xtr/formatters.hpp \
+    include/xtr/streamed.hpp;
 do
     sed '$d' $file|grep -Ev '^ *//|^#include "|^#ifndef XTR_.*HPP|^#define XTR_.*HPP' >> $target
 done

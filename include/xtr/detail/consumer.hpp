@@ -21,12 +21,13 @@
 #ifndef XTR_DETAIL_CONSUMER_HPP
 #define XTR_DETAIL_CONSUMER_HPP
 
-#include "buffer.hpp"
-#include "commands/command_dispatcher_fwd.hpp"
-#include "commands/requests_fwd.hpp"
+#include "xtr/detail/buffer.hpp"
+#include "xtr/detail/commands/command_dispatcher_fwd.hpp"
+#include "xtr/detail/commands/requests_fwd.hpp"
+#include "xtr/pump_io_stats.hpp"
 
-#include <ctime>
 #include <cstddef>
+#include <ctime>
 #include <functional>
 #include <latch>
 #include <memory>
@@ -62,7 +63,7 @@ private:
 
 public:
     void run() noexcept;
-    bool run_once() noexcept;
+    bool run_once(pump_io_stats* stats = nullptr) noexcept;
     void set_command_path(std::string path) noexcept;
 
     consumer(

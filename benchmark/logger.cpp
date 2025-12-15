@@ -76,6 +76,8 @@ namespace
                 state.ResumeTiming();                                       \
             }                                                               \
         }                                                                   \
+                                                                            \
+        ::fclose(fp);                                                       \
     }                                                                       \
     BENCHMARK(NAME);
 

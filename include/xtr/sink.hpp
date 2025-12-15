@@ -37,7 +37,6 @@
 #include <cstdint>
 #include <limits>
 #include <memory>
-#include <new>
 #include <string>
 #include <string_view>
 #include <type_traits>
@@ -211,7 +210,7 @@ private:
         noexcept((XTR_NOTHROW_INGESTIBLE(Args, args) && ...));
 
     template<typename Func>
-    void sync_post(Func&& func);
+    void sync_post(Func func);
 
     template<typename Tags, typename... Args>
     auto make_lambda(Args&&... args)

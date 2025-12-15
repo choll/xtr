@@ -29,17 +29,23 @@ to disk or passes it to a custom back-end if one is in use.
 
 An application is expected to use multiple sinks, for example a sink per thread, or
 sink per component. To support this sinks have a name associated with them which
-is included in the output log message. Sink names do not need to be unique.
+is included in the output log message. Sink names do not need to be unique and sink
+log levels can be set individually.
 
 Creating and Writing to Sinks
 -----------------------------
 
-Sinks are created either by calling :cpp:func:`xtr::logger::get_sink`, via normal
-construction followed by a call to :cpp:func:`xtr::logger::register_sink`, or by
-copying another sink. Copied sinks are registered to the same logger and have the
-same name as the source sink. Sinks may be renamed by calling :cpp:func:`xtr::sink::set_name`.
-Once a sink has been created or registered, it may be written to using one of several
-log macros which are described in the :ref:`log macros <log-macros>` section.
+Sinks are created by either:
+
+* Calling :cpp:func:`xtr::logger::get_sink`.
+* Default construction followed by a call to :cpp:func:`xtr::logger::register_sink`.
+* Copying another sink.
+
+Copied sinks are registered to the same logger and have the same name as the
+source sink. Sinks may be renamed by calling :cpp:func:`xtr::sink::set_name`.
+Once a sink has been created or registered, it may be written to using one of
+several log macros which are described in the :ref:`log macros <log-macros>`
+section.
 
 Examples
 ~~~~~~~~
@@ -56,7 +62,7 @@ Sink creation via :cpp:func:`xtr::logger::get_sink`:
 
     XTR_LOG(s, "Hello world");
 
-View this example on `Compiler Explorer <https://godbolt.org/z/1GWbEPq8T>`__.
+View this example on `Compiler Explorer <https://godbolt.org/z/6MYYWzG4b>`__.
 
 Sink creation via :cpp:func:`xtr::logger::register_sink`:
 
@@ -71,7 +77,7 @@ Sink creation via :cpp:func:`xtr::logger::register_sink`:
 
     XTR_LOG(s, "Hello world");
 
-View this example on `Compiler Explorer <https://godbolt.org/z/cobj4n3Gx>`__.
+View this example on `Compiler Explorer <https://godbolt.org/z/qzqeMbGas>`__.
 
 Sink creation via copying:
 
@@ -89,7 +95,7 @@ Sink creation via copying:
     XTR_LOG(s1, "Hello world");
     XTR_LOG(s2, "Hello world");
 
-View this example on `Compiler Explorer <https://godbolt.org/z/9bGTG38ez>`__.
+View this example on `Compiler Explorer <https://godbolt.org/z/oTGqK4q4j>`__.
 
 Format String Syntax
 --------------------
@@ -147,7 +153,7 @@ Example
     // Here 'arg' is passed by value:
     XTR_LOG(s, "Hello {}", arg);
 
-View this example on `Compiler Explorer <https://godbolt.org/z/j5ebhWfdT>`__.
+View this example on `Compiler Explorer <https://godbolt.org/z/TaT3nv61K>`__.
 
 .. _string_args:
 
@@ -214,7 +220,7 @@ so in the following example the function :cpp:func:`foo` is not called:
 
     XTR_LOGL(info, s, "Hello {}", foo());
 
-View this example on `Compiler Explorer <https://godbolt.org/z/ss36qzo1c>`__.
+View this example on `Compiler Explorer <https://godbolt.org/z/PxfhfTn8v>`__.
 
 Debug Log Statements
 ~~~~~~~~~~~~~~~~~~~~
@@ -244,7 +250,8 @@ Custom formatters are implemented the same as in `{fmt} <https://fmt.dev>`__,
 which is done either by:
 
 * Providing a :cpp:func:`std::stream& operator<<(std::stream&, T&)` overload. Note
-  that fmt/ostream.h must be included.
+  that arguments must be wrapped with either :cpp:func:`xtr::streamed_copy` or
+  :cpp:func:`xtr::streamed_ref` (from `xtr/streamed.hpp`).
 * Specializing :cpp:expr:`fmt::formatter<T>` and implementing the `parse` and
   `format` methods as described by the `{fmt}` documentation
   `here <https://fmt.dev/latest/api.html#formatting-user-defined-types>`__.
@@ -278,12 +285,12 @@ Formatting a custom type via operator<<:
 
         xtr::sink s = log.get_sink("Main");
 
-        XTR_LOG(s, "Hello {}", custom());
+        XTR_LOG(s, "Hello {}", xtr::streamed_copy(custom()));
 
         return 0;
     }
 
-View this example on `Compiler Explorer <https://godbolt.org/z/cK14z5Kr6>`__.
+View this example on `Compiler Explorer <https://godbolt.org/z/b71h3d38x>`__.
 
 Formatting a custom type via fmt::formatter:
 
@@ -323,7 +330,7 @@ Formatting a custom type via fmt::formatter:
         return 0;
     }
 
-View this example on `Compiler Explorer <https://godbolt.org/z/W56zdWEh1>`__.
+View this example on `Compiler Explorer <https://godbolt.org/z/1aEeaKn5c>`__.
 
 Formatting Containers, Tuples and Pairs
 ---------------------------------------
@@ -445,7 +452,7 @@ Example
 		return 0;
 	}
 
-View this example on `Compiler Explorer <https://godbolt.org/z/GcffPWjvz>`__.
+View this example on `Compiler Explorer <https://godbolt.org/z/h1Pqnhz6Y>`__.
 
 Background Consumer Thread Details
 ----------------------------------
@@ -515,7 +522,7 @@ Example
         return 0;
     }
 
-View this example on `Compiler Explorer <https://godbolt.org/z/1vh5exK4K>`__.
+View this example on `Compiler Explorer <https://godbolt.org/z/MP9bosffb>`__.
 
 Disabling the Background Consumer Thread
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -561,7 +568,7 @@ Example
         return 0;
     }
 
-View this example on `Compiler Explorer <https://godbolt.org/z/G6v5G1MrG>`__.
+View this example on `Compiler Explorer <https://godbolt.org/z/ezsceP49c>`__.
 
 Note that :cpp:func:`xtr::logger::pump_io` will only return false after all
 sinks have been closed and the logger has destructed, in order to ensure no log
@@ -714,7 +721,7 @@ to create a logger with a storage back-end that discards all input:
         return 0;
     }
 
-View this example on `Compiler Explorer <https://godbolt.org/z/W4YE7YqPr>`__.
+View this example on `Compiler Explorer <https://godbolt.org/z/fvf1o1cjK>`__.
 
 .. _custom-log-level-styles:
 
@@ -758,7 +765,7 @@ The following example will output::
     XTR_LOGL(info, s, "Hello world");
     XTR_LOGL(error, s, "Hello world");
 
-View this example on `Compiler Explorer <https://godbolt.org/z/ohcW6ndoz>`__.
+View this example on `Compiler Explorer <https://godbolt.org/z/4s9q4bad8>`__.
 
 Logging to the Systemd Journal
 ------------------------------
@@ -792,7 +799,7 @@ Example
     XTR_LOGL(warning, s, "Warning");
     XTR_LOGL(error, s, "Error");
 
-View this example on `Compiler Explorer <https://godbolt.org/z/zvsjech4a>`__.
+View this example on `Compiler Explorer <https://godbolt.org/z/xMYevEjfW>`__.
 
 The output of the above example will be something like::
 

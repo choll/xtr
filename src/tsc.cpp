@@ -160,11 +160,11 @@ std::timespec xtr::detail::tsc::to_timespec(tsc ts)
     static const double tsc_multiplier = 1e9 / double(get_tsc_hz());
 
     // Sync up TSC and wall clocks every minute
-    if (ts.ticks > last_tsc.ticks + one_minute_ticks)
+    if (ts.ticks > last_tsc.ticks + one_minute_ticks || last_tsc.ticks == 0UL)
     {
         last_tsc = tsc::now();
         std::timespec temp;
-        ::clock_gettime(XTR_CLOCK_WALL, &temp);
+        (void)::clock_gettime(XTR_CLOCK_WALL, &temp);
         last_epoch_nanos = temp.tv_sec * 1000000000L + temp.tv_nsec;
     }
 

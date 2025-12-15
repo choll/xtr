@@ -59,6 +59,9 @@ xtr::io_uring_fd_storage::io_uring_fd_storage(
     if (queue_size > std::numeric_limits<decltype(buffer::index_)>::max())
         detail::throw_invalid_argument("queue_size too large");
 
+    if (batch_size == 0)
+        detail::throw_invalid_argument("batch_size cannot be zero");
+
     const int flags =
 #if XTR_IO_URING_POLL
         IORING_SETUP_SQPOLL;

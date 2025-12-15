@@ -34,9 +34,9 @@
 #include <fmt/format.h>
 
 #include <algorithm>
-#include <climits>
-#include <cstring>
 #include <cstdio>
+#include <cstring>
+#include <exception>
 #include <version>
 
 XTR_FUNC
@@ -69,14 +69,16 @@ void xtr::detail::consumer::run() noexcept
 }
 
 XTR_FUNC
-bool xtr::detail::consumer::run_once() noexcept
+bool xtr::detail::consumer::run_once(pump_io_stats* stats) noexcept
 {
     char ts[32] = {};
     bool ts_stale = true;
 
     // Read commands once per loop over sinks
-    if (cmds_)
+    if (cmds_ && cmds_->is_open())
         cmds_->process_commands(/* timeout= */0);
+
+    std::size_t n_events = 0;
 
     // The inner do/while loop below can modify sinks_ so references to sinks_
     // cannot be taken here (i.e. no range-based for).
@@ -117,6 +119,7 @@ bool xtr::detail::consumer::run_once() noexcept
             assert(!destroy);
             const sink::fptr_t fptr = *reinterpret_cast<const sink::fptr_t*>(pos);
             pos = fptr(buf, pos, *this, ts, sinks_[i].name);
+            ++n_events;
         } while (pos < end);
 
         if (destroy)
@@ -154,6 +157,9 @@ bool xtr::detail::consumer::run_once() noexcept
     if (sinks_.empty())
         destruct_latch_.count_down();
 
+    if (stats != nullptr)
+        stats->n_events = n_events;
+
     return !sinks_.empty();
 }
 
@@ -167,7 +173,10 @@ XTR_FUNC
 void xtr::detail::consumer::set_command_path(std::string path) noexcept
 {
     if (path == null_command_path)
+    {
+        cmds_.reset();
         return;
+    }
 
     cmds_.reset(new detail::command_dispatcher(std::move(path)));
 
