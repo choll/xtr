@@ -53,7 +53,7 @@ Basic log macro, logs the specified format string and arguments to the given sin
 .INDENT 0.0
 .TP
 .B XTR_LOGL(LEVEL, SINK, \&...) 
-Log level variant of \fI\%XTR_LOG\fP\&. If the specified log level has lower importance than the log level of the sink, then the message is dropped (please see the \fI\%log levels\fP section of the user guide for details).
+Log level variant of \fI\%XTR_LOG\fP\&. If the specified log level has lower importance than the log level of the sink, then the message is dropped (please see the \fI\%log levels\fP <\fBguide.html#log-levels\fP> section of the user guide for details).
 .sp
 \fBNOTE:\fP
 .INDENT 7.0
@@ -128,7 +128,7 @@ Timestamped log macro, logs the specified format string and arguments to the giv
 .INDENT 0.0
 .TP
 .B XTR_LOGL_TSC(LEVEL, SINK, \&...) 
-Log level variant of \fI\%XTR_LOG_TSC\fP\&. If the specified log level has lower importance than the log level of the sink, then the message is dropped (please see the \fI\%log levels\fP section of the user guide for details).
+Log level variant of \fI\%XTR_LOG_TSC\fP\&. If the specified log level has lower importance than the log level of the sink, then the message is dropped (please see the \fI\%log levels\fP <\fBguide.html#log-levels\fP> section of the user guide for details).
 .sp
 \fBNOTE:\fP
 .INDENT 7.0
@@ -189,7 +189,7 @@ logging. Use these macros if accurate timestamps are required.
 .INDENT 0.0
 .TP
 .B XTR_LOG_RTC(SINK, \&...) 
-Timestamped log macro, logs the specified format string and arguments to the given sink along with a timestamp obtained by invoking \fI\%clock_gettime(3)\fP <\fBhttps://www.man7.org/linux/man-pages/man3/clock_gettime.3.html\fP> with a clock source of CLOCK_REALTIME_COARSE on Linux or CLOCK_REALTIME_FAST on FreeBSD. Depending on the host CPU this may be faster than \fI\%XTR_LOG_TSC\fP\&. The non\-blocking variant of this macro is \fI\%XTR_TRY_LOG_RTC\fP which will discard the message if the sink is full. This macro will log regardless of the sink\(aqs log level.
+Timestamped log macro, logs the specified format string and arguments to the given sink along with a timestamp obtained by invoking \X'tty: link https://www.man7.org/linux/man-pages/man3/clock_gettime.3.html'\fI\%clock_gettime(3)\fP <\fBhttps://www.man7.org/linux/man-pages/man3/clock_gettime.3.html\fP>\X'tty: link' with a clock source of CLOCK_REALTIME_COARSE on Linux or CLOCK_REALTIME_FAST on FreeBSD. Depending on the host CPU this may be faster than \fI\%XTR_LOG_TSC\fP\&. The non\-blocking variant of this macro is \fI\%XTR_TRY_LOG_RTC\fP which will discard the message if the sink is full. This macro will log regardless of the sink\(aqs log level.
 .INDENT 7.0
 .TP
 .B Parameters
@@ -202,7 +202,7 @@ Timestamped log macro, logs the specified format string and arguments to the giv
 .INDENT 0.0
 .TP
 .B XTR_LOGL_RTC(LEVEL, SINK, \&...) 
-Log level variant of \fI\%XTR_LOG_RTC\fP\&. If the specified log level has lower importance than the log level of the sink, then the message is dropped (please see the \fI\%log levels\fP section of the user guide for details).
+Log level variant of \fI\%XTR_LOG_RTC\fP\&. If the specified log level has lower importance than the log level of the sink, then the message is dropped (please see the \fI\%log levels\fP <\fBguide.html#log-levels\fP> section of the user guide for details).
 .sp
 \fBNOTE:\fP
 .INDENT 7.0
@@ -262,7 +262,7 @@ The following macros log and accept a user\-supplied timestamp.
 .INDENT 0.0
 .TP
 .B XTR_LOG_TS(SINK, TS, \&...) 
-User\-supplied timestamp log macro, logs the specified format string and arguments to the given sink along with the specified timestamp, blocking if the sink is full. The timestamp may be any type as long as it has a formatter defined\-\-\-please see the \fI\%custom formatters\fP section of the user guide for details. xtr::timespec is provided as a convenience type which is compatible with std::timespec and has a formatter pre\-defined. A formatter for std::timespec isn\(aqt defined in order to avoid conflict with user code that also defines such a formatter. This macro will log regardless of the sink\(aqs log level.
+User\-supplied timestamp log macro, logs the specified format string and arguments to the given sink along with the specified timestamp, blocking if the sink is full. The timestamp may be any type as long as it has a formatter defined\-\-\-please see the \fI\%custom formatters\fP <\fBguide.html#custom-formatters\fP> section of the user guide for details. xtr::timespec is provided as a convenience type which is compatible with std::timespec and has a formatter pre\-defined. A formatter for std::timespec isn\(aqt defined in order to avoid conflict with user code that also defines such a formatter. This macro will log regardless of the sink\(aqs log level.
 .INDENT 7.0
 .TP
 .B Parameters
@@ -277,7 +277,7 @@ User\-supplied timestamp log macro, logs the specified format string and argumen
 .INDENT 0.0
 .TP
 .B XTR_LOGL_TS(LEVEL, SINK, TS, \&...) 
-Log level variant of \fI\%XTR_LOG_TS\fP\&. If the specified log level has lower importance than the log level of the sink, then the message is dropped (please see the \fI\%log levels\fP section of the user guide for details).
+Log level variant of \fI\%XTR_LOG_TS\fP\&. If the specified log level has lower importance than the log level of the sink, then the message is dropped (please see the \fI\%log levels\fP <\fBguide.html#log-levels\fP> section of the user guide for details).
 .sp
 \fBNOTE:\fP
 .INDENT 7.0
@@ -340,13 +340,13 @@ Non\-blocking variant of \fI\%XTR_TRY_LOGL_TS\fP\&. The message will be discarde
 .SH LOGGER
 .INDENT 0.0
 .TP
-.B class  logger 
-The main logger class. When constructed a background thread will be created which is used for formatting log messages and performing I/O. To write to the logger call \fI\%logger::get_sink\fP to create a sink, then pass the sink to a macro such as \fI\%XTR_LOG\fP (see the \fI\%creating and writing to sinks\fP section of the user guide for details). 
+.B class logger 
+The main logger class. When constructed a background thread will be created which is used for formatting log messages and performing I/O. To write to the logger call \fI\%logger::get_sink\fP to create a sink, then pass the sink to a macro such as \fI\%XTR_LOG\fP (see the \fI\%creating and writing to sinks\fP <\fBguide.html#creating-and-writing-to-sinks\fP> section of the user guide for details). 
 .sp
 Public Functions
 .INDENT 7.0
 .TP
-.B template<typename  Clock  =  std::chrono::system_clock> inline  explicit  logger(const  char  *path, \fI\%Clock\fP  &&clock  =  \fI\%Clock\fP(), std::string  command_path  =  \fI\%default_command_path\fP(), \fI\%log_level_style_t\fP  level_style  =  \fI\%default_log_level_style\fP, \fI\%option_flags_t\fP  options  =  \fI\%option_flags_t\fP::\fI\%none\fP) 
+.B template<typename Clock = std::chrono::system_clock> inline explicit logger(const char *path, \fI\%Clock\fP &&clock = \fI\%Clock\fP(), std::string command_path = \fI\%default_command_path\fP(), \fI\%log_level_style_t\fP level_style = \fI\%default_log_level_style\fP, \fI\%option_flags_t\fP options = \fI\%option_flags_t\fP::\fI\%none\fP) 
 Path constructor. The first argument is the path to a file which should be opened and logged to. The file will be opened in append mode, and will be created if it does not exist. Errors will be written to stdout.
 .sp
 
@@ -357,9 +357,9 @@ Path constructor. The first argument is the path to a file which should be opene
 .IP \(bu 2
 \fBpath\fP \-\- The path of a file to write log statements to.
 .IP \(bu 2
-\fBclock\fP \-\- A function returning the current time of day as a std::timespec. This function will be invoked when creating timestamps for log statements produced by the basic log macros\-\-\- please see the \fI\%basic time source\fP section of the user guide for details. The default clock is std::chrono::system_clock.
+\fBclock\fP \-\- A function returning the current time of day as a std::timespec. This function will be invoked when creating timestamps for log statements produced by the basic log macros\-\-\- please see the \fI\%basic time source\fP <\fBguide.html#basic-time-source\fP> section of the user guide for details. The default clock is std::chrono::system_clock.
 .IP \(bu 2
-\fBcommand_path\fP \-\- The path where the local domain socket used to communicate with \fI\%xtrctl\fP should be created. The default behaviour is to create sockets in $XDG_RUNTIME_DIR (if set, otherwise \(dq/run/user/<uid>\(dq). If that directory does not exist or is inaccessible then $TMPDIR (if set, otherwise \(dq/tmp\(dq) will be used instead. See \fI\%default_command_path\fP for further details. To prevent a socket from being created, pass \fI\%null_command_path\fP\&.
+\fBcommand_path\fP \-\- The path where the local domain socket used to communicate with \fI\%xtrctl\fP <\fBxtrctl.html\fP> should be created. The default behaviour is to create sockets in $XDG_RUNTIME_DIR (if set, otherwise \(dq/run/user/<uid>\(dq). If that directory does not exist or is inaccessible then $TMPDIR (if set, otherwise \(dq/tmp\(dq) will be used instead. See \fI\%default_command_path\fP for further details. To prevent a socket from being created, pass \fI\%null_command_path\fP\&.
 .IP \(bu 2
 \fBlevel_style\fP \-\- The log level style that will be used to prefix each log statement\-\-\-please refer to the \fI\%log_level_style_t\fP documentation for details.
 .IP \(bu 2
@@ -369,7 +369,7 @@ Path constructor. The first argument is the path to a file which should be opene
 .UNINDENT
 .INDENT 7.0
 .TP
-.B template<typename  Clock  =  std::chrono::system_clock> inline  explicit  logger(FILE  *stream  =  stderr, \fI\%Clock\fP  &&clock  =  \fI\%Clock\fP(), std::string  command_path  =  \fI\%default_command_path\fP(), \fI\%log_level_style_t\fP  level_style  =  \fI\%default_log_level_style\fP, \fI\%option_flags_t\fP  options  =  \fI\%option_flags_t\fP::\fI\%none\fP) 
+.B template<typename Clock = std::chrono::system_clock> inline explicit logger(FILE *stream = stderr, \fI\%Clock\fP &&clock = \fI\%Clock\fP(), std::string command_path = \fI\%default_command_path\fP(), \fI\%log_level_style_t\fP level_style = \fI\%default_log_level_style\fP, \fI\%option_flags_t\fP options = \fI\%option_flags_t\fP::\fI\%none\fP) 
 Stream constructor.
 .sp
 It is expected that this constructor will be used with streams such as stdout or stderr. If a stream that has been opened by the user is to be passed to the logger then the \fI\%stream\fP
@@ -405,13 +405,13 @@ tool is <em>not</em> supported if this constructor is used.
 .UNINDENT
 .INDENT 7.0
 .TP
-.B template<typename  Clock  =  std::chrono::system_clock> inline  logger(std::string  reopen_path, FILE  *stream, \fI\%Clock\fP  &&clock  =  \fI\%Clock\fP(), std::string  command_path  =  \fI\%default_command_path\fP(), \fI\%log_level_style_t\fP  level_style  =  \fI\%default_log_level_style\fP, \fI\%option_flags_t\fP  options  =  \fI\%option_flags_t\fP::\fI\%none\fP) 
+.B template<typename Clock = std::chrono::system_clock> inline logger(std::string reopen_path, FILE *stream, \fI\%Clock\fP &&clock = \fI\%Clock\fP(), std::string command_path = \fI\%default_command_path\fP(), \fI\%log_level_style_t\fP level_style = \fI\%default_log_level_style\fP, \fI\%option_flags_t\fP options = \fI\%option_flags_t\fP::\fI\%none\fP) 
  Stream constructor with reopen path.
 .sp
 \fBNOTE:\fP
 .INDENT 7.0
 .INDENT 3.5
-Reopening the log file via the \fI\%xtrctl\fP tool is supported, with the reopen_path argument specifying the path to reopen.
+Reopening the log file via the \fI\%xtrctl\fP <\fBxtrctl.html#rotating-log-files\fP> tool is supported, with the reopen_path argument specifying the path to reopen.
 .UNINDENT
 .UNINDENT
 .INDENT 7.0
@@ -419,7 +419,7 @@ Reopening the log file via the \fI\%xtrctl\fP tool is supported, with the reopen
 .B Parameters
 .INDENT 7.0
 .IP \(bu 2
-\fBreopen_path\fP \-\- The path of the file associated with the stream argument. This path will be used to reopen the stream if requested via the xtrctl \fI\%reopen command\fP\&. Pass \fI\%null_reopen_path\fP if no filename is associated with the stream.
+\fBreopen_path\fP \-\- The path of the file associated with the stream argument. This path will be used to reopen the stream if requested via the xtrctl \fI\%reopen command\fP <\fBxtrctl.html#reopening-log-files\fP>\&. Pass \fI\%null_reopen_path\fP if no filename is associated with the stream.
 .IP \(bu 2
 \fBstream\fP \-\- The stream to write log statements to.
 .IP \(bu 2
@@ -435,8 +435,8 @@ Reopening the log file via the \fI\%xtrctl\fP tool is supported, with the reopen
 .UNINDENT
 .INDENT 7.0
 .TP
-.B template<typename  Clock  =  std::chrono::system_clock> inline  explicit  logger(\fI\%storage_interface_ptr\fP  storage, \fI\%Clock\fP  &&clock  =  \fI\%Clock\fP(), std::string  command_path  =  \fI\%default_command_path\fP(), \fI\%log_level_style_t\fP  level_style  =  \fI\%default_log_level_style\fP, \fI\%option_flags_t\fP  options  =  \fI\%option_flags_t\fP::\fI\%none\fP) 
- Custom back\-end constructor (please refer to the \fI\%custom back\-ends\fP section of the user guide for further details on implementing a custom back\-end).
+.B template<typename Clock = std::chrono::system_clock> inline explicit logger(\fI\%storage_interface_ptr\fP storage, \fI\%Clock\fP &&clock = \fI\%Clock\fP(), std::string command_path = \fI\%default_command_path\fP(), \fI\%log_level_style_t\fP level_style = \fI\%default_log_level_style\fP, \fI\%option_flags_t\fP options = \fI\%option_flags_t\fP::\fI\%none\fP) 
+ Custom back\-end constructor (please refer to the \fI\%custom back\-ends\fP <\fBguide.html#custom-back-ends\fP> section of the user guide for further details on implementing a custom back\-end).
 .INDENT 7.0
 .TP
 .B Parameters
@@ -456,17 +456,17 @@ Reopening the log file via the \fI\%xtrctl\fP tool is supported, with the reopen
 .UNINDENT
 .INDENT 7.0
 .TP
-.B ~logger()  =  default 
+.B ~logger() = default 
 Logger destructor. This function will join the consumer thread if it is in use. If sinks are still connected to the logger then the consumer thread will not terminate until the sinks disconnect, i.e. the destructor will block until all connected sinks disconnect from the logger. If the consumer thread has been disabled via \fI\%option_flags_t::disable_worker_thread\fP then the destructor will similarly block until \fI\%logger::pump_io\fP returns false. 
 .UNINDENT
 .INDENT 7.0
 .TP
-.B inline  std::thread::native_handle_type  consumer_thread_native_handle() 
+.B inline std::thread::native_handle_type consumer_thread_native_handle() 
 Returns the native handle for the logger\(aqs consumer thread. This may be used for setting thread affinities or other thread attributes. 
 .UNINDENT
 .INDENT 7.0
 .TP
-.B \fI\%sink\fP  get_sink(std::string  name) 
+.B \fI\%sink\fP get_sink(std::string name) 
 Creates a sink with the specified name. Note that each call to this function creates a new sink; if repeated calls are made with the same name, separate sinks with the name name are created.
 .INDENT 7.0
 .TP
@@ -476,7 +476,7 @@ Creates a sink with the specified name. Note that each call to this function cre
 .UNINDENT
 .INDENT 7.0
 .TP
-.B void  register_sink(\fI\%sink\fP  &s, std::string  name)  noexcept 
+.B void register_sink(\fI\%sink\fP &s, std::string name) noexcept 
 Registers the sink with the logger. Note that the sink name does not need to be unique; if repeated calls are made with the same name, separate sinks with the same name are registered.
 .INDENT 7.0
 .TP
@@ -494,22 +494,22 @@ The sink must be closed.
 .UNINDENT
 .INDENT 7.0
 .TP
-.B void  set_command_path(std::string  path)  noexcept 
+.B void set_command_path(std::string path) noexcept 
 Sets the logger command path\-\-\-please refer to the \(aqcommand_path\(aq argument \fI\%description\fP above for details. 
 .UNINDENT
 .INDENT 7.0
 .TP
-.B void  set_log_level_style(\fI\%log_level_style_t\fP  level_style)  noexcept 
+.B void set_log_level_style(\fI\%log_level_style_t\fP level_style) noexcept 
 Sets the logger log level style\-\-\-please refer to the \fI\%log_level_style_t\fP documentation for details. 
 .UNINDENT
 .INDENT 7.0
 .TP
-.B void  set_default_log_level(\fI\%log_level_t\fP  level) 
+.B void set_default_log_level(\fI\%log_level_t\fP level) 
 Sets the default log level. Sinks created via future calls to \fI\%get_sink\fP will be created with the given log level. 
 .UNINDENT
 .INDENT 7.0
 .TP
-.B bool  pump_io(\fI\%pump_io_stats\fP  *stats  =  nullptr) 
+.B bool pump_io(\fI\%pump_io_stats\fP *stats = nullptr) 
 If the \fI\%option_flags_t::disable_worker_thread\fP option has been passed to \fI\%logger::logger\fP then this function must be called in order to process messages written to the logger. Users may call this function from a thread of their choosing and may interleave calls with other background tasks that their program needs to perform.
 .sp
 For best results when interleaving with other tasks ensure that io_uring mode is enabled (so that I/O will be performed asynchronously leaving more time for other tasks to run). See \fI\%XTR_USE_IO_URING\fP for details on enabling io_uring.
@@ -530,17 +530,17 @@ True if any sinks or the logger are still active, false if no sinks are active a
 .SH OPTION FLAGS
 .INDENT 0.0
 .TP
-.B enum  class  xtr::option_flags_t 
+.B enum class xtr::option_flags_t 
 Passed to \fI\%logger::logger\fP to control logger behaviour. 
 .sp
 \fIValues:\fP
 .INDENT 7.0
 .TP
-.B enumerator  none 
+.B enumerator none 
 .UNINDENT
 .INDENT 7.0
 .TP
-.B enumerator  disable_worker_thread 
+.B enumerator disable_worker_thread 
 Disables the background worker thread. Users must call \fI\%logger::pump_io\fP to process log messages.
 .sp
 \fBWARNING:\fP
@@ -561,7 +561,7 @@ See notes attached to \fI\%logger::pump_io\fP on shutting the logger down when t
 .SH SINK
 .INDENT 0.0
 .TP
-.B class  sink 
+.B class sink 
 Log sink class. A sink is how log messages are written to a log. Each sink has its own queue which is used to send log messages to the logger. Sink operations are not thread safe, with the exception of \fI\%set_level\fP and \fI\%level\fP\&.
 .sp
 It is expected that an application will have many sinks, such as a sink per thread or sink per component. A sink that is connected to a logger may be created by calling \fI\%logger::get_sink\fP\&. A sink that is not connected to a logger may be created simply by default construction, then the sink may be connected to a logger by calling \fI\%logger::register_sink\fP\&. 
@@ -569,12 +569,12 @@ It is expected that an application will have many sinks, such as a sink per thre
 Public Functions
 .INDENT 7.0
 .TP
-.B sink(const  \fI\%sink\fP  &other) 
+.B sink(const \fI\%sink\fP &other) 
 Sink copy constructor. When a sink is copied it is automatically registered with the same logger object as the source sink, using the same sink name. The sink name may be modified by calling \fI\%set_name\fP\&. 
 .UNINDENT
 .INDENT 7.0
 .TP
-.B \fI\%sink\fP  &operator=(const  \fI\%sink\fP  &other) 
+.B \fI\%sink\fP &operator=(const \fI\%sink\fP &other) 
 Sink copy assignment operator. When a sink is copy assigned it is closed in order to disconnect it from any existing logger object and is then automatically registered with the same logger object as the source sink, using the same sink name. The sink name may be modified by calling \fI\%set_name\fP\&. 
 .UNINDENT
 .INDENT 7.0
@@ -584,17 +584,17 @@ Sink destructor. When a sink is destructed it is automatically closed.
 .UNINDENT
 .INDENT 7.0
 .TP
-.B void  close() 
+.B void close() 
 Closes the sink. After this function returns the sink is closed and \fI\%log()\fP functions may not be called on the sink. The sink may be re\-opened by calling \fI\%logger::register_sink\fP\&. 
 .UNINDENT
 .INDENT 7.0
 .TP
-.B bool  is_open()  const  noexcept 
+.B bool is_open() const noexcept 
 Returns true if the sink is open (connected to a logger), or false if the sink is closed (not connected to a logger). Log messages may only be written to a sink that is open. 
 .UNINDENT
 .INDENT 7.0
 .TP
-.B void  sync() 
+.B void sync() 
 Synchronizes all log calls previously made by this sink with the background thread and syncs all data to back\-end storage.
 .INDENT 7.0
 .TP
@@ -604,44 +604,44 @@ All entries in the sink\(aqs queue have been processed by the background thread,
 .UNINDENT
 .INDENT 7.0
 .TP
-.B void  set_name(std::string  name) 
+.B void set_name(std::string name) 
 Sets the sink\(aqs name to the specified value. 
 .UNINDENT
 .INDENT 7.0
 .TP
-.B template<auto  Format,  auto  Level,  typename  Tags  =  void(),  typename  \&...Args> void  log(\fI\%Args\fP&&\&...  args)  noexcept((XTR_NOTHROW_INGESTIBLE(\fI\%Args\fP,  \fI\%args\fP)  &&  \&...)) 
+.B template<auto Format, auto Level, typename Tags = void(), typename \&...Args> void log(\fI\%Args\fP&&\&... args) noexcept((XTR_NOTHROW_INGESTIBLE(\fI\%Args\fP, \fI\%args\fP) && \&...)) 
 Logs the given format string and arguments. This function is not intended to be used directly, instead one of the XTR_LOG macros should be used. It is provided for use in situations where use of a macro may be undesirable. 
 .UNINDENT
 .INDENT 7.0
 .TP
-.B inline  void  set_level(\fI\%log_level_t\fP  level) 
-Sets the log level of the sink to the specified level (see \fI\%log_level_t\fP). Any log statement made with a log level with lower importance than the current level will be dropped\-\-\-please see the \fI\%log levels\fP section of the user guide for details. 
+.B inline void set_level(\fI\%log_level_t\fP level) 
+Sets the log level of the sink to the specified level (see \fI\%log_level_t\fP). Any log statement made with a log level with lower importance than the current level will be dropped\-\-\-please see the \fI\%log levels\fP <\fBguide.html#log-levels\fP> section of the user guide for details. 
 .UNINDENT
 .INDENT 7.0
 .TP
-.B inline  \fI\%log_level_t\fP  level()  const 
+.B inline \fI\%log_level_t\fP level() const 
 Returns the current log level (see \fI\%log_level_t\fP). 
 .UNINDENT
 .INDENT 7.0
 .TP
-.B inline  std::size_t  capacity()  const 
+.B inline std::size_t capacity() const 
 Returns the capacity (in bytes) of the queue that the sink uses to send log data to the background thread. To override the sink capacity set \fI\%XTR_SINK_CAPACITY\fP in xtr/config.hpp\&. 
 .UNINDENT
 .UNINDENT
 .SH NOCOPY
 .INDENT 0.0
 .TP
-.B template<typename  T> inline  auto  xtr::nocopy(const  \fI\%T\fP  &arg) 
-nocopy is used to specify that a string argument should be passed by reference instead of by value, so that \fBarg\fP becomes \fBnocopy(arg)\fP\&. Note that by default, all strings including C strings and std::string_view are copied. In order to pass strings by reference they must be wrapped in a call to nocopy. Please see the \fI\%passing arguments by value or reference\fP and \fI\%string arguments\fP sections of the user guide for further details. 
+.B template<typename T> inline auto xtr::nocopy(const \fI\%T\fP &arg) 
+nocopy is used to specify that a string argument should be passed by reference instead of by value, so that \fBarg\fP becomes \fBnocopy(arg)\fP\&. Note that by default, all strings including C strings and std::string_view are copied. In order to pass strings by reference they must be wrapped in a call to nocopy. Please see the \fI\%passing arguments by value or reference\fP <\fBguide.html#passing-arguments-by-value-or-reference\fP> and \fI\%string arguments\fP <\fBguide.html#string-arguments\fP> sections of the user guide for further details. 
 .UNINDENT
 .SH STREAM FORMATTING WRAPPERS
 .INDENT 0.0
 .TP
-.B template<typename  T> constexpr  detail::streamed_wrapper<std::remove_cv_t<std::remove_reference_t<\fI\%T\fP>>>  xtr::streamed_copy(\fI\%T\fP  &&value) 
+.B template<typename T> constexpr detail::streamed_wrapper<std::remove_cv_t<std::remove_reference_t<\fI\%T\fP>>> xtr::streamed_copy(\fI\%T\fP &&value) 
 Returns a wrapper that formats the given argument using its ostream stream insertion operator (operator<<). The value is copied into the wrapper.
 .sp
 
-Refer to the \fI\%custom formatters\fP section of the user guide for example use. 
+Refer to the \fI\%custom formatters\fP <\fBguide.html#custom-formatters\fP> section of the user guide for example use. 
 .INDENT 7.0
 .TP
 .B Parameters
@@ -653,11 +653,11 @@ A wrapper object suitable for passing as an argument to a log macro such as \fI\
 .UNINDENT
 .INDENT 0.0
 .TP
-.B template<typename  T> constexpr  detail::streamed_wrapper<const  \fI\%T\fP&>  xtr::streamed_ref(const  \fI\%T\fP  &value) 
+.B template<typename T> constexpr detail::streamed_wrapper<const \fI\%T\fP&> xtr::streamed_ref(const \fI\%T\fP &value) 
 Returns a wrapper that formats the given argument using its ostream stream insertion operator (operator<<). The wrapper stores a reference to the argument so callers must ensure that it remains valid until formatting is completed.
 .sp
 
-Refer to the \fI\%custom formatters\fP section of the user guide for example use. 
+Refer to the \fI\%custom formatters\fP <\fBguide.html#custom-formatters\fP> section of the user guide for example use. 
 .INDENT 7.0
 .TP
 .B Parameters
@@ -670,116 +670,116 @@ A wrapper object suitable for passing as an argument to a log macro such as \fI\
 .SH LOG LEVELS
 .INDENT 0.0
 .TP
-.B enum  class  xtr::log_level_t 
+.B enum class xtr::log_level_t 
 Passed to \fI\%XTR_LOGL\fP, \fI\%XTR_LOGL_TSC\fP etc to indicate the severity of the log message. 
 .sp
 \fIValues:\fP
 .INDENT 7.0
 .TP
-.B enumerator  none 
+.B enumerator none 
 .UNINDENT
 .INDENT 7.0
 .TP
-.B enumerator  fatal 
+.B enumerator fatal 
 .UNINDENT
 .INDENT 7.0
 .TP
-.B enumerator  error 
+.B enumerator error 
 .UNINDENT
 .INDENT 7.0
 .TP
-.B enumerator  warning 
+.B enumerator warning 
 .UNINDENT
 .INDENT 7.0
 .TP
-.B enumerator  info 
+.B enumerator info 
 .UNINDENT
 .INDENT 7.0
 .TP
-.B enumerator  debug 
+.B enumerator debug 
 .UNINDENT
 .UNINDENT
 .sp
 If the \fInone\fP level is applied to a sink then all log statements will be
 disabled. Fatal log statements will still call
-\fI\%abort(3)\fP <\fBhttps://www.man7.org/linux/man-pages/man3/abort.3.html\fP>, however.
+\X'tty: link https://www.man7.org/linux/man-pages/man3/abort.3.html'\fI\%abort(3)\fP <\fBhttps://www.man7.org/linux/man-pages/man3/abort.3.html\fP>\X'tty: link', however.
 .INDENT 0.0
 .TP
-.B \fI\%log_level_t\fP  xtr::log_level_from_string(std::string_view  str) 
+.B \fI\%log_level_t\fP xtr::log_level_from_string(std::string_view str) 
 Converts a string containing a log level name to the corresponding \fI\%log_level_t\fP enum value. Throws std::invalid_argument if the given string does not correspond to any log level. 
 .UNINDENT
 .SH LOG LEVEL STYLES
 .INDENT 0.0
 .TP
-.B using  xtr::log_level_style_t  =  const  char  *(*)(\fI\%log_level_t\fP) 
+.B using xtr::log_level_style_t = const char *(*)(\fI\%log_level_t\fP) 
 Log level styles are used to customise the formatting used when prefixing log statements with their associated log level (see \fI\%log_level_t\fP). Styles are simply function pointers\-\-\-to provide a custom style, define a function returning a string literal and accepting a single argument of type \fI\%log_level_t\fP and pass the function to \fI\%logger::logger\fP or \fI\%logger::set_log_level_style\fP\&. The values returned by the function will be prefixed to log statements produced by the logger. Two formatters are provided, the default formatter \fI\%default_log_level_style\fP and a Systemd compatible style \fI\%systemd_log_level_style\fP\&. 
 .UNINDENT
 .INDENT 0.0
 .TP
-.B const  char  *xtr::default_log_level_style(\fI\%log_level_t\fP  level) 
+.B const char *xtr::default_log_level_style(\fI\%log_level_t\fP level) 
 The default log level style (see \fI\%log_level_style_t\fP). Returns a single upper\-case character representing the log level followed by a space, e.g. \(dqE \(dq, \(dqW \(dq, \(dqI \(dq for \fI\%log_level_t::error\fP, \fI\%log_level_t::warning\fP, \fI\%log_level_t::info\fP and so on. 
 .UNINDENT
 .INDENT 0.0
 .TP
-.B const  char  *xtr::systemd_log_level_style(\fI\%log_level_t\fP  level) 
-Systemd log level style (see \fI\%log_level_style_t\fP). Returns strings as described in \fI\%sd\-daemon(3)\fP <\fBhttps://man7.org/linux/man-pages/man3/sd-daemon.3.html\fP>, e.g. \(dq<0>\(dq, \(dq<1>\(dq, \(dq<2>\(dq etc. 
+.B const char *xtr::systemd_log_level_style(\fI\%log_level_t\fP level) 
+Systemd log level style (see \fI\%log_level_style_t\fP). Returns strings as described in \X'tty: link https://man7.org/linux/man-pages/man3/sd-daemon.3.html'\fI\%sd\-daemon(3)\fP <\fBhttps://man7.org/linux/man-pages/man3/sd-daemon.3.html\fP>\X'tty: link', e.g. \(dq<0>\(dq, \(dq<1>\(dq, \(dq<2>\(dq etc. 
 .UNINDENT
 .SH STORAGE INTERFACES
 .INDENT 0.0
 .TP
-.B struct  storage_interface 
+.B struct storage_interface 
 Interface allowing custom back\-ends to be implemented. To create a custom back\-end, inherit from storage_interfance, implement all pure\-virtual functions then pass a \fI\%storage_interface_ptr\fP pointing to an instance of the custom back\-end to \fI\%logger::logger\fP\&. 
 .sp
 Public Functions
 .INDENT 7.0
 .TP
-.B virtual  std::span<char>  allocate_buffer()  =  0 
+.B virtual std::span<char> allocate_buffer() = 0 
 Allocates a buffer for formatted log data to be written to. Once a buffer has been allocated, allocate_buffer will not be called again until the buffer has been submitted via \fI\%submit_buffer\fP\&. 
 .UNINDENT
 .INDENT 7.0
 .TP
-.B virtual  void  submit_buffer(char  *buf, std::size_t  size)  =  0 
+.B virtual void submit_buffer(char *buf, std::size_t size) = 0 
 Submits a buffer containing formatted log data to be written. 
 .UNINDENT
 .INDENT 7.0
 .TP
-.B virtual  void  flush()  =  0 
+.B virtual void flush() = 0 
 Invoked to indicate that the back\-end should write any buffered data to its associated backing store. 
 .UNINDENT
 .INDENT 7.0
 .TP
-.B virtual  void  sync()  noexcept  =  0 
+.B virtual void sync() noexcept = 0 
 Invoked to indicate that the back\-end should ensure that all data written to the associated backing store has reached permanent storage. 
 .UNINDENT
 .INDENT 7.0
 .TP
-.B virtual  int  reopen()  noexcept  =  0 
+.B virtual int reopen() noexcept = 0 
 Invoked to indicate that if the back\-end has a regular file opened for writing log data then the file should be reopened. 
 .UNINDENT
 .UNINDENT
 .INDENT 0.0
 .TP
-.B using  xtr::storage_interface_ptr  =  std::unique_ptr<\fI\%storage_interface\fP> 
+.B using xtr::storage_interface_ptr = std::unique_ptr<\fI\%storage_interface\fP> 
 Convenience typedef for std::unique_ptr<\fI\%storage_interface\fP> 
 .UNINDENT
 .INDENT 0.0
 .TP
-.B class  io_uring_fd_storage  :  public  detail::fd_storage_base 
-An implementation of \fI\%storage_interface\fP that uses \fI\%io_uring(7)\fP <\fBhttps://www.man7.org/linux/man-pages/man7/io_uring.7.html\fP> to perform file I/O (Linux only). 
+.B class io_uring_fd_storage : public detail::fd_storage_base 
+An implementation of \fI\%storage_interface\fP that uses \X'tty: link https://www.man7.org/linux/man-pages/man7/io_uring.7.html'\fI\%io_uring(7)\fP <\fBhttps://www.man7.org/linux/man-pages/man7/io_uring.7.html\fP>\X'tty: link' to perform file I/O (Linux only). 
 .sp
 Public Functions
 .INDENT 7.0
 .TP
-.B explicit  io_uring_fd_storage(int  fd, std::string  reopen_path  =  \fI\%null_reopen_path\fP, std::size_t  buffer_capacity  =  \fI\%default_buffer_capacity\fP, std::size_t  queue_size  =  \fI\%default_queue_size\fP, std::size_t  batch_size  =  \fI\%default_batch_size\fP) 
+.B explicit io_uring_fd_storage(int fd, std::string reopen_path = \fI\%null_reopen_path\fP, std::size_t buffer_capacity = \fI\%default_buffer_capacity\fP, std::size_t queue_size = \fI\%default_queue_size\fP, std::size_t batch_size = \fI\%default_batch_size\fP) 
 File descriptor constructor.
 .INDENT 7.0
 .TP
 .B Parameters
 .INDENT 7.0
 .IP \(bu 2
-\fBfd\fP \-\- File descriptor to write to. This will be duplicated via a call to \fI\%dup(2)\fP <\fBhttps://www.man7.org/linux/man-pages/man2/dup.2.html\fP>, so callers may close the file descriptor immediately after this constructor returns if desired.
+\fBfd\fP \-\- File descriptor to write to. This will be duplicated via a call to \X'tty: link https://www.man7.org/linux/man-pages/man2/dup.2.html'\fI\%dup(2)\fP <\fBhttps://www.man7.org/linux/man-pages/man2/dup.2.html\fP>\X'tty: link', so callers may close the file descriptor immediately after this constructor returns if desired.
 .IP \(bu 2
-\fBreopen_path\fP \-\- The path of the file associated with the fd argument. This path will be used to reopen the file if requested via the xtrctl \fI\%reopen command\fP\&. Pass \fI\%null_reopen_path\fP if no filename is associated with the file descriptor.
+\fBreopen_path\fP \-\- The path of the file associated with the fd argument. This path will be used to reopen the file if requested via the xtrctl \fI\%reopen command\fP <\fBxtrctl.html#reopening-log-files\fP>\&. Pass \fI\%null_reopen_path\fP if no filename is associated with the file descriptor.
 .IP \(bu 2
 \fBbuffer_capacity\fP \-\- The size in bytes of a single io_uring buffer.
 .IP \(bu 2
@@ -793,38 +793,38 @@ File descriptor constructor.
 Public Static Attributes
 .INDENT 7.0
 .TP
-.B static  constexpr  std::size_t  default_buffer_capacity  =  64UL  *  1024UL 
+.B static constexpr std::size_t default_buffer_capacity = 64UL * 1024UL 
 Default value for the buffer_capacity constructor argument. 
 .UNINDENT
 .INDENT 7.0
 .TP
-.B static  constexpr  std::size_t  default_queue_size  =  1024UL 
+.B static constexpr std::size_t default_queue_size = 1024UL 
 Default value for the queue_size constructor argument. 
 .UNINDENT
 .INDENT 7.0
 .TP
-.B static  constexpr  std::size_t  default_batch_size  =  32UL 
+.B static constexpr std::size_t default_batch_size = 32UL 
 Default value for the batch_size constructor argument. 
 .UNINDENT
 .UNINDENT
 .INDENT 0.0
 .TP
-.B class  posix_fd_storage  :  public  detail::fd_storage_base 
-An implementation of \fI\%storage_interface\fP that uses standard \fI\%POSIX\fP <\fBhttps://pubs.opengroup.org/onlinepubs/9699919799/functions/write.html\fP> functions to perform file I/O. 
+.B class posix_fd_storage : public detail::fd_storage_base 
+An implementation of \fI\%storage_interface\fP that uses standard \X'tty: link https://pubs.opengroup.org/onlinepubs/9699919799/functions/write.html'\fI\%POSIX\fP <\fBhttps://pubs.opengroup.org/onlinepubs/9699919799/functions/write.html\fP>\X'tty: link' functions to perform file I/O. 
 .sp
 Public Functions
 .INDENT 7.0
 .TP
-.B explicit  posix_fd_storage(int  fd, std::string  reopen_path  =  \fI\%null_reopen_path\fP, std::size_t  buffer_capacity  =  \fI\%default_buffer_capacity\fP) 
+.B explicit posix_fd_storage(int fd, std::string reopen_path = \fI\%null_reopen_path\fP, std::size_t buffer_capacity = \fI\%default_buffer_capacity\fP) 
 File descriptor constructor.
 .INDENT 7.0
 .TP
 .B Parameters
 .INDENT 7.0
 .IP \(bu 2
-\fBfd\fP \-\- File descriptor to write to. This will be duplicated via a call to \fI\%dup(2)\fP <\fBhttps://www.man7.org/linux/man-pages/man2/dup.2.html\fP>, so callers may close the file descriptor immediately after this constructor returns if desired.
+\fBfd\fP \-\- File descriptor to write to. This will be duplicated via a call to \X'tty: link https://www.man7.org/linux/man-pages/man2/dup.2.html'\fI\%dup(2)\fP <\fBhttps://www.man7.org/linux/man-pages/man2/dup.2.html\fP>\X'tty: link', so callers may close the file descriptor immediately after this constructor returns if desired.
 .IP \(bu 2
-\fBreopen_path\fP \-\- The path of the file associated with the fd argument. This path will be used to reopen the file if requested via the xtrctl \fI\%reopen command\fP\&. Pass \fI\%null_reopen_path\fP if no filename is associated with the file descriptor.
+\fBreopen_path\fP \-\- The path of the file associated with the fd argument. This path will be used to reopen the file if requested via the xtrctl \fI\%reopen command\fP <\fBxtrctl.html#reopening-log-files\fP>\&. Pass \fI\%null_reopen_path\fP if no filename is associated with the file descriptor.
 .IP \(bu 2
 \fBbuffer_capacity\fP \-\- The size in bytes of the internal write buffer. 
 .UNINDENT
@@ -834,73 +834,73 @@ File descriptor constructor.
 Public Static Attributes
 .INDENT 7.0
 .TP
-.B static  constexpr  std::size_t  default_buffer_capacity  =  64UL  *  1024UL 
+.B static constexpr std::size_t default_buffer_capacity = 64UL * 1024UL 
 Default value for the buffer_capacity constructor argument. 
 .UNINDENT
 .UNINDENT
 .INDENT 0.0
 .TP
-.B \fI\%storage_interface_ptr\fP  xtr::make_fd_storage(const  char  *path) 
-Creates a storage interface object from a path. If the host kernel supports \fI\%io_uring(7)\fP <\fBhttps://www.man7.org/linux/man-pages/man7/io_uring.7.html\fP> and libxtr was built on a machine with liburing header files available then an instance of \fI\%io_uring_fd_storage\fP will be created, otherwise an instance of \fI\%posix_fd_storage\fP will be created. To prevent \fI\%io_uring_fd_storage\fP from being used define set XTR_USE_IO_URING to 0 in xtr/config.hpp\&. 
+.B \fI\%storage_interface_ptr\fP xtr::make_fd_storage(const char *path) 
+Creates a storage interface object from a path. If the host kernel supports \X'tty: link https://www.man7.org/linux/man-pages/man7/io_uring.7.html'\fI\%io_uring(7)\fP <\fBhttps://www.man7.org/linux/man-pages/man7/io_uring.7.html\fP>\X'tty: link' and libxtr was built on a machine with liburing header files available then an instance of \fI\%io_uring_fd_storage\fP will be created, otherwise an instance of \fI\%posix_fd_storage\fP will be created. To prevent \fI\%io_uring_fd_storage\fP from being used define set XTR_USE_IO_URING to 0 in xtr/config.hpp\&. 
 .UNINDENT
 .INDENT 0.0
 .TP
-.B \fI\%storage_interface_ptr\fP  xtr::make_fd_storage(FILE  *fp, std::string  reopen_path  =  \fI\%null_reopen_path\fP) 
+.B \fI\%storage_interface_ptr\fP xtr::make_fd_storage(FILE *fp, std::string reopen_path = \fI\%null_reopen_path\fP) 
 Creates a storage interface object from a file descriptor and reopen path. Either an instance of \fI\%io_uring_fd_storage\fP or \fI\%posix_fd_storage\fP will be created, refer to \fI\%make_fd_storage(constchar*)\fP for details.
 .INDENT 7.0
 .TP
 .B Parameters
 .INDENT 7.0
 .IP \(bu 2
-\fBfd\fP \-\- File handle to write to. The underlying file descriptor will be duplicated via a call to \fI\%dup(2)\fP <\fBhttps://www.man7.org/linux/man-pages/man2/dup.2.html\fP>, so callers may close the file handle immediately after this function returns if desired.
+\fBfd\fP \-\- File handle to write to. The underlying file descriptor will be duplicated via a call to \X'tty: link https://www.man7.org/linux/man-pages/man2/dup.2.html'\fI\%dup(2)\fP <\fBhttps://www.man7.org/linux/man-pages/man2/dup.2.html\fP>\X'tty: link', so callers may close the file handle immediately after this function returns if desired.
 .IP \(bu 2
-\fBreopen_path\fP \-\- The path of the file associated with the fp argument. This path will be used to reopen the file if requested via the xtrctl \fI\%reopen command\fP\&. Pass \fI\%null_reopen_path\fP if no filename is associated with the file handle. 
+\fBreopen_path\fP \-\- The path of the file associated with the fp argument. This path will be used to reopen the file if requested via the xtrctl \fI\%reopen command\fP <\fBxtrctl.html#reopening-log-files\fP>\&. Pass \fI\%null_reopen_path\fP if no filename is associated with the file handle. 
 .UNINDENT
 .UNINDENT
 .UNINDENT
 .INDENT 0.0
 .TP
-.B \fI\%storage_interface_ptr\fP  xtr::make_fd_storage(int  fd, std::string  reopen_path  =  \fI\%null_reopen_path\fP) 
+.B \fI\%storage_interface_ptr\fP xtr::make_fd_storage(int fd, std::string reopen_path = \fI\%null_reopen_path\fP) 
 Creates a storage interface object from a file descriptor and reopen path. Either an instance of \fI\%io_uring_fd_storage\fP or \fI\%posix_fd_storage\fP will be created, refer to \fI\%make_fd_storage(const char*)\fP for details.
 .INDENT 7.0
 .TP
 .B Parameters
 .INDENT 7.0
 .IP \(bu 2
-\fBfd\fP \-\- File descriptor to write to. This will be duplicated via a call to \fI\%dup(2)\fP <\fBhttps://www.man7.org/linux/man-pages/man2/dup.2.html\fP>, so callers may close the file descriptor immediately after this function returns if desired.
+\fBfd\fP \-\- File descriptor to write to. This will be duplicated via a call to \X'tty: link https://www.man7.org/linux/man-pages/man2/dup.2.html'\fI\%dup(2)\fP <\fBhttps://www.man7.org/linux/man-pages/man2/dup.2.html\fP>\X'tty: link', so callers may close the file descriptor immediately after this function returns if desired.
 .IP \(bu 2
-\fBreopen_path\fP \-\- The path of the file associated with the fd argument. This path will be used to reopen the file if requested via the xtrctl \fI\%reopen command\fP\&. Pass \fI\%null_reopen_path\fP if no filename is associated with the file descriptor. 
+\fBreopen_path\fP \-\- The path of the file associated with the fd argument. This path will be used to reopen the file if requested via the xtrctl \fI\%reopen command\fP <\fBxtrctl.html#reopening-log-files\fP>\&. Pass \fI\%null_reopen_path\fP if no filename is associated with the file descriptor. 
 .UNINDENT
 .UNINDENT
 .UNINDENT
 .INDENT 0.0
 .TP
-.B constexpr  auto  xtr::null_reopen_path  =  \(dq\(dq 
-When passed to the reopen_path argument of \fI\%make_fd_storage\fP, \fI\%posix_fd_storage::posix_fd_storage\fP, \fI\%io_uring_fd_storage\fP or \fI\%logger::logger\fP indicates that the output file handle has no associated filename and so should not be reopened if requested by the xtrctl \fI\%reopen command\fP\&. 
+.B constexpr auto xtr::null_reopen_path = \(dq\(dq 
+When passed to the reopen_path argument of \fI\%make_fd_storage\fP, \fI\%posix_fd_storage::posix_fd_storage\fP, \fI\%io_uring_fd_storage\fP or \fI\%logger::logger\fP indicates that the output file handle has no associated filename and so should not be reopened if requested by the xtrctl \fI\%reopen command\fP <\fBxtrctl.html#reopening-log-files\fP>\&. 
 .UNINDENT
 .SH I/O PUMP STATISTICS
 .INDENT 0.0
 .TP
-.B struct  pump_io_stats 
+.B struct pump_io_stats 
 Statistics struct yielded by \fI\%xtr::logger::pump_io\fP\&. 
 .sp
 Public Members
 .INDENT 7.0
 .TP
-.B std::size_t  n_events 
+.B std::size_t n_events 
 Number of events processed. This includes log statements, sink construction and destruction events, sync requests etc. 
 .UNINDENT
 .UNINDENT
 .SH DEFAULT COMMAND PATH
 .INDENT 0.0
 .TP
-.B std::string  xtr::default_command_path() 
+.B std::string xtr::default_command_path() 
 Returns the default command path used for the \fI\%command_path\fP argument of \fI\%logger::logger\fP (and other logger constructors). A string with the format \(dq$XDG_RUNTIME_DIR/xtrctl.<pid>.<N>\(dq is returned, where N begins at 0 and increases for each call to the function. If the directory specified by $XDG_RUNTIME_DIR does not exist or is inaccessible then $TMPDIR is used instead. If $XDG_RUNTIME_DIR or $TMPDIR are not set then \(dq/run/user/<uid>\(dq and \(dq/tmp\(dq are used instead, respectively. 
 .UNINDENT
 .SH NULL COMMAND PATH
 .INDENT 0.0
 .TP
-.B constexpr  auto  xtr::null_command_path  =  \(dq\(dq 
+.B constexpr auto xtr::null_command_path = \(dq\(dq 
 When passed to the \fI\%command_path\fP argument of \fI\%logger::logger\fP (or other logger constructors) indicates that no command socket should be created. 
 .UNINDENT
 .SH CONFIGURATION VARIABLES
