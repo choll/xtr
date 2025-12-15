@@ -37,7 +37,7 @@ namespace fmt
     // writing fmt::formatter
 
     template<typename T>
-    requires xtr::detail::tuple_like<T> && (!xtr::detail::iterable<T>)
+        requires xtr::detail::tuple_like<T> && (!xtr::detail::iterable<T>)
     struct formatter<T>
     {
         template<typename ParseContext>
@@ -106,10 +106,9 @@ namespace fmt
     };
 
     template<typename T>
-    requires
-        xtr::detail::iterable<T> &&
-        (!std::is_constructible_v<T, const char*>) &&
-        (!xtr::detail::associative_container<T>)
+        requires xtr::detail::iterable<T> &&
+                 (!std::is_constructible_v<T, const char*>) &&
+                 (!xtr::detail::associative_container<T>)
     struct formatter<T>
     {
         template<typename ParseContext>

@@ -192,8 +192,8 @@ private:
     void post(Func&& func) noexcept(XTR_NOTHROW_INGESTIBLE(Func, func));
 
     template<auto Format, auto Level, typename Tags, typename... Args>
-    void post_variable_len(Args&&... args)
-        noexcept((XTR_NOTHROW_INGESTIBLE(Args, args) && ...));
+    void post_variable_len(Args&&... args) noexcept(
+        (XTR_NOTHROW_INGESTIBLE(Args, args) && ...));
 
     template<typename Func>
     void sync_post(Func func);
@@ -252,8 +252,8 @@ void xtr::sink::log_impl(Args&&... args) noexcept(
 }
 
 template<auto Format, auto Level, typename Tags, typename... Args>
-void xtr::sink::post_variable_len(Args&&... args)
-    noexcept((XTR_NOTHROW_INGESTIBLE(Args, args) && ...))
+void xtr::sink::post_variable_len(Args&&... args) noexcept(
+    (XTR_NOTHROW_INGESTIBLE(Args, args) && ...))
 {
     using lambda_t = decltype(make_lambda<Tags>(detail::build_string_table<Tags>(
         std::declval<std::byte*&>(),
