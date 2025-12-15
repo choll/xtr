@@ -100,7 +100,7 @@ XTR_LOG(s, \(dqHello world\(dq);
 .UNINDENT
 .UNINDENT
 .sp
-View this example on \fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/6MYYWzG4b\fP>\&.
+View this example on \X'tty: link https://godbolt.org/z/6MYYWzG4b'\fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/6MYYWzG4b\fP>\X'tty: link'\&.
 .sp
 Sink creation via \fI\%xtr::logger::register_sink()\fP:
 .INDENT 0.0
@@ -121,7 +121,7 @@ XTR_LOG(s, \(dqHello world\(dq);
 .UNINDENT
 .UNINDENT
 .sp
-View this example on \fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/qzqeMbGas\fP>\&.
+View this example on \X'tty: link https://godbolt.org/z/qzqeMbGas'\fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/qzqeMbGas\fP>\X'tty: link'\&.
 .sp
 Sink creation via copying:
 .INDENT 0.0
@@ -145,13 +145,13 @@ XTR_LOG(s2, \(dqHello world\(dq);
 .UNINDENT
 .UNINDENT
 .sp
-View this example on \fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/oTGqK4q4j\fP>\&.
+View this example on \X'tty: link https://godbolt.org/z/oTGqK4q4j'\fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/oTGqK4q4j\fP>\X'tty: link'\&.
 .SH FORMAT STRING SYNTAX
 .sp
-XTR uses \fI\%{fmt}\fP <\fBhttps://fmt.dev\fP> for formatting, so format strings follow the
-same Python \fI\%str.format\fP <\fBhttps://docs.python.org/3/library/string.html#formatstrings\fP>
+XTR uses \X'tty: link https://fmt.dev'\fI\%{fmt}\fP <\fBhttps://fmt.dev\fP>\X'tty: link' for formatting, so format strings follow the
+same Python \X'tty: link https://docs.python.org/3/library/string.html#formatstrings'\fI\%str.format\fP <\fBhttps://docs.python.org/3/library/string.html#formatstrings\fP>\X'tty: link'
 style formatting as found in {fmt}. The {fmt} format string documentation can be found
-\fI\%here\fP <\fBhttps://fmt.dev/latest/syntax.html\fP>\&.
+\X'tty: link https://fmt.dev/latest/syntax.html'\fI\%here\fP <\fBhttps://fmt.dev/latest/syntax.html\fP>\X'tty: link'\&.
 .SS Example
 .INDENT 0.0
 .INDENT 3.5
@@ -172,7 +172,7 @@ XTR_LOG(s, \(dqHello {:.1f}\(dq, 123.456); // Hello 123.1
 .UNINDENT
 .UNINDENT
 .sp
-View this example on \fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/zxs7WThM6\fP>\&.
+View this example on \X'tty: link https://godbolt.org/z/zxs7WThM6'\fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/zxs7WThM6\fP>\X'tty: link'\&.
 .SH PASSING ARGUMENTS BY VALUE OR REFERENCE
 .sp
 The default behaviour of the logger is to copy format arguments into the
@@ -203,7 +203,7 @@ XTR_LOG(s, \(dqHello {}\(dq, arg);
 .UNINDENT
 .UNINDENT
 .sp
-View this example on \fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/TaT3nv61K\fP>\&.
+View this example on \X'tty: link https://godbolt.org/z/TaT3nv61K'\fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/TaT3nv61K\fP>\X'tty: link'\&.
 .SH STRING ARGUMENTS
 .sp
 Passing strings to the logger is guaranteed to not allocate memory, and does
@@ -282,14 +282,14 @@ XTR_LOGL(info, s, \(dqHello {}\(dq, foo());
 .UNINDENT
 .UNINDENT
 .sp
-View this example on \fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/PxfhfTn8v\fP>\&.
+View this example on \X'tty: link https://godbolt.org/z/PxfhfTn8v'\fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/PxfhfTn8v\fP>\X'tty: link'\&.
 .SS Debug Log Statements
 .sp
 Debug log statements can be disabled by defining XTR_NDEBUG.
 .SS Fatal Log Statements
 .sp
 Fatal log statements will additionally call \fI\%xtr::sink::sync()\fP followed
-by \fI\%abort(3)\fP <\fBhttps://www.man7.org/linux/man-pages/man3/abort.3.html\fP>\&.
+by \X'tty: link https://www.man7.org/linux/man-pages/man3/abort.3.html'\fI\%abort(3)\fP <\fBhttps://www.man7.org/linux/man-pages/man3/abort.3.html\fP>\X'tty: link'\&.
 .SH THREAD SAFETY
 .INDENT 0.0
 .INDENT 3.5
@@ -305,7 +305,7 @@ This is because each thread is expected to have its own sink(s).
 .UNINDENT
 .SH CUSTOM FORMATTERS
 .sp
-Custom formatters are implemented the same as in \fI\%{fmt}\fP <\fBhttps://fmt.dev\fP>,
+Custom formatters are implemented the same as in \X'tty: link https://fmt.dev'\fI\%{fmt}\fP <\fBhttps://fmt.dev\fP>\X'tty: link',
 which is done either by:
 .INDENT 0.0
 .IP \(bu 2
@@ -315,7 +315,7 @@ that arguments must be wrapped with either \fI\%xtr::streamed_copy()\fP or
 .IP \(bu 2
 Specializing fmt::formatter<T> and implementing the \fIparse\fP and
 \fIformat\fP methods as described by the \fI{fmt}\fP documentation
-\fI\%here\fP <\fBhttps://fmt.dev/latest/api.html#formatting-user-defined-types\fP>\&.
+\X'tty: link https://fmt.dev/latest/api.html#formatting-user-defined-types'\fI\%here\fP <\fBhttps://fmt.dev/latest/api.html#formatting-user-defined-types\fP>\X'tty: link'\&.
 .UNINDENT
 .SS Examples
 .sp
@@ -356,7 +356,7 @@ int main()
 .UNINDENT
 .UNINDENT
 .sp
-View this example on \fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/b71h3d38x\fP>\&.
+View this example on \X'tty: link https://godbolt.org/z/b71h3d38x'\fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/b71h3d38x\fP>\X'tty: link'\&.
 .sp
 Formatting a custom type via fmt::formatter:
 .INDENT 0.0
@@ -402,7 +402,7 @@ int main()
 .UNINDENT
 .UNINDENT
 .sp
-View this example on \fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/1aEeaKn5c\fP>\&.
+View this example on \X'tty: link https://godbolt.org/z/1aEeaKn5c'\fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/1aEeaKn5c\fP>\X'tty: link'\&.
 .SH FORMATTING CONTAINERS, TUPLES AND PAIRS
 .sp
 Formatters for containers, tuples and pairs are provided in
@@ -413,7 +413,7 @@ Any non\-string iterable type\-\-\-specifically any type that meets all of the
 following criteria;
 .INDENT 2.0
 .IP 1. 3
-Is not constructible from const  char*\&.
+Is not constructible from const char*\&.
 .IP 2. 3
 \fBstd::begin()\fP and \fBstd::end()\fP are defined.
 .IP 3. 3
@@ -499,7 +499,7 @@ constructing the logger (see \fI\%xtr::logger::logger()\fP). In these macros
 The \fI\%XTR_LOG_RTC\fP macro and it\(aqs variants listed under the
 \fI\%real\-time clock macros\fP section of the API reference all use the
 real\-time clock source. In these macros the timestamp is read using
-\fI\%clock_gettime(3)\fP <\fBhttps://www.man7.org/linux/man-pages/man3/clock_gettime.3.html\fP>
+\X'tty: link https://www.man7.org/linux/man-pages/man3/clock_gettime.3.html'\fI\%clock_gettime(3)\fP <\fBhttps://www.man7.org/linux/man-pages/man3/clock_gettime.3.html\fP>\X'tty: link'
 with a clock source of either CLOCK_REALTIME_COARSE on Linux or CLOCK_REALTIME_FAST
 on FreeBSD.
 .SS TSC
@@ -556,7 +556,7 @@ argument. Any type may be passed as long as it has a formatter defined
 .UNINDENT
 .UNINDENT
 .sp
-View this example on \fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/h1Pqnhz6Y\fP>\&.
+View this example on \X'tty: link https://godbolt.org/z/h1Pqnhz6Y'\fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/h1Pqnhz6Y\fP>\X'tty: link'\&.
 .SH BACKGROUND CONSUMER THREAD DETAILS
 .sp
 As no system calls are made when a log statement is made, the consumer
@@ -582,7 +582,7 @@ To bind the background thread to a specific CPU
 the consumer thread\(aqs platform specific thread handle. The handle can then be
 used with whatever platform specific functionality is available for setting
 thread affinities\-\-\-for example
-\fI\%pthread_setaffinity_np(3)\fP <\fBhttps://www.man7.org/linux/man-pages/man3/pthread_setaffinity_np.3.html\fP>
+\X'tty: link https://www.man7.org/linux/man-pages/man3/pthread_setaffinity_np.3.html'\fI\%pthread_setaffinity_np(3)\fP <\fBhttps://www.man7.org/linux/man-pages/man3/pthread_setaffinity_np.3.html\fP>\X'tty: link'
 on Linux.
 .SS Example
 .INDENT 0.0
@@ -624,7 +624,7 @@ int main()
 .UNINDENT
 .UNINDENT
 .sp
-View this example on \fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/MP9bosffb\fP>\&.
+View this example on \X'tty: link https://godbolt.org/z/MP9bosffb'\fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/MP9bosffb\fP>\X'tty: link'\&.
 .SS Disabling the Background Consumer Thread
 .sp
 The consumer thread can be disabled by passing the
@@ -672,7 +672,7 @@ int main()
 .UNINDENT
 .UNINDENT
 .sp
-View this example on \fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/ezsceP49c\fP>\&.
+View this example on \X'tty: link https://godbolt.org/z/ezsceP49c'\fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/ezsceP49c\fP>\X'tty: link'\&.
 .sp
 Note that \fI\%xtr::logger::pump_io()\fP will only return false after all
 sinks have been closed and the logger has destructed, in order to ensure no log
@@ -689,7 +689,7 @@ emulators are sensible about the escape sequences they interpret, however it is 
 good practice for a logger to err on the side of caution and remove them from string
 arguments.
 Please refer to
-\fI\%this document\fP <\fBhttps://seclists.org/fulldisclosure/2003/Feb/att-341/Termulation.txt\fP>
+\X'tty: link https://seclists.org/fulldisclosure/2003/Feb/att-341/Termulation.txt'\fI\%this document\fP <\fBhttps://seclists.org/fulldisclosure/2003/Feb/att-341/Termulation.txt\fP>\X'tty: link'
 posted to the full\-disclosure mailing list for a more thorough explanation of terminal
 escape sequence attacks.
 .SH LOG ROTATION
@@ -727,7 +727,7 @@ using storage_interface_ptr = std::unique_ptr<storage_interface>;
 .UNINDENT
 .sp
 Storage interface objects are then passed to the \fI\%xtr::storage_interface_ptr\fP
-argument of the \fI\%custom back\-end constructor\fP\&.
+argument of the \fI\%custom back\-end constructor\fP <\fBapi.html#_CPPv4I0EN3xtr6logger6loggerE21storage_interface_ptrRR5ClockNSt6stringE17log_level_style_t\fP>\&.
 .sp
 \fBNOTE:\fP
 .INDENT 0.0
@@ -768,12 +768,12 @@ storage.
 The \fIreopen\fP function is invoked to indicate that if the back\-end has a regular
 file opened for writing log data then the file should be reopened. This is
 intended to be used to implement log rotation via tool such as
-\fI\%logrotate(8)\fP <\fBhttps://www.man7.org/linux/man-pages/man8/logrotate.8.html\fP>\&.
+\X'tty: link https://www.man7.org/linux/man-pages/man8/logrotate.8.html'\fI\%logrotate(8)\fP <\fBhttps://www.man7.org/linux/man-pages/man8/logrotate.8.html\fP>\X'tty: link'\&.
 Please refer to the \fI\%Reopening Log Files\fP section
 of the \fI\%xtrctl\fP documentation for further details.
 .sp
 The return value should be either zero on success or an
-\fI\%errno(3)\fP <\fBhttps://www.man7.org/linux/man-pages/man3/errno.3.html\fP>
+\X'tty: link https://www.man7.org/linux/man-pages/man3/errno.3.html'\fI\%errno(3)\fP <\fBhttps://www.man7.org/linux/man-pages/man3/errno.3.html\fP>\X'tty: link'
 compatible error number on failure.
 .TP
 .B destructor
@@ -782,7 +782,7 @@ associated backing store.
 .UNINDENT
 .SS Example
 .sp
-Using the \fI\%custom back\-end constructor\fP
+Using the \fI\%custom back\-end constructor\fP <\fBapi.html#_CPPv4I0EN3xtr6logger6loggerE21storage_interface_ptrRR5ClockNSt6stringE17log_level_style_t\fP>
 to create a logger with a storage back\-end that discards all input:
 .INDENT 0.0
 .INDENT 3.5
@@ -839,7 +839,7 @@ int main()
 .UNINDENT
 .UNINDENT
 .sp
-View this example on \fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/fvf1o1cjK\fP>\&.
+View this example on \X'tty: link https://godbolt.org/z/fvf1o1cjK'\fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/fvf1o1cjK\fP>\X'tty: link'\&.
 .SH CUSTOM LOG LEVEL STYLES
 .sp
 The text at the beginning of each log statement representing the log level of
@@ -847,7 +847,7 @@ the statement can be customised via \fI\%xtr::logger::set_log_level_style()\fP,
 which accepts a function pointer of type
 \fI\%xtr::log_level_style_t\fP\&. The passed function should accept
 a single argument of type \fI\%xtr::log_level_t\fP and should return
-a const  char* string literal to be used as the log level prefix.
+a const char* string literal to be used as the log level prefix.
 Please refer to the \fI\%xtr::log_level_style_t\fP documentation for
 further details.
 .SS Example
@@ -891,7 +891,7 @@ XTR_LOGL(error, s, \(dqHello world\(dq);
 .UNINDENT
 .UNINDENT
 .sp
-View this example on \fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/4s9q4bad8\fP>\&.
+View this example on \X'tty: link https://godbolt.org/z/4s9q4bad8'\fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/4s9q4bad8\fP>\X'tty: link'\&.
 .SH LOGGING TO THE SYSTEMD JOURNAL
 .sp
 To support logging to systemd, log level prefixes suitable for logging to the
@@ -927,7 +927,7 @@ XTR_LOGL(error, s, \(dqError\(dq);
 .UNINDENT
 .UNINDENT
 .sp
-View this example on \fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/xMYevEjfW\fP>\&.
+View this example on \X'tty: link https://godbolt.org/z/xMYevEjfW'\fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/xMYevEjfW\fP>\X'tty: link'\&.
 .sp
 The output of the above example will be something like:
 .INDENT 0.0
@@ -976,7 +976,7 @@ This will cause XTR to be built with the \fB\-fno\-exceptions\fP flag.
 .sp
 If exceptions are disabled then when an error occurs that would have thrown an
 exception, an error message is instead printed to \fIstderr\fP and the program
-terminates via  \fI\%abort(3)\fP <\fBhttps://www.man7.org/linux/man-pages/man3/abort.3.html\fP>\&.
+terminates via  \X'tty: link https://www.man7.org/linux/man-pages/man3/abort.3.html'\fI\%abort(3)\fP <\fBhttps://www.man7.org/linux/man-pages/man3/abort.3.html\fP>\X'tty: link'\&.
 .SH FOOTNOTES
 .IP [1] 5
 Specifically the queue is a single\-producer/single\-consumer ring buffer.
