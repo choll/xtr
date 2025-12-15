@@ -7,8 +7,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 //
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 //
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -29,12 +29,20 @@ namespace xtr
      * Passed to @ref XTR_LOGL, @ref XTR_LOGL_TSC etc to indicate the severity
      * of the log message.
      */
-    enum class log_level_t {none, fatal, error, warning, info, debug};
+    enum class log_level_t
+    {
+        none,
+        fatal,
+        error,
+        warning,
+        info,
+        debug
+    };
 
     /**
-     * Converts a string containing a log level name to the corresponding
-     * @ref log_level_t enum value. Throws std::invalid_argument if the given
-     * string does not correspond to any log level.
+     * Converts a string containing a log level name to the corresponding @ref
+     * log_level_t enum value. Throws std::invalid_argument if the given string
+     * does not correspond to any log level.
      */
     log_level_t log_level_from_string(std::string_view str);
 
@@ -49,7 +57,7 @@ namespace xtr
      * provided, the default formatter @ref default_log_level_style and a
      * Systemd compatible style @ref systemd_log_level_style.
      */
-    using log_level_style_t = const char *(*)(log_level_t);
+    using log_level_style_t = const char* (*)(log_level_t);
 
     /**
      * The default log level style (see @ref log_level_style_t). Returns a

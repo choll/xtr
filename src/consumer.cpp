@@ -7,8 +7,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 //
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 //
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -19,12 +19,12 @@
 // SOFTWARE.
 
 #include "xtr/detail/consumer.hpp"
+#include "xtr/command_path.hpp"
 #include "xtr/detail/commands/command_dispatcher.hpp"
 #include "xtr/detail/commands/matcher.hpp"
 #include "xtr/detail/commands/requests.hpp"
 #include "xtr/detail/commands/responses.hpp"
 #include "xtr/detail/strzcpy.hpp"
-#include "xtr/command_path.hpp"
 #include "xtr/log_level.hpp"
 #include "xtr/sink.hpp"
 #include "xtr/timespec.hpp"
@@ -51,12 +51,9 @@ xtr::detail::consumer::~consumer()
         destruct_latch_.wait();
 #if __cpp_exceptions
     }
-    catch(const std::exception& e)
+    catch (const std::exception& e)
     {
-        fmt::print(
-            stderr,
-            FMT_COMPILE("Error destructing consumer: {}\n"),
-            e.what());
+        fmt::print(stderr, FMT_COMPILE("Error destructing consumer: {}\n"), e.what());
     }
 #endif
 }
@@ -76,7 +73,7 @@ bool xtr::detail::consumer::run_once(pump_io_stats* stats) noexcept
 
     // Read commands once per loop over sinks
     if (cmds_ && cmds_->is_open())
-        cmds_->process_commands(/* timeout= */0);
+        cmds_->process_commands(/* timeout= */ 0);
 
     std::size_t n_events = 0;
 
@@ -201,21 +198,15 @@ void xtr::detail::consumer::set_command_path(std::string path) noexcept
     // This can be removed when libc++ supports bind_front
     cmds_->register_callback<detail::status>(
         [this](auto&&... args)
-        {
-            status_handler(std::forward<decltype(args)>(args)...);
-        });
+        { status_handler(std::forward<decltype(args)>(args)...); });
 
     cmds_->register_callback<detail::set_level>(
         [this](auto&&... args)
-        {
-            set_level_handler(std::forward<decltype(args)>(args)...);
-        });
+        { set_level_handler(std::forward<decltype(args)>(args)...); });
 
     cmds_->register_callback<detail::reopen>(
         [this](auto&&... args)
-        {
-            reopen_handler(std::forward<decltype(args)>(args)...);
-        });
+        { reopen_handler(std::forward<decltype(args)>(args)...); });
 #endif
 }
 
@@ -225,8 +216,7 @@ void xtr::detail::consumer::status_handler(int fd, detail::status& st)
     st.pattern.text[sizeof(st.pattern.text) - 1] = '\0';
 
     const auto matcher =
-        detail::make_matcher(
-            st.pattern.type, st.pattern.text, st.pattern.ignore_case);
+        detail::make_matcher(st.pattern.type, st.pattern.text, st.pattern.ignore_case);
 
     if (!matcher->valid())
     {
@@ -267,8 +257,7 @@ void xtr::detail::consumer::set_level_handler(int fd, detail::set_level& sl)
     }
 
     const auto matcher =
-        detail::make_matcher(
-            sl.pattern.type, sl.pattern.text, sl.pattern.ignore_case);
+        detail::make_matcher(sl.pattern.type, sl.pattern.text, sl.pattern.ignore_case);
 
     if (!matcher->valid())
     {

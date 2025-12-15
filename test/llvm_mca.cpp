@@ -1,6 +1,8 @@
 #include "xtr/logger.hpp"
 
-// clang++ -o - -S -mllvm -std=c++17 -pipe -fno-rtti -isystem third_party/include -Ofast -march=native -DNDEBUG -fno-plt -Ibuild/clang++-release/xtr -Ixtr test/logger.cpp|llvm-mca -iterations=1
+// clang++ -o - -S -mllvm -std=c++17 -pipe -fno-rtti -isystem
+// third_party/include -Ofast -march=native -DNDEBUG -fno-plt
+// -Ibuild/clang++-release/xtr -Ixtr test/logger.cpp|llvm-mca -iterations=1
 void llvm_mca_test1(xtr::logger::sink& s)
 {
     __asm volatile("# LLVM-MCA-BEGIN logger_no_arg");

@@ -7,8 +7,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 //
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 //
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -21,8 +21,8 @@
 #ifndef XTR_DETAIL_STRING_TABLE_HPP
 #define XTR_DETAIL_STRING_TABLE_HPP
 
-#include "pause.hpp"
 #include "is_c_string.hpp"
+#include "pause.hpp"
 #include "string_ref.hpp"
 #include "tags.hpp"
 
@@ -40,14 +40,14 @@ namespace xtr::detail
 {
     struct string_table_entry
     {
-        static constexpr auto truncated = std::numeric_limits<std::uint32_t>::max();
+        static constexpr auto truncated =
+            std::numeric_limits<std::uint32_t>::max();
 
         // This conversion is safe as sink cannot have a capacity greater
         // than UINT_MAX (via a static assertion in sink.hpp). Additionally
         // truncated having the value UINT_MAX is safe as the size of a log
         // record must be greater than zero.
-        explicit string_table_entry(std::size_t sz)
-        :
+        explicit string_table_entry(std::size_t sz) :
             size(std::uint32_t(sz))
         {
         }
@@ -56,15 +56,14 @@ namespace xtr::detail
     };
 
     template<typename T>
-    requires (!std::same_as<std::remove_cvref_t<T>, string_table_entry>)
+        requires(!std::same_as<std::remove_cvref_t<T>, string_table_entry>)
     T&& transform_string_table_entry(const std::byte*, T&& value)
     {
         return std::forward<T>(value);
     }
 
     inline string_ref<std::string_view> transform_string_table_entry(
-        std::byte*& pos,
-        string_table_entry entry)
+        std::byte*& pos, string_table_entry entry)
     {
         if (entry.size == string_table_entry::truncated) [[unlikely]]
             return string_ref<std::string_view>("<truncated>");
@@ -79,26 +78,21 @@ namespace xtr::detail
     // C string and string_view r-value references are not forwarded because
     // they are non-owning so being moved is meaningless.
     template<typename Tags, typename T, typename Buffer>
-    requires
-        (std::is_rvalue_reference_v<decltype(std::forward<T>(std::declval<T>()))> &&
-         std::same_as<std::remove_cvref_t<T>, std::string>) ||
-        (!is_c_string<T>::value &&
-         !std::same_as<std::remove_cvref_t<T>, std::string> &&
-         !std::same_as<std::remove_cvref_t<T>, std::string_view>)
+        requires(std::is_rvalue_reference_v<decltype(std::forward<T>(std::declval<T>()))> &&
+                 std::same_as<std::remove_cvref_t<T>, std::string>) ||
+                (!is_c_string<T>::value &&
+                 !std::same_as<std::remove_cvref_t<T>, std::string> &&
+                 !std::same_as<std::remove_cvref_t<T>, std::string_view>)
     T&& build_string_table(std::byte*&, std::byte*&, Buffer&, T&& value)
     {
         return std::forward<T>(value);
     }
 
     template<typename Tags, typename Buffer, typename String>
-    requires
-        std::same_as<String, std::string> ||
-        std::same_as<String, std::string_view>
+        requires std::same_as<String, std::string> ||
+                 std::same_as<String, std::string_view>
     string_table_entry build_string_table(
-        std::byte*& pos,
-        std::byte*& end,
-        Buffer& buf,
-        const String& sv)
+        std::byte*& pos, std::byte*& end, Buffer& buf, const String& sv)
     {
         std::byte* str_end = pos + sv.length();
         while (end < str_end) [[unlikely]]
@@ -121,10 +115,7 @@ namespace xtr::detail
 
     template<typename Tags, typename Buffer>
     string_table_entry build_string_table(
-        std::byte*& pos,
-        std::byte*& end,
-        Buffer& buf,
-        const char* str)
+        std::byte*& pos, std::byte*& end, Buffer& buf, const char* str)
     {
         std::byte* begin = pos;
         while (*str != '\0')

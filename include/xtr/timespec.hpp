@@ -18,8 +18,7 @@ namespace xtr
         timespec() = default;
 
         // lack of explicit is intentional
-        timespec(std::timespec ts)
-        :
+        timespec(std::timespec ts) :
             std::timespec(ts)
         {
         }
@@ -44,12 +43,12 @@ template<>
 struct fmt::formatter<xtr::timespec>
 {
     template<typename ParseContext>
-    constexpr auto parse(ParseContext &ctx)
+    constexpr auto parse(ParseContext& ctx)
     {
         return ctx.begin();
     }
 
-    template <typename FormatContext>
+    template<typename FormatContext>
     auto format(const timespec& ts, FormatContext& ctx) const
     {
         thread_local struct

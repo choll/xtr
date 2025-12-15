@@ -7,8 +7,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 //
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 //
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "xtr/config.hpp"
 #include "xtr/logger.hpp"
+#include "xtr/config.hpp"
 #include "xtr/formatters.hpp"
 #include "xtr/streamed.hpp"
 
@@ -44,22 +44,22 @@
 
 #include <array>
 #include <atomic>
-#include <chrono>
-#include <condition_variable>
 #include <cerrno>
 #include <charconv>
+#include <chrono>
 #include <cmath>
-#include <cstdio>
+#include <condition_variable>
 #include <cstdint>
+#include <cstdio>
 #include <cstring>
 #include <ctime>
 #include <deque>
 #include <filesystem>
 #include <forward_list>
 #include <functional>
-#include <list>
 #include <iostream>
 #include <iterator>
+#include <list>
 #include <map>
 #include <memory>
 #include <mutex>
@@ -73,14 +73,14 @@
 #include <utility>
 #include <vector>
 
-#include <sys/mman.h>
-#include <sys/un.h>
-#include <sys/stat.h>
-#include <sys/types.h>
 #include <err.h>
 #include <setjmp.h>
 #include <signal.h>
 #include <stdio.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/un.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -90,10 +90,10 @@ namespace
 {
     struct test_clock
     {
-        typedef std::int64_t rep;
-        typedef std::ratio<1, 1000000000> period;
-        typedef std::chrono::duration<rep, period> duration;
-        typedef std::chrono::time_point<test_clock> time_point;
+        using rep = std::int64_t;
+        using period = std::ratio<1, 1000000000>;
+        using duration = std::chrono::duration<rep, period>;
+        using time_point = std::chrono::time_point<test_clock>;
 
         time_point now() const noexcept
         {
@@ -102,9 +102,9 @@ namespace
 
         std::time_t to_time_t(time_point tp) const noexcept
         {
-            return
-                std::chrono::duration_cast<std::chrono::seconds>(
-                    tp.time_since_epoch()).count();
+            return std::chrono::duration_cast<std::chrono::seconds>(
+                       tp.time_since_epoch())
+                .count();
         }
 
         std::atomic<std::int64_t>* nanos_;
@@ -121,7 +121,8 @@ namespace
         {
             // pread is used here because writes to the file descriptor modify
             // the file offset
-            while (const ::ssize_t nread = ::pread(fd_.get(), buf_, sizeof(buf_), offset_))
+            while (const ::ssize_t nread =
+                       ::pread(fd_.get(), buf_, sizeof(buf_), offset_))
             {
                 REQUIRE(nread != -1);
                 for (auto it = buf_; it != buf_ + nread; ++it)
@@ -145,8 +146,7 @@ namespace
     {
         static constexpr std::size_t buffer_capacity = 64 * 1024;
 
-        container_storage(std::mutex& m, std::vector<std::string>& lines)
-        :
+        container_storage(std::mutex& m, std::vector<std::string>& lines) :
             m_(m),
             lines_(lines)
         {
@@ -205,15 +205,14 @@ namespace
         std::atomic<std::size_t> sync_count_{};
         std::vector<std::string>& lines_;
 
-private:
+    private:
         std::unique_ptr<char[]> buf_{new char[buffer_capacity]};
         std::string current_line_;
     };
 
     struct fixture
     {
-        fixture()
-        :
+        fixture() :
             storage_(new container_storage(m_, lines_)),
             log_(
                 xtr::storage_interface_ptr(storage_),
@@ -223,8 +222,7 @@ private:
         }
 
         template<typename... Args>
-        fixture(Args&&... args)
-        :
+        fixture(Args&&... args) :
             log_(std::forward<Args>(args)...)
         {
         }
@@ -276,8 +274,7 @@ private:
 
     struct pump_io_fixture : pump_io_fixture_base, fixture
     {
-        pump_io_fixture()
-        :
+        pump_io_fixture() :
             fixture(
                 std::make_unique<container_storage>(m_, lines_),
                 test_clock{&clock_nanos_},
@@ -310,12 +307,8 @@ private:
 
     struct file_fixture : file_fixture_base, fixture
     {
-        file_fixture()
-        :
-            fixture(
-                fp_,
-                test_clock{&clock_nanos_},
-                xtr::null_command_path)
+        file_fixture() :
+            fixture(fp_, test_clock{&clock_nanos_}, xtr::null_command_path)
         {
         }
 
@@ -329,8 +322,7 @@ private:
     template<typename StorageType>
     struct template_file_fixture : file_fixture_base, fixture
     {
-        template_file_fixture()
-        :
+        template_file_fixture() :
             fixture(
                 std::make_unique<StorageType>(outbuf_.fd_.get()),
                 test_clock{&clock_nanos_},
@@ -348,13 +340,8 @@ private:
     struct path_fixture_impl
     {
         template<typename Clock>
-        explicit path_fixture_impl(Clock&& clock)
-        :
-            log_(
-                tmp_.path_,
-                fp_,
-                std::forward<Clock>(clock),
-                xtr::null_command_path)
+        explicit path_fixture_impl(Clock&& clock) :
+            log_(tmp_.path_, fp_, std::forward<Clock>(clock), xtr::null_command_path)
         {
         }
 
@@ -372,8 +359,7 @@ private:
 
     struct path_fixture : path_fixture_impl
     {
-        path_fixture()
-        :
+        path_fixture() :
             path_fixture_impl(test_clock{&clock_nanos_})
         {
         }
@@ -381,8 +367,7 @@ private:
 
     struct path_fixture_default_clock : path_fixture_impl
     {
-        path_fixture_default_clock()
-        :
+        path_fixture_default_clock() :
             path_fixture_impl(std::chrono::system_clock())
         {
         }
@@ -400,7 +385,9 @@ private:
     };
 
 #if __cpp_exceptions
-    struct thrower {};
+    struct thrower
+    {
+    };
 
     std::ostream& operator<<(std::ostream& os, thrower)
     {
@@ -423,8 +410,7 @@ private:
 
     struct non_copyable
     {
-        explicit non_copyable(int x)
-        :
+        explicit non_copyable(int x) :
             x_(x)
         {
         }
@@ -526,13 +512,13 @@ namespace fmt
     struct formatter<custom_format>
     {
         template<typename ParseContext>
-        constexpr auto parse(ParseContext &ctx)
+        constexpr auto parse(ParseContext& ctx)
         {
             return ctx.begin();
         }
 
         template<typename FormatContext>
-        auto format(const custom_format &c, FormatContext &ctx) const
+        auto format(const custom_format& c, FormatContext& ctx) const
         {
             return fmt::format_to(ctx.out(), "({}, {})", c.x, c.y);
         }
@@ -542,13 +528,13 @@ namespace fmt
     struct formatter<blocker>
     {
         template<typename ParseContext>
-        constexpr auto parse(ParseContext &ctx)
+        constexpr auto parse(ParseContext& ctx)
         {
             return ctx.begin();
         }
 
         template<typename FormatContext>
-        auto format(const blocker &b, FormatContext &ctx) const
+        auto format(const blocker& b, FormatContext& ctx) const
         {
             b.wait();
             return fmt::format_to(ctx.out(), "<blocker>");
@@ -561,53 +547,95 @@ using namespace fmt::literals;
 TEST_CASE_METHOD(fixture, "logger no arguments test", "[logger]")
 {
     XTR_LOG(s_, "Test"), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
 }
 
 TEST_CASE_METHOD(fixture, "logger arithmetic types test", "[logger]")
 {
     XTR_LOG(s_, "Test {}", (short)42), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42", line_));
 
     XTR_LOG(s_, "Test {}", (unsigned short)42), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42", line_));
 
     XTR_LOG(s_, "Test {}", 42), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42", line_));
 
     XTR_LOG(s_, "Test {}", 42U), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42", line_));
 
     XTR_LOG(s_, "Test {}", 42L), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42", line_));
 
     XTR_LOG(s_, "Test {}", 42UL), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42", line_));
 
     XTR_LOG(s_, "Test {}", 42LL), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42", line_));
 
     XTR_LOG(s_, "Test {}", 42ULL), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42", line_));
 
     XTR_LOG(s_, "Test {}", true), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test true", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format(
+            "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test true",
+            line_));
 
     XTR_LOG(s_, "Test {:.2f}", 42.42f), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42.42", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format(
+            "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42.42",
+            line_));
 
     XTR_LOG(s_, "Test {}", 42.42), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42.42", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format(
+            "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42.42",
+            line_));
 }
 
 TEST_CASE_METHOD(fixture, "logger mixed types test", "[logger]")
 {
     XTR_LOG(s_, "Test {:.1f} {}", 42.0, 42), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42.0 42", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format(
+            "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42.0 42",
+            line_));
     XTR_LOG(s_, "Test {:.1f} {} {:.1f}", 42.0, 42, 42.0), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42.0 42 42.0", line_));
+    REQUIRE(
+        last_line() == fmt::format(
+                           "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: "
+                           "Test 42.0 42 42.0",
+                           line_));
     XTR_LOG(s_, "Test {:.1f} {} {:.1f} {}", 42.0, 42, 42.0, 42), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42.0 42 42.0 42", line_));
+    REQUIRE(
+        last_line() == fmt::format(
+                           "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: "
+                           "Test 42.0 42 42.0 42",
+                           line_));
 }
 
 #if XTR_USE_IO_URING
@@ -617,23 +645,37 @@ TEST_CASE_METHOD(fixture, "logger mixed types test", "[logger]")
 #endif
 
 TEMPLATE_TEST_CASE_METHOD(
-    template_file_fixture,
-    "logger file test", "[logger][template]",
-    FD_STORAGE_TYPES)
+    template_file_fixture, "logger file test", "[logger][template]", FD_STORAGE_TYPES)
 {
     XTR_LOG(this->s_, "Test"), this->line_ = __LINE__;
-    REQUIRE(this->last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", this->line_));
+    REQUIRE(
+        this->last_line() ==
+        fmt::format(
+            "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test",
+            this->line_));
 
     XTR_LOG(this->s_, "Test {}", 42), this->line_ = __LINE__;
-    REQUIRE(this->last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42", this->line_));
+    REQUIRE(
+        this->last_line() ==
+        fmt::format(
+            "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42",
+            this->line_));
 
-    const char*s = "Hello world";
+    const char* s = "Hello world";
     XTR_LOG(this->s_, "Test {}", s), this->line_ = __LINE__;
-    REQUIRE(this->last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test Hello world", this->line_));
+    REQUIRE(
+        this->last_line() ==
+        fmt::format(
+            "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test Hello world",
+            this->line_));
 
     const std::string_view sv{"Hello world"};
     XTR_LOG(this->s_, "Test {}", sv), this->line_ = __LINE__;
-    REQUIRE(this->last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test Hello world", this->line_));
+    REQUIRE(
+        this->last_line() ==
+        fmt::format(
+            "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test Hello world",
+            this->line_));
 }
 
 #undef FD_STORAGE_TYPES
@@ -647,7 +689,11 @@ TEST_CASE_METHOD(fixture, "logger string copy test", "[logger]")
         XTR_LOG(s_, "Test {}", s), line_ = __LINE__;
         std::strcpy(const_cast<char*>(s), "DEADBEEF");
         b.release();
-        REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test String 1 contents", line_));
+        REQUIRE(
+            last_line() == fmt::format(
+                               "I 2000-01-01 01:02:03.123456 Name "
+                               "logger.cpp:{}: Test String 1 contents",
+                               line_));
     }
 
     {
@@ -657,7 +703,11 @@ TEST_CASE_METHOD(fixture, "logger string copy test", "[logger]")
         XTR_LOG(s_, "Test {}", s), line_ = __LINE__;
         std::strcpy(s, "DEADBEEF");
         b.release();
-        REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test String 2 contents", line_));
+        REQUIRE(
+            last_line() == fmt::format(
+                               "I 2000-01-01 01:02:03.123456 Name "
+                               "logger.cpp:{}: Test String 2 contents",
+                               line_));
     }
 
     {
@@ -667,7 +717,11 @@ TEST_CASE_METHOD(fixture, "logger string copy test", "[logger]")
         XTR_LOG(s_, "Test {}", std::move(s)), line_ = __LINE__;
         std::strcpy(s, "DEADBEEF");
         b.release();
-        REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test String 3 contents", line_));
+        REQUIRE(
+            last_line() == fmt::format(
+                               "I 2000-01-01 01:02:03.123456 Name "
+                               "logger.cpp:{}: Test String 3 contents",
+                               line_));
     }
 
     {
@@ -678,7 +732,11 @@ TEST_CASE_METHOD(fixture, "logger string copy test", "[logger]")
         XTR_LOG(s_, "Test {}", s), line_ = __LINE__;
         std::strcpy(storage, "DEADBEEF");
         b.release();
-        REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test String 4 contents", line_));
+        REQUIRE(
+            last_line() == fmt::format(
+                               "I 2000-01-01 01:02:03.123456 Name "
+                               "logger.cpp:{}: Test String 4 contents",
+                               line_));
     }
 
     {
@@ -689,7 +747,11 @@ TEST_CASE_METHOD(fixture, "logger string copy test", "[logger]")
         XTR_LOG(s_, "Test {}", s), line_ = __LINE__;
         std::strcpy(storage, "DEADBEEF");
         b.release();
-        REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test String 5 contents", line_));
+        REQUIRE(
+            last_line() == fmt::format(
+                               "I 2000-01-01 01:02:03.123456 Name "
+                               "logger.cpp:{}: Test String 5 contents",
+                               line_));
     }
 
     {
@@ -700,7 +762,11 @@ TEST_CASE_METHOD(fixture, "logger string copy test", "[logger]")
         XTR_LOG(s_, "Test {}", std::move(s)), line_ = __LINE__;
         std::strcpy(storage, "DEADBEEF");
         b.release();
-        REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test String 6 contents", line_));
+        REQUIRE(
+            last_line() == fmt::format(
+                               "I 2000-01-01 01:02:03.123456 Name "
+                               "logger.cpp:{}: Test String 6 contents",
+                               line_));
     }
 
     {
@@ -711,7 +777,11 @@ TEST_CASE_METHOD(fixture, "logger string copy test", "[logger]")
         XTR_LOG(s_, "Test {}", s), line_ = __LINE__;
         std::memcpy(storage, "DEADBEEF", 8);
         b.release();
-        REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test String 7 contents", line_));
+        REQUIRE(
+            last_line() == fmt::format(
+                               "I 2000-01-01 01:02:03.123456 Name "
+                               "logger.cpp:{}: Test String 7 contents",
+                               line_));
     }
 
     {
@@ -722,7 +792,11 @@ TEST_CASE_METHOD(fixture, "logger string copy test", "[logger]")
         XTR_LOG(s_, "Test {}", s), line_ = __LINE__;
         std::memcpy(storage, "DEADBEEF", 8);
         b.release();
-        REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test String 8 contents", line_));
+        REQUIRE(
+            last_line() == fmt::format(
+                               "I 2000-01-01 01:02:03.123456 Name "
+                               "logger.cpp:{}: Test String 8 contents",
+                               line_));
     }
 
     {
@@ -733,7 +807,11 @@ TEST_CASE_METHOD(fixture, "logger string copy test", "[logger]")
         XTR_LOG(s_, "Test {}", std::move(s)), line_ = __LINE__;
         std::memcpy(storage, "DEADBEEF", 8);
         b.release();
-        REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test String 9 contents", line_));
+        REQUIRE(
+            last_line() == fmt::format(
+                               "I 2000-01-01 01:02:03.123456 Name "
+                               "logger.cpp:{}: Test String 9 contents",
+                               line_));
     }
 
     {
@@ -743,7 +821,11 @@ TEST_CASE_METHOD(fixture, "logger string copy test", "[logger]")
         XTR_LOG(s_, "Test {}", s), line_ = __LINE__;
         std::strcpy(const_cast<char*>(&s[0]), "DEADBEEF");
         b.release();
-        REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test String 10 contents", line_));
+        REQUIRE(
+            last_line() == fmt::format(
+                               "I 2000-01-01 01:02:03.123456 Name "
+                               "logger.cpp:{}: Test String 10 contents",
+                               line_));
     }
 
     {
@@ -753,7 +835,11 @@ TEST_CASE_METHOD(fixture, "logger string copy test", "[logger]")
         XTR_LOG(s_, "Test {}", s), line_ = __LINE__;
         std::strcpy(&s[0], "DEADBEEF");
         b.release();
-        REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test String 11 contents", line_));
+        REQUIRE(
+            last_line() == fmt::format(
+                               "I 2000-01-01 01:02:03.123456 Name "
+                               "logger.cpp:{}: Test String 11 contents",
+                               line_));
     }
 }
 
@@ -766,7 +852,11 @@ TEST_CASE_METHOD(fixture, "logger string move test", "[logger]")
     XTR_LOG(s_, "Test {}", std::move(s)), line_ = __LINE__;
     std::strcpy(storage, "Replaced contents............!");
     b.release();
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test Replaced contents............!", line_));
+    REQUIRE(
+        last_line() == fmt::format(
+                           "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: "
+                           "Test Replaced contents............!",
+                           line_));
 }
 
 TEST_CASE_METHOD(fixture, "logger string reference test", "[logger]")
@@ -778,7 +868,11 @@ TEST_CASE_METHOD(fixture, "logger string reference test", "[logger]")
         XTR_LOG(s_, "Test {}", nocopy(s)), line_ = __LINE__;
         std::strcpy(const_cast<char*>(s), "Replaced contents");
         b.release();
-        REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test Replaced contents", line_));
+        REQUIRE(
+            last_line() == fmt::format(
+                               "I 2000-01-01 01:02:03.123456 Name "
+                               "logger.cpp:{}: Test Replaced contents",
+                               line_));
     }
 
     {
@@ -788,7 +882,11 @@ TEST_CASE_METHOD(fixture, "logger string reference test", "[logger]")
         XTR_LOG(s_, "Test {}", nocopy(s)), line_ = __LINE__;
         std::strcpy(s, "Replaced contents");
         b.release();
-        REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test Replaced contents", line_));
+        REQUIRE(
+            last_line() == fmt::format(
+                               "I 2000-01-01 01:02:03.123456 Name "
+                               "logger.cpp:{}: Test Replaced contents",
+                               line_));
     }
 
     {
@@ -802,7 +900,11 @@ TEST_CASE_METHOD(fixture, "logger string reference test", "[logger]")
         // reference to s was incorrectly taken.
         s = "String 3 CODEBAD";
         b.release();
-        REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test Replaced contents", line_));
+        REQUIRE(
+            last_line() == fmt::format(
+                               "I 2000-01-01 01:02:03.123456 Name "
+                               "logger.cpp:{}: Test Replaced contents",
+                               line_));
     }
 
     {
@@ -815,7 +917,11 @@ TEST_CASE_METHOD(fixture, "logger string reference test", "[logger]")
         char storage2[] = "String 4 CODEBAD";
         s = storage2;
         b.release();
-        REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test Replaced contents", line_));
+        REQUIRE(
+            last_line() == fmt::format(
+                               "I 2000-01-01 01:02:03.123456 Name "
+                               "logger.cpp:{}: Test Replaced contents",
+                               line_));
     }
 
     {
@@ -827,7 +933,11 @@ TEST_CASE_METHOD(fixture, "logger string reference test", "[logger]")
         std::memcpy(storage, "Replaced contents", 17);
         const_cast<std::string_view&>(s) = "String 5 contentsCODEBAD";
         b.release();
-        REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test Replaced contents", line_));
+        REQUIRE(
+            last_line() == fmt::format(
+                               "I 2000-01-01 01:02:03.123456 Name "
+                               "logger.cpp:{}: Test Replaced contents",
+                               line_));
     }
 
     {
@@ -839,7 +949,11 @@ TEST_CASE_METHOD(fixture, "logger string reference test", "[logger]")
         std::memcpy(storage, "Replaced contents", 17);
         s = "String 6 contentsCODEBAD";
         b.release();
-        REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test Replaced contents", line_));
+        REQUIRE(
+            last_line() == fmt::format(
+                               "I 2000-01-01 01:02:03.123456 Name "
+                               "logger.cpp:{}: Test Replaced contents",
+                               line_));
     }
 
     {
@@ -849,7 +963,11 @@ TEST_CASE_METHOD(fixture, "logger string reference test", "[logger]")
         XTR_LOG(s_, "Test {}", nocopy(s)), line_ = __LINE__;
         std::strcpy(const_cast<char*>(&s[0]), "Replaced contents");
         b.release();
-        REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test Replaced contents", line_));
+        REQUIRE(
+            last_line() == fmt::format(
+                               "I 2000-01-01 01:02:03.123456 Name "
+                               "logger.cpp:{}: Test Replaced contents",
+                               line_));
     }
 
     {
@@ -859,7 +977,11 @@ TEST_CASE_METHOD(fixture, "logger string reference test", "[logger]")
         XTR_LOG(s_, "Test {}", nocopy(s)), line_ = __LINE__;
         std::strcpy(&s[0], "Replaced contents");
         b.release();
-        REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test Replaced contents", line_));
+        REQUIRE(
+            last_line() == fmt::format(
+                               "I 2000-01-01 01:02:03.123456 Name "
+                               "logger.cpp:{}: Test Replaced contents",
+                               line_));
     }
 }
 
@@ -873,12 +995,14 @@ TEST_CASE_METHOD(fixture, "logger string table test", "[logger]")
     const std::string_view s5{"blopBADCODE", 4};
     const char* s6 = "";
     const char* s7 = "slightly longer string";
+    // clang-format off
     XTR_LOG(s_, "Test {} {} {} {} {} {} {}", s1, s2, s3, s4, s5, s6, s7), line_ = __LINE__;
+    // clang-format on
     REQUIRE(
-        last_line() ==
-        fmt::format(
-            "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: "
-            "Test foo bar baz blep blop  slightly longer string", line_));
+        last_line() == fmt::format(
+                           "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: "
+                           "Test foo bar baz blep blop  slightly longer string",
+                           line_));
 }
 
 TEST_CASE_METHOD(fixture, "logger string overflow test", "[logger]")
@@ -888,7 +1012,10 @@ TEST_CASE_METHOD(fixture, "logger string overflow test", "[logger]")
     XTR_LOG(s_, "Test {}", s), line_ = __LINE__;
     REQUIRE(
         last_line() ==
-        fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test {}", line_, s));
+        fmt::format(
+            "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test {}",
+            line_,
+            s));
 
     s += 'Y';
 
@@ -896,7 +1023,9 @@ TEST_CASE_METHOD(fixture, "logger string overflow test", "[logger]")
 
     REQUIRE(
         last_line() ==
-        fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test <truncated>", line_));
+        fmt::format(
+            "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test <truncated>",
+            line_));
 }
 
 TEST_CASE_METHOD(fixture, "logger const string overflow test", "[logger]")
@@ -906,7 +1035,9 @@ TEST_CASE_METHOD(fixture, "logger const string overflow test", "[logger]")
     XTR_LOG(s_, "Test {}", s), line_ = __LINE__;
     REQUIRE(
         last_line() ==
-        fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test <truncated>", line_));
+        fmt::format(
+            "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test <truncated>",
+            line_));
 }
 
 TEST_CASE_METHOD(fixture, "logger string_view overflow test", "[logger]")
@@ -917,7 +1048,10 @@ TEST_CASE_METHOD(fixture, "logger string_view overflow test", "[logger]")
     XTR_LOG(s_, "Test {}", sv), line_ = __LINE__;
     REQUIRE(
         last_line() ==
-        fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test {}", line_, sv));
+        fmt::format(
+            "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test {}",
+            line_,
+            sv));
 
     s += 'Y';
     sv = std::string_view{s};
@@ -926,7 +1060,9 @@ TEST_CASE_METHOD(fixture, "logger string_view overflow test", "[logger]")
 
     REQUIRE(
         last_line() ==
-        fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test <truncated>", line_));
+        fmt::format(
+            "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test <truncated>",
+            line_));
 }
 
 TEST_CASE_METHOD(fixture, "logger c string overflow test", "[logger]")
@@ -936,7 +1072,10 @@ TEST_CASE_METHOD(fixture, "logger c string overflow test", "[logger]")
     XTR_LOG(s_, "Test {}", s.c_str()), line_ = __LINE__;
     REQUIRE(
         last_line() ==
-        fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test {}", line_, s));
+        fmt::format(
+            "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test {}",
+            line_,
+            s));
 
     s += 'Y';
 
@@ -944,10 +1083,13 @@ TEST_CASE_METHOD(fixture, "logger c string overflow test", "[logger]")
 
     REQUIRE(
         last_line() ==
-        fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test <truncated>", line_));
+        fmt::format(
+            "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test <truncated>",
+            line_));
 }
 
-TEST_CASE_METHOD(fixture, "logger c string overflow followed by c string test", "[logger]")
+TEST_CASE_METHOD(
+    fixture, "logger c string overflow followed by c string test", "[logger]")
 {
     const std::string s1(s_.capacity(), char('X'));
     const char* s2 = "hello";
@@ -955,24 +1097,38 @@ TEST_CASE_METHOD(fixture, "logger c string overflow followed by c string test", 
     XTR_LOG(s_, "Test {} {}", s1.c_str(), s2), line_ = __LINE__;
 
     REQUIRE(
-        last_line() ==
-        fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test <truncated> hello", line_));
+        last_line() == fmt::format(
+                           "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: "
+                           "Test <truncated> hello",
+                           line_));
 }
 
 TEST_CASE_METHOD(fixture, "logger streams formatter test", "[logger]")
 {
     streams_format s{10, 20};
     XTR_LOG(s_, "Streams {}", xtr::streamed_copy(s)), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Streams (10, 20)", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format(
+            "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Streams (10, 20)",
+            line_));
     XTR_LOG(s_, "Streams {}", xtr::streamed_ref(s)), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Streams (10, 20)", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format(
+            "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Streams (10, 20)",
+            line_));
 }
 
 TEST_CASE_METHOD(fixture, "logger custom formatter test", "[logger]")
 {
     custom_format c{10, 20};
     XTR_LOG(s_, "Custom {}", c), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Custom (10, 20)", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format(
+            "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Custom (10, 20)",
+            line_));
 }
 
 TEST_CASE_METHOD(fixture, "logger timestamp test", "[logger]")
@@ -980,17 +1136,23 @@ TEST_CASE_METHOD(fixture, "logger timestamp test", "[logger]")
     clock_nanos_ = 0;
     sync();
     XTR_LOG(s_, "Test"), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 1970-01-01 00:00:00.000000 Name logger.cpp:{}: Test", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("I 1970-01-01 00:00:00.000000 Name logger.cpp:{}: Test", line_));
 
     clock_nanos_ = 1000;
     sync();
     XTR_LOG(s_, "Test"), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 1970-01-01 00:00:00.000001 Name logger.cpp:{}: Test", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("I 1970-01-01 00:00:00.000001 Name logger.cpp:{}: Test", line_));
 
     clock_nanos_ = 4858113906123456000;
     sync();
     XTR_LOG(s_, "Test"), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2123-12-13 04:05:06.123456 Name logger.cpp:{}: Test", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("I 2123-12-13 04:05:06.123456 Name logger.cpp:{}: Test", line_));
 }
 
 TEST_CASE_METHOD(fixture, "logger sink arbitrary timestamp test", "[logger]")
@@ -1003,7 +1165,9 @@ TEST_CASE_METHOD(fixture, "logger sink arbitrary timestamp test", "[logger]")
     ts1 = ts;
 
     XTR_LOG_TS(s_, ts1, "Test {}", 42), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 1990-01-01 01:02:03.654321 Name logger.cpp:{}: Test 42", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("I 1990-01-01 01:02:03.654321 Name logger.cpp:{}: Test 42", line_));
 }
 
 TEST_CASE_METHOD(fixture, "logger sink rtc timestamp test", "[logger]")
@@ -1011,7 +1175,8 @@ TEST_CASE_METHOD(fixture, "logger sink rtc timestamp test", "[logger]")
     // Only somewhat sane way I can think of to test XTR_LOG_RTC
     const auto ts = xtrd::get_time<XTR_CLOCK_REALTIME_FAST>();
     XTR_LOG_TS(s_, ts, "Test {}", 42), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I {} Name logger.cpp:{}: Test 42", ts, line_));
+    REQUIRE(
+        last_line() == fmt::format("I {} Name logger.cpp:{}: Test 42", ts, line_));
 }
 
 TEST_CASE_METHOD(fixture, "logger sink tsc timestamp test", "[logger]")
@@ -1020,7 +1185,8 @@ TEST_CASE_METHOD(fixture, "logger sink tsc timestamp test", "[logger]")
     const auto ts = xtrd::tsc::now();
     XTR_LOG_TS(s_, ts, "Test {}", 42), line_ = __LINE__;
     const auto logged = last_line();
-    const auto expected = fmt::format("I {} Name logger.cpp:{}: Test 42", ts, line_);
+    const auto expected =
+        fmt::format("I {} Name logger.cpp:{}: Test 42", ts, line_);
     // The timestamps in logged and expected may be off by a small margin due
     // to tsc::to_timespec's calibration state being stored in thread_local
     // variables, which may differ between the test thread and the logger
@@ -1028,23 +1194,22 @@ TEST_CASE_METHOD(fixture, "logger sink tsc timestamp test", "[logger]")
     // of the clock related code, IMHO doing so would unacceptably compromise
     // the code, so instead the test is just bodged below to allow a small
     // difference in the timestamps.
-    const auto timestamp_to_micros =
-        [](const char* str)
-        {
-            std::tm tm{};
-            const char* pos = ::strptime(str, "I %Y-%m-%d %T", &tm);
-            REQUIRE(pos != nullptr);
-            REQUIRE(*pos == '.');
-            ++pos;
-            // note that mktime converts local time, while str will be utc, so
-            // the result of this function will be off by whatever the local
-            // timezone adjustment is. This does not matter for the purpose of
-            // this test.
-            const std::time_t secs = std::mktime(&tm);
-            std::int64_t micros = 0;
-            std::from_chars(pos, pos + 6, micros);
-            return secs * 1000000L + micros;
-        };
+    const auto timestamp_to_micros = [](const char* str)
+    {
+        std::tm tm{};
+        const char* pos = ::strptime(str, "I %Y-%m-%d %T", &tm);
+        REQUIRE(pos != nullptr);
+        REQUIRE(*pos == '.');
+        ++pos;
+        // note that mktime converts local time, while str will be utc, so
+        // the result of this function will be off by whatever the local
+        // timezone adjustment is. This does not matter for the purpose of
+        // this test.
+        const std::time_t secs = std::mktime(&tm);
+        std::int64_t micros = 0;
+        std::from_chars(pos, pos + 6, micros);
+        return secs * 1000000L + micros;
+    };
     INFO(logged);
     INFO(expected);
     REQUIRE(
@@ -1079,20 +1244,20 @@ TEST_CASE_METHOD(fixture, "logger error handling test", "[logger]")
     REQUIRE(errors.size() == 1);
     REQUIRE(
         errors.back() ==
-        "E 2000-01-01 01:02:03.123456: Error writing log: Exception error text");
+        "E 2000-01-01 01:02:03.123456: Error writing log: Exception error "
+        "text");
     REQUIRE(lines_.empty());
 
     // Check that the logger is still usable
     XTR_LOG(s_, "Test"), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
 
     {
         std::scoped_lock lock{storage_->m_};
-        storage_->submit_func_ =
-            [](char*, std::size_t)
-            {
-                throw std::runtime_error("Flush error text");
-            };
+        storage_->submit_func_ = [](char*, std::size_t)
+        { throw std::runtime_error("Flush error text"); };
     }
 
     XTR_LOG(s_, "Test");
@@ -1103,7 +1268,7 @@ TEST_CASE_METHOD(fixture, "logger error handling test", "[logger]")
     REQUIRE_THAT(
         errors.back(),
         Catch::Matchers::StartsWith("E ") &&
-        Catch::Matchers::EndsWith("Error flushing log: Flush error text"));
+            Catch::Matchers::EndsWith("Error flushing log: Flush error text"));
     REQUIRE(lines_.size() == 1);
 
     {
@@ -1113,7 +1278,9 @@ TEST_CASE_METHOD(fixture, "logger error handling test", "[logger]")
 
     // Check that the logger is still usable
     XTR_LOG(s_, "Test"), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
 
     REQUIRE(dup2(saved_stderr.get(), STDERR_FILENO) == STDERR_FILENO);
 
@@ -1140,57 +1307,87 @@ TEST_CASE_METHOD(fixture, "logger argument destruction test", "[logger]")
 TEST_CASE_METHOD(fixture, "logger sink change name test", "[logger]")
 {
     XTR_LOG(s_, "Test"), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
 
     s_.set_name("A new name");
     XTR_LOG(s_, "Test"), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 A new name logger.cpp:{}: Test", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format(
+            "I 2000-01-01 01:02:03.123456 A new name logger.cpp:{}: Test",
+            line_));
 
     s_.set_name("An even newer name");
     XTR_LOG(s_, "Test"), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 An even newer name logger.cpp:{}: Test", line_));
+    REQUIRE(
+        last_line() == fmt::format(
+                           "I 2000-01-01 01:02:03.123456 An even newer name "
+                           "logger.cpp:{}: Test",
+                           line_));
 }
 
 TEST_CASE_METHOD(fixture, "logger no macro test", "[logger]")
 {
     static constexpr auto test1 = FMT_COMPILE("{}{} {} Test\n");
     s_.log<test1, xtr::log_level_t::info>();
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name Test", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("I 2000-01-01 01:02:03.123456 Name Test", line_));
 
     static constexpr auto test2 = FMT_COMPILE("{}{} {} Test {}\n");
     s_.log<test2, xtr::log_level_t::info>(42);
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name Test 42", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("I 2000-01-01 01:02:03.123456 Name Test 42", line_));
 }
 
 TEST_CASE_METHOD(fixture, "logger alignment test", "[logger]")
 {
+    // clang-format off
     XTR_LOG(s_, "Test {}", xtr::streamed_copy(align_format<4>{42})), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42", line_));
 
     XTR_LOG(s_, "Test {}", xtr::streamed_copy(align_format<8>{42})), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42", line_));
 
     XTR_LOG(s_, "Test {}", xtr::streamed_copy(align_format<16>{42})), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42", line_));
 
     XTR_LOG(s_, "Test {}", xtr::streamed_copy(align_format<32>{42})), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42", line_));
 
     XTR_LOG(s_, "Test {}", xtr::streamed_copy(align_format<64>{42})), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42", line_));
+    // clang-format on
 }
 
 TEST_CASE_METHOD(fixture, "logger argument move test", "[logger]")
 {
     non_copyable nc(42);
     XTR_LOG(s_, "Test {}", xtr::streamed_copy(std::move(nc))), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42", line_));
 }
 
 TEST_CASE_METHOD(fixture, "logger non-blocking test", "[logger]")
 {
     XTR_TRY_LOG(s_, "Test"), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
 }
 
 TEST_CASE_METHOD(fixture, "logger non-blocking drop test", "[logger]")
@@ -1199,16 +1396,29 @@ TEST_CASE_METHOD(fixture, "logger non-blocking drop test", "[logger]")
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
 #endif
-    auto log_func_and_sizes =
-        GENERATE(
-            std::make_tuple(+[](xtr::sink& s) { XTR_TRY_LOG(s, "Test"); }, 8UL),
-            std::make_tuple(+[](xtr::sink& s) { XTR_TRY_LOGL(info, s, "Test"); }, 8UL),
-            std::make_tuple(+[](xtr::sink& s) { XTR_TRY_LOG_TS(s, 0, "Test"); }, 16UL),
-            std::make_tuple(+[](xtr::sink& s) { XTR_TRY_LOGL_TS(info, s, 0, "Test"); }, 16UL),
-            std::make_tuple(+[](xtr::sink& s) { XTR_TRY_LOG_TSC(s, "Test"); }, 16UL),
-            std::make_tuple(+[](xtr::sink& s) { XTR_TRY_LOGL_TSC(info, s, "Test"); }, 16UL),
-            std::make_tuple(+[](xtr::sink& s) { XTR_TRY_LOG_RTC(s, "Test"); }, 24UL),
-            std::make_tuple(+[](xtr::sink& s) { XTR_TRY_LOGL_RTC(info, s, "Test"); }, 24UL));
+    auto log_func_and_sizes = GENERATE(
+        std::make_tuple(
+            +[](xtr::sink& s) { XTR_TRY_LOG(s, "Test"); },
+            8UL),
+        std::make_tuple(
+            +[](xtr::sink& s) { XTR_TRY_LOGL(info, s, "Test"); },
+            8UL),
+        std::make_tuple(
+            +[](xtr::sink& s) { XTR_TRY_LOG_TS(s, 0, "Test"); },
+            16UL),
+        std::make_tuple(
+            +[](xtr::sink& s) { XTR_TRY_LOGL_TS(info, s, 0, "Test"); },
+            16UL),
+        std::make_tuple(
+            +[](xtr::sink& s) { XTR_TRY_LOG_TSC(s, "Test"); },
+            16UL),
+        std::make_tuple(
+            +[](xtr::sink& s) { XTR_TRY_LOGL_TSC(info, s, "Test"); },
+            16UL),
+        std::make_tuple(
+            +[](xtr::sink& s) { XTR_TRY_LOG_RTC(s, "Test"); },
+            24UL),
+        std::make_tuple(+[](xtr::sink& s) { XTR_TRY_LOGL_RTC(info, s, "Test"); }, 24UL));
 #if defined(__clang__)
 #pragma clang diagnostic pop
 #endif
@@ -1239,20 +1449,20 @@ TEST_CASE_METHOD(fixture, "logger non-blocking drop test", "[logger]")
     // the next sink.
     next_sink.sync();
 
-    REQUIRE(last_line() == fmt::format("W 2000-01-01 01:02:03.123456 Name: {} messages dropped", n_dropped));
+    REQUIRE(
+        last_line() ==
+        fmt::format("W 2000-01-01 01:02:03.123456 Name: {} messages dropped", n_dropped));
 }
 
 // Calling these tests `soak' tests is stretching things but I can't think
 // of a better name.
 
 #if XTR_USE_IO_URING
-#define SOAK_TEST_FIXTURES \
-    fixture, \
-    template_file_fixture<xtr::io_uring_fd_storage>, \
-    template_file_fixture<xtr::posix_fd_storage>
+#define SOAK_TEST_FIXTURES                                    \
+    fixture, template_file_fixture<xtr::io_uring_fd_storage>, \
+        template_file_fixture<xtr::posix_fd_storage>
 #else
-#define SOAK_TEST_FIXTURES \
-    fixture, template_file_fixture<xtr::posix_fd_storage>
+#define SOAK_TEST_FIXTURES fixture, template_file_fixture<xtr::posix_fd_storage>
 #endif
 
 TEMPLATE_TEST_CASE("logger soak test", "[logger]", SOAK_TEST_FIXTURES)
@@ -1272,8 +1482,18 @@ TEMPLATE_TEST_CASE("logger soak test", "[logger]", SOAK_TEST_FIXTURES)
 
     for (std::size_t i = 0; i < n * 2; i += 2)
     {
-        REQUIRE(f.lines_[i] == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test {}", f.line_, i / 2));
-        REQUIRE(f.lines_[i + 1] == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test {}", f.line_ + 1, i / 2));
+        REQUIRE(
+            f.lines_[i] ==
+            fmt::format(
+                "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test {}",
+                f.line_,
+                i / 2));
+        REQUIRE(
+            f.lines_[i + 1] ==
+            fmt::format(
+                "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test {}",
+                f.line_ + 1,
+                i / 2));
     }
 }
 
@@ -1306,7 +1526,11 @@ TEMPLATE_TEST_CASE("logger multiple sink soak test", "[logger]", SOAK_TEST_FIXTU
     REQUIRE(f.line_count() == n);
 
     for (std::size_t i = 0; i < n; ++i)
-        REQUIRE(f.lines_[i] == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", f.line_));
+        REQUIRE(
+            f.lines_[i] ==
+            fmt::format(
+                "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test",
+                f.line_));
 }
 
 #undef SOAK_TEST_FIXTURES
@@ -1327,29 +1551,55 @@ TEST_CASE_METHOD(fixture, "logger string soak test", "[logger]")
 
     for (std::size_t i = 0; i < n * 2; i += 2)
     {
-        REQUIRE(lines_[i] == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test {}", line_, s));
-        REQUIRE(lines_[i + 1] == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test {}", line_ + 1, s));
+        REQUIRE(
+            lines_[i] ==
+            fmt::format(
+                "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test {}",
+                line_,
+                s));
+        REQUIRE(
+            lines_[i + 1] ==
+            fmt::format(
+                "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test {}",
+                line_ + 1,
+                s));
     }
 }
 
 TEST_CASE_METHOD(fixture, "logger unprintable characters test", "[logger]")
 {
-    const char *s = "\nTest\r\nTest";
+    const char* s = "\nTest\r\nTest";
     XTR_LOG(s_, "{}", s), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: \\x0ATest\\x0D\\x0ATest", line_));
+    REQUIRE(
+        last_line() == fmt::format(
+                           "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: "
+                           "\\x0ATest\\x0D\\x0ATest",
+                           line_));
 
     XTR_LOG(s_, "{}", nocopy(s)), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: \\x0ATest\\x0D\\x0ATest", line_));
+    REQUIRE(
+        last_line() == fmt::format(
+                           "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: "
+                           "\\x0ATest\\x0D\\x0ATest",
+                           line_));
 }
 
 TEST_CASE_METHOD(fixture, "logger escape sequence test", "[logger]")
 {
     const char* s = "\x1b]0;Test\x07";
     XTR_LOG(s_, "{}", s), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: \\x1B]0;Test\\x07", line_));
+    REQUIRE(
+        last_line() == fmt::format(
+                           "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: "
+                           "\\x1B]0;Test\\x07",
+                           line_));
 
     XTR_LOG(s_, "{}", nocopy(s)), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: \\x1B]0;Test\\x07", line_));
+    REQUIRE(
+        last_line() == fmt::format(
+                           "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: "
+                           "\\x1B]0;Test\\x07",
+                           line_));
 }
 
 TEST_CASE_METHOD(fixture, "logger flush/sync test", "[logger]")
@@ -1370,7 +1620,7 @@ TEST_CASE("logger storage destructor test", "[logger]")
 
     {
         fixture f;
-        f.storage_->dtor_func_ = [&destructed](){ destructed = true; };
+        f.storage_->dtor_func_ = [&destructed]() { destructed = true; };
         REQUIRE(!destructed);
     }
 
@@ -1385,26 +1635,22 @@ TEST_CASE("logger throughput", "[.logger]")
 
     const auto print_result =
         [](auto t0, auto t1, const std::string& path, const char* name)
-        {
-            const std::size_t size = std::filesystem::file_size(path);
-            const std::chrono::duration<double> delta = t1 - t0;
-            const double messages_sec = n / delta.count();
-            const double mb_sec = (double(size) / delta.count()) / (1024 * 1024);
-            std::cout
-                << name << " messages/s: " << std::size_t(messages_sec) << ", "
-                << "MB/s: " << mb_sec << ", time: " << delta << ", bytes: "
-                << size << "\n";
-        };
+    {
+        const std::size_t size = std::filesystem::file_size(path);
+        const std::chrono::duration<double> delta = t1 - t0;
+        const double messages_sec = n / delta.count();
+        const double mb_sec = (double(size) / delta.count()) / (1024 * 1024);
+        std::cout << name << " messages/s: " << std::size_t(messages_sec) << ", "
+                  << "MB/s: " << mb_sec << ", time: " << delta
+                  << ", bytes: " << size << "\n";
+    };
 
     {
         path_fixture_default_clock f;
         const auto t0 = clock::now();
         for (std::size_t i = 0; i != n; ++i)
         {
-            XTR_LOG(
-                f.s_,
-                "Iteration: {} int: {} double: {}",
-                i, i * 2, double(i) / 2.0);
+            XTR_LOG(f.s_, "Iteration: {} int: {} double: {}", i, i * 2, double(i) / 2.0);
         }
         f.s_.sync();
         const auto t1 = clock::now();
@@ -1420,7 +1666,9 @@ TEST_CASE("logger throughput", "[.logger]")
                 info,
                 f.s_,
                 "Iteration: {} int: {} double: {}",
-                i, i * 2, double(i) / 2.0);
+                i,
+                i * 2,
+                double(i) / 2.0);
         }
         f.s_.sync();
         const auto t1 = clock::now();
@@ -1437,7 +1685,9 @@ TEST_CASE("logger throughput", "[.logger]")
                 FMT_COMPILE(
                     "I 2019-10-17 20:59:03.123456 Name logger.cpp:1000: "
                     "Iteration: {} int: {} double: {}\n"),
-                i, i * 2, double(i) / 2.0);
+                i,
+                i * 2,
+                double(i) / 2.0);
         }
         std::fflush(f.fp_);
         ::fsync(::fileno(f.fp_));
@@ -1472,7 +1722,7 @@ TEST_CASE("logger no exit test", "[.logger]")
 
     XTR_LOG(sinks[0], "Hello world");
 
-    for (std::size_t i = 0; ; ++i)
+    for (std::size_t i = 0;; ++i)
     {
         std::this_thread::sleep_for(std::chrono::seconds(1));
         XTR_LOG(sinks[i % 5], "Hello world");
@@ -1498,49 +1748,73 @@ TEST_CASE_METHOD(fixture, "logger sink copy test", "[logger]")
 
     XTR_LOG(s_copy, "Test"), line_ = __LINE__;
     s_copy.sync();
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 s_copy logger.cpp:{}: Test", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("I 2000-01-01 01:02:03.123456 s_copy logger.cpp:{}: Test", line_));
 
     XTR_LOG(s_assign, "Test"), line_ = __LINE__;
     s_assign.sync();
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 s_assign logger.cpp:{}: Test", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("I 2000-01-01 01:02:03.123456 s_assign logger.cpp:{}: Test", line_));
 
     XTR_LOG(v[0], "Test"), line_ = __LINE__;
     v[0].sync();
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 vec0 logger.cpp:{}: Test", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("I 2000-01-01 01:02:03.123456 vec0 logger.cpp:{}: Test", line_));
 
     XTR_LOG(v[1], "Test"), line_ = __LINE__;
     v[1].sync();
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 vec1 logger.cpp:{}: Test", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("I 2000-01-01 01:02:03.123456 vec1 logger.cpp:{}: Test", line_));
 
     XTR_LOG(v[2], "Test"), line_ = __LINE__;
     v[2].sync();
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 vec2 logger.cpp:{}: Test", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("I 2000-01-01 01:02:03.123456 vec2 logger.cpp:{}: Test", line_));
 
     s_assign = s_copy;
     s_assign.set_name("s_assign2");
     XTR_LOG(s_assign, "Test"), line_ = __LINE__;
     s_assign.sync();
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 s_assign2 logger.cpp:{}: Test", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format(
+            "I 2000-01-01 01:02:03.123456 s_assign2 logger.cpp:{}: Test",
+            line_));
 
     s_assign.close();
     s_assign = s_copy;
     s_assign.set_name("s_assign3");
     XTR_LOG(s_assign, "Test"), line_ = __LINE__;
     s_assign.sync();
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 s_assign3 logger.cpp:{}: Test", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format(
+            "I 2000-01-01 01:02:03.123456 s_assign3 logger.cpp:{}: Test",
+            line_));
 
     // Copy and assign without calling set_name to verify names are
     // copied correctly.
     xtr::sink s_copy2(s_copy);
     XTR_LOG(s_copy2, "Test"), line_ = __LINE__;
     s_copy2.sync();
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 s_copy logger.cpp:{}: Test", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("I 2000-01-01 01:02:03.123456 s_copy logger.cpp:{}: Test", line_));
 
     xtr::sink s_assign2;
     s_assign2 = s_assign;
     XTR_LOG(s_assign2, "Test"), line_ = __LINE__;
     s_assign2.sync();
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 s_assign3 logger.cpp:{}: Test", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format(
+            "I 2000-01-01 01:02:03.123456 s_assign3 logger.cpp:{}: Test",
+            line_));
 }
 
 TEST_CASE_METHOD(fixture, "logger sink name overwrite test", "[logger]")
@@ -1551,7 +1825,9 @@ TEST_CASE_METHOD(fixture, "logger sink name overwrite test", "[logger]")
 
     XTR_LOG(s, "Test"), line_ = __LINE__;
     s.sync();
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
 }
 
 TEST_CASE_METHOD(fixture, "logger sink assign from closed sink test", "[logger]")
@@ -1585,7 +1861,9 @@ TEST_CASE_METHOD(fixture, "logger sink self assign test", "[logger]")
 
     XTR_LOG(s, "Test"), line_ = __LINE__;
     s.sync();
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Test1 logger.cpp:{}: Test", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("I 2000-01-01 01:02:03.123456 Test1 logger.cpp:{}: Test", line_));
 }
 
 TEST_CASE_METHOD(fixture, "logger log level test", "[logger]")
@@ -1617,7 +1895,9 @@ TEST_CASE_METHOD(fixture, "logger log level test", "[logger]")
     s_.set_level(xtr::log_level_t::error);
 
     XTR_LOGL(error, s_, "Test"), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("E 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("E 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
     XTR_LOGL(warning, s_, "Test"), line_ = __LINE__;
     XTR_LOGL(info, s_, "Test"), line_ = __LINE__;
     XTR_LOGL(debug, s_, "Test"), line_ = __LINE__;
@@ -1626,9 +1906,13 @@ TEST_CASE_METHOD(fixture, "logger log level test", "[logger]")
     s_.set_level(xtr::log_level_t::warning);
 
     XTR_LOGL(error, s_, "Test"), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("E 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("E 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
     XTR_LOGL(warning, s_, "Test"), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("W 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("W 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
     XTR_LOGL(info, s_, "Test"), line_ = __LINE__;
     XTR_LOGL(debug, s_, "Test"), line_ = __LINE__;
 
@@ -1636,24 +1920,38 @@ TEST_CASE_METHOD(fixture, "logger log level test", "[logger]")
     s_.set_level(xtr::log_level_t::info);
 
     XTR_LOGL(error, s_, "Test"), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("E 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("E 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
     XTR_LOGL(warning, s_, "Test"), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("W 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("W 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
     XTR_LOGL(info, s_, "Test"), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
     XTR_LOGL(debug, s_, "Test"), line_ = __LINE__;
 
     // Debug
     s_.set_level(xtr::log_level_t::debug);
 
     XTR_LOGL(error, s_, "Test"), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("E 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("E 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
     XTR_LOGL(warning, s_, "Test"), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("W 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("W 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
     XTR_LOGL(info, s_, "Test"), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
     XTR_LOGL(debug, s_, "Test"), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("D 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("D 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
 
     // Check total lines to ensure nothing extra was logged
     REQUIRE(lines_.size() == 10);
@@ -1717,7 +2015,8 @@ TEST_CASE_METHOD(command_fixture<>, "logger status command test", "[logger]")
     REQUIRE(infos[4].dropped_count == 0);
 }
 
-TEST_CASE_METHOD(command_fixture<>, "logger status command dropped count test", "[logger]")
+TEST_CASE_METHOD(
+    command_fixture<>, "logger status command dropped count test", "[logger]")
 {
     // 8 bytes per log record, 16 bytes taken by blocker.
     const std::size_t n_dropped = 100;
@@ -1776,7 +2075,8 @@ TEST_CASE_METHOD(command_fixture<>, "logger set_level command test", "[logger]")
     REQUIRE(infos[0].level == xtr::log_level_t::debug);
 }
 
-TEST_CASE_METHOD(command_fixture<>, "logger set_level invalid command test", "[logger]")
+TEST_CASE_METHOD(
+    command_fixture<>, "logger set_level invalid command test", "[logger]")
 {
     xtrd::frame<xtrd::set_level> sl;
 
@@ -1791,7 +2091,8 @@ TEST_CASE_METHOD(command_fixture<>, "logger set_level invalid command test", "[l
     REQUIRE(errors[0].reason == "Invalid level"sv);
 }
 
-TEST_CASE_METHOD(command_fixture<>, "logger status command regex test", "[logger]")
+TEST_CASE_METHOD(
+    command_fixture<>, "logger status command regex test", "[logger]")
 {
     auto p0 = log_.get_sink("Foo");
     auto p1 = log_.get_sink("FobFar");
@@ -1818,7 +2119,8 @@ TEST_CASE_METHOD(command_fixture<>, "logger status command regex test", "[logger
     REQUIRE(infos[1].name == "FooBar"sv);
 }
 
-TEST_CASE_METHOD(command_fixture<>, "logger status command invalid regex test", "[logger]")
+TEST_CASE_METHOD(
+    command_fixture<>, "logger status command invalid regex test", "[logger]")
 {
     xtrd::frame<xtrd::status> st;
 
@@ -1835,7 +2137,8 @@ TEST_CASE_METHOD(command_fixture<>, "logger status command invalid regex test", 
         Catch::Matchers::Contains("invalid", Catch::CaseSensitive::No));
 }
 
-TEST_CASE_METHOD(command_fixture<>, "logger status command regex case test", "[logger]")
+TEST_CASE_METHOD(
+    command_fixture<>, "logger status command regex case test", "[logger]")
 {
     auto p0 = log_.get_sink("Foo");
     auto p1 = log_.get_sink("foo");
@@ -1869,7 +2172,8 @@ TEST_CASE_METHOD(command_fixture<>, "logger status command regex case test", "[l
     REQUIRE(infos[0].name == "foo"sv);
 }
 
-TEST_CASE_METHOD(command_fixture<>, "logger status command wildcard test", "[logger]")
+TEST_CASE_METHOD(
+    command_fixture<>, "logger status command wildcard test", "[logger]")
 {
     auto p0 = log_.get_sink("Foo");
     auto p1 = log_.get_sink("FobFar");
@@ -1896,7 +2200,8 @@ TEST_CASE_METHOD(command_fixture<>, "logger status command wildcard test", "[log
     REQUIRE(infos[1].name == "FooBar"sv);
 }
 
-TEST_CASE_METHOD(command_fixture<>, "logger status command wildcard case test", "[logger]")
+TEST_CASE_METHOD(
+    command_fixture<>, "logger status command wildcard case test", "[logger]")
 {
     auto p0 = log_.get_sink("Foo");
     auto p1 = log_.get_sink("foo");
@@ -1930,7 +2235,8 @@ TEST_CASE_METHOD(command_fixture<>, "logger status command wildcard case test", 
     REQUIRE(infos[0].name == "foo"sv);
 }
 
-TEST_CASE_METHOD(command_fixture<>, "logger status command extended regex test", "[logger]")
+TEST_CASE_METHOD(
+    command_fixture<>, "logger status command extended regex test", "[logger]")
 {
     auto p = log_.get_sink("foo");
 
@@ -1949,7 +2255,8 @@ TEST_CASE_METHOD(command_fixture<>, "logger status command extended regex test",
     REQUIRE(infos[0].name == "foo"sv);
 }
 
-TEST_CASE_METHOD(command_fixture<>, "logger set_level command regex test", "[logger]")
+TEST_CASE_METHOD(
+    command_fixture<>, "logger set_level command regex test", "[logger]")
 {
     auto p0 = log_.get_sink("Foo");
     auto p1 = log_.get_sink("FobFar");
@@ -1993,7 +2300,8 @@ TEST_CASE_METHOD(command_fixture<>, "logger set_level command regex test", "[log
     REQUIRE(infos[4].level == xtr::log_level_t::info);
 }
 
-TEST_CASE_METHOD(command_fixture<>, "logger set_level command regex case test", "[logger]")
+TEST_CASE_METHOD(
+    command_fixture<>, "logger set_level command regex case test", "[logger]")
 {
     auto p0 = log_.get_sink("Foo");
     auto p1 = log_.get_sink("foo");
@@ -2052,7 +2360,8 @@ TEST_CASE_METHOD(command_fixture<>, "logger set_level command regex case test", 
     REQUIRE(infos[2].level == xtr::log_level_t::error);
 }
 
-TEST_CASE_METHOD(command_fixture<>, "logger set_level command invalid regex test", "[logger]")
+TEST_CASE_METHOD(
+    command_fixture<>, "logger set_level command invalid regex test", "[logger]")
 {
     xtrd::frame<xtrd::set_level> sl;
 
@@ -2070,7 +2379,8 @@ TEST_CASE_METHOD(command_fixture<>, "logger set_level command invalid regex test
         Catch::Matchers::Contains("invalid", Catch::CaseSensitive::No));
 }
 
-TEST_CASE_METHOD(command_fixture<>, "logger set_level command wildcard test", "[logger]")
+TEST_CASE_METHOD(
+    command_fixture<>, "logger set_level command wildcard test", "[logger]")
 {
     auto p0 = log_.get_sink("Foo");
     auto p1 = log_.get_sink("FobFar");
@@ -2114,7 +2424,8 @@ TEST_CASE_METHOD(command_fixture<>, "logger set_level command wildcard test", "[
     REQUIRE(infos[4].level == xtr::log_level_t::info);
 }
 
-TEST_CASE_METHOD(command_fixture<>, "logger set_level command wildcard case test", "[logger]")
+TEST_CASE_METHOD(
+    command_fixture<>, "logger set_level command wildcard case test", "[logger]")
 {
     auto p0 = log_.get_sink("Foo");
     auto p1 = log_.get_sink("foo");
@@ -2171,7 +2482,8 @@ TEST_CASE_METHOD(command_fixture<>, "logger set_level command wildcard case test
     REQUIRE(infos[2].level == xtr::log_level_t::error);
 }
 
-TEST_CASE_METHOD(command_fixture<>, "logger command multiple clients test", "[logger]")
+TEST_CASE_METHOD(
+    command_fixture<>, "logger command multiple clients test", "[logger]")
 {
     std::array<xtrd::command_client, 64> clients;
     std::vector<xtr::sink> sinks;
@@ -2199,7 +2511,11 @@ TEST_CASE_METHOD(command_fixture<>, "logger reopen command test", "[logger]")
 {
     bool reopened = false;
 
-    storage_->reopen_func_ = [&reopened](){ reopened = true; return 0; };
+    storage_->reopen_func_ = [&reopened]()
+    {
+        reopened = true;
+        return 0;
+    };
 
     REQUIRE(!reopened);
 
@@ -2209,9 +2525,10 @@ TEST_CASE_METHOD(command_fixture<>, "logger reopen command test", "[logger]")
     REQUIRE(reopened);
 }
 
-TEST_CASE_METHOD(command_fixture<>, "logger reopen command error test", "[logger]")
+TEST_CASE_METHOD(
+    command_fixture<>, "logger reopen command error test", "[logger]")
 {
-    storage_->reopen_func_ = [](){ return EBADF; };
+    storage_->reopen_func_ = []() { return EBADF; };
 
     xtrd::frame<xtrd::reopen> ro;
     const auto errors = send_frame<xtrd::error>(ro);
@@ -2222,7 +2539,8 @@ TEST_CASE_METHOD(command_fixture<>, "logger reopen command error test", "[logger
     REQUIRE(errors[0].reason == "Bad file descriptor"sv);
 }
 
-TEST_CASE_METHOD(command_fixture<path_fixture>, "logger reopen command path test", "[logger]")
+TEST_CASE_METHOD(
+    command_fixture<path_fixture>, "logger reopen command path test", "[logger]")
 {
     ::unlink(tmp_.path_.c_str());
 
@@ -2236,7 +2554,8 @@ TEST_CASE_METHOD(command_fixture<path_fixture>, "logger reopen command path test
     REQUIRE(::stat(tmp_.path_.c_str(), &sb) == 0);
 }
 
-TEST_CASE_METHOD(command_fixture<file_fixture>, "logger null_reopen_path test", "[logger]")
+TEST_CASE_METHOD(
+    command_fixture<file_fixture>, "logger null_reopen_path test", "[logger]")
 {
     xtrd::frame<xtrd::reopen> ro;
     const auto errors = send_frame<xtrd::error>(ro);
@@ -2331,7 +2650,11 @@ TEST_CASE_METHOD(fixture, "logger re-register sink test", "[logger]")
     s_.close();
     log_.register_sink(s_, "Reregistered");
     XTR_LOG(s_, "Test"), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Reregistered logger.cpp:{}: Test", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format(
+            "I 2000-01-01 01:02:03.123456 Reregistered logger.cpp:{}: Test",
+            line_));
 }
 
 TEST_CASE_METHOD(fixture, "logger macro test", "[logger]")
@@ -2432,9 +2755,9 @@ TEST_CASE("default_command_path fallback test", "[logger]")
     CHECK(xtr::default_command_path().starts_with("/tmp"));
 
     ::unsetenv("XDG_RUNTIME_DIR");
-    CHECK((
-        xtr::default_command_path().starts_with("/tmp") ||
-        xtr::default_command_path().starts_with("/run/user")));
+    CHECK(
+        (xtr::default_command_path().starts_with("/tmp") ||
+         xtr::default_command_path().starts_with("/run/user")));
 
     if (!rundir.empty())
         ::setenv("XDG_RUNTIME_DIR", rundir.c_str(), 1);
@@ -2444,38 +2767,47 @@ TEST_CASE("default_command_path fallback test", "[logger]")
 
 TEST_CASE_METHOD(fixture, "logger custom log level style test", "[logger]")
 {
-    auto style =
-        [](xtr::log_level_t level)
+    auto style = [](xtr::log_level_t level)
+    {
+        switch (level)
         {
-            switch (level)
-            {
-            case xtr::log_level_t::error:
-                return "ERROR ";
-            case xtr::log_level_t::warning:
-                return "WARNING ";
-            case xtr::log_level_t::info:
-                return "INFO ";
-            case xtr::log_level_t::debug:
-                return "DEBUG ";
-            default:
-                return "";
-            }
-        };
+        case xtr::log_level_t::error:
+            return "ERROR ";
+        case xtr::log_level_t::warning:
+            return "WARNING ";
+        case xtr::log_level_t::info:
+            return "INFO ";
+        case xtr::log_level_t::debug:
+            return "DEBUG ";
+        default:
+            return "";
+        }
+    };
 
     log_.set_log_level_style(style);
     s_.set_level(xtr::log_level_t::debug);
 
     XTR_LOGL(error, s_, "Test"), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("ERROR 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("ERROR 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
 
     XTR_LOGL(warning, s_, "Test"), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("WARNING 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format(
+            "WARNING 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test",
+            line_));
 
     XTR_LOGL(info, s_, "Test"), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("INFO 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("INFO 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
 
     XTR_LOGL(debug, s_, "Test"), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("DEBUG 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("DEBUG 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
 }
 
 TEST_CASE_METHOD(fixture, "logger systemd log level style test", "[logger]")
@@ -2484,16 +2816,24 @@ TEST_CASE_METHOD(fixture, "logger systemd log level style test", "[logger]")
     s_.set_level(xtr::log_level_t::debug);
 
     XTR_LOGL(error, s_, "Test"), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("<3>2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("<3>2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
 
     XTR_LOGL(warning, s_, "Test"), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("<4>2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("<4>2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
 
     XTR_LOGL(info, s_, "Test"), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("<6>2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("<6>2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
 
     XTR_LOGL(debug, s_, "Test"), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("<7>2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("<7>2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
 
 #ifndef XTR_THREAD_SANITIZER_ENABLED
     struct sigaction act{};
@@ -2504,11 +2844,7 @@ TEST_CASE_METHOD(fixture, "logger systemd log level style test", "[logger]")
 
     if (val == 0)
     {
-        act.sa_handler =
-            [](int)
-            {
-                siglongjmp(jbuf, 1);
-            };
+        act.sa_handler = [](int) { siglongjmp(jbuf, 1); };
 
         REQUIRE(::sigaction(SIGABRT, &act, &oldact) == 0);
         line_ = __LINE__, XTR_LOGL(fatal, s_, "Test");
@@ -2516,7 +2852,9 @@ TEST_CASE_METHOD(fixture, "logger systemd log level style test", "[logger]")
 
     if (::sigaction(SIGABRT, &oldact, nullptr) != 0)
         err(EXIT_FAILURE, "sigaction failed");
-    REQUIRE(last_line() == fmt::format("<0>2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("<0>2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
 #endif
 }
 
@@ -2542,13 +2880,12 @@ TEST_CASE_METHOD(fixture, "logger fatal test", "[logger]")
 
     if (val == 0)
     {
-        act.sa_handler =
-            [](int signo)
-            {
-                ++abort_handler_count;
-                abort_handler_signo = signo;
-                siglongjmp(jbuf, 1);
-            };
+        act.sa_handler = [](int signo)
+        {
+            ++abort_handler_count;
+            abort_handler_signo = signo;
+            siglongjmp(jbuf, 1);
+        };
 
         REQUIRE(::sigaction(SIGABRT, &act, &oldact) == 0);
         XTR_LOGL(fatal, s_, "Fatal error");
@@ -2566,59 +2903,111 @@ TEST_CASE_METHOD(fixture, "logger formatter helpers test", "[logger]")
 {
     std::deque<int> d{1, 2, 3};
     XTR_LOG(s_, "{}", d), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: [1, 2, 3]", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format(
+            "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: [1, 2, 3]",
+            line_));
 
     std::forward_list<int> f{1, 2, 3};
     XTR_LOG(s_, "{}", f), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: [1, 2, 3]", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format(
+            "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: [1, 2, 3]",
+            line_));
 
     std::list<int> l{1, 2, 3};
     XTR_LOG(s_, "{}", l), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: [1, 2, 3]", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format(
+            "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: [1, 2, 3]",
+            line_));
 
     std::vector<int> v1{1, 2, 3};
     XTR_LOG(s_, "{}", v1), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: [1, 2, 3]", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format(
+            "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: [1, 2, 3]",
+            line_));
 
     const std::vector<std::string> v2{"1", "2", "3"};
     XTR_LOG(s_, "{}", v2), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: [1, 2, 3]", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format(
+            "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: [1, 2, 3]",
+            line_));
 
     std::array a{1, 2, 3};
     XTR_LOG(s_, "{}", a), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: [1, 2, 3]", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format(
+            "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: [1, 2, 3]",
+            line_));
 
     std::map<int, int> m{{1, 2}, {3, 4}, {5, 6}};
     XTR_LOG(s_, "{}", m), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: {{1: 2, 3: 4, 5: 6}}", line_));
+    REQUIRE(
+        last_line() == fmt::format(
+                           "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: "
+                           "{{1: 2, 3: 4, 5: 6}}",
+                           line_));
 
     std::multimap<int, int> mm{{1, 2}, {3, 4}, {5, 6}, {1, 7}, {3, 8}, {5, 9}};
     XTR_LOG(s_, "{}", mm), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: {{1: 2, 1: 7, 3: 4, 3: 8, 5: 6, 5: 9}}", line_));
+    REQUIRE(
+        last_line() == fmt::format(
+                           "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: "
+                           "{{1: 2, 1: 7, 3: 4, 3: 8, 5: 6, 5: 9}}",
+                           line_));
 
     std::set<int> s{1, 2, 3};
     XTR_LOG(s_, "{}", s), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: [1, 2, 3]", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format(
+            "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: [1, 2, 3]",
+            line_));
 
     std::multiset<int> ms{1, 2, 3, 1, 2, 3};
     XTR_LOG(s_, "{}", ms), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: [1, 1, 2, 2, 3, 3]", line_));
+    REQUIRE(
+        last_line() == fmt::format(
+                           "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: "
+                           "[1, 1, 2, 2, 3, 3]",
+                           line_));
 
     std::pair<int, int> p{1, 2};
     XTR_LOG(s_, "{}", p), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: (1, 2)", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: (1, 2)", line_));
 
     std::tuple<int, int, int> t{1, 2, 3};
     XTR_LOG(s_, "{}", t), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: (1, 2, 3)", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format(
+            "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: (1, 2, 3)",
+            line_));
 
     std::tuple<> empty_t{};
     XTR_LOG(s_, "{}", empty_t), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: ()", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: ()", line_));
 
     const int ca[] = {1, 2, 3};
     XTR_LOG(s_, "{}", std::span(std::begin(ca), std::end(ca))), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: [1, 2, 3]", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format(
+            "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: [1, 2, 3]",
+            line_));
 }
 
 TEST_CASE_METHOD(fixture, "logger embedded nul test", "[logger]")
@@ -2626,7 +3015,11 @@ TEST_CASE_METHOD(fixture, "logger embedded nul test", "[logger]")
     const char str[] = "abc\0def";
     const std::string_view sv(str, sizeof(str) - 1);
     XTR_LOG(s_, "{}", sv), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: abc\\x00def", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format(
+            "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: abc\\x00def",
+            line_));
 }
 
 TEST_CASE_METHOD(fixture, "logger default log level test", "[logger]")
@@ -2659,6 +3052,8 @@ TEST_CASE_METHOD(fixture, "logger log_level_from_string test", "[logger]")
 TEST_CASE_METHOD(pump_io_fixture, "logger pump_io test", "[logger]")
 {
     XTR_LOG(s_, "Test"), line_ = __LINE__;
-    REQUIRE(last_line() == fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
+    REQUIRE(
+        last_line() ==
+        fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
     REQUIRE(n_events >= 1); // Sink creation, sync() create events
 }

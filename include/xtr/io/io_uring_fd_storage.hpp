@@ -7,8 +7,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 //
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 //
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -33,7 +33,6 @@
 #include <memory>
 #include <span>
 #include <string>
-#include <vector>
 
 namespace xtr
 {
@@ -41,8 +40,8 @@ namespace xtr
 }
 
 /**
- * An implementation of @ref storage_interface that uses
- * <a href="https://www.man7.org/linux/man-pages/man7/io_uring.7.html">io_uring(7)</a>
+ * An implementation of @ref storage_interface that uses <a
+ * href="https://www.man7.org/linux/man-pages/man7/io_uring.7.html">io_uring(7)</a>
  * to perform file I/O (Linux only).
  */
 class xtr::io_uring_fd_storage : public detail::fd_storage_base
@@ -51,22 +50,22 @@ public:
     /**
      * Default value for the buffer_capacity constructor argument.
      */
-    static constexpr std::size_t default_buffer_capacity = 64 * 1024;
+    static constexpr std::size_t default_buffer_capacity = 64UL * 1024UL;
 
     /**
      * Default value for the queue_size constructor argument.
      */
-    static constexpr std::size_t default_queue_size = 1024;
+    static constexpr std::size_t default_queue_size = 1024UL;
 
     /**
      * Default value for the batch_size constructor argument.
      */
-    static constexpr std::size_t default_batch_size = 32;
+    static constexpr std::size_t default_batch_size = 32UL;
 
 private:
     struct buffer
     {
-        int index_; // io_uring_prep_write_fixed accepts indexes as int
+        int index_;     // io_uring_prep_write_fixed accepts indexes as int
         unsigned size_; // io_uring_cqe::res is an unsigned int
         std::size_t offset_;
         std::size_t file_offset_;
@@ -107,20 +106,23 @@ public:
     /**
      * File descriptor constructor.
      *
-     * @arg fd: File descriptor to write to. This will be duplicated via a call to
-     *          <a href="https://www.man7.org/linux/man-pages/man2/dup.2.html">dup(2)</a>,
-     *          so callers may close the file descriptor immediately after this
-     *          constructor returns if desired.
-     * @arg reopen_path: The path of the file associated with the fd argument.
-     *                   This path will be used to reopen the file if requested via
-     *                   the xtrctl <a href="xtrctl.html#reopening-log-files">reopen command</a>.
-     *                   Pass @ref null_reopen_path if no filename is associated with the file
-     *                   descriptor.
-     * @arg buffer_capacity: The size in bytes of a single io_uring buffer.
-     * @arg queue_size: The size of the io_uring submission queue.
-     * @arg batch_size: The number of buffers to collect before submitting the
-     *                  buffers to io_uring. If @ref XTR_IO_URING_POLL is set
-     *                  to 1 in xtr/config.hpp then this parameter has no effect.
+     * @param fd: File descriptor to write to. This will be duplicated via a
+     * call to <a href="https://www.man7.org/linux/man-pages/man2/dup.2.html">dup(2)</a>,
+     * so callers may close the file descriptor immediately after this
+     * constructor returns if desired.
+     *
+     * @param reopen_path: The path of the file associated with the fd argument.
+     * This path will be used to reopen the file if requested via the xtrctl
+     * <a href="xtrctl.html#reopening-log-files">reopen command</a>. Pass @ref
+     * null_reopen_path if no filename is associated with the file descriptor.
+     *
+     * @param buffer_capacity: The size in bytes of a single io_uring buffer.
+     *
+     * @param queue_size: The size of the io_uring submission queue.
+     *
+     * @param batch_size: The number of buffers to collect before submitting the
+     * buffers to io_uring. If @ref XTR_IO_URING_POLL is set to 1 in
+     * xtr/config.hpp then this parameter has no effect.
      */
     explicit io_uring_fd_storage(
         int fd,
@@ -129,18 +131,18 @@ public:
         std::size_t queue_size = default_queue_size,
         std::size_t batch_size = default_batch_size);
 
-    ~io_uring_fd_storage();
+    ~io_uring_fd_storage() override;
 
-    void sync() noexcept override final;
+    void sync() noexcept final;
 
-    void flush() override final;
+    void flush() final;
 
-    std::span<char> allocate_buffer() override final;
+    std::span<char> allocate_buffer() final;
 
-    void submit_buffer(char* data, std::size_t size) override final;
+    void submit_buffer(char* data, std::size_t size) final;
 
 protected:
-    void replace_fd(int newfd) noexcept override final;
+    void replace_fd(int newfd) noexcept final;
 
 private:
     void allocate_buffers(std::size_t queue_size);

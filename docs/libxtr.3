@@ -40,18 +40,20 @@ performance.
 .INDENT 0.0
 .TP
 .B XTR_LOG(SINK, \&...) 
-Basic log macro, logs the specified format string and arguments to the given sink, blocking if the sink is full. Timestamps are read in the background thread\-\-\-if this is undesirable use \fI\%XTR_LOG_RTC\fP or \fI\%XTR_LOG_TSC\fP which read timestamps at the point of logging. This macro will log regardless of the sink\(aqs log level. 
+Basic log macro, logs the specified format string and arguments to the given sink, blocking if the sink is full. Timestamps are read in the background thread\-\-\-if this is undesirable use \fI\%XTR_LOG_RTC\fP or \fI\%XTR_LOG_TSC\fP which read timestamps at the point of logging. This macro will log regardless of the sink\(aqs log level.
+.INDENT 7.0
+.TP
+.B Parameters
+.INDENT 7.0
+.IP \(bu 2
+\fBSINK\fP \-\- The \fI\%xtr::sink\fP to log to. 
+.UNINDENT
+.UNINDENT
 .UNINDENT
 .INDENT 0.0
 .TP
 .B XTR_LOGL(LEVEL, SINK, \&...) 
 Log level variant of \fI\%XTR_LOG\fP\&. If the specified log level has lower importance than the log level of the sink, then the message is dropped (please see the \fI\%log levels\fP section of the user guide for details).
-.sp
-.INDENT 7.0
-.IP \(bu 2
-LEVEL: The unqualified log level name, for example simply \(dqinfo\(dq or \(dqerror\(dq.
-.UNINDENT
-
 .sp
 \fBNOTE:\fP
 .INDENT 7.0
@@ -66,22 +68,44 @@ If the \(aqfatal\(aq level is passed then the log message is written, \fI\%xtr::
 Log statements with the \(aqdebug\(aq level can be disabled at build time by defining XTR_NDEBUG\&. 
 .UNINDENT
 .UNINDENT
+.INDENT 7.0
+.TP
+.B Parameters
+.INDENT 7.0
+.IP \(bu 2
+\fBLEVEL\fP \-\- The unqualified log level name, for example simply \(dqinfo\(dq or \(dqerror\(dq.
+.IP \(bu 2
+\fBSINK\fP \-\- The \fI\%xtr::sink\fP to log to.
+.UNINDENT
+.UNINDENT
 .UNINDENT
 .INDENT 0.0
 .TP
 .B XTR_TRY_LOG(SINK, \&...) 
-Non\-blocking variant of \fI\%XTR_LOG\fP\&. The message will be discarded if the sink is full. If a message is dropped a warning will appear in the log. 
+Non\-blocking variant of \fI\%XTR_LOG\fP\&. The message will be discarded if the sink is full. If a message is dropped a warning will appear in the log.
+.INDENT 7.0
+.TP
+.B Parameters
+.INDENT 7.0
+.IP \(bu 2
+\fBSINK\fP \-\- The \fI\%xtr::sink\fP to log to. 
+.UNINDENT
+.UNINDENT
 .UNINDENT
 .INDENT 0.0
 .TP
 .B XTR_TRY_LOGL(LEVEL, SINK, \&...) 
 Non\-blocking variant of \fI\%XTR_LOGL\fP\&. The message will be discarded if the sink is full. If a message is dropped a warning will appear in the log.
-.sp
+.INDENT 7.0
+.TP
+.B Parameters
 .INDENT 7.0
 .IP \(bu 2
-LEVEL: The unqualified log level name, for example simply \(dqinfo\(dq or \(dqerror\(dq. 
+\fBLEVEL\fP \-\- The unqualified log level name, for example simply \(dqinfo\(dq or \(dqerror\(dq.
+.IP \(bu 2
+\fBSINK\fP \-\- The \fI\%xtr::sink\fP to log to. 
 .UNINDENT
-
+.UNINDENT
 .UNINDENT
 .SS Time\-Stamp Counter Timestamped Macros
 .sp
@@ -91,18 +115,20 @@ systems reading rdtsc may be slower than using the real\-time clock (see below).
 .INDENT 0.0
 .TP
 .B XTR_LOG_TSC(SINK, \&...) 
-Timestamped log macro, logs the specified format string and arguments to the given sink along with a timestamp obtained by reading the CPU timestamp counter via the RDTSC instruction. The non\-blocking variant of this macro is \fI\%XTR_TRY_LOG_TSC\fP which will discard the message if the sink is full. This macro will log regardless of the sink\(aqs log level. 
+Timestamped log macro, logs the specified format string and arguments to the given sink along with a timestamp obtained by reading the CPU timestamp counter via the RDTSC instruction. The non\-blocking variant of this macro is \fI\%XTR_TRY_LOG_TSC\fP which will discard the message if the sink is full. This macro will log regardless of the sink\(aqs log level.
+.INDENT 7.0
+.TP
+.B Parameters
+.INDENT 7.0
+.IP \(bu 2
+\fBSINK\fP \-\- The \fI\%xtr::sink\fP to log to. 
+.UNINDENT
+.UNINDENT
 .UNINDENT
 .INDENT 0.0
 .TP
 .B XTR_LOGL_TSC(LEVEL, SINK, \&...) 
 Log level variant of \fI\%XTR_LOG_TSC\fP\&. If the specified log level has lower importance than the log level of the sink, then the message is dropped (please see the \fI\%log levels\fP section of the user guide for details).
-.sp
-.INDENT 7.0
-.IP \(bu 2
-LEVEL: The unqualified log level name, for example simply \(dqinfo\(dq or \(dqerror\(dq.
-.UNINDENT
-
 .sp
 \fBNOTE:\fP
 .INDENT 7.0
@@ -117,22 +143,44 @@ If the \(aqfatal\(aq level is passed then the log message is written, \fI\%xtr::
 Log statements with the \(aqdebug\(aq level can be disabled at build time by defining XTR_NDEBUG\&. 
 .UNINDENT
 .UNINDENT
+.INDENT 7.0
+.TP
+.B Parameters
+.INDENT 7.0
+.IP \(bu 2
+\fBLEVEL\fP \-\- The unqualified log level name, for example simply \(dqinfo\(dq or \(dqerror\(dq.
+.IP \(bu 2
+\fBSINK\fP \-\- The \fI\%xtr::sink\fP to log to.
+.UNINDENT
+.UNINDENT
 .UNINDENT
 .INDENT 0.0
 .TP
 .B XTR_TRY_LOG_TSC(SINK, \&...) 
-Non\-blocking variant of \fI\%XTR_LOG_TSC\fP\&. The message will be discarded if the sink is full. If a message is dropped a warning will appear in the log. 
+Non\-blocking variant of \fI\%XTR_LOG_TSC\fP\&. The message will be discarded if the sink is full. If a message is dropped a warning will appear in the log.
+.INDENT 7.0
+.TP
+.B Parameters
+.INDENT 7.0
+.IP \(bu 2
+\fBSINK\fP \-\- The \fI\%xtr::sink\fP to log to. 
+.UNINDENT
+.UNINDENT
 .UNINDENT
 .INDENT 0.0
 .TP
 .B XTR_TRY_LOGL_TSC(LEVEL, SINK, \&...) 
 Non\-blocking variant of \fI\%XTR_TRY_LOGL_TSC\fP\&. The message will be discarded if the sink is full. If a message is dropped a warning will appear in the log.
-.sp
+.INDENT 7.0
+.TP
+.B Parameters
 .INDENT 7.0
 .IP \(bu 2
-LEVEL: The unqualified log level name, for example simply \(dqinfo\(dq or \(dqerror\(dq. 
+\fBLEVEL\fP \-\- The unqualified log level name, for example simply \(dqinfo\(dq or \(dqerror\(dq.
+.IP \(bu 2
+\fBSINK\fP \-\- The \fI\%xtr::sink\fP to log to. 
 .UNINDENT
-
+.UNINDENT
 .UNINDENT
 .SS Real\-Time Clock Timestamped Macros
 .sp
@@ -141,18 +189,20 @@ logging. Use these macros if accurate timestamps are required.
 .INDENT 0.0
 .TP
 .B XTR_LOG_RTC(SINK, \&...) 
-Timestamped log macro, logs the specified format string and arguments to the given sink along with a timestamp obtained by invoking \fI\%clock_gettime(3)\fP <\fBhttps://www.man7.org/linux/man-pages/man3/clock_gettime.3.html\fP> with a clock source of CLOCK_REALTIME_COARSE on Linux or CLOCK_REALTIME_FAST on FreeBSD. Depending on the host CPU this may be faster than \fI\%XTR_LOG_TSC\fP\&. The non\-blocking variant of this macro is \fI\%XTR_TRY_LOG_RTC\fP which will discard the message if the sink is full. This macro will log regardless of the sink\(aqs log level. 
+Timestamped log macro, logs the specified format string and arguments to the given sink along with a timestamp obtained by invoking \fI\%clock_gettime(3)\fP <\fBhttps://www.man7.org/linux/man-pages/man3/clock_gettime.3.html\fP> with a clock source of CLOCK_REALTIME_COARSE on Linux or CLOCK_REALTIME_FAST on FreeBSD. Depending on the host CPU this may be faster than \fI\%XTR_LOG_TSC\fP\&. The non\-blocking variant of this macro is \fI\%XTR_TRY_LOG_RTC\fP which will discard the message if the sink is full. This macro will log regardless of the sink\(aqs log level.
+.INDENT 7.0
+.TP
+.B Parameters
+.INDENT 7.0
+.IP \(bu 2
+\fBSINK\fP \-\- The \fI\%xtr::sink\fP to log to. 
+.UNINDENT
+.UNINDENT
 .UNINDENT
 .INDENT 0.0
 .TP
 .B XTR_LOGL_RTC(LEVEL, SINK, \&...) 
 Log level variant of \fI\%XTR_LOG_RTC\fP\&. If the specified log level has lower importance than the log level of the sink, then the message is dropped (please see the \fI\%log levels\fP section of the user guide for details).
-.sp
-.INDENT 7.0
-.IP \(bu 2
-LEVEL: The unqualified log level name, for example simply \(dqinfo\(dq or \(dqerror\(dq.
-.UNINDENT
-
 .sp
 \fBNOTE:\fP
 .INDENT 7.0
@@ -167,22 +217,44 @@ If the \(aqfatal\(aq level is passed then the log message is written, \fI\%xtr::
 Log statements with the \(aqdebug\(aq level can be disabled at build time by defining XTR_NDEBUG\&. 
 .UNINDENT
 .UNINDENT
+.INDENT 7.0
+.TP
+.B Parameters
+.INDENT 7.0
+.IP \(bu 2
+\fBLEVEL\fP \-\- The unqualified log level name, for example simply \(dqinfo\(dq or \(dqerror\(dq.
+.IP \(bu 2
+\fBSINK\fP \-\- The \fI\%xtr::sink\fP to log to.
+.UNINDENT
+.UNINDENT
 .UNINDENT
 .INDENT 0.0
 .TP
 .B XTR_TRY_LOG_RTC(SINK, \&...) 
-Non\-blocking variant of \fI\%XTR_LOG_RTC\fP\&. The message will be discarded if the sink is full. If a message is dropped a warning will appear in the log. 
+Non\-blocking variant of \fI\%XTR_LOG_RTC\fP\&. The message will be discarded if the sink is full. If a message is dropped a warning will appear in the log.
+.INDENT 7.0
+.TP
+.B Parameters
+.INDENT 7.0
+.IP \(bu 2
+\fBSINK\fP \-\- The \fI\%xtr::sink\fP to log to. 
+.UNINDENT
+.UNINDENT
 .UNINDENT
 .INDENT 0.0
 .TP
 .B XTR_TRY_LOGL_RTC(LEVEL, SINK, \&...) 
 Non\-blocking variant of \fI\%XTR_TRY_LOGL_RTC\fP\&. The message will be discarded if the sink is full. If a message is dropped a warning will appear in the log.
-.sp
+.INDENT 7.0
+.TP
+.B Parameters
 .INDENT 7.0
 .IP \(bu 2
-LEVEL: The unqualified log level name, for example simply \(dqinfo\(dq or \(dqerror\(dq. 
+\fBLEVEL\fP \-\- The unqualified log level name, for example simply \(dqinfo\(dq or \(dqerror\(dq.
+.IP \(bu 2
+\fBSINK\fP \-\- The \fI\%xtr::sink\fP to log to. 
 .UNINDENT
-
+.UNINDENT
 .UNINDENT
 .SS User\-Supplied Timestamp Macros
 .sp
@@ -191,25 +263,21 @@ The following macros log and accept a user\-supplied timestamp.
 .TP
 .B XTR_LOG_TS(SINK, TS, \&...) 
 User\-supplied timestamp log macro, logs the specified format string and arguments to the given sink along with the specified timestamp, blocking if the sink is full. The timestamp may be any type as long as it has a formatter defined\-\-\-please see the \fI\%custom formatters\fP section of the user guide for details. xtr::timespec is provided as a convenience type which is compatible with std::timespec and has a formatter pre\-defined. A formatter for std::timespec isn\(aqt defined in order to avoid conflict with user code that also defines such a formatter. This macro will log regardless of the sink\(aqs log level.
-.sp
+.INDENT 7.0
+.TP
+.B Parameters
 .INDENT 7.0
 .IP \(bu 2
-TS: The timestamp to apply to the log statement. 
+\fBSINK\fP \-\- The \fI\%xtr::sink\fP to log to.
+.IP \(bu 2
+\fBTS\fP \-\- The timestamp to apply to the log statement. 
 .UNINDENT
-
+.UNINDENT
 .UNINDENT
 .INDENT 0.0
 .TP
 .B XTR_LOGL_TS(LEVEL, SINK, TS, \&...) 
 Log level variant of \fI\%XTR_LOG_TS\fP\&. If the specified log level has lower importance than the log level of the sink, then the message is dropped (please see the \fI\%log levels\fP section of the user guide for details).
-.sp
-.INDENT 7.0
-.IP \(bu 2
-LEVEL: The unqualified log level name, for example simply \(dqinfo\(dq or \(dqerror\(dq. 
-.IP \(bu 2
-TS: The timestamp to apply to the log statement.
-.UNINDENT
-
 .sp
 \fBNOTE:\fP
 .INDENT 7.0
@@ -224,24 +292,50 @@ If the \(aqfatal\(aq level is passed then the log message is written, \fI\%xtr::
 Log statements with the \(aqdebug\(aq level can be disabled at build time by defining XTR_NDEBUG\&. 
 .UNINDENT
 .UNINDENT
+.INDENT 7.0
+.TP
+.B Parameters
+.INDENT 7.0
+.IP \(bu 2
+\fBLEVEL\fP \-\- The unqualified log level name, for example simply \(dqinfo\(dq or \(dqerror\(dq.
+.IP \(bu 2
+\fBSINK\fP \-\- The \fI\%xtr::sink\fP to log to.
+.IP \(bu 2
+\fBTS\fP \-\- The timestamp to apply to the log statement.
+.UNINDENT
+.UNINDENT
 .UNINDENT
 .INDENT 0.0
 .TP
 .B XTR_TRY_LOG_TS(SINK, TS, \&...) 
-Non\-blocking variant of \fI\%XTR_LOG_TS\fP\&. The message will be discarded if the sink is full. If a message is dropped a warning will appear in the log. 
+Non\-blocking variant of \fI\%XTR_LOG_TS\fP\&. The message will be discarded if the sink is full. If a message is dropped a warning will appear in the log.
+.INDENT 7.0
+.TP
+.B Parameters
+.INDENT 7.0
+.IP \(bu 2
+\fBSINK\fP \-\- The \fI\%xtr::sink\fP to log to.
+.IP \(bu 2
+\fBTS\fP \-\- The timestamp to apply to the log statement. 
+.UNINDENT
+.UNINDENT
 .UNINDENT
 .INDENT 0.0
 .TP
 .B XTR_TRY_LOGL_TS(LEVEL, SINK, TS, \&...) 
 Non\-blocking variant of \fI\%XTR_TRY_LOGL_TS\fP\&. The message will be discarded if the sink is full. If a message is dropped a warning will appear in the log.
-.sp
+.INDENT 7.0
+.TP
+.B Parameters
 .INDENT 7.0
 .IP \(bu 2
-LEVEL: The unqualified log level name, for example simply \(dqinfo\(dq or \(dqerror\(dq. 
+\fBLEVEL\fP \-\- The unqualified log level name, for example simply \(dqinfo\(dq or \(dqerror\(dq.
 .IP \(bu 2
-TS: The timestamp to apply to the log statement. 
+\fBSINK\fP \-\- The \fI\%xtr::sink\fP to log to.
+.IP \(bu 2
+\fBTS\fP \-\- The timestamp to apply to the log statement. 
 .UNINDENT
-
+.UNINDENT
 .UNINDENT
 .SH LOGGER
 .INDENT 0.0
@@ -255,45 +349,57 @@ Public Functions
 .B template<typename  Clock  =  std::chrono::system_clock> inline  explicit  logger(const  char  *path, \fI\%Clock\fP  &&clock  =  \fI\%Clock\fP(), std::string  command_path  =  \fI\%default_command_path\fP(), \fI\%log_level_style_t\fP  level_style  =  \fI\%default_log_level_style\fP, \fI\%option_flags_t\fP  options  =  \fI\%option_flags_t\fP::\fI\%none\fP) 
 Path constructor. The first argument is the path to a file which should be opened and logged to. The file will be opened in append mode, and will be created if it does not exist. Errors will be written to stdout.
 .sp
+
+.INDENT 7.0
+.TP
+.B Parameters
 .INDENT 7.0
 .IP \(bu 2
-path: The path of a file to write log statements to. 
+\fBpath\fP \-\- The path of a file to write log statements to.
 .IP \(bu 2
-clock: A function returning the current time of day as a std::timespec. This function will be invoked when creating timestamps for log statements produced by the basic log macros\-\-\- please see the \fI\%basic time source\fP section of the user guide for details. The default clock is std::chrono::system_clock. 
+\fBclock\fP \-\- A function returning the current time of day as a std::timespec. This function will be invoked when creating timestamps for log statements produced by the basic log macros\-\-\- please see the \fI\%basic time source\fP section of the user guide for details. The default clock is std::chrono::system_clock.
 .IP \(bu 2
-command_path: The path where the local domain socket used to communicate with \fI\%xtrctl\fP should be created. The default behaviour is to create sockets in $XDG_RUNTIME_DIR (if set, otherwise \(dq/run/user/<uid>\(dq). If that directory does not exist or is inaccessible then $TMPDIR (if set, otherwise \(dq/tmp\(dq) will be used instead. See \fI\%default_command_path\fP for further details. To prevent a socket from being created, pass \fI\%null_command_path\fP\&. 
+\fBcommand_path\fP \-\- The path where the local domain socket used to communicate with \fI\%xtrctl\fP should be created. The default behaviour is to create sockets in $XDG_RUNTIME_DIR (if set, otherwise \(dq/run/user/<uid>\(dq). If that directory does not exist or is inaccessible then $TMPDIR (if set, otherwise \(dq/tmp\(dq) will be used instead. See \fI\%default_command_path\fP for further details. To prevent a socket from being created, pass \fI\%null_command_path\fP\&.
 .IP \(bu 2
-level_style: The log level style that will be used to prefix each log statement\-\-\-please refer to the \fI\%log_level_style_t\fP documentation for details. 
+\fBlevel_style\fP \-\- The log level style that will be used to prefix each log statement\-\-\-please refer to the \fI\%log_level_style_t\fP documentation for details.
 .IP \(bu 2
-options: Logger options, see \fI\%option_flags_t\fP\&. 
+\fBoptions\fP \-\- Logger options, see \fI\%option_flags_t\fP\&. 
 .UNINDENT
-
+.UNINDENT
 .UNINDENT
 .INDENT 7.0
 .TP
 .B template<typename  Clock  =  std::chrono::system_clock> inline  explicit  logger(FILE  *stream  =  stderr, \fI\%Clock\fP  &&clock  =  \fI\%Clock\fP(), std::string  command_path  =  \fI\%default_command_path\fP(), \fI\%log_level_style_t\fP  level_style  =  \fI\%default_log_level_style\fP, \fI\%option_flags_t\fP  options  =  \fI\%option_flags_t\fP::\fI\%none\fP) 
 Stream constructor.
 .sp
-It is expected that this constructor will be used with streams such as stdout or stderr. If a stream that has been opened by the user is to be passed to the logger then the \fI\%stream constructor with reopen path\fP constructor is recommended instead, as this will mean that the log file can be rotated\-\-\-please refer to the xtrctl documentation for the \fI\%reopening log files\fP command for details.
+It is expected that this constructor will be used with streams such as stdout or stderr. If a stream that has been opened by the user is to be passed to the logger then the \fI\%stream\fP
 .sp
-.INDENT 7.0
-.IP \(bu 2
-stream: The stream to write log statements to. 
-.IP \(bu 2
-clock: Please refer to the \fI\%description\fP above. 
-.IP \(bu 2
-command_path: Please refer to the \fI\%description\fP above. 
-.IP \(bu 2
-level_style: The log level style that will be used to prefix each log statement\-\-\-please refer to the \fI\%log_level_style_t\fP documentation for details. 
-.IP \(bu 2
-options: Logger options, see \fI\%option_flags_t\fP\&. 
-.UNINDENT
+constructor with reopen path\(dq constructor is recommended instead, as this
+.sp
+will mean that the log file can be rotated\-\-\-please refer to the xtrctl
+.sp
+documentation for the <a href=\(dqxtrctl.html::reopening\-log\-files\(dq>reopening
+.sp
+log files</a> command for details.
+.sp
+@note Reopening the log file via the <a href=\(dqxtrctl.html::rotating\-log\-files\(dq>xtrctl</a>
+.sp
+tool is <em>not</em> supported if this constructor is used.
+.sp
+@param stream: The stream to write log statements to.
+.sp
+@param clock: Please refer to the @ref clock_arg \(dqdescription\(dq above.
+.sp
+@param command_path: Please refer to the @ref command_path_arg \(dqdescription\(dq above.
 
-.sp
-\fBNOTE:\fP
 .INDENT 7.0
-.INDENT 3.5
-Reopening the log file via the \fI\%xtrctl\fP tool is \fInot\fP supported if this constructor is used.
+.TP
+.B Parameters
+.INDENT 7.0
+.IP \(bu 2
+\fBlevel_style\fP \-\- The log level style that will be used to prefix each log statement\-\-\-please refer to the \fI\%log_level_style_t\fP documentation for details.
+.IP \(bu 2
+\fBoptions\fP \-\- Logger options, see \fI\%option_flags_t\fP\&. 
 .UNINDENT
 .UNINDENT
 .UNINDENT
@@ -302,26 +408,28 @@ Reopening the log file via the \fI\%xtrctl\fP tool is \fInot\fP supported if thi
 .B template<typename  Clock  =  std::chrono::system_clock> inline  logger(std::string  reopen_path, FILE  *stream, \fI\%Clock\fP  &&clock  =  \fI\%Clock\fP(), std::string  command_path  =  \fI\%default_command_path\fP(), \fI\%log_level_style_t\fP  level_style  =  \fI\%default_log_level_style\fP, \fI\%option_flags_t\fP  options  =  \fI\%option_flags_t\fP::\fI\%none\fP) 
  Stream constructor with reopen path.
 .sp
-.INDENT 7.0
-.IP \(bu 2
-reopen_path: The path of the file associated with the stream argument. This path will be used to reopen the stream if requested via the xtrctl \fI\%reopen command\fP\&. Pass \fI\%null_reopen_path\fP if no filename is associated with the stream. 
-.IP \(bu 2
-stream: The stream to write log statements to. 
-.IP \(bu 2
-clock: Please refer to the \fI\%description\fP above. 
-.IP \(bu 2
-command_path: Please refer to the \fI\%description\fP above. 
-.IP \(bu 2
-level_style: The log level style that will be used to prefix each log statement\-\-\-please refer to the \fI\%log_level_style_t\fP documentation for details. 
-.IP \(bu 2
-options: Logger options, see \fI\%option_flags_t\fP\&. 
-.UNINDENT
-
-.sp
 \fBNOTE:\fP
 .INDENT 7.0
 .INDENT 3.5
 Reopening the log file via the \fI\%xtrctl\fP tool is supported, with the reopen_path argument specifying the path to reopen.
+.UNINDENT
+.UNINDENT
+.INDENT 7.0
+.TP
+.B Parameters
+.INDENT 7.0
+.IP \(bu 2
+\fBreopen_path\fP \-\- The path of the file associated with the stream argument. This path will be used to reopen the stream if requested via the xtrctl \fI\%reopen command\fP\&. Pass \fI\%null_reopen_path\fP if no filename is associated with the stream.
+.IP \(bu 2
+\fBstream\fP \-\- The stream to write log statements to.
+.IP \(bu 2
+\fBclock\fP \-\- Please refer to the \fI\%description\fP above.
+.IP \(bu 2
+\fBcommand_path\fP \-\- Please refer to the \fI\%description\fP above.
+.IP \(bu 2
+\fBlevel_style\fP \-\- The log level style that will be used to prefix each log statement\-\-\-please refer to the \fI\%log_level_style_t\fP documentation for details.
+.IP \(bu 2
+\fBoptions\fP \-\- Logger options, see \fI\%option_flags_t\fP\&. 
 .UNINDENT
 .UNINDENT
 .UNINDENT
@@ -329,20 +437,22 @@ Reopening the log file via the \fI\%xtrctl\fP tool is supported, with the reopen
 .TP
 .B template<typename  Clock  =  std::chrono::system_clock> inline  explicit  logger(\fI\%storage_interface_ptr\fP  storage, \fI\%Clock\fP  &&clock  =  \fI\%Clock\fP(), std::string  command_path  =  \fI\%default_command_path\fP(), \fI\%log_level_style_t\fP  level_style  =  \fI\%default_log_level_style\fP, \fI\%option_flags_t\fP  options  =  \fI\%option_flags_t\fP::\fI\%none\fP) 
  Custom back\-end constructor (please refer to the \fI\%custom back\-ends\fP section of the user guide for further details on implementing a custom back\-end).
-.sp
+.INDENT 7.0
+.TP
+.B Parameters
 .INDENT 7.0
 .IP \(bu 2
-storage: Unique pointer to an object implementing the \fI\%storage_interface\fP interface. The logger will invoke methods on this object from the background thread in order to write log data to whatever underlying storage medium is implemented by the object, such as disk, network, dot\-matrix printer etc. 
+\fBstorage\fP \-\- Unique pointer to an object implementing the \fI\%storage_interface\fP interface. The logger will invoke methods on this object from the background thread in order to write log data to whatever underlying storage medium is implemented by the object, such as disk, network, dot\-matrix printer etc.
 .IP \(bu 2
-clock: Please refer to the \fI\%description\fP above. 
+\fBclock\fP \-\- Please refer to the \fI\%description\fP above.
 .IP \(bu 2
-command_path: Please refer to the \fI\%description\fP above. 
+\fBcommand_path\fP \-\- Please refer to the \fI\%description\fP above.
 .IP \(bu 2
-level_style: The log level style that will be used to prefix each log statement\-\-\-please refer to the \fI\%log_level_style_t\fP documentation for details. 
+\fBlevel_style\fP \-\- The log level style that will be used to prefix each log statement\-\-\-please refer to the \fI\%log_level_style_t\fP documentation for details.
 .IP \(bu 2
-options: Logger options, see \fI\%option_flags_t\fP\&. 
+\fBoptions\fP \-\- Logger options, see \fI\%option_flags_t\fP\&. 
 .UNINDENT
-
+.UNINDENT
 .UNINDENT
 .INDENT 7.0
 .TP
@@ -373,7 +483,7 @@ Registers the sink with the logger. Note that the sink name does not need to be 
 .B Parameters
 .INDENT 7.0
 .IP \(bu 2
-\fBs\fP \-\- The sink to register. 
+\fBs\fP \-\- The sink to register.
 .IP \(bu 2
 \fBname\fP \-\- The name for the given sink.
 .UNINDENT
@@ -535,7 +645,7 @@ Refer to the \fI\%custom formatters\fP section of the user guide for example use
 .INDENT 7.0
 .TP
 .B Parameters
-\fBvalue\fP \-\- The value to copy and wrap for stream\-based formatting. 
+\fBvalue\fP \-\- The value to copy and wrap for stream\-based formatting.
 .TP
 .B Returns
 A wrapper object suitable for passing as an argument to a log macro such as \fI\%XTR_LOG\fP\&.
@@ -551,7 +661,7 @@ Refer to the \fI\%custom formatters\fP section of the user guide for example use
 .INDENT 7.0
 .TP
 .B Parameters
-\fBvalue\fP \-\- The value to copy and wrap for stream\-based formatting. 
+\fBvalue\fP \-\- The value to copy and wrap for stream\-based formatting.
 .TP
 .B Returns
 A wrapper object suitable for passing as an argument to a log macro such as \fI\%XTR_LOG\fP\&.
@@ -662,36 +772,38 @@ Public Functions
 .TP
 .B explicit  io_uring_fd_storage(int  fd, std::string  reopen_path  =  \fI\%null_reopen_path\fP, std::size_t  buffer_capacity  =  \fI\%default_buffer_capacity\fP, std::size_t  queue_size  =  \fI\%default_queue_size\fP, std::size_t  batch_size  =  \fI\%default_batch_size\fP) 
 File descriptor constructor.
-.sp
+.INDENT 7.0
+.TP
+.B Parameters
 .INDENT 7.0
 .IP \(bu 2
-fd: File descriptor to write to. This will be duplicated via a call to \fI\%dup(2)\fP <\fBhttps://www.man7.org/linux/man-pages/man2/dup.2.html\fP>, so callers may close the file descriptor immediately after this constructor returns if desired. 
+\fBfd\fP \-\- File descriptor to write to. This will be duplicated via a call to \fI\%dup(2)\fP <\fBhttps://www.man7.org/linux/man-pages/man2/dup.2.html\fP>, so callers may close the file descriptor immediately after this constructor returns if desired.
 .IP \(bu 2
-reopen_path: The path of the file associated with the fd argument. This path will be used to reopen the file if requested via the xtrctl \fI\%reopen command\fP\&. Pass \fI\%null_reopen_path\fP if no filename is associated with the file descriptor. 
+\fBreopen_path\fP \-\- The path of the file associated with the fd argument. This path will be used to reopen the file if requested via the xtrctl \fI\%reopen command\fP\&. Pass \fI\%null_reopen_path\fP if no filename is associated with the file descriptor.
 .IP \(bu 2
-buffer_capacity: The size in bytes of a single io_uring buffer. 
+\fBbuffer_capacity\fP \-\- The size in bytes of a single io_uring buffer.
 .IP \(bu 2
-queue_size: The size of the io_uring submission queue. 
+\fBqueue_size\fP \-\- The size of the io_uring submission queue.
 .IP \(bu 2
-batch_size: The number of buffers to collect before submitting the buffers to io_uring. If \fI\%XTR_IO_URING_POLL\fP is set to 1 in xtr/config.hpp then this parameter has no effect. 
+\fBbatch_size\fP \-\- The number of buffers to collect before submitting the buffers to io_uring. If \fI\%XTR_IO_URING_POLL\fP is set to 1 in xtr/config.hpp then this parameter has no effect. 
 .UNINDENT
-
+.UNINDENT
 .UNINDENT
 .sp
 Public Static Attributes
 .INDENT 7.0
 .TP
-.B static  constexpr  std::size_t  default_buffer_capacity  =  64  *  1024 
+.B static  constexpr  std::size_t  default_buffer_capacity  =  64UL  *  1024UL 
 Default value for the buffer_capacity constructor argument. 
 .UNINDENT
 .INDENT 7.0
 .TP
-.B static  constexpr  std::size_t  default_queue_size  =  1024 
+.B static  constexpr  std::size_t  default_queue_size  =  1024UL 
 Default value for the queue_size constructor argument. 
 .UNINDENT
 .INDENT 7.0
 .TP
-.B static  constexpr  std::size_t  default_batch_size  =  32 
+.B static  constexpr  std::size_t  default_batch_size  =  32UL 
 Default value for the batch_size constructor argument. 
 .UNINDENT
 .UNINDENT
@@ -705,22 +817,24 @@ Public Functions
 .TP
 .B explicit  posix_fd_storage(int  fd, std::string  reopen_path  =  \fI\%null_reopen_path\fP, std::size_t  buffer_capacity  =  \fI\%default_buffer_capacity\fP) 
 File descriptor constructor.
-.sp
+.INDENT 7.0
+.TP
+.B Parameters
 .INDENT 7.0
 .IP \(bu 2
-fd: File descriptor to write to. This will be duplicated via a call to \fI\%dup(2)\fP <\fBhttps://www.man7.org/linux/man-pages/man2/dup.2.html\fP>, so callers may close the file descriptor immediately after this constructor returns if desired. 
+\fBfd\fP \-\- File descriptor to write to. This will be duplicated via a call to \fI\%dup(2)\fP <\fBhttps://www.man7.org/linux/man-pages/man2/dup.2.html\fP>, so callers may close the file descriptor immediately after this constructor returns if desired.
 .IP \(bu 2
-reopen_path: The path of the file associated with the fd argument. This path will be used to reopen the file if requested via the xtrctl \fI\%reopen command\fP\&. Pass \fI\%null_reopen_path\fP if no filename is associated with the file descriptor. 
+\fBreopen_path\fP \-\- The path of the file associated with the fd argument. This path will be used to reopen the file if requested via the xtrctl \fI\%reopen command\fP\&. Pass \fI\%null_reopen_path\fP if no filename is associated with the file descriptor.
 .IP \(bu 2
-buffer_capacity: The size in bytes of the internal write buffer. 
+\fBbuffer_capacity\fP \-\- The size in bytes of the internal write buffer. 
 .UNINDENT
-
+.UNINDENT
 .UNINDENT
 .sp
 Public Static Attributes
 .INDENT 7.0
 .TP
-.B static  constexpr  std::size_t  default_buffer_capacity  =  64  *  1024 
+.B static  constexpr  std::size_t  default_buffer_capacity  =  64UL  *  1024UL 
 Default value for the buffer_capacity constructor argument. 
 .UNINDENT
 .UNINDENT
@@ -732,28 +846,32 @@ Creates a storage interface object from a path. If the host kernel supports \fI\
 .INDENT 0.0
 .TP
 .B \fI\%storage_interface_ptr\fP  xtr::make_fd_storage(FILE  *fp, std::string  reopen_path  =  \fI\%null_reopen_path\fP) 
-Creates a storage interface object from a file descriptor and reopen path. Either an instance of \fI\%io_uring_fd_storage\fP or \fI\%posix_fd_storage\fP will be created, refer to \fI\%make_fd_storage(const char*)\fP for details.
-.sp
+Creates a storage interface object from a file descriptor and reopen path. Either an instance of \fI\%io_uring_fd_storage\fP or \fI\%posix_fd_storage\fP will be created, refer to \fI\%make_fd_storage(constchar*)\fP for details.
+.INDENT 7.0
+.TP
+.B Parameters
 .INDENT 7.0
 .IP \(bu 2
-fd: File handle to write to. The underlying file descriptor will be duplicated via a call to \fI\%dup(2)\fP <\fBhttps://www.man7.org/linux/man-pages/man2/dup.2.html\fP>, so callers may close the file handle immediately after this function returns if desired. 
+\fBfd\fP \-\- File handle to write to. The underlying file descriptor will be duplicated via a call to \fI\%dup(2)\fP <\fBhttps://www.man7.org/linux/man-pages/man2/dup.2.html\fP>, so callers may close the file handle immediately after this function returns if desired.
 .IP \(bu 2
-reopen_path: The path of the file associated with the fp argument. This path will be used to reopen the file if requested via the xtrctl \fI\%reopen command\fP\&. Pass \fI\%null_reopen_path\fP if no filename is associated with the file handle. 
+\fBreopen_path\fP \-\- The path of the file associated with the fp argument. This path will be used to reopen the file if requested via the xtrctl \fI\%reopen command\fP\&. Pass \fI\%null_reopen_path\fP if no filename is associated with the file handle. 
 .UNINDENT
-
+.UNINDENT
 .UNINDENT
 .INDENT 0.0
 .TP
 .B \fI\%storage_interface_ptr\fP  xtr::make_fd_storage(int  fd, std::string  reopen_path  =  \fI\%null_reopen_path\fP) 
 Creates a storage interface object from a file descriptor and reopen path. Either an instance of \fI\%io_uring_fd_storage\fP or \fI\%posix_fd_storage\fP will be created, refer to \fI\%make_fd_storage(const char*)\fP for details.
-.sp
+.INDENT 7.0
+.TP
+.B Parameters
 .INDENT 7.0
 .IP \(bu 2
-fd: File descriptor to write to. This will be duplicated via a call to \fI\%dup(2)\fP <\fBhttps://www.man7.org/linux/man-pages/man2/dup.2.html\fP>, so callers may close the file descriptor immediately after this function returns if desired. 
+\fBfd\fP \-\- File descriptor to write to. This will be duplicated via a call to \fI\%dup(2)\fP <\fBhttps://www.man7.org/linux/man-pages/man2/dup.2.html\fP>, so callers may close the file descriptor immediately after this function returns if desired.
 .IP \(bu 2
-reopen_path: The path of the file associated with the fd argument. This path will be used to reopen the file if requested via the xtrctl \fI\%reopen command\fP\&. Pass \fI\%null_reopen_path\fP if no filename is associated with the file descriptor. 
+\fBreopen_path\fP \-\- The path of the file associated with the fd argument. This path will be used to reopen the file if requested via the xtrctl \fI\%reopen command\fP\&. Pass \fI\%null_reopen_path\fP if no filename is associated with the file descriptor. 
 .UNINDENT
-
+.UNINDENT
 .UNINDENT
 .INDENT 0.0
 .TP

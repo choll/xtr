@@ -7,8 +7,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 //
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 //
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -24,7 +24,6 @@
 #include <cstddef>
 #include <memory>
 #include <span>
-#include <string_view>
 
 namespace xtr
 {
@@ -36,12 +35,12 @@ namespace xtr
     using storage_interface_ptr = std::unique_ptr<storage_interface>;
 
     /**
-     * When passed to the reopen_path argument of @ref make_fd_storage,
-     * @ref posix_fd_storage::posix_fd_storage, @ref io_uring_fd_storage or
-     * @ref stream-with-reopen-ctor "logger::logger" indicates that
-     * the output file handle has no associated filename and so should not be
-     * reopened if requested by the
-     * xtrctl <a href="xtrctl.html#reopening-log-files">reopen command</a>.
+     * When passed to the reopen_path argument of @ref make_fd_storage, @ref
+     * posix_fd_storage::posix_fd_storage, @ref io_uring_fd_storage or @ref
+     * stream-with-reopen-ctor "logger::logger" indicates that the output file
+     * handle has no associated filename and so should not be reopened if
+     * requested by the xtrctl <a href="xtrctl.html#reopening-log-files">reopen
+     * command</a>.
      */
     inline constexpr auto null_reopen_path = "";
 }
@@ -55,9 +54,9 @@ namespace xtr
 struct xtr::storage_interface
 {
     /**
-     * Allocates a buffer for formatted log data to be written to. Once a
-     * buffer has been allocated, allocate_buffer will not be called again
-     * until the buffer has been submitted via @ref submit_buffer.
+     * Allocates a buffer for formatted log data to be written to. Once a buffer
+     * has been allocated, allocate_buffer will not be called again until the
+     * buffer has been submitted via @ref submit_buffer.
      */
     virtual std::span<char> allocate_buffer() = 0;
 
@@ -73,8 +72,8 @@ struct xtr::storage_interface
     virtual void flush() = 0;
 
     /**
-     * Invoked to indicate that the back-end should ensure that all data
-     * written to the associated backing store has reached permanent storage.
+     * Invoked to indicate that the back-end should ensure that all data written
+     * to the associated backing store has reached permanent storage.
      */
     virtual void sync() noexcept = 0;
 

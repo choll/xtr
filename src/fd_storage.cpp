@@ -7,8 +7,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 //
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 //
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "xtr/config.hpp"
 #include "xtr/io/fd_storage.hpp"
+#include "xtr/config.hpp"
 #include "xtr/io/io_uring_fd_storage.hpp"
 #include "xtr/io/posix_fd_storage.hpp"
 
@@ -41,12 +41,11 @@
 XTR_FUNC
 xtr::storage_interface_ptr xtr::make_fd_storage(const char* path)
 {
-    const int fd =
-        XTR_TEMP_FAILURE_RETRY(
-            ::open(
-                path,
-                O_CREAT|O_APPEND|O_WRONLY,
-                S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH));
+    const int fd = XTR_TEMP_FAILURE_RETRY(
+        ::open(
+            path,
+            O_CREAT | O_APPEND | O_WRONLY,
+            S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH));
 
     if (fd == -1)
         detail::throw_system_error_fmt(errno, "Failed to open `%s'", path);
@@ -80,8 +79,9 @@ xtr::storage_interface_ptr xtr::make_fd_storage(int fd, std::string reopen_path)
         {
             fmt::print(
                 stderr,
-                FMT_COMPILE("Falling back to posix_fd_storage due to "
-                            "io_uring_fd_storage error: {}\n"),
+                FMT_COMPILE(
+                    "Falling back to posix_fd_storage due to "
+                    "io_uring_fd_storage error: {}\n"),
                 e.what());
         }
 #endif

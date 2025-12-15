@@ -7,8 +7,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 //
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 //
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -21,10 +21,9 @@
 #ifndef XTR_DETAIL_COMMANDS_RESPONSES_HPP
 #define XTR_DETAIL_COMMANDS_RESPONSES_HPP
 
+#include "frame.hpp"
 #include "message_id.hpp"
 #include "xtr/log_level.hpp"
-
-#include <ostream>
 
 namespace xtr::detail
 {

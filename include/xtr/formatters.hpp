@@ -7,8 +7,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 //
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 //
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -56,15 +56,17 @@ namespace fmt
 
         template<typename FormatContext, std::size_t... Indexes>
         auto format_impl(
-            const T& value,
-            FormatContext& ctx,
-            std::index_sequence<Indexes...>) const
+            const T& value, FormatContext& ctx, std::index_sequence<Indexes...>) const
         {
             fmt::format_to(ctx.out(), "(");
             if constexpr (std::tuple_size_v<T> > 0)
             {
                 fmt::format_to(ctx.out(), FMT_COMPILE("{}"), std::get<0>(value));
-                ((fmt::format_to(ctx.out(), FMT_COMPILE(", {}"), std::get<Indexes + 1>(value))), ...);
+                ((fmt::format_to(
+                     ctx.out(),
+                     FMT_COMPILE(", {}"),
+                     std::get<Indexes + 1>(value))),
+                 ...);
             }
             return fmt::format_to(ctx.out(), ")");
         }
@@ -85,12 +87,17 @@ namespace fmt
             fmt::format_to(ctx.out(), "{{");
             if (!value.empty())
             {
-                auto it = std::begin(value);;
+                auto it = std::begin(value);
+                ;
                 fmt::format_to(ctx.out(), FMT_COMPILE("{}: {}"), it->first, it->second);
                 ++it;
                 while (it != std::end(value))
                 {
-                    fmt::format_to(ctx.out(), FMT_COMPILE(", {}: {}"), it->first, it->second);
+                    fmt::format_to(
+                        ctx.out(),
+                        FMT_COMPILE(", {}: {}"),
+                        it->first,
+                        it->second);
                     ++it;
                 }
             }
@@ -117,7 +124,8 @@ namespace fmt
             fmt::format_to(ctx.out(), "[");
             if (!value.empty())
             {
-                auto it = std::begin(value);;
+                auto it = std::begin(value);
+                ;
                 fmt::format_to(ctx.out(), FMT_COMPILE("{}"), *it++);
                 while (it != std::end(value))
                     fmt::format_to(ctx.out(), FMT_COMPILE(", {}"), *it++);

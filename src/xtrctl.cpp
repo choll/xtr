@@ -7,8 +7,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 //
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 //
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -21,9 +21,9 @@
 #include "xtr/detail/commands/connect.hpp"
 #include "xtr/detail/commands/ios.hpp"
 #include "xtr/detail/commands/pattern.hpp"
+#include "xtr/detail/commands/recv.hpp"
 #include "xtr/detail/commands/requests.hpp"
 #include "xtr/detail/commands/responses.hpp"
-#include "xtr/detail/commands/recv.hpp"
 #include "xtr/detail/commands/send.hpp"
 #include "xtr/detail/file_descriptor.hpp"
 #include "xtr/detail/strzcpy.hpp"
@@ -32,7 +32,6 @@
 #include <cstring>
 #include <iostream>
 #include <map>
-#include <stdexcept>
 #include <string_view>
 #include <vector>
 
@@ -42,14 +41,12 @@ namespace xtrd = xtr::detail;
 
 namespace
 {
-    [[noreturn]] void usage(
-        const char* progname,
-        int status,
-        const char* reason = nullptr)
+    [[noreturn]] void usage(const char* progname, int status, const char* reason = nullptr)
     {
         if (reason != nullptr)
             std::cout << reason << "\n\n";
 
+        // clang-format off
         (status != 0 ? std::cerr : std::cout)
             << "Usage: " << progname << " [--help] <command> [<args>] <socket path>\n"
             "Available commands are:\n"
@@ -67,6 +64,7 @@ namespace
             "  -W, --wildcard               Pattern is a wildcard pattern\n"
             "\n"
             "If no pattern is specified then the command applies to all sinks.\n";
+        // clang-format on
 
         std::exit(status);
     }
@@ -105,11 +103,11 @@ namespace
 int main(int argc, char* argv[])
 {
     const struct option long_options[] = {
-        {"extended-regexp", no_argument,       nullptr, 'E'},
-        {"basic-regexp",    no_argument,       nullptr, 'G'},
-        {"wildcard",        no_argument,       nullptr, 'W'},
-        {"help",            no_argument,       nullptr, 'h'},
-        {nullptr,           0,                 nullptr,  0}};
+        {"extended-regexp", no_argument, nullptr, 'E'},
+        {"basic-regexp", no_argument, nullptr, 'G'},
+        {"wildcard", no_argument, nullptr, 'W'},
+        {"help", no_argument, nullptr, 'h'},
+        {nullptr, 0, nullptr, 0}};
 
     int optc;
     xtr::log_level_t log_level = xtr::log_level_t::none;
@@ -197,7 +195,10 @@ int main(int argc, char* argv[])
     }
 
     if (pattern_type != xtrd::pattern_type_t::none && pattern == nullptr)
-        usage(argv[0], EXIT_FAILURE, "Pattern type specified, but no pattern given");
+        usage(
+            argv[0],
+            EXIT_FAILURE,
+            "Pattern type specified, but no pattern given");
 
     if (pattern != nullptr && pattern_type == xtrd::pattern_type_t::none)
         pattern_type = xtrd::pattern_type_t::basic_regex;
@@ -250,7 +251,8 @@ int main(int argc, char* argv[])
         switch (buf.hdr.frame_id)
         {
         case xtrd::sink_info::frame_id:
-            infos.push_back(*frame_cast<xtrd::sink_info>(&buf, std::size_t(nbytes)));
+            infos.push_back(
+                *frame_cast<xtrd::sink_info>(&buf, std::size_t(nbytes)));
             break;
         case xtrd::success::frame_id:
             std::cout << "Success\n";
@@ -266,13 +268,10 @@ int main(int argc, char* argv[])
         infos.begin(),
         infos.end(),
         [](const auto& a, const auto& b)
-        {
-            return std::strcmp(a.name, b.name) < 0;
-        });
+        { return std::strcmp(a.name, b.name) < 0; });
 
     for (const auto& info : infos)
         std::cout << info << "\n";
 
     return EXIT_SUCCESS;
 }
-
