@@ -37,4 +37,3 @@ TEST_CASE("align_to_page_size", "[pagesize]")
     REQUIRE(pagesz == xtr::detail::align_to_page_size(pagesz - 1));
     REQUIRE(pagesz * 2 == xtr::detail::align_to_page_size(pagesz + 1));
 }
-

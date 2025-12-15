@@ -24,12 +24,10 @@
 
 XTR_FUNC
 xtr::detail::regex_matcher::regex_matcher(
-    const char* pattern,
-    bool ignore_case,
-    bool extended)
+    const char* pattern, bool ignore_case, bool extended)
 {
-    const int flags =
-        REG_NOSUB | (ignore_case ? REG_ICASE : 0) | (extended ? REG_EXTENDED : 0);
+    const int flags = REG_NOSUB | (ignore_case ? REG_ICASE : 0) |
+                      (extended ? REG_EXTENDED : 0);
     errnum_ = ::regcomp(&regex_, pattern, flags);
 }
 
@@ -58,4 +56,3 @@ bool xtr::detail::regex_matcher::operator()(const char* str) const
 {
     return ::regexec(&regex_, str, 0, nullptr, 0) == 0;
 }
-

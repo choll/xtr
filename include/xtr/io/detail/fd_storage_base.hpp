@@ -21,8 +21,8 @@
 #ifndef XTR_IO_DETAIL_FD_STORAGE_BASE_HPP
 #define XTR_IO_DETAIL_FD_STORAGE_BASE_HPP
 
-#include "xtr/io/storage_interface.hpp"
 #include "xtr/detail/file_descriptor.hpp"
+#include "xtr/io/storage_interface.hpp"
 
 #include <string>
 

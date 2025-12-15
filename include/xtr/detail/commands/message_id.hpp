@@ -23,7 +23,15 @@
 
 namespace xtr::detail
 {
-    enum class message_id {status, set_level, sink_info, success, error, reopen};
+    enum class message_id
+    {
+        status,
+        set_level,
+        sink_info,
+        success,
+        error,
+        reopen
+    };
 }
 
 #endif

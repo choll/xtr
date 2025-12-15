@@ -46,7 +46,7 @@ namespace xtr::detail
         std::string& name) noexcept
     {
         print(buf, Format, Level, timestamp, name);
-        return record + sizeof(void(*)());
+        return record + sizeof(void (*)());
     }
 
     // Fixed-size capture trampoline---log has arguments but the sizes of all
@@ -69,7 +69,7 @@ namespace xtr::detail
         [[maybe_unused]] const char* timestamp,
         std::string& name) noexcept
     {
-        typedef void(*fptr_t)();
+        using fptr_t = void (*)();
 
         auto func_pos = record + sizeof(fptr_t);
         if constexpr (alignof(Func) > alignof(fptr_t))
@@ -116,7 +116,7 @@ namespace xtr::detail
         const char* timestamp,
         std::string& name) noexcept
     {
-        typedef void(*fptr_t)();
+        using fptr_t = void (*)();
 
         auto func_pos = record + sizeof(fptr_t);
         if constexpr (alignof(Func) > alignof(fptr_t))

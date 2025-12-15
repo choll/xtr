@@ -32,8 +32,8 @@ TEST_CASE("memory_mapping anonymous mapping", "[memory_mapping]")
     xtrd::memory_mapping m(
         nullptr,
         1,
-        PROT_READ|PROT_WRITE,
-        MAP_PRIVATE|MAP_ANON,
+        PROT_READ | PROT_WRITE,
+        MAP_PRIVATE | MAP_ANON,
         -1, // fd
         0); // offset
 
@@ -49,8 +49,8 @@ TEST_CASE("memory_mapping zero length mapping", "[memory_mapping]")
         xtrd::memory_mapping(
             nullptr,
             0,
-            PROT_READ|PROT_WRITE,
-            MAP_PRIVATE|MAP_ANON,
+            PROT_READ | PROT_WRITE,
+            MAP_PRIVATE | MAP_ANON,
             -1,
             0),
         std::system_error);
@@ -62,8 +62,8 @@ TEST_CASE("memory_mapping move constructor", "[memory_mapping]")
     xtrd::memory_mapping m(
         nullptr,
         1,
-        PROT_READ|PROT_WRITE,
-        MAP_PRIVATE|MAP_ANON,
+        PROT_READ | PROT_WRITE,
+        MAP_PRIVATE | MAP_ANON,
         -1, // fd
         0); // offset
 
@@ -98,8 +98,8 @@ TEST_CASE("memory_mapping move assignment", "[memory_mapping]")
     xtrd::memory_mapping m(
         nullptr,
         1,
-        PROT_READ|PROT_WRITE,
-        MAP_PRIVATE|MAP_ANON,
+        PROT_READ | PROT_WRITE,
+        MAP_PRIVATE | MAP_ANON,
         -1, // fd
         0); // offset
 
@@ -136,8 +136,8 @@ TEST_CASE("memory_mapping reset and release", "[memory_mapping]")
     xtrd::memory_mapping m(
         nullptr,
         1,
-        PROT_READ|PROT_WRITE,
-        MAP_PRIVATE|MAP_ANON,
+        PROT_READ | PROT_WRITE,
+        MAP_PRIVATE | MAP_ANON,
         -1, // fd
         0); // offset
 
@@ -161,8 +161,8 @@ TEST_CASE("memory_mapping swap", "[memory_mapping]")
     xtrd::memory_mapping m(
         nullptr,
         1,
-        PROT_READ|PROT_WRITE,
-        MAP_PRIVATE|MAP_ANON,
+        PROT_READ | PROT_WRITE,
+        MAP_PRIVATE | MAP_ANON,
         -1, // fd
         0); // offset
 
@@ -194,4 +194,3 @@ TEST_CASE("memory_mapping swap", "[memory_mapping]")
 
     REQUIRE(m.get() == saved_mem);
 }
-

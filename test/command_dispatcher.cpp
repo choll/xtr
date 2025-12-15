@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "xtr/command_path.hpp"
 #include "xtr/detail/commands/command_dispatcher.hpp"
+#include "xtr/command_path.hpp"
 #include "xtr/detail/commands/frame.hpp"
 #include "xtr/detail/commands/responses.hpp"
 #include "xtr/detail/retry.hpp"
@@ -29,9 +29,9 @@
 #include <catch2/catch.hpp>
 
 #include <atomic>
+#include <stdexcept>
 #include <string>
 #include <string_view>
-#include <stdexcept>
 #include <thread>
 
 #include <sys/socket.h>
@@ -74,22 +74,18 @@ namespace
 
     struct fixture : xtrd::command_client
     {
-        fixture(const std::string& path = xtr::default_command_path())
-        :
+        fixture(const std::string& path = xtr::default_command_path()) :
             cmd_(path)
         {
             REQUIRE(cmd_.is_open());
 
             connect(path);
 
-            cmd_thread_ = std::thread([&](){ run(); });
+            cmd_thread_ = std::thread([&]() { run(); });
 
 #if __cpp_exceptions
             cmd_.register_callback<thrower>(
-                [](int, const thrower&)
-                {
-                    throw std::runtime_error("Reason");
-                });
+                [](int, const thrower&) { throw std::runtime_error("Reason"); });
 #endif
 
             cmd_.register_callback<sum>(
@@ -124,8 +120,7 @@ namespace
 #if defined(__linux__)
     struct abstract_socket_fixture : fixture
     {
-        abstract_socket_fixture()
-        :
+        abstract_socket_fixture() :
             fixture(socket_path())
         {
         }
@@ -139,7 +134,8 @@ namespace
 #endif
 }
 
-TEST_CASE_METHOD(fixture, "command_dispatcher request response test", "[command_dispatcher]")
+TEST_CASE_METHOD(
+    fixture, "command_dispatcher request response test", "[command_dispatcher]")
 {
     xtrd::frame<sum> request;
 
@@ -175,7 +171,8 @@ TEST_CASE_METHOD(
 #endif
 
 #if __cpp_exceptions
-TEST_CASE_METHOD(fixture, "command_dispatcher throw test", "[command_dispatcher]")
+TEST_CASE_METHOD(
+    fixture, "command_dispatcher throw test", "[command_dispatcher]")
 {
     const auto errors = send_frame<xtrd::error>(xtrd::frame<thrower>());
 
@@ -186,7 +183,8 @@ TEST_CASE_METHOD(fixture, "command_dispatcher throw test", "[command_dispatcher]
 }
 #endif
 
-TEST_CASE_METHOD(fixture, "command_dispatcher incomplete header test", "[command_dispatcher]")
+TEST_CASE_METHOD(
+    fixture, "command_dispatcher incomplete header test", "[command_dispatcher]")
 {
     ::msghdr hdr{};
     ::iovec iov;
@@ -201,7 +199,7 @@ TEST_CASE_METHOD(fixture, "command_dispatcher incomplete header test", "[command
 
     REQUIRE(
         XTR_TEMP_FAILURE_RETRY(::sendmsg(fd_.get(), &hdr, MSG_NOSIGNAL)) ==
-            sizeof(bad_header));
+        sizeof(bad_header));
 
     const auto errors = read_reply<xtrd::error>();
 
@@ -211,7 +209,8 @@ TEST_CASE_METHOD(fixture, "command_dispatcher incomplete header test", "[command
     REQUIRE(errors[0].reason == "Incomplete frame header"sv);
 }
 
-TEST_CASE_METHOD(fixture, "command_dispatcher invalid frame id test", "[command_dispatcher]")
+TEST_CASE_METHOD(
+    fixture, "command_dispatcher invalid frame id test", "[command_dispatcher]")
 {
     xtrd::frame<bad_frame_id> bf;
 
@@ -223,7 +222,10 @@ TEST_CASE_METHOD(fixture, "command_dispatcher invalid frame id test", "[command_
     REQUIRE(errors[0].reason == "Invalid frame id"sv);
 }
 
-TEST_CASE_METHOD(fixture, "command_dispatcher invalid frame length test", "[command_dispatcher]")
+TEST_CASE_METHOD(
+    fixture,
+    "command_dispatcher invalid frame length test",
+    "[command_dispatcher]")
 {
     xtrd::frame<bad_frame_length> bf;
 

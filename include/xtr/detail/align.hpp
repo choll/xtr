@@ -46,9 +46,9 @@ namespace xtr::detail
     {
         static_assert(
             std::is_same_v<std::remove_cv_t<T>, std::byte> ||
-            std::is_same_v<std::remove_cv_t<T>, char> ||
-            std::is_same_v<std::remove_cv_t<T>, unsigned char> ||
-            std::is_same_v<std::remove_cv_t<T>, signed char>,
+                std::is_same_v<std::remove_cv_t<T>, char> ||
+                std::is_same_v<std::remove_cv_t<T>, unsigned char> ||
+                std::is_same_v<std::remove_cv_t<T>, signed char>,
             "value must be a char or byte pointer");
         return reinterpret_cast<T*>(align(std::uintptr_t(ptr), Align));
     }

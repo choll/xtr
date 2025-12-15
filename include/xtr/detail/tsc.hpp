@@ -23,11 +23,8 @@ struct xtr::detail::tsc
     inline static tsc now() noexcept
     {
         std::uint32_t a, d;
-        asm volatile(
-            "rdtsc;"
-            : "=a" (a), "=d" (d)); // output, a=eax, d=edx
-        return
-            {static_cast<std::uint64_t>(a) | (static_cast<uint64_t>(d) << 32)};
+        asm volatile("rdtsc;" : "=a"(a), "=d"(d)); // output, a=eax, d=edx
+        return {static_cast<std::uint64_t>(a) | (static_cast<uint64_t>(d) << 32)};
     }
 
     static std::timespec to_timespec(tsc ts);
@@ -41,13 +38,13 @@ namespace fmt
     struct formatter<xtr::detail::tsc>
     {
         template<typename ParseContext>
-        constexpr auto parse(ParseContext &ctx)
+        constexpr auto parse(ParseContext& ctx)
         {
             return ctx.begin();
         }
 
         template<typename FormatContext>
-        auto format(const xtr::detail::tsc ticks, FormatContext &ctx) const
+        auto format(const xtr::detail::tsc ticks, FormatContext& ctx) const
         {
             const auto ts = xtr::detail::tsc::to_timespec(ticks);
             return formatter<xtr::timespec>().format(ts, ctx);

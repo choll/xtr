@@ -24,9 +24,7 @@
 
 XTR_FUNC
 xtr::detail::wildcard_matcher::wildcard_matcher(
-    const char* pattern,
-    bool ignore_case)
-:
+    const char* pattern, bool ignore_case) :
     pattern_(pattern),
     flags_(ignore_case ? FNM_CASEFOLD : 0)
 {
@@ -37,4 +35,3 @@ bool xtr::detail::wildcard_matcher::operator()(const char* str) const
 {
     return ::fnmatch(pattern_, str, flags_) == 0;
 }
-

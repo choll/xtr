@@ -37,7 +37,7 @@ class xtr::detail::regex_matcher final : public matcher
 public:
     regex_matcher(const char* pattern, bool ignore_case, bool extended);
 
-    ~regex_matcher();
+    ~regex_matcher() override;
 
     regex_matcher(const regex_matcher&) = delete;
     regex_matcher& operator=(const regex_matcher&) = delete;

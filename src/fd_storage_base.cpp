@@ -29,8 +29,7 @@
 #include <unistd.h>
 
 XTR_FUNC
-xtr::detail::fd_storage_base::fd_storage_base(int fd, std::string reopen_path)
-:
+xtr::detail::fd_storage_base::fd_storage_base(int fd, std::string reopen_path) :
     reopen_path_(std::move(reopen_path)),
     // The input file descriptor is duplicated so that there is no ambiguity
     // regarding ownership of the fd---we effectively increment a reference
@@ -58,12 +57,11 @@ int xtr::detail::fd_storage_base::reopen() noexcept
     if (reopen_path_ == null_reopen_path)
         return ENOENT;
 
-    const int newfd =
-        XTR_TEMP_FAILURE_RETRY(
-            ::open(
-                reopen_path_.c_str(),
-                O_CREAT|O_APPEND|O_WRONLY,
-                S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH));
+    const int newfd = XTR_TEMP_FAILURE_RETRY(
+        ::open(
+            reopen_path_.c_str(),
+            O_CREAT | O_APPEND | O_WRONLY,
+            S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH));
 
     if (newfd == -1)
         return errno;

@@ -26,11 +26,7 @@
 #include <unistd.h>
 
 XTR_FUNC
-xtr::detail::file_descriptor::file_descriptor(
-    const char* path,
-    int flags,
-    int mode)
-:
+xtr::detail::file_descriptor::file_descriptor(const char* path, int flags, int mode) :
     fd_(XTR_TEMP_FAILURE_RETRY(::open(path, flags, mode)))
 {
     if (fd_ == -1)
@@ -38,7 +34,8 @@ xtr::detail::file_descriptor::file_descriptor(
         throw_system_error_fmt(
             errno,
             "xtr::detail::file_descriptor::file_descriptor: "
-            "Failed to open `%s'", path);
+            "Failed to open `%s'",
+            path);
     }
 }
 
@@ -70,4 +67,3 @@ void xtr::detail::file_descriptor::reset(int fd) noexcept
         (void)::close(fd_);
     fd_ = fd;
 }
-

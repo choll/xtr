@@ -39,43 +39,41 @@ namespace xtr
     storage_interface_ptr make_fd_storage(const char* path);
 
     /**
-     * Creates a storage interface object from a file descriptor and reopen path.
-     * Either an instance of @ref io_uring_fd_storage or @ref posix_fd_storage
-     * will be created, refer to @ref make_fd_storage(const char*) for details.
+     * Creates a storage interface object from a file descriptor and reopen
+     * path. Either an instance of @ref io_uring_fd_storage or @ref
+     * posix_fd_storage will be created, refer to @ref make_fd_storage(const
+     * char*) for details.
      *
-     * @arg fd: File handle to write to. The underlying file descriptor will be
-     *          duplicated via a call to
-     *          <a href="https://www.man7.org/linux/man-pages/man2/dup.2.html">dup(2)</a>,
-     *          so callers may close the file handle immediately after this
-     *          function returns if desired.
-     * @arg reopen_path: The path of the file associated with the fp argument.
-     *                   This path will be used to reopen the file if requested via
-     *                   the xtrctl <a href="xtrctl.html#reopening-log-files">reopen command</a>.
-     *                   Pass @ref null_reopen_path if no filename is associated with the file
-     *                   handle.
+     * @param fd: File handle to write to. The underlying file descriptor will
+     * be duplicated via a call to <a
+     * href="https://www.man7.org/linux/man-pages/man2/dup.2.html">dup(2)</a>,
+     * so callers may close the file handle immediately after this function
+     * returns if desired.
+     *
+     * @param reopen_path: The path of the file associated with the fp argument.
+     * This path will be used to reopen the file if requested via the xtrctl <a
+     * href="xtrctl.html#reopening-log-files">reopen command</a>. Pass @ref
+     * null_reopen_path if no filename is associated with the file handle.
      */
     storage_interface_ptr make_fd_storage(
-        FILE* fp,
-        std::string reopen_path = null_reopen_path);
+        FILE* fp, std::string reopen_path = null_reopen_path);
 
     /**
      * Creates a storage interface object from a file descriptor and reopen path.
      * Either an instance of @ref io_uring_fd_storage or @ref posix_fd_storage
      * will be created, refer to @ref make_fd_storage(const char*) for details.
      *
-     * @arg fd: File descriptor to write to. This will be duplicated via a call to
-     *          <a href="https://www.man7.org/linux/man-pages/man2/dup.2.html">dup(2)</a>,
-     *          so callers may close the file descriptor immediately after this
-     *          function returns if desired.
-     * @arg reopen_path: The path of the file associated with the fd argument.
-     *                   This path will be used to reopen the file if requested via
-     *                   the xtrctl <a href="xtrctl.html#reopening-log-files">reopen command</a>.
-     *                   Pass @ref null_reopen_path if no filename is associated with the file
-     *                   descriptor.
+     * @param fd: File descriptor to write to. This will be duplicated via a call
+     * to <a href="https://www.man7.org/linux/man-pages/man2/dup.2.html">dup(2)</a>,
+     * so callers may close the file descriptor immediately after this function returns if desired.
+     *
+     * @param reopen_path: The path of the file associated with the fd argument.
+     * This path will be used to reopen the file if requested via the xtrctl <a
+     * href="xtrctl.html#reopening-log-files">reopen command</a>. Pass @ref null_reopen_path
+     * if no filename is associated with the file descriptor.
      */
     storage_interface_ptr make_fd_storage(
-        int fd,
-        std::string reopen_path = null_reopen_path);
+        int fd, std::string reopen_path = null_reopen_path);
 }
 
 #endif

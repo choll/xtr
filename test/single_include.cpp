@@ -7,4 +7,3 @@ int main()
     XTR_LOG(s, "Hello world");
     return 0;
 }
-

@@ -33,7 +33,9 @@ TEST_CASE("runtime_error", "[throw]")
 
 TEST_CASE("runtime_error_fmt", "[throw]")
 {
-    REQUIRE_THROWS_WITH(xtr::detail::throw_runtime_error_fmt("error text"), "error text");
+    REQUIRE_THROWS_WITH(
+        xtr::detail::throw_runtime_error_fmt("error text"),
+        "error text");
 }
 
 TEST_CASE("system_error", "[throw]")
@@ -54,7 +56,9 @@ TEST_CASE("system_error_fmt", "[throw]")
 
 TEST_CASE("invalid_argument", "[throw]")
 {
-    REQUIRE_THROWS_AS(xtr::detail::throw_invalid_argument(""), std::invalid_argument);
+    REQUIRE_THROWS_AS(
+        xtr::detail::throw_invalid_argument(""),
+        std::invalid_argument);
 }
 
 TEST_CASE("bad_alloc", "[throw]")

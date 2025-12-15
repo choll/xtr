@@ -41,7 +41,7 @@ public:
         std::size_t length,
         int prot,
         int flags,
-        int fd = - 1,
+        int fd = -1,
         std::size_t offset = 0);
 
     memory_mapping(const memory_mapping&) = delete;

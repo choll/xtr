@@ -22,8 +22,8 @@
 
 #include <catch2/catch.hpp>
 
-#include <utility>
 #include <system_error>
+#include <utility>
 
 #include <fcntl.h>
 #include <unistd.h>
@@ -46,7 +46,8 @@ TEST_CASE("file_descriptor construct from fd and destruct", "[file_descriptor]")
     REQUIRE(!is_fd_open(saved_fd));
 }
 
-TEST_CASE("file_descriptor construct from path and destruct", "[file_descriptor]")
+TEST_CASE(
+    "file_descriptor construct from path and destruct", "[file_descriptor]")
 {
     int saved_fd;
     {
@@ -180,4 +181,3 @@ TEST_CASE("file_descriptor open error", "[file_descriptor]")
     REQUIRE_THROWS_AS(xtr::detail::file_descriptor("/", O_RDWR), std::system_error);
 }
 #endif
-

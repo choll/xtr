@@ -86,13 +86,10 @@ public:
         static_assert(sizeof(frame_type) <= max_frame_size);
         static_assert(alignof(frame_type) <= max_frame_alignment);
 
-        callbacks_[Payload::frame_id] =
-            callback{
-                [c = std::forward<Callback>(c)](int fd, void* buf)
-                {
-                    c(fd, static_cast<frame_type*>(buf)->payload);
-                },
-                sizeof(frame_type)};
+        callbacks_[Payload::frame_id] = callback{
+            [c = std::forward<Callback>(c)](int fd, void* buf)
+            { c(fd, static_cast<frame_type*>(buf)->payload); },
+            sizeof(frame_type)};
     }
 
     void send(int fd, const void* buf, std::size_t nbytes);

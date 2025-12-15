@@ -21,10 +21,9 @@
 #ifndef XTR_DETAIL_COMMANDS_RESPONSES_HPP
 #define XTR_DETAIL_COMMANDS_RESPONSES_HPP
 
+#include "frame.hpp"
 #include "message_id.hpp"
 #include "xtr/log_level.hpp"
-
-#include <ostream>
 
 namespace xtr::detail
 {

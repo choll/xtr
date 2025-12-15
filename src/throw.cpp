@@ -20,9 +20,9 @@
 
 #include "xtr/detail/throw.hpp"
 
+#include <cstdarg>
 #include <cstdio>
 #include <cstdlib>
-#include <cstdarg>
 #include <cstring>
 #include <new>
 #include <stdexcept>
@@ -43,7 +43,8 @@ XTR_FUNC
 void xtr::detail::throw_runtime_error_fmt(const char* format, ...)
 {
     va_list args;
-    va_start(args, format);;
+    va_start(args, format);
+    ;
     char buf[1024];
     std::vsnprintf(buf, sizeof(buf), format, args);
     va_end(args);
@@ -70,7 +71,8 @@ XTR_FUNC
 void xtr::detail::throw_system_error_fmt(int errnum, const char* format, ...)
 {
     va_list args;
-    va_start(args, format);;
+    va_start(args, format);
+    ;
     char buf[1024];
     std::vsnprintf(buf, sizeof(buf), format, args);
     va_end(args);

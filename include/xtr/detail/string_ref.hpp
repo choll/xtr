@@ -36,14 +36,12 @@ namespace xtr::detail
     template<>
     struct string_ref<const char*>
     {
-        explicit string_ref(const char* s)
-        :
+        explicit string_ref(const char* s) :
             str(s)
         {
         }
 
-        explicit string_ref(const std::string& s)
-        :
+        explicit string_ref(const std::string& s) :
             str(s.c_str())
         {
         }
@@ -58,8 +56,7 @@ namespace xtr::detail
     template<>
     struct string_ref<std::string_view>
     {
-        explicit string_ref(std::string_view s)
-        :
+        explicit string_ref(std::string_view s) :
             str(s)
         {
         }
@@ -74,13 +71,13 @@ namespace fmt
     struct formatter<xtr::detail::string_ref<const char*>>
     {
         template<typename ParseContext>
-        constexpr auto parse(ParseContext &ctx)
+        constexpr auto parse(ParseContext& ctx)
         {
             return ctx.begin();
         }
 
         template<typename FormatContext>
-        auto format(xtr::detail::string_ref<const char*> ref, FormatContext &ctx) const
+        auto format(xtr::detail::string_ref<const char*> ref, FormatContext& ctx) const
         {
             auto pos = ctx.out();
             while (*ref.str != '\0')
@@ -93,13 +90,15 @@ namespace fmt
     struct formatter<xtr::detail::string_ref<std::string_view>>
     {
         template<typename ParseContext>
-        constexpr auto parse(ParseContext &ctx)
+        constexpr auto parse(ParseContext& ctx)
         {
             return ctx.begin();
         }
 
         template<typename FormatContext>
-        auto format(const xtr::detail::string_ref<std::string_view> ref, FormatContext &ctx) const
+        auto format(
+            const xtr::detail::string_ref<std::string_view> ref,
+            FormatContext& ctx) const
         {
             auto pos = ctx.out();
             for (const char c : ref.str)

@@ -22,8 +22,8 @@
 #define XTR_DETAIL_COMMANDS_REQUESTS_HPP
 
 #include "frame.hpp"
-#include "pattern.hpp"
 #include "message_id.hpp"
+#include "pattern.hpp"
 #include "xtr/log_level.hpp"
 
 namespace xtr::detail

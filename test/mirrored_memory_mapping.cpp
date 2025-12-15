@@ -36,9 +36,8 @@ namespace
     void test_mirroring(xtrd::mirrored_memory_mapping& m)
     {
         volatile unsigned int* first = reinterpret_cast<unsigned int*>(m.get());
-        volatile unsigned int* second =
-            reinterpret_cast<unsigned int*>(
-                static_cast<std::byte*>(m.get()) + m.length());
+        volatile unsigned int* second = reinterpret_cast<unsigned int*>(
+            static_cast<std::byte*>(m.get()) + m.length());
 
         *first = 0xDEADBEEF;
         REQUIRE(*second == 0xDEADBEEF);
@@ -54,19 +53,17 @@ namespace
 
         REQUIRE(m.length() % sizeof(int) == 0);
 
-        for (
-            volatile unsigned int* it1 = first, *it2 = second, *end1 = second;
-            it1 != end1;
-            ++it1, ++it2)
+        for (volatile unsigned int *it1 = first, *it2 = second, *end1 = second;
+             it1 != end1;
+             ++it1, ++it2)
         {
             *it1 = unsigned(it1 - first);
             REQUIRE(*it1 == *it2);
         }
 
-        for (
-            volatile unsigned int* it1 = first, *it2 = second, *end1 = second;
-            it1 != end1;
-            ++it1, ++it2)
+        for (volatile unsigned int *it1 = first, *it2 = second, *end1 = second;
+             it1 != end1;
+             ++it1, ++it2)
         {
             *it2 = unsigned(it2 - second);
             REQUIRE(*it1 == *it2);
@@ -74,7 +71,8 @@ namespace
     }
 }
 
-TEST_CASE("mirrored_memory_mapping anonymous mapping", "[mirrored_memory_mapping]")
+TEST_CASE(
+    "mirrored_memory_mapping anonymous mapping", "[mirrored_memory_mapping]")
 {
     const std::size_t len = xtrd::align_to_page_size(1);
 
@@ -102,7 +100,8 @@ TEST_CASE("mirrored_memory_mapping file mapping", "[mirrored_memory_mapping]")
 }
 
 #if __cpp_exceptions
-TEST_CASE("mirrored_memory_mapping size not page aligned", "[mirrored_memory_mapping]")
+TEST_CASE(
+    "mirrored_memory_mapping size not page aligned", "[mirrored_memory_mapping]")
 {
     REQUIRE_THROWS_AS(xtrd::mirrored_memory_mapping(1), std::invalid_argument);
     REQUIRE_THROWS_WITH(
@@ -111,7 +110,8 @@ TEST_CASE("mirrored_memory_mapping size not page aligned", "[mirrored_memory_map
 }
 #endif
 
-TEST_CASE("mirrored_memory_mapping move constructor", "[mirrored_memory_mapping]")
+TEST_CASE(
+    "mirrored_memory_mapping move constructor", "[mirrored_memory_mapping]")
 {
     xtrd::mirrored_memory_mapping m1(xtrd::align_to_page_size(1));
 
@@ -183,4 +183,3 @@ TEST_CASE("mirrored_memory_mapping swap", "[mirrored_memory_mapping]")
     REQUIRE(m1.get() == saved_buf);
     REQUIRE(m1.length() == saved_length);
 }
-

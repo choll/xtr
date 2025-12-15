@@ -30,10 +30,7 @@
 
 XTR_FUNC
 xtr::posix_fd_storage::posix_fd_storage(
-    int fd,
-    std::string reopen_path,
-    std::size_t buffer_capacity)
-:
+    int fd, std::string reopen_path, std::size_t buffer_capacity) :
     fd_storage_base(fd, std::move(reopen_path)),
     buf_(new char[buffer_capacity]),
     buffer_capacity_(buffer_capacity)

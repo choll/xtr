@@ -70,8 +70,7 @@ public:
         buffer bf,
         sink* control,
         std::string command_path,
-        std::function<std::timespec()> clock)
-    :
+        std::function<std::timespec()> clock) :
         buf(std::move(bf)),
         clock_(std::move(clock)),
         sinks_({{control, "control", 0}})
@@ -99,9 +98,7 @@ private:
 
     std::function<std::timespec()> clock_;
     std::vector<sink_handle> sinks_;
-    std::unique_ptr<
-        detail::command_dispatcher,
-        detail::command_dispatcher_deleter> cmds_;
+    std::unique_ptr<detail::command_dispatcher, detail::command_dispatcher_deleter> cmds_;
     std::size_t flush_count_ = 0;
     std::latch destruct_latch_{1};
 };

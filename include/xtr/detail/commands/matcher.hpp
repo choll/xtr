@@ -31,9 +31,7 @@ namespace xtr::detail
     class matcher;
 
     std::unique_ptr<matcher> make_matcher(
-        pattern_type_t pattern_type,
-        const char* pattern,
-        bool ignore_case);
+        pattern_type_t pattern_type, const char* pattern, bool ignore_case);
 }
 
 class xtr::detail::matcher
@@ -53,9 +51,7 @@ public:
     {
     }
 
-    virtual ~matcher()
-    {
-    };
+    virtual ~matcher() {};
 };
 
 #endif

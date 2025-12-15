@@ -42,32 +42,34 @@ public:
     /**
      * Default value for the buffer_capacity constructor argument.
      */
-    static constexpr std::size_t default_buffer_capacity = 64 * 1024;
+    static constexpr std::size_t default_buffer_capacity = 64UL * 1024UL;
 
     /**
      * File descriptor constructor.
      *
-     * @arg fd: File descriptor to write to. This will be duplicated via a call to
-     *          <a href="https://www.man7.org/linux/man-pages/man2/dup.2.html">dup(2)</a>,
-     *          so callers may close the file descriptor immediately after this
-     *          constructor returns if desired.
-     * @arg reopen_path: The path of the file associated with the fd argument.
-     *                   This path will be used to reopen the file if requested via
-     *                   the xtrctl <a href="xtrctl.html#reopening-log-files">reopen command</a>.
-     *                   Pass @ref null_reopen_path if no filename is associated with the file
-     *                   descriptor.
-     * @arg buffer_capacity: The size in bytes of the internal write buffer.
+     * @param fd: File descriptor to write to. This will be duplicated via a
+     * call to
+     * <a href="https://www.man7.org/linux/man-pages/man2/dup.2.html">dup(2)</a>,
+     * so callers may close the file descriptor immediately after this
+     * constructor returns if desired.
+     *
+     * @param reopen_path: The path of the file associated with the fd argument.
+     * This path will be used to reopen the file if requested via the xtrctl <a
+     * href="xtrctl.html#reopening-log-files">reopen command</a>. Pass @ref
+     * null_reopen_path if no filename is associated with the file descriptor.
+     *
+     * @param buffer_capacity: The size in bytes of the internal write buffer.
      */
     explicit posix_fd_storage(
         int fd,
         std::string reopen_path = null_reopen_path,
         std::size_t buffer_capacity = default_buffer_capacity);
 
-    std::span<char> allocate_buffer() override final;
+    std::span<char> allocate_buffer() final;
 
-    void submit_buffer(char* buf, std::size_t size) override final;
+    void submit_buffer(char* buf, std::size_t size) final;
 
-    void flush() override final
+    void flush() final
     {
     }
 

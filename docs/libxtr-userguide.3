@@ -1,4 +1,6 @@
-.\" Man page generated from reStructuredText.
+'\" t
+.\" Man page generated from reStructuredText
+.\" by the Docutils 0.22.3 manpage writer.
 .
 .
 .nr rst2man-indent-level 0
@@ -32,8 +34,8 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 libxtr-userguide \- C++ logging library user guide
 .SH OVERVIEW
 .sp
-The XTR API contains two classes; \fI\%xtr::logger\fP and
-\fI\%xtr::sink\fP\&. Sinks each contain a queue [1], and
+The XTR API contains two classes; \fBxtr::logger\fP \%<#\:_CPPv4N3xtr6loggerE> and
+\fBxtr::sink\fP \%<#\:_CPPv4N3xtr4sinkE>\&. Sinks each contain a queue [1], and
 pass log messages to the associated logger via these queues. Each logger
 has a background consumer thread which reads from the sinks that were created from the
 logger. The background thread then formats the log message and either writes it
@@ -41,8 +43,7 @@ to disk or passes it to a custom back\-end if one is in use.
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 +\-\-\-\-\-\-+
 | Sink |\-\-\-[queue]\-\-\-+
 +\-\-\-\-\-\-+             |
@@ -54,8 +55,7 @@ to disk or passes it to a custom back\-end if one is in use.
 +\-\-\-\-\-\-+             |
 | Sink |\-\-\-[queue]\-\-\-+
 +\-\-\-\-\-\-+
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
@@ -64,20 +64,19 @@ sink per component. To support this sinks have a name associated with them which
 is included in the output log message. Sink names do not need to be unique.
 .SH CREATING AND WRITING TO SINKS
 .sp
-Sinks are created either by calling \fI\%xtr::logger::get_sink()\fP, via normal
-construction followed by a call to \fI\%xtr::logger::register_sink()\fP, or by
+Sinks are created either by calling \fBxtr::logger::get_sink()\fP \%<#\:_CPPv4N3xtr6logger8get_sinkENSt6stringE>, via normal
+construction followed by a call to \fBxtr::logger::register_sink()\fP \%<#\:_CPPv4N3xtr6logger13register_sinkER4sinkNSt6stringE>, or by
 copying another sink. Copied sinks are registered to the same logger and have the
-same name as the source sink. Sinks may be renamed by calling \fI\%xtr::sink::set_name()\fP\&.
+same name as the source sink. Sinks may be renamed by calling \fBxtr::sink::set_name()\fP \%<#\:_CPPv4N3xtr4sink8set_nameENSt6stringE>\&.
 Once a sink has been created or registered, it may be written to using one of several
-log macros which are described in the \fI\%log macros\fP section.
+log macros which are described in the log macros \%<#\:log-macros> section.
 .SS Examples
 .sp
-Sink creation via \fI\%xtr::logger::get_sink()\fP:
+Sink creation via \fBxtr::logger::get_sink()\fP \%<#\:_CPPv4N3xtr6logger8get_sinkENSt6stringE>:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 #include <xtr/logger.hpp>
 
 xtr::logger log;
@@ -85,19 +84,17 @@ xtr::logger log;
 xtr::sink s = log.get_sink(\(dqMain\(dq);
 
 XTR_LOG(s, \(dqHello world\(dq);
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
-View this example on \X'tty: link https://godbolt.org/z/6MYYWzG4b'\fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/6MYYWzG4b\fP>\X'tty: link'\&.
+View this example on Compiler Explorer \%<https://\:godbolt\:.org/\:z/\:6MYYWzG4b>\&.
 .sp
-Sink creation via \fI\%xtr::logger::register_sink()\fP:
+Sink creation via \fBxtr::logger::register_sink()\fP \%<#\:_CPPv4N3xtr6logger13register_sinkER4sinkNSt6stringE>:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 #include <xtr/logger.hpp>
 
 xtr::logger log;
@@ -106,19 +103,17 @@ xtr::sink s;
 log.register_sink(s, \(dqMain\(dq);
 
 XTR_LOG(s, \(dqHello world\(dq);
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
-View this example on \X'tty: link https://godbolt.org/z/qzqeMbGas'\fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/qzqeMbGas\fP>\X'tty: link'\&.
+View this example on Compiler Explorer \%<https://\:godbolt\:.org/\:z/\:qzqeMbGas>\&.
 .sp
 Sink creation via copying:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 #include <xtr/logger.hpp>
 
 xtr::logger log;
@@ -130,24 +125,22 @@ s2.set_name(\(dqCopy\(dq);
 
 XTR_LOG(s1, \(dqHello world\(dq);
 XTR_LOG(s2, \(dqHello world\(dq);
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
-View this example on \X'tty: link https://godbolt.org/z/oTGqK4q4j'\fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/oTGqK4q4j\fP>\X'tty: link'\&.
+View this example on Compiler Explorer \%<https://\:godbolt\:.org/\:z/\:oTGqK4q4j>\&.
 .SH FORMAT STRING SYNTAX
 .sp
-XTR uses \X'tty: link https://fmt.dev'\fI\%{fmt}\fP <\fBhttps://fmt.dev\fP>\X'tty: link' for formatting, so format strings follow the
-same Python \X'tty: link https://docs.python.org/3/library/string.html#formatstrings'\fI\%str.format\fP <\fBhttps://docs.python.org/3/library/string.html#formatstrings\fP>\X'tty: link'
+XTR uses {fmt} \%<https://\:fmt\:.dev> for formatting, so format strings follow the
+same Python str.format \%<https://\:docs\:.python\:.org/\:3/\:library/\:string\:.html#\:formatstrings>
 style formatting as found in {fmt}. The {fmt} format string documentation can be found
-\X'tty: link https://fmt.dev/latest/syntax.html'\fI\%here\fP <\fBhttps://fmt.dev/latest/syntax.html\fP>\X'tty: link'\&.
+here \%<https://\:fmt\:.dev/\:latest/\:syntax\:.html>\&.
 .SS Example
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 #include <xtr/logger.hpp>
 
 xtr::logger log;
@@ -157,24 +150,22 @@ xtr::sink s = log.get_sink(\(dqMain\(dq);
 XTR_LOG(s, \(dqHello {}\(dq, 123); // Hello 123
 XTR_LOG(s, \(dqHello {}\(dq, 123.456); // Hello 123.456
 XTR_LOG(s, \(dqHello {:.1f}\(dq, 123.456); // Hello 123.1
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
-View this example on \X'tty: link https://godbolt.org/z/zxs7WThM6'\fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/zxs7WThM6\fP>\X'tty: link'\&.
+View this example on Compiler Explorer \%<https://\:godbolt\:.org/\:z/\:zxs7WThM6>\&.
 .SH PASSING ARGUMENTS BY VALUE OR REFERENCE
 .sp
 The default behaviour of the logger is to copy format arguments into the
 specified sink by value. Note that no allocations are be performed by the
 logger when this is done. If copying is undesirable then arguments may be
-passed by reference by wrapping them in a call to \fI\%xtr::nocopy()\fP\&.
+passed by reference by wrapping them in a call to \fBxtr::nocopy()\fP \%<#\:_CPPv4I0EN3xtr6nocopyEDaRK1T>\&.
 .SS Example
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 #include <xtr/logger.hpp>
 
 xtr::logger log;
@@ -188,12 +179,11 @@ XTR_LOG(s, \(dqHello {}\(dq, nocopy(arg));
 
 // Here \(aqarg\(aq is passed by value:
 XTR_LOG(s, \(dqHello {}\(dq, arg);
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
-View this example on \X'tty: link https://godbolt.org/z/TaT3nv61K'\fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/TaT3nv61K\fP>\X'tty: link'\&.
+View this example on Compiler Explorer \%<https://\:godbolt\:.org/\:z/\:TaT3nv61K>\&.
 .SH STRING ARGUMENTS
 .sp
 Passing strings to the logger is guaranteed to not allocate memory, and does
@@ -202,11 +192,9 @@ following log statement:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 XTR_LOG(s, \(dq{}\(dq, str);
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
@@ -217,15 +205,13 @@ to not allocate\-\-\-i.e. even if std::string is passed, the
 std::string copy constructor is not invoked and no allocation occurs.
 String data is copied in order to provide safe default behaviour regarding the
 lifetime of the string data. If copying the string data is undesirable then
-string arguments may be wrapped in a call to \fI\%xtr::nocopy()\fP:
+string arguments may be wrapped in a call to \fBxtr::nocopy()\fP \%<#\:_CPPv4I0EN3xtr6nocopyEDaRK1T>:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 XTR_LOG(sink, \(dq{}\(dq, nocopy(str));
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
@@ -237,15 +223,15 @@ object itself does not need to remain valid, just the data it references.
 .SH LOG LEVELS
 .sp
 The logger supports debug, info, warning, error and fatal log levels, which
-are enumerated in the \fI\%xtr::log_level_t\fP enum. Log statements with
-these levels may be produced using the \fI\%XTR_LOGL\fP macro, along with
-additional macros that are described in the \fI\%log macros\fP
+are enumerated in the \fBxtr::log_level_t\fP \%<#\:_CPPv4N3xtr11log_level_tE> enum. Log statements with
+these levels may be produced using the \fBXTR_LOGL\fP \%<#\:c\:.XTR_LOGL> macro, along with
+additional macros that are described in the log macros \%<#\:log-macros>
 section of the API reference, all of which follow the convention of containing
 \(dqLOGL\(dq in the macro name.
 .sp
 Each sink has its own log level, which can be programmatically set or queried
-via \fI\%xtr::sink::set_level()\fP and \fI\%xtr::sink::level()\fP, and can
-be set or queried from the command line using the \fI\%xtrctl\fP tool.
+via \fBxtr::sink::set_level()\fP \%<#\:_CPPv4N3xtr4sink9set_levelE11log_level_t> and \fBxtr::sink::level()\fP \%<#\:_CPPv4NK3xtr4sink5levelEv>, and can
+be set or queried from the command line using the xtrctl \%<#\:xtrctl> tool.
 .sp
 Each log level has an order of importance. The listing of levels above is in
 the order of increasing importance\-\-\-so the least important level is \(aqdebug\(aq
@@ -256,8 +242,7 @@ so in the following example the function \fBfoo()\fP is not called:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 #include <xtr/logger.hpp>
 
 xtr::logger log;
@@ -267,45 +252,44 @@ xtr::sink s = log.get_sink(\(dqMain\(dq);
 s.set_level(xtr::log_level_t::error);
 
 XTR_LOGL(info, s, \(dqHello {}\(dq, foo());
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
-View this example on \X'tty: link https://godbolt.org/z/PxfhfTn8v'\fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/PxfhfTn8v\fP>\X'tty: link'\&.
+View this example on Compiler Explorer \%<https://\:godbolt\:.org/\:z/\:PxfhfTn8v>\&.
 .SS Debug Log Statements
 .sp
 Debug log statements can be disabled by defining XTR_NDEBUG.
 .SS Fatal Log Statements
 .sp
-Fatal log statements will additionally call \fI\%xtr::sink::sync()\fP followed
-by \X'tty: link https://www.man7.org/linux/man-pages/man3/abort.3.html'\fI\%abort(3)\fP <\fBhttps://www.man7.org/linux/man-pages/man3/abort.3.html\fP>\X'tty: link'\&.
+Fatal log statements will additionally call \fBxtr::sink::sync()\fP \%<#\:_CPPv4N3xtr4sink4syncEv> followed
+by abort(3) \%<https://\:www\:.man7\:.org/\:linux/\:man-pages/\:man3/\:abort\:.3\:.html>\&.
 .SH THREAD SAFETY
 .INDENT 0.0
 .INDENT 3.5
 .INDENT 0.0
 .IP \(bu 2
-All functions in \fI\%xtr::logger\fP are thread\-safe.
+All functions in \fBxtr::logger\fP \%<#\:_CPPv4N3xtr6loggerE> are thread\-safe.
 .IP \(bu 2
-No functions in \fI\%xtr::sink\fP are thread\-safe other than
-\fI\%xtr::sink::level()\fP and \fI\%xtr::sink::set_level()\fP\&.
+No functions in \fBxtr::sink\fP \%<#\:_CPPv4N3xtr4sinkE> are thread\-safe other than
+\fBxtr::sink::level()\fP \%<#\:_CPPv4NK3xtr4sink5levelEv> and \fBxtr::sink::set_level()\fP \%<#\:_CPPv4N3xtr4sink9set_levelE11log_level_t>\&.
 This is because each thread is expected to have its own sink(s).
 .UNINDENT
 .UNINDENT
 .UNINDENT
 .SH CUSTOM FORMATTERS
 .sp
-Custom formatters are implemented the same as in \X'tty: link https://fmt.dev'\fI\%{fmt}\fP <\fBhttps://fmt.dev\fP>\X'tty: link',
+Custom formatters are implemented the same as in {fmt} \%<https://\:fmt\:.dev>,
 which is done either by:
 .INDENT 0.0
 .IP \(bu 2
 Providing a \fBstd::stream& operator<<(std::stream&, T&)()\fP overload. Note
-that arguments must be wrapped with either \fI\%xtr::streamed_copy()\fP or
-\fI\%xtr::streamed_ref()\fP (from \fIxtr/streamed.hpp\fP).
+that arguments must be wrapped with either \fBxtr::streamed_copy()\fP \%<#\:_CPPv4I0EN3xtr13streamed_copyEN6detail16streamed_wrapperINSt11remove_cv_tINSt18remove_reference_tI1TEEEEEERR1T> or
+\fBxtr::streamed_ref()\fP \%<#\:_CPPv4I0EN3xtr12streamed_refEN6detail16streamed_wrapperIRK1TEERK1T> (from \fIxtr/streamed.hpp\fP).
 .IP \(bu 2
 Specializing fmt::formatter<T> and implementing the \fIparse\fP and
 \fIformat\fP methods as described by the \fI{fmt}\fP documentation
-\X'tty: link https://fmt.dev/latest/api.html#formatting-user-defined-types'\fI\%here\fP <\fBhttps://fmt.dev/latest/api.html#formatting-user-defined-types\fP>\X'tty: link'\&.
+here \%<https://\:fmt\:.dev/\:latest/\:api\:.html#\:formatting-user-defined-types>\&.
 .UNINDENT
 .SS Examples
 .sp
@@ -313,8 +297,7 @@ Formatting a custom type via operator<<:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 #include <xtr/logger.hpp>
 
 #include <fmt/ostream.h>
@@ -341,19 +324,17 @@ int main()
 
     return 0;
 }
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
-View this example on \X'tty: link https://godbolt.org/z/b71h3d38x'\fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/b71h3d38x\fP>\X'tty: link'\&.
+View this example on Compiler Explorer \%<https://\:godbolt\:.org/\:z/\:b71h3d38x>\&.
 .sp
 Formatting a custom type via fmt::formatter:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 #include <xtr/logger.hpp>
 
 namespace
@@ -387,12 +368,11 @@ int main()
 
     return 0;
 }
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
-View this example on \X'tty: link https://godbolt.org/z/1aEeaKn5c'\fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/1aEeaKn5c\fP>\X'tty: link'\&.
+View this example on Compiler Explorer \%<https://\:godbolt\:.org/\:z/\:1aEeaKn5c>\&.
 .SH FORMATTING CONTAINERS, TUPLES AND PAIRS
 .sp
 Formatters for containers, tuples and pairs are provided in
@@ -421,9 +401,8 @@ Any tuple\-like type\-\-\-specifically any type for which a
 The logger provides a choice of time\-sources when logging messages, each with
 varying levels of accuracy and performance. The options are listed below.
 .TS
-center;
-|l|l|l|.
-_
+box center;
+l|l|l.
 T{
 Source
 T}	T{
@@ -467,15 +446,14 @@ T}	T{
 .IP \(bu 2
 .UNINDENT
 T}
-_
 .TE
 .sp
 The performance of the TSC source is listed as either low or medium as it depends
 on the particular CPU.
 .SS Basic
 .sp
-The \fI\%XTR_LOG\fP macro and it\(aqs variants listed under the
-\fI\%basic macros\fP section of the API reference all use the basic
+The \fBXTR_LOG\fP \%<#\:c\:.XTR_LOG> macro and it\(aqs variants listed under the
+basic macros \%<#\:log-macros> section of the API reference all use the basic
 time source. In these macros no timestamp is read when the log message is written
 to the sink\(aqs queue, instead the logger\(aqs background thread reads the timestamp when
 the log message is read from the queue. This is of course not accurate, but it is
@@ -483,36 +461,35 @@ fast.
 .sp
 \fBstd::chrono::system_clock()\fP is used to read the current time, this can
 be customised by passing an arbitrary function to the \(aqclock\(aq parameter when
-constructing the logger (see \fI\%xtr::logger::logger()\fP). In these macros
+constructing the logger (see \fBxtr::logger::logger()\fP \%<#\:_CPPv4I0EN3xtr6logger6loggerEPKcRR5ClockNSt6stringE17log_level_style_t14option_flags_t>). In these macros
 .SS Real\-time Clock
 .sp
-The \fI\%XTR_LOG_RTC\fP macro and it\(aqs variants listed under the
-\fI\%real\-time clock macros\fP section of the API reference all use the
+The \fBXTR_LOG_RTC\fP \%<#\:c\:.XTR_LOG_RTC> macro and it\(aqs variants listed under the
+real\-time clock macros \%<#\:rtc-macros> section of the API reference all use the
 real\-time clock source. In these macros the timestamp is read using
-\X'tty: link https://www.man7.org/linux/man-pages/man3/clock_gettime.3.html'\fI\%clock_gettime(3)\fP <\fBhttps://www.man7.org/linux/man-pages/man3/clock_gettime.3.html\fP>\X'tty: link'
+clock_gettime(3) \%<https://\:www\:.man7\:.org/\:linux/\:man-pages/\:man3/\:clock_gettime\:.3\:.html>
 with a clock source of either CLOCK_REALTIME_COARSE on Linux or CLOCK_REALTIME_FAST
 on FreeBSD.
 .SS TSC
 .sp
-The \fI\%XTR_LOG_TSC\fP macro and it\(aqs variants listed under the
-\fI\%TSC macros\fP section of the API reference all use the TSC
+The \fBXTR_LOG_TSC\fP \%<#\:c\:.XTR_LOG_TSC> macro and it\(aqs variants listed under the
+TSC macros \%<#\:tsc-macros> section of the API reference all use the TSC
 clock source. In these macros the timestamp is read from the CPU timestamp
 counter via the RDTSC instruction. The TSC time source is is listed in the
 table above as either low or medium performance as the cost of the RDTSC
 instruction varies depending upon the host CPU microarchitecture.
 .SS User\-Supplied Timestamp
 .sp
-The \fI\%XTR_LOG_TS\fP macro and it\(aqs variants listed under the
-\fI\%user\-supplied timestamp macros\fP section of the
+The \fBXTR_LOG_TS\fP \%<#\:c\:.XTR_LOG_TS> macro and it\(aqs variants listed under the
+user\-supplied timestamp macros \%<#\:user-supplied-timestamp-macros> section of the
 API reference all allow passing a user\-supplied timestamp to the logger as the second
 argument. Any type may be passed as long as it has a formatter defined
-(see \fI\%custom formatters\fP).
+(see custom formatters).
 .SS Example
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 #include <xtr/logger.hpp>
 
     template<>
@@ -541,12 +518,11 @@ argument. Any type may be passed as long as it has a formatter defined
 
             return 0;
     }
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
-View this example on \X'tty: link https://godbolt.org/z/h1Pqnhz6Y'\fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/h1Pqnhz6Y\fP>\X'tty: link'\&.
+View this example on Compiler Explorer \%<https://\:godbolt\:.org/\:z/\:h1Pqnhz6Y>\&.
 .SH BACKGROUND CONSUMER THREAD DETAILS
 .sp
 As no system calls are made when a log statement is made, the consumer
@@ -568,18 +544,17 @@ unless they are explicitly disconnected by closing the sink.
 .SS CPU Affinity
 .sp
 To bind the background thread to a specific CPU
-\fI\%xtr::logger::consumer_thread_native_handle()\fP can be used to obtain
+\fBxtr::logger::consumer_thread_native_handle()\fP \%<#\:_CPPv4N3xtr6logger29consumer_thread_native_handleEv> can be used to obtain
 the consumer thread\(aqs platform specific thread handle. The handle can then be
 used with whatever platform specific functionality is available for setting
 thread affinities\-\-\-for example
-\X'tty: link https://www.man7.org/linux/man-pages/man3/pthread_setaffinity_np.3.html'\fI\%pthread_setaffinity_np(3)\fP <\fBhttps://www.man7.org/linux/man-pages/man3/pthread_setaffinity_np.3.html\fP>\X'tty: link'
+pthread_setaffinity_np(3) \%<https://\:www\:.man7\:.org/\:linux/\:man-pages/\:man3/\:pthread_setaffinity_np\:.3\:.html>
 on Linux.
 .SS Example
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 #include <xtr/logger.hpp>
 
 #include <cerrno>
@@ -609,25 +584,23 @@ int main()
 
     return 0;
 }
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
-View this example on \X'tty: link https://godbolt.org/z/MP9bosffb'\fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/MP9bosffb\fP>\X'tty: link'\&.
+View this example on Compiler Explorer \%<https://\:godbolt\:.org/\:z/\:MP9bosffb>\&.
 .SS Disabling the Background Consumer Thread
 .sp
 The consumer thread can be disabled by passing the
-\fI\%xtr::option_flags_t::disable_worker_thread\fP flag to
-\fI\%xtr::logger::logger()\fP\&. Users should then run
-\fI\%xtr::logger::pump_io()\fP on a thread of their choosing in order to
+\fBxtr::option_flags_t::disable_worker_thread\fP \%<#\:_CPPv4N3xtr14option_flags_t21disable_worker_threadE> flag to
+\fBxtr::logger::logger()\fP \%<#\:_CPPv4I0EN3xtr6logger6loggerEPKcRR5ClockNSt6stringE17log_level_style_t14option_flags_t>\&. Users should then run
+\fBxtr::logger::pump_io()\fP \%<#\:_CPPv4N3xtr6logger7pump_ioEP13pump_io_stats> on a thread of their choosing in order to
 process messages written to the logger.
 .SS Example
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 #include <xtr/logger.hpp>
 
 #include <chrono>
@@ -657,14 +630,13 @@ int main()
 
     return 0;
 }
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
-View this example on \X'tty: link https://godbolt.org/z/ezsceP49c'\fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/ezsceP49c\fP>\X'tty: link'\&.
+View this example on Compiler Explorer \%<https://\:godbolt\:.org/\:z/\:ezsceP49c>\&.
 .sp
-Note that \fI\%xtr::logger::pump_io()\fP will only return false after all
+Note that \fBxtr::logger::pump_io()\fP \%<#\:_CPPv4N3xtr6logger7pump_ioEP13pump_io_stats> will only return false after all
 sinks have been closed and the logger has destructed, in order to ensure no log
 data is lost. This means that the logger should be destructed before attempting
 to join the background thread (otherwise a deadlock would occur).
@@ -679,22 +651,21 @@ emulators are sensible about the escape sequences they interpret, however it is 
 good practice for a logger to err on the side of caution and remove them from string
 arguments.
 Please refer to
-\X'tty: link https://seclists.org/fulldisclosure/2003/Feb/att-341/Termulation.txt'\fI\%this document\fP <\fBhttps://seclists.org/fulldisclosure/2003/Feb/att-341/Termulation.txt\fP>\X'tty: link'
+this document \%<https://\:seclists\:.org/\:fulldisclosure/\:2003/\:Feb/\:att-341/\:Termulation\:.txt>
 posted to the full\-disclosure mailing list for a more thorough explanation of terminal
 escape sequence attacks.
 .SH LOG ROTATION
 .sp
-Please refer to the \fI\%reopening log files\fP section of
-the \fI\%xtrctl\fP guide.
+Please refer to the reopening log files \%<#\:reopening-log-files> section of
+the xtrctl \%<#\:xtrctl> guide.
 .SH CUSTOM BACK-ENDS
 .sp
 The logger allows custom back\-ends to be used. This is done by implementing the
-\fI\%xtr::storage_interface\fP interface:
+\fBxtr::storage_interface\fP \%<#\:_CPPv4N3xtr17storage_interfaceE> interface:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 struct xtr::storage_interface
 {
     virtual std::span<char> allocate_buffer() = 0;
@@ -711,15 +682,14 @@ struct xtr::storage_interface
 };
 
 using storage_interface_ptr = std::unique_ptr<storage_interface>;
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
-Storage interface objects are then passed to the \fI\%xtr::storage_interface_ptr\fP
-argument of the \fI\%custom back\-end constructor\fP <\fBapi.html#_CPPv4I0EN3xtr6logger6loggerE21storage_interface_ptrRR5ClockNSt6stringE17log_level_style_t\fP>\&.
+Storage interface objects are then passed to the \fBxtr::storage_interface_ptr\fP \%<#\:_CPPv4N3xtr21storage_interface_ptrE>
+argument of the custom back\-end constructor \%<api\:.html#\:_CPPv4I0EN3xtr6logger6loggerE21storage_interface_ptrRR5ClockNSt6stringE17log_level_style_t>\&.
 .sp
-\fBNOTE:\fP
+\fBNote:\fP
 .INDENT 0.0
 .INDENT 3.5
 All back\-end functions are invoked from the logger\(aqs background thread.
@@ -758,12 +728,12 @@ storage.
 The \fIreopen\fP function is invoked to indicate that if the back\-end has a regular
 file opened for writing log data then the file should be reopened. This is
 intended to be used to implement log rotation via tool such as
-\X'tty: link https://www.man7.org/linux/man-pages/man8/logrotate.8.html'\fI\%logrotate(8)\fP <\fBhttps://www.man7.org/linux/man-pages/man8/logrotate.8.html\fP>\X'tty: link'\&.
-Please refer to the \fI\%Reopening Log Files\fP section
-of the \fI\%xtrctl\fP documentation for further details.
+logrotate(8) \%<https://\:www\:.man7\:.org/\:linux/\:man-pages/\:man8/\:logrotate\:.8\:.html>\&.
+Please refer to the Reopening Log Files \%<#\:reopening-log-files> section
+of the xtrctl \%<#\:xtrctl> documentation for further details.
 .sp
 The return value should be either zero on success or an
-\X'tty: link https://www.man7.org/linux/man-pages/man3/errno.3.html'\fI\%errno(3)\fP <\fBhttps://www.man7.org/linux/man-pages/man3/errno.3.html\fP>\X'tty: link'
+errno(3) \%<https://\:www\:.man7\:.org/\:linux/\:man-pages/\:man3/\:errno\:.3\:.html>
 compatible error number on failure.
 .TP
 .B destructor
@@ -772,13 +742,12 @@ associated backing store.
 .UNINDENT
 .SS Example
 .sp
-Using the \fI\%custom back\-end constructor\fP <\fBapi.html#_CPPv4I0EN3xtr6logger6loggerE21storage_interface_ptrRR5ClockNSt6stringE17log_level_style_t\fP>
+Using the custom back\-end constructor \%<api\:.html#\:_CPPv4I0EN3xtr6logger6loggerE21storage_interface_ptrRR5ClockNSt6stringE17log_level_style_t>
 to create a logger with a storage back\-end that discards all input:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 #include <xtr/logger.hpp>
 
 #include <span>
@@ -824,21 +793,20 @@ int main()
 
     return 0;
 }
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
-View this example on \X'tty: link https://godbolt.org/z/fvf1o1cjK'\fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/fvf1o1cjK\fP>\X'tty: link'\&.
+View this example on Compiler Explorer \%<https://\:godbolt\:.org/\:z/\:fvf1o1cjK>\&.
 .SH CUSTOM LOG LEVEL STYLES
 .sp
 The text at the beginning of each log statement representing the log level of
-the statement can be customised via \fI\%xtr::logger::set_log_level_style()\fP,
+the statement can be customised via \fBxtr::logger::set_log_level_style()\fP \%<#\:_CPPv4N3xtr6logger19set_log_level_styleE17log_level_style_t>,
 which accepts a function pointer of type
-\fI\%xtr::log_level_style_t\fP\&. The passed function should accept
-a single argument of type \fI\%xtr::log_level_t\fP and should return
+\fBxtr::log_level_style_t\fP \%<#\:_CPPv4N3xtr17log_level_style_tE>\&. The passed function should accept
+a single argument of type \fBxtr::log_level_t\fP \%<#\:_CPPv4N3xtr11log_level_tE> and should return
 a const char* string literal to be used as the log level prefix.
-Please refer to the \fI\%xtr::log_level_style_t\fP documentation for
+Please refer to the \fBxtr::log_level_style_t\fP \%<#\:_CPPv4N3xtr17log_level_style_tE> documentation for
 further details.
 .SS Example
 .sp
@@ -846,19 +814,16 @@ The following example will output:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 info: 2021\-09\-17 23:36:39.043028 Main <source>:18: Hello world
 not\-info: 2021\-09\-17 23:36:39.043028 Main <source>:19: Hello world
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 #include <xtr/logger.hpp>
 
 xtr::logger log;
@@ -876,26 +841,24 @@ log.set_log_level_style(
 
 XTR_LOGL(info, s, \(dqHello world\(dq);
 XTR_LOGL(error, s, \(dqHello world\(dq);
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
-View this example on \X'tty: link https://godbolt.org/z/4s9q4bad8'\fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/4s9q4bad8\fP>\X'tty: link'\&.
+View this example on Compiler Explorer \%<https://\:godbolt\:.org/\:z/\:4s9q4bad8>\&.
 .SH LOGGING TO THE SYSTEMD JOURNAL
 .sp
 To support logging to systemd, log level prefixes suitable for logging to the
 systemd journal can be enabled by passing the
-\fI\%xtr::systemd_log_level_style()\fP to
-\fI\%xtr::logger::set_log_level_style()\fP\&. Please refer to the
-\fI\%xtr::log_level_style_t\fP documentation for further details on log
+\fBxtr::systemd_log_level_style()\fP \%<#\:_CPPv4N3xtr23systemd_log_level_styleE11log_level_t> to
+\fBxtr::logger::set_log_level_style()\fP \%<#\:_CPPv4N3xtr6logger19set_log_level_styleE17log_level_style_t>\&. Please refer to the
+\fBxtr::log_level_style_t\fP \%<#\:_CPPv4N3xtr17log_level_style_tE> documentation for further details on log
 level styles.
 .SS Example
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 #include <xtr/logger.hpp>
 
 xtr::logger log;
@@ -912,25 +875,22 @@ XTR_LOGL(debug, s, \(dqDebug\(dq);
 XTR_LOGL(info, s, \(dqInfo\(dq);
 XTR_LOGL(warning, s, \(dqWarning\(dq);
 XTR_LOGL(error, s, \(dqError\(dq);
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
-View this example on \X'tty: link https://godbolt.org/z/xMYevEjfW'\fI\%Compiler Explorer\fP <\fBhttps://godbolt.org/z/xMYevEjfW\fP>\X'tty: link'\&.
+View this example on Compiler Explorer \%<https://\:godbolt\:.org/\:z/\:xMYevEjfW>\&.
 .sp
 The output of the above example will be something like:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 <7>2022\-12\-18 16:01:16.205253 Main xtrdemo.cpp:12: Debug
 <6>2022\-12\-18 16:01:16.205259 Main xtrdemo.cpp:13: Info
 <4>2022\-12\-18 16:01:16.205259 Main xtrdemo.cpp:14: Warning
 <3>2022\-12\-18 16:01:16.205259 Main xtrdemo.cpp:15: Error
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
@@ -940,14 +900,12 @@ the messages logged to the journal can be viewed via e.g.
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 Dec 18 16:01:16 xtrdemo[1008402]: 2022\-12\-18 16:01:16.205253 Main xtrdemo.cpp:13: Debug
 Dec 18 16:01:16 xtrdemo[1008402]: 2022\-12\-18 16:01:16.205259 Main xtrdemo.cpp:14: Info
 Dec 18 16:01:16 xtrdemo[1008402]: 2022\-12\-18 16:01:16.205259 Main xtrdemo.cpp:15: Warning
 Dec 18 16:01:16 xtrdemo[1008402]: 2022\-12\-18 16:01:16.205259 Main xtrdemo.cpp:16: Error
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .SH DISABLING EXCEPTIONS
@@ -966,13 +924,12 @@ This will cause XTR to be built with the \fB\-fno\-exceptions\fP flag.
 .sp
 If exceptions are disabled then when an error occurs that would have thrown an
 exception, an error message is instead printed to \fIstderr\fP and the program
-terminates via  \X'tty: link https://www.man7.org/linux/man-pages/man3/abort.3.html'\fI\%abort(3)\fP <\fBhttps://www.man7.org/linux/man-pages/man3/abort.3.html\fP>\X'tty: link'\&.
+terminates via  abort(3) \%<https://\:www\:.man7\:.org/\:linux/\:man-pages/\:man3/\:abort\:.3\:.html>\&.
 .SH FOOTNOTES
 .IP [1] 5
 Specifically the queue is a single\-producer/single\-consumer ring buffer.
-.SH AUTHOR
+.SH Author
 Chris E. Holloway
-.SH COPYRIGHT
+.SH Copyright
 2022, Chris E. Holloway
-.\" Generated by docutils manpage writer.
-.
+.\" End of generated man page.

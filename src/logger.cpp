@@ -35,33 +35,23 @@ XTR_FUNC
 void xtr::logger::register_sink(sink& s, std::string name) noexcept
 {
     assert(!s.open_);
-    post(
-        [&s, name = std::move(name)](detail::consumer& c, auto&)
-        {
-            c.add_sink(s, name);
-        });
+    post([&s, name = std::move(name)](detail::consumer& c, auto&)
+         { c.add_sink(s, name); });
     s.open_ = true;
 }
 
 XTR_FUNC
 void xtr::logger::set_command_path(std::string path) noexcept
 {
-    post(
-        [s = std::move(path)](detail::consumer& c, auto&) mutable
-        {
-            c.set_command_path(std::move(s));
-        });
+    post([s = std::move(path)](detail::consumer& c, auto&) mutable
+         { c.set_command_path(std::move(s)); });
     control_.sync();
 }
 
 XTR_FUNC
 void xtr::logger::set_log_level_style(log_level_style_t level_style) noexcept
 {
-    post(
-        [=](detail::consumer& c, auto&)
-        {
-            c.buf.lstyle = level_style;
-        });
+    post([=](detail::consumer& c, auto&) { c.buf.lstyle = level_style; });
     control_.sync();
 }
 

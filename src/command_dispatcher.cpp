@@ -71,7 +71,7 @@ xtr::detail::command_dispatcher::command_dispatcher(std::string path)
     }
 
     detail::file_descriptor fd(
-        ::socket(AF_LOCAL, SOCK_SEQPACKET|SOCK_NONBLOCK, 0));
+        ::socket(AF_LOCAL, SOCK_SEQPACKET | SOCK_NONBLOCK, 0));
 
     if (!fd)
     {
@@ -118,8 +118,7 @@ xtr::detail::command_dispatcher::~command_dispatcher()
 
 XTR_FUNC
 xtr::detail::command_dispatcher::buffer::buffer(
-    const void* srcbuf, std::size_t srcsize)
-:
+    const void* srcbuf, std::size_t srcsize) :
     buf(new char[srcsize]),
     size(srcsize)
 {
@@ -127,10 +126,7 @@ xtr::detail::command_dispatcher::buffer::buffer(
 }
 
 XTR_FUNC
-void xtr::detail::command_dispatcher::send(
-    int fd,
-    const void* buf,
-    std::size_t nbytes)
+void xtr::detail::command_dispatcher::send(int fd, const void* buf, std::size_t nbytes)
 {
     results_[fd].bufs.emplace_back(buf, nbytes);
 }
@@ -138,12 +134,11 @@ void xtr::detail::command_dispatcher::send(
 XTR_FUNC
 void xtr::detail::command_dispatcher::process_commands(int timeout) noexcept
 {
-    int nfds =
-        XTR_TEMP_FAILURE_RETRY(
-            ::poll(
-                reinterpret_cast<::pollfd*>(&pollfds_[0]),
-                ::nfds_t(pollfds_.size()),
-                timeout));
+    int nfds = XTR_TEMP_FAILURE_RETRY(
+        ::poll(
+            reinterpret_cast<::pollfd*>(&pollfds_[0]),
+            ::nfds_t(pollfds_.size()),
+            timeout));
 
     if (nfds == -1)
     {
@@ -173,7 +168,7 @@ void xtr::detail::command_dispatcher::process_commands(int timeout) noexcept
             process_socket_write(pollfds_[i]);
             --nfds;
         }
-        else if ((pollfds_[i].revents & (POLLHUP|POLLIN)) != 0)
+        else if ((pollfds_[i].revents & (POLLHUP | POLLIN)) != 0)
         {
             process_socket_read(pollfds_[i]);
             --nfds;

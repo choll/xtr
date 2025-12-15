@@ -33,8 +33,7 @@ class xtr::detail::file_descriptor
 public:
     file_descriptor() = default;
 
-    explicit file_descriptor(int fd)
-    :
+    explicit file_descriptor(int fd) :
         fd_(fd)
     {
     }
@@ -43,8 +42,7 @@ public:
 
     file_descriptor(const file_descriptor&) = delete;
 
-    file_descriptor(file_descriptor&& other) noexcept
-    :
+    file_descriptor(file_descriptor&& other) noexcept :
         fd_(other.fd_)
     {
         other.release();

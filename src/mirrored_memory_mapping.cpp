@@ -29,9 +29,9 @@
 #include <cstdlib>
 #include <random>
 
+#include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
-#include <fcntl.h>
 #include <unistd.h>
 
 #if !defined(__linux__)
@@ -63,9 +63,9 @@ namespace xtr::detail
         {
             for (char* pos = name + 5; *pos != '\0'; ++pos)
                 *pos = ctable[udist(rd)];
-            fd = XTR_TEMP_FAILURE_RETRY(::shm_open(name, oflag|O_EXCL|O_CREAT, mode));
-        }
-        while (--retries > 0 && fd == -1 && errno == EEXIST);
+            fd = XTR_TEMP_FAILURE_RETRY(
+                ::shm_open(name, oflag | O_EXCL | O_CREAT, mode));
+        } while (--retries > 0 && fd == -1 && errno == EEXIST);
 
         if (fd != -1)
             ::shm_unlink(name);
@@ -78,14 +78,13 @@ namespace xtr::detail
 
 XTR_FUNC
 xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping(
-    std::size_t length,
-    int fd,
-    std::size_t offset,
-    int flags)
+    std::size_t length, int fd, std::size_t offset, int flags)
 {
     assert(!(flags & MAP_ANONYMOUS) || fd == -1);
     assert((flags & MAP_FIXED) == 0); // Not implemented (would be easy though)
-    assert((flags & MAP_PRIVATE) == 0); // Can't be private, must be shared for mirroring to work
+    assert(
+        (flags & MAP_PRIVATE) ==
+        0); // Can't be private, must be shared for mirroring to work
 
     // length is not automatically rounded up because it would make the class
     // error prone---mirroring would not take place where the user expects.
@@ -102,13 +101,9 @@ xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping(
     // 3.) Create a mapping at of size L at A using MAP_FIXED, this will
     //     also destroy the mapping created in (1).
 
-    const int prot = PROT_READ|PROT_WRITE;
+    const int prot = PROT_READ | PROT_WRITE;
 
-    memory_mapping reserve(
-        nullptr,
-        length * 2,
-        prot,
-        MAP_PRIVATE|MAP_ANONYMOUS);
+    memory_mapping reserve(nullptr, length * 2, prot, MAP_PRIVATE | MAP_ANONYMOUS);
 
 #if !defined(__linux__)
     file_descriptor temp_fd;
@@ -132,14 +127,14 @@ xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping(
             static_cast<std::byte*>(reserve.get()) + length,
             length,
             prot,
-            MAP_FIXED|MAP_SHARED|MAP_ANONYMOUS|flags);
+            MAP_FIXED | MAP_SHARED | MAP_ANONYMOUS | flags);
 
         m_.reset(
             ::mremap(
                 mirror.get(),
                 0,
                 length,
-                MREMAP_FIXED|MREMAP_MAYMOVE,
+                MREMAP_FIXED | MREMAP_MAYMOVE,
                 reserve.get()),
             length);
 
@@ -147,7 +142,8 @@ xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping(
         {
             throw_system_error(
                 errno,
-                "xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping: "
+                "xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping:"
+                " "
                 "mremap failed");
         }
 
@@ -155,11 +151,12 @@ xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping(
         mirror.release(); // mirror will be recreated in ~mirrored_memory_mapping
         return;
 #else
-        if (!(temp_fd = shm_open_anon(O_RDWR, S_IRUSR|S_IWUSR)))
+        if (!(temp_fd = shm_open_anon(O_RDWR, S_IRUSR | S_IWUSR)))
         {
             throw_system_error(
                 errno,
-                "xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping: "
+                "xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping:"
+                " "
                 "Failed to shm_open backing file");
         }
 
@@ -169,7 +166,8 @@ xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping(
         {
             throw_system_error(
                 errno,
-                "xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping: "
+                "xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping:"
+                " "
                 "Failed to ftruncate backing file");
         }
 #endif
@@ -189,7 +187,7 @@ xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping(
     m_ = memory_mapping(reserve.get(), length, prot, flags, fd, offset);
 
     reserve.release(); // mapping was destroyed when m_ was created
-    mirror.release(); // mirror will be recreated in ~mirrored_memory_mapping
+    mirror.release();  // mirror will be recreated in ~mirrored_memory_mapping
 }
 
 XTR_FUNC

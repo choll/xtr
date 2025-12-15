@@ -23,7 +23,13 @@
 
 namespace xtr::detail
 {
-    enum class pattern_type_t {none, extended_regex, basic_regex, wildcard};
+    enum class pattern_type_t
+    {
+        none,
+        extended_regex,
+        basic_regex,
+        wildcard
+    };
 
     struct pattern
     {

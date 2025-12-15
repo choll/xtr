@@ -22,14 +22,14 @@
 #define XTR_DETAIL_SYNCHRONIZED_RING_BUFFER_HPP
 
 #include "config.hpp"
-#include "tags.hpp"
 #include "mirrored_memory_mapping.hpp"
 #include "pagesize.hpp"
 #include "pause.hpp"
+#include "tags.hpp"
 
 #include <atomic>
-#include <cassert>
 #include <bit>
+#include <cassert>
 #include <cstddef>
 #include <cstdint>
 #include <limits>
@@ -52,17 +52,16 @@ namespace xtr::detail
     template<std::size_t N>
     struct least_uint
     {
-        typedef
+        using type = std::conditional_t<
+            N <= std::size_t{std::numeric_limits<std::uint8_t>::max()},
+            std::uint8_t,
             std::conditional_t<
-                N <= std::size_t{std::numeric_limits<std::uint8_t>::max()},
-                std::uint8_t,
+                N <= std::size_t{std::numeric_limits<std::uint16_t>::max()},
+                std::uint16_t,
                 std::conditional_t<
-                    N <= std::size_t{std::numeric_limits<std::uint16_t>::max()},
-                    std::uint16_t,
-                    std::conditional_t<
-                        N <= std::size_t{std::numeric_limits<std::uint32_t>::max()},
-                        std::uint32_t,
-                        std::uint64_t>>> type;
+                    N <= std::size_t{std::numeric_limits<std::uint32_t>::max()},
+                    std::uint32_t,
+                    std::uint64_t>>>;
     };
 
     template<std::size_t N>
@@ -74,14 +73,15 @@ namespace xtr::detail
     static_assert(std::is_same<std::uint8_t, least_uint_t<0UL>>::value);
     static_assert(std::is_same<std::uint8_t, least_uint_t<255UL>>::value);
 
-    static_assert(std::is_same<std::uint16_t,least_uint_t<256UL>>::value);
+    static_assert(std::is_same<std::uint16_t, least_uint_t<256UL>>::value);
     static_assert(std::is_same<std::uint16_t, least_uint_t<65535UL>>::value);
 
     static_assert(std::is_same<std::uint32_t, least_uint_t<65536UL>>::value);
     static_assert(std::is_same<std::uint32_t, least_uint_t<4294967295UL>>::value);
 
     static_assert(std::is_same<std::uint64_t, least_uint_t<4294967296UL>>::value);
-    static_assert(std::is_same<std::uint64_t, least_uint_t<18446744073709551615UL>>::value);
+    static_assert(
+        std::is_same<std::uint64_t, least_uint_t<18446744073709551615UL>>::value);
 #endif
 
     template<typename T, typename SizeType>
@@ -94,8 +94,7 @@ namespace xtr::detail
 
         span() = default;
 
-        span(const span<std::remove_const_t<T>, SizeType>& other) noexcept
-        :
+        span(const span<std::remove_const_t<T>, SizeType>& other) noexcept :
             begin_(other.begin()),
             size_(other.size())
         {
@@ -108,15 +107,13 @@ namespace xtr::detail
             return *this;
         }
 
-        span(iterator begin, iterator end)
-        :
+        span(iterator begin, iterator end) :
             begin_(begin),
             size_(size_type(end - begin))
         {
             assert(begin <= end);
             assert(
-                size_type(end - begin) <=
-                    std::numeric_limits<size_type>::max());
+                size_type(end - begin) <= std::numeric_limits<size_type>::max());
         }
 
         [[nodiscard]] constexpr size_type size() const noexcept
@@ -158,11 +155,8 @@ public:
     static constexpr bool is_dynamic = Capacity == dynamic_capacity;
 
 public:
-    synchronized_ring_buffer(
-        int fd = -1,
-        std::size_t offset = 0,
-        int flags = srb_flags)
-    requires (!is_dynamic)
+    synchronized_ring_buffer(int fd = -1, std::size_t offset = 0, int flags = srb_flags)
+        requires(!is_dynamic)
     {
         m_ = mirrored_memory_mapping{capacity(), fd, offset, flags};
         nread_plus_capacity_ = wrnread_plus_capacity_ = capacity();
@@ -174,18 +168,17 @@ public:
         int fd = -1,
         std::size_t offset = 0,
         int flags = srb_flags)
-    requires is_dynamic
-    :
-        m_(
-            align_to_page_size(
+        requires is_dynamic
+        :
+        m_(align_to_page_size(
 #if defined(__cpp_lib_int_pow2) && __cpp_lib_int_pow2 >= 202002L
-                std::bit_ceil(min_capacity)),
+               std::bit_ceil(min_capacity)),
 #else
-                std::ceil2(min_capacity)),
+               std::ceil2(min_capacity)),
 #endif
-            fd,
-            offset,
-            flags)
+           fd,
+           offset,
+           flags)
     {
         assert(capacity() <= std::numeric_limits<size_type>::max());
         wrbase_ = begin();
@@ -260,8 +253,8 @@ public:
     void reduce_writable(size_type nbytes) noexcept
     {
         assert(nbytes <= nread_plus_capacity_.load() - nwritten_.load());
-        // This release pairs with the acquire in read_span(). No reads or writes
-        // in the current thread can be reordered after this store.
+        // This release pairs with the acquire in read_span(). No reads or
+        // writes in the current thread can be reordered after this store.
         wrnwritten_ += nbytes;
         nwritten_.store(wrnwritten_, std::memory_order_release);
     }
@@ -289,8 +282,8 @@ public:
 
     void reduce_readable(size_type nbytes) noexcept
     {
-        // This release pairs with the acquire in write_span(). No reads or writes
-        // in the current thread can be reordered after this store.
+        // This release pairs with the acquire in write_span(). No reads or
+        // writes in the current thread can be reordered after this store.
         nread_plus_capacity_.fetch_add(nbytes, std::memory_order_release);
 #if !defined(XTR_THREAD_SANITIZER_ENABLED)
         assert(nread_plus_capacity_.load() - nwritten_.load() <= capacity());
@@ -330,7 +323,7 @@ private:
 #else
         std::ispow2(Capacity)
 #endif
-        );
+    );
     static_assert(is_dynamic || Capacity > 0);
     static_assert(is_dynamic || Capacity <= std::numeric_limits<size_type>::max());
 
@@ -349,14 +342,13 @@ private:
         // capacity is the same as the maximum value representible by rdoff
         // and wroff
         using clamp_type =
-            std::conditional_t<
-                is_dynamic,
-                size_type,
-                least_uint_t<Capacity - 1>>;
+            std::conditional_t<is_dynamic, size_type, least_uint_t<Capacity - 1>>;
         return clamp_type(n) & clamp_type(capacity - 1);
     }
 
-    struct empty{};
+    struct empty
+    {
+    };
     using capacity_type = std::conditional_t<is_dynamic, size_type, empty>;
 
     // Shared, but written by the writer only:

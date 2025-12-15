@@ -19,8 +19,8 @@
 // SOFTWARE.
 
 #include "xtr/detail/pagesize.hpp"
-#include "xtr/detail/throw.hpp"
 #include "xtr/detail/align.hpp"
+#include "xtr/detail/throw.hpp"
 
 #include <cerrno>
 
@@ -33,4 +33,3 @@ XTR_FUNC std::size_t xtr::detail::align_to_page_size(std::size_t length)
         throw_system_error(errno, "sysconf(_SC_PAGESIZE) failed");
     return align(length, std::size_t(pagesize));
 }
-

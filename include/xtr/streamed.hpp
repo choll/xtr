@@ -7,8 +7,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 //
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
 //
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -42,15 +42,16 @@ namespace xtr
      * insertion operator (operator<<). The value is copied into the wrapper.
      *
      * @param value: The value to copy and wrap for stream-based formatting.
-     * @return A wrapper object suitable for passing as an argument to
-     *         a log macro such as @ref XTR_LOG.
+     *
+     * @return A wrapper object suitable for passing as an argument to a log macro
+     * such as @ref XTR_LOG.
      *
      * Refer to the <a href="guide.html#custom-formatters">custom formatters</a>
      * section of the user guide for example use.
      */
     template<typename T>
-    constexpr detail::streamed_wrapper<std::remove_cv_t<std::remove_reference_t<T>>>
-    streamed_copy(T&& value)
+    constexpr detail::streamed_wrapper<std::remove_cv_t<std::remove_reference_t<T>>> streamed_copy(
+        T&& value)
     {
         return {std::forward<T>(value)};
     }
@@ -62,8 +63,9 @@ namespace xtr
      * formatting is completed.
      *
      * @param value: The value to copy and wrap for stream-based formatting.
-     * @return A wrapper object suitable for passing as an argument to
-     *         a log macro such as @ref XTR_LOG.
+     *
+     * @return A wrapper object suitable for passing as an argument to a log
+     * macro such as @ref XTR_LOG.
      *
      * Refer to the <a href="guide.html#custom-formatters">custom formatters</a>
      * section of the user guide for example use.
@@ -76,8 +78,7 @@ namespace xtr
 }
 
 template<typename T, typename Char>
-struct fmt::formatter<xtr::detail::streamed_wrapper<T>, Char> :
-    ostream_formatter
+struct fmt::formatter<xtr::detail::streamed_wrapper<T>, Char> : ostream_formatter
 {
     template<typename FormatContext>
     auto format(const xtr::detail::streamed_wrapper<T>& sc, FormatContext& ctx) const

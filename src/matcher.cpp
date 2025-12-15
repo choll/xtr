@@ -24,9 +24,7 @@
 
 XTR_FUNC
 std::unique_ptr<xtr::detail::matcher> xtr::detail::make_matcher(
-    pattern_type_t pattern_type,
-    const char* pattern,
-    bool ignore_case)
+    pattern_type_t pattern_type, const char* pattern, bool ignore_case)
 {
     switch (pattern_type)
     {

@@ -21,8 +21,9 @@
 #ifndef XTR_DETAIL_COMMANDS_IOS_HPP
 #define XTR_DETAIL_COMMANDS_IOS_HPP
 
-#include "requests.hpp"
 #include "responses.hpp"
+
+#include <ostream>
 
 namespace xtr::detail
 {
@@ -48,12 +49,9 @@ namespace xtr::detail
 
     inline std::ostream& operator<<(std::ostream& os, const sink_info& si)
     {
-        return os
-            << si.name
-            << " (" << si.level << ") "
-            << si.buf_capacity / 1024 << "K capacity, "
-            << si.buf_nbytes / 1024 << "K used, "
-            << si.dropped_count << " dropped";
+        return os << si.name << " (" << si.level << ") " << si.buf_capacity / 1024
+                  << "K capacity, " << si.buf_nbytes / 1024 << "K used, "
+                  << si.dropped_count << " dropped";
     }
 }
 

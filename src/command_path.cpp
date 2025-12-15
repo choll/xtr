@@ -24,8 +24,8 @@
 #include <cstdio>
 
 #include <limits.h>
-#include <unistd.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 namespace xtr::detail
 {

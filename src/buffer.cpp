@@ -30,8 +30,7 @@
 #include <utility>
 
 XTR_FUNC
-xtr::detail::buffer::buffer(storage_interface_ptr storage, log_level_style_t ls)
-:
+xtr::detail::buffer::buffer(storage_interface_ptr storage, log_level_style_t ls) :
     lstyle(ls),
     storage_(std::move(storage))
 {

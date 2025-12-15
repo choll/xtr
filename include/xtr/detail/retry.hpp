@@ -23,13 +23,13 @@
 
 #include <cerrno>
 
-#define XTR_TEMP_FAILURE_RETRY(expr)                    \
-    (__extension__                                      \
-        ({                                              \
-            decltype(expr) xtr_result;                  \
-            do xtr_result = (expr);                     \
-            while (xtr_result == -1 && errno == EINTR); \
-            xtr_result;                                 \
-        }))
+#define XTR_TEMP_FAILURE_RETRY(expr)                \
+    (__extension__({                                \
+        decltype(expr) xtr_result;                  \
+        do                                          \
+            xtr_result = (expr);                    \
+        while (xtr_result == -1 && errno == EINTR); \
+        xtr_result;                                 \
+    }))
 
 #endif

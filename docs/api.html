@@ -242,17 +242,20 @@ performance.</p>
 <dl class="cpp macro">
 <dt class="sig sig-object cpp" id="c.XTR_LOG">
 <span class="target" id="log__macros_8hpp_1afccfe93e240adc0620c7c82918263fb2"></span><span class="sig-name descname"><span class="n"><span class="pre">XTR_LOG</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">SINK</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XTR_LOG" title="Link to this definition"></a><br /></dt>
-<dd><p>Basic log macro, logs the specified format string and arguments to the given sink, blocking if the sink is full. Timestamps are read in the background thread—if this is undesirable use <a class="reference internal" href="#log__macros_8hpp_1a87d6001cf0ec22748893a3275cb4310a"><span class="std std-ref">XTR_LOG_RTC</span></a> or <a class="reference internal" href="#log__macros_8hpp_1a6ddb487b65cfa3398dd42c5357fe2906"><span class="std std-ref">XTR_LOG_TSC</span></a> which read timestamps at the point of logging. This macro will log regardless of the sink’s log level. </p>
+<dd><p>Basic log macro, logs the specified format string and arguments to the given sink, blocking if the sink is full. Timestamps are read in the background thread—if this is undesirable use <a class="reference internal" href="#log__macros_8hpp_1a87d6001cf0ec22748893a3275cb4310a"><span class="std std-ref">XTR_LOG_RTC</span></a> or <a class="reference internal" href="#log__macros_8hpp_1a6ddb487b65cfa3398dd42c5357fe2906"><span class="std std-ref">XTR_LOG_TSC</span></a> which read timestamps at the point of logging. This macro will log regardless of the sink’s log level.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>SINK</strong> – The <a class="reference internal" href="#classxtr_1_1sink"><span class="std std-ref">xtr::sink</span></a> to log to. </p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="cpp macro">
 <dt class="sig sig-object cpp" id="c.XTR_LOGL">
 <span class="target" id="log__macros_8hpp_1a86a961bfbcd5bf0945b9ef83503c958a"></span><span class="sig-name descname"><span class="n"><span class="pre">XTR_LOGL</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">LEVEL</span></span>, <span class="n"><span class="pre">SINK</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XTR_LOGL" title="Link to this definition"></a><br /></dt>
 <dd><p>Log level variant of <a class="reference internal" href="#log__macros_8hpp_1afccfe93e240adc0620c7c82918263fb2"><span class="std std-ref">XTR_LOG</span></a>. If the specified log level has lower importance than the log level of the sink, then the message is dropped (please see the <a class="reference external" href="guide.html#log-levels">log levels</a> section of the user guide for details).</p>
-<p><ul class="simple">
-<li><p>LEVEL: The unqualified log level name, for example simply “info” or “error”.</p></li>
-</ul>
-</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>If the ‘fatal’ level is passed then the log message is written, <a class="reference internal" href="#classxtr_1_1sink_1aa3b28b9b9d8f4c5b90ca398eacfafed3"><span class="std std-ref">xtr::sink::sync</span></a> is invoked, then the program is terminated via abort(3).</p>
@@ -261,22 +264,41 @@ performance.</p>
 <p class="admonition-title">Note</p>
 <p>Log statements with the ‘debug’ level can be disabled at build time by defining XTR_NDEBUG. </p>
 </div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>LEVEL</strong> – The unqualified log level name, for example simply “info” or “error”.</p></li>
+<li><p><strong>SINK</strong> – The <a class="reference internal" href="#classxtr_1_1sink"><span class="std std-ref">xtr::sink</span></a> to log to.</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="cpp macro">
 <dt class="sig sig-object cpp" id="c.XTR_TRY_LOG">
 <span class="target" id="log__macros_8hpp_1a5ec7c3836ae3137647a1020f6fa5c47f"></span><span class="sig-name descname"><span class="n"><span class="pre">XTR_TRY_LOG</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">SINK</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XTR_TRY_LOG" title="Link to this definition"></a><br /></dt>
-<dd><p>Non-blocking variant of <a class="reference internal" href="#log__macros_8hpp_1afccfe93e240adc0620c7c82918263fb2"><span class="std std-ref">XTR_LOG</span></a>. The message will be discarded if the sink is full. If a message is dropped a warning will appear in the log. </p>
+<dd><p>Non-blocking variant of <a class="reference internal" href="#log__macros_8hpp_1afccfe93e240adc0620c7c82918263fb2"><span class="std std-ref">XTR_LOG</span></a>. The message will be discarded if the sink is full. If a message is dropped a warning will appear in the log.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>SINK</strong> – The <a class="reference internal" href="#classxtr_1_1sink"><span class="std std-ref">xtr::sink</span></a> to log to. </p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="cpp macro">
 <dt class="sig sig-object cpp" id="c.XTR_TRY_LOGL">
 <span class="target" id="log__macros_8hpp_1a59ae5d57bb1a74ae7881fd3b1e640788"></span><span class="sig-name descname"><span class="n"><span class="pre">XTR_TRY_LOGL</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">LEVEL</span></span>, <span class="n"><span class="pre">SINK</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XTR_TRY_LOGL" title="Link to this definition"></a><br /></dt>
 <dd><p>Non-blocking variant of <a class="reference internal" href="#log__macros_8hpp_1a86a961bfbcd5bf0945b9ef83503c958a"><span class="std std-ref">XTR_LOGL</span></a>. The message will be discarded if the sink is full. If a message is dropped a warning will appear in the log.</p>
-<p><ul class="simple">
-<li><p>LEVEL: The unqualified log level name, for example simply “info” or “error”. </p></li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>LEVEL</strong> – The unqualified log level name, for example simply “info” or “error”.</p></li>
+<li><p><strong>SINK</strong> – The <a class="reference internal" href="#classxtr_1_1sink"><span class="std std-ref">xtr::sink</span></a> to log to. </p></li>
 </ul>
-</p>
+</dd>
+</dl>
 </dd></dl>
 
 </section>
@@ -288,17 +310,20 @@ systems reading rdtsc may be slower than using the real-time clock (see below).<
 <dl class="cpp macro">
 <dt class="sig sig-object cpp" id="c.XTR_LOG_TSC">
 <span class="target" id="log__macros_8hpp_1a6ddb487b65cfa3398dd42c5357fe2906"></span><span class="sig-name descname"><span class="n"><span class="pre">XTR_LOG_TSC</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">SINK</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XTR_LOG_TSC" title="Link to this definition"></a><br /></dt>
-<dd><p>Timestamped log macro, logs the specified format string and arguments to the given sink along with a timestamp obtained by reading the CPU timestamp counter via the RDTSC instruction. The non-blocking variant of this macro is <a class="reference internal" href="#log__macros_8hpp_1a5f6d0172da419dc3891a133a3b4b396a"><span class="std std-ref">XTR_TRY_LOG_TSC</span></a> which will discard the message if the sink is full. This macro will log regardless of the sink’s log level. </p>
+<dd><p>Timestamped log macro, logs the specified format string and arguments to the given sink along with a timestamp obtained by reading the CPU timestamp counter via the RDTSC instruction. The non-blocking variant of this macro is <a class="reference internal" href="#log__macros_8hpp_1a5f6d0172da419dc3891a133a3b4b396a"><span class="std std-ref">XTR_TRY_LOG_TSC</span></a> which will discard the message if the sink is full. This macro will log regardless of the sink’s log level.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>SINK</strong> – The <a class="reference internal" href="#classxtr_1_1sink"><span class="std std-ref">xtr::sink</span></a> to log to. </p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="cpp macro">
 <dt class="sig sig-object cpp" id="c.XTR_LOGL_TSC">
 <span class="target" id="log__macros_8hpp_1a0405f0c4588ff06710d8c36c98b3ade3"></span><span class="sig-name descname"><span class="n"><span class="pre">XTR_LOGL_TSC</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">LEVEL</span></span>, <span class="n"><span class="pre">SINK</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XTR_LOGL_TSC" title="Link to this definition"></a><br /></dt>
 <dd><p>Log level variant of <a class="reference internal" href="#log__macros_8hpp_1a6ddb487b65cfa3398dd42c5357fe2906"><span class="std std-ref">XTR_LOG_TSC</span></a>. If the specified log level has lower importance than the log level of the sink, then the message is dropped (please see the <a class="reference external" href="guide.html#log-levels">log levels</a> section of the user guide for details).</p>
-<p><ul class="simple">
-<li><p>LEVEL: The unqualified log level name, for example simply “info” or “error”.</p></li>
-</ul>
-</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>If the ‘fatal’ level is passed then the log message is written, <a class="reference internal" href="#classxtr_1_1sink_1aa3b28b9b9d8f4c5b90ca398eacfafed3"><span class="std std-ref">xtr::sink::sync</span></a> is invoked, then the program is terminated via abort(3).</p>
@@ -307,22 +332,41 @@ systems reading rdtsc may be slower than using the real-time clock (see below).<
 <p class="admonition-title">Note</p>
 <p>Log statements with the ‘debug’ level can be disabled at build time by defining XTR_NDEBUG. </p>
 </div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>LEVEL</strong> – The unqualified log level name, for example simply “info” or “error”.</p></li>
+<li><p><strong>SINK</strong> – The <a class="reference internal" href="#classxtr_1_1sink"><span class="std std-ref">xtr::sink</span></a> to log to.</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="cpp macro">
 <dt class="sig sig-object cpp" id="c.XTR_TRY_LOG_TSC">
 <span class="target" id="log__macros_8hpp_1a5f6d0172da419dc3891a133a3b4b396a"></span><span class="sig-name descname"><span class="n"><span class="pre">XTR_TRY_LOG_TSC</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">SINK</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XTR_TRY_LOG_TSC" title="Link to this definition"></a><br /></dt>
-<dd><p>Non-blocking variant of <a class="reference internal" href="#log__macros_8hpp_1a6ddb487b65cfa3398dd42c5357fe2906"><span class="std std-ref">XTR_LOG_TSC</span></a>. The message will be discarded if the sink is full. If a message is dropped a warning will appear in the log. </p>
+<dd><p>Non-blocking variant of <a class="reference internal" href="#log__macros_8hpp_1a6ddb487b65cfa3398dd42c5357fe2906"><span class="std std-ref">XTR_LOG_TSC</span></a>. The message will be discarded if the sink is full. If a message is dropped a warning will appear in the log.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>SINK</strong> – The <a class="reference internal" href="#classxtr_1_1sink"><span class="std std-ref">xtr::sink</span></a> to log to. </p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="cpp macro">
 <dt class="sig sig-object cpp" id="c.XTR_TRY_LOGL_TSC">
 <span class="target" id="log__macros_8hpp_1a12325b70a3c4cb82e4567bb5d95bb596"></span><span class="sig-name descname"><span class="n"><span class="pre">XTR_TRY_LOGL_TSC</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">LEVEL</span></span>, <span class="n"><span class="pre">SINK</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XTR_TRY_LOGL_TSC" title="Link to this definition"></a><br /></dt>
 <dd><p>Non-blocking variant of <a class="reference internal" href="#log__macros_8hpp_1a12325b70a3c4cb82e4567bb5d95bb596"><span class="std std-ref">XTR_TRY_LOGL_TSC</span></a>. The message will be discarded if the sink is full. If a message is dropped a warning will appear in the log.</p>
-<p><ul class="simple">
-<li><p>LEVEL: The unqualified log level name, for example simply “info” or “error”. </p></li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>LEVEL</strong> – The unqualified log level name, for example simply “info” or “error”.</p></li>
+<li><p><strong>SINK</strong> – The <a class="reference internal" href="#classxtr_1_1sink"><span class="std std-ref">xtr::sink</span></a> to log to. </p></li>
 </ul>
-</p>
+</dd>
+</dl>
 </dd></dl>
 
 </section>
@@ -333,17 +377,20 @@ logging. Use these macros if accurate timestamps are required.</p>
 <dl class="cpp macro">
 <dt class="sig sig-object cpp" id="c.XTR_LOG_RTC">
 <span class="target" id="log__macros_8hpp_1a87d6001cf0ec22748893a3275cb4310a"></span><span class="sig-name descname"><span class="n"><span class="pre">XTR_LOG_RTC</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">SINK</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XTR_LOG_RTC" title="Link to this definition"></a><br /></dt>
-<dd><p>Timestamped log macro, logs the specified format string and arguments to the given sink along with a timestamp obtained by invoking <a class="reference external" href="https://www.man7.org/linux/man-pages/man3/clock_gettime.3.html">clock_gettime(3)</a> with a clock source of CLOCK_REALTIME_COARSE on Linux or CLOCK_REALTIME_FAST on FreeBSD. Depending on the host CPU this may be faster than <a class="reference internal" href="#log__macros_8hpp_1a6ddb487b65cfa3398dd42c5357fe2906"><span class="std std-ref">XTR_LOG_TSC</span></a>. The non-blocking variant of this macro is <a class="reference internal" href="#log__macros_8hpp_1aa2f20bb9953451c05bb0cddfb6aaf47c"><span class="std std-ref">XTR_TRY_LOG_RTC</span></a> which will discard the message if the sink is full. This macro will log regardless of the sink’s log level. </p>
+<dd><p>Timestamped log macro, logs the specified format string and arguments to the given sink along with a timestamp obtained by invoking <a class="reference external" href="https://www.man7.org/linux/man-pages/man3/clock_gettime.3.html">clock_gettime(3)</a> with a clock source of CLOCK_REALTIME_COARSE on Linux or CLOCK_REALTIME_FAST on FreeBSD. Depending on the host CPU this may be faster than <a class="reference internal" href="#log__macros_8hpp_1a6ddb487b65cfa3398dd42c5357fe2906"><span class="std std-ref">XTR_LOG_TSC</span></a>. The non-blocking variant of this macro is <a class="reference internal" href="#log__macros_8hpp_1aa2f20bb9953451c05bb0cddfb6aaf47c"><span class="std std-ref">XTR_TRY_LOG_RTC</span></a> which will discard the message if the sink is full. This macro will log regardless of the sink’s log level.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>SINK</strong> – The <a class="reference internal" href="#classxtr_1_1sink"><span class="std std-ref">xtr::sink</span></a> to log to. </p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="cpp macro">
 <dt class="sig sig-object cpp" id="c.XTR_LOGL_RTC">
 <span class="target" id="log__macros_8hpp_1a08eaa13e5f526d60104816c7f7fbfa70"></span><span class="sig-name descname"><span class="n"><span class="pre">XTR_LOGL_RTC</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">LEVEL</span></span>, <span class="n"><span class="pre">SINK</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XTR_LOGL_RTC" title="Link to this definition"></a><br /></dt>
 <dd><p>Log level variant of <a class="reference internal" href="#log__macros_8hpp_1a87d6001cf0ec22748893a3275cb4310a"><span class="std std-ref">XTR_LOG_RTC</span></a>. If the specified log level has lower importance than the log level of the sink, then the message is dropped (please see the <a class="reference external" href="guide.html#log-levels">log levels</a> section of the user guide for details).</p>
-<p><ul class="simple">
-<li><p>LEVEL: The unqualified log level name, for example simply “info” or “error”.</p></li>
-</ul>
-</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>If the ‘fatal’ level is passed then the log message is written, <a class="reference internal" href="#classxtr_1_1sink_1aa3b28b9b9d8f4c5b90ca398eacfafed3"><span class="std std-ref">xtr::sink::sync</span></a> is invoked, then the program is terminated via abort(3).</p>
@@ -352,22 +399,41 @@ logging. Use these macros if accurate timestamps are required.</p>
 <p class="admonition-title">Note</p>
 <p>Log statements with the ‘debug’ level can be disabled at build time by defining XTR_NDEBUG. </p>
 </div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>LEVEL</strong> – The unqualified log level name, for example simply “info” or “error”.</p></li>
+<li><p><strong>SINK</strong> – The <a class="reference internal" href="#classxtr_1_1sink"><span class="std std-ref">xtr::sink</span></a> to log to.</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="cpp macro">
 <dt class="sig sig-object cpp" id="c.XTR_TRY_LOG_RTC">
 <span class="target" id="log__macros_8hpp_1aa2f20bb9953451c05bb0cddfb6aaf47c"></span><span class="sig-name descname"><span class="n"><span class="pre">XTR_TRY_LOG_RTC</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">SINK</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XTR_TRY_LOG_RTC" title="Link to this definition"></a><br /></dt>
-<dd><p>Non-blocking variant of <a class="reference internal" href="#log__macros_8hpp_1a87d6001cf0ec22748893a3275cb4310a"><span class="std std-ref">XTR_LOG_RTC</span></a>. The message will be discarded if the sink is full. If a message is dropped a warning will appear in the log. </p>
+<dd><p>Non-blocking variant of <a class="reference internal" href="#log__macros_8hpp_1a87d6001cf0ec22748893a3275cb4310a"><span class="std std-ref">XTR_LOG_RTC</span></a>. The message will be discarded if the sink is full. If a message is dropped a warning will appear in the log.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>SINK</strong> – The <a class="reference internal" href="#classxtr_1_1sink"><span class="std std-ref">xtr::sink</span></a> to log to. </p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="cpp macro">
 <dt class="sig sig-object cpp" id="c.XTR_TRY_LOGL_RTC">
 <span class="target" id="log__macros_8hpp_1a803631f912907a5162f400adaa5238cc"></span><span class="sig-name descname"><span class="n"><span class="pre">XTR_TRY_LOGL_RTC</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">LEVEL</span></span>, <span class="n"><span class="pre">SINK</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XTR_TRY_LOGL_RTC" title="Link to this definition"></a><br /></dt>
 <dd><p>Non-blocking variant of <a class="reference internal" href="#log__macros_8hpp_1a803631f912907a5162f400adaa5238cc"><span class="std std-ref">XTR_TRY_LOGL_RTC</span></a>. The message will be discarded if the sink is full. If a message is dropped a warning will appear in the log.</p>
-<p><ul class="simple">
-<li><p>LEVEL: The unqualified log level name, for example simply “info” or “error”. </p></li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>LEVEL</strong> – The unqualified log level name, for example simply “info” or “error”.</p></li>
+<li><p><strong>SINK</strong> – The <a class="reference internal" href="#classxtr_1_1sink"><span class="std std-ref">xtr::sink</span></a> to log to. </p></li>
 </ul>
-</p>
+</dd>
+</dl>
 </dd></dl>
 
 </section>
@@ -378,21 +444,20 @@ logging. Use these macros if accurate timestamps are required.</p>
 <dt class="sig sig-object cpp" id="c.XTR_LOG_TS">
 <span class="target" id="log__macros_8hpp_1a3b6d7cd3d6c5e7106330a354c3edc1e8"></span><span class="sig-name descname"><span class="n"><span class="pre">XTR_LOG_TS</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">SINK</span></span>, <span class="n"><span class="pre">TS</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XTR_LOG_TS" title="Link to this definition"></a><br /></dt>
 <dd><p>User-supplied timestamp log macro, logs the specified format string and arguments to the given sink along with the specified timestamp, blocking if the sink is full. The timestamp may be any type as long as it has a formatter defined—please see the <a class="reference external" href="guide.html#custom-formatters">custom formatters</a> section of the user guide for details. xtr::timespec is provided as a convenience type which is compatible with std::timespec and has a formatter pre-defined. A formatter for std::timespec isn’t defined in order to avoid conflict with user code that also defines such a formatter. This macro will log regardless of the sink’s log level.</p>
-<p><ul class="simple">
-<li><p>TS: The timestamp to apply to the log statement. </p></li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>SINK</strong> – The <a class="reference internal" href="#classxtr_1_1sink"><span class="std std-ref">xtr::sink</span></a> to log to.</p></li>
+<li><p><strong>TS</strong> – The timestamp to apply to the log statement. </p></li>
 </ul>
-</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="cpp macro">
 <dt class="sig sig-object cpp" id="c.XTR_LOGL_TS">
 <span class="target" id="log__macros_8hpp_1a017008086b37ef1a32d2409c5587bb20"></span><span class="sig-name descname"><span class="n"><span class="pre">XTR_LOGL_TS</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">LEVEL</span></span>, <span class="n"><span class="pre">SINK</span></span>, <span class="n"><span class="pre">TS</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XTR_LOGL_TS" title="Link to this definition"></a><br /></dt>
 <dd><p>Log level variant of <a class="reference internal" href="#log__macros_8hpp_1a3b6d7cd3d6c5e7106330a354c3edc1e8"><span class="std std-ref">XTR_LOG_TS</span></a>. If the specified log level has lower importance than the log level of the sink, then the message is dropped (please see the <a class="reference external" href="guide.html#log-levels">log levels</a> section of the user guide for details).</p>
-<p><ul class="simple">
-<li><p>LEVEL: The unqualified log level name, for example simply “info” or “error”. </p></li>
-<li><p>TS: The timestamp to apply to the log statement.</p></li>
-</ul>
-</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>If the ‘fatal’ level is passed then the log message is written, <a class="reference internal" href="#classxtr_1_1sink_1aa3b28b9b9d8f4c5b90ca398eacfafed3"><span class="std std-ref">xtr::sink::sync</span></a> is invoked, then the program is terminated via abort(3).</p>
@@ -401,23 +466,44 @@ logging. Use these macros if accurate timestamps are required.</p>
 <p class="admonition-title">Note</p>
 <p>Log statements with the ‘debug’ level can be disabled at build time by defining XTR_NDEBUG. </p>
 </div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>LEVEL</strong> – The unqualified log level name, for example simply “info” or “error”.</p></li>
+<li><p><strong>SINK</strong> – The <a class="reference internal" href="#classxtr_1_1sink"><span class="std std-ref">xtr::sink</span></a> to log to.</p></li>
+<li><p><strong>TS</strong> – The timestamp to apply to the log statement.</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="cpp macro">
 <dt class="sig sig-object cpp" id="c.XTR_TRY_LOG_TS">
 <span class="target" id="log__macros_8hpp_1ad3772907ce8e2c048b4130d7dd0efe32"></span><span class="sig-name descname"><span class="n"><span class="pre">XTR_TRY_LOG_TS</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">SINK</span></span>, <span class="n"><span class="pre">TS</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XTR_TRY_LOG_TS" title="Link to this definition"></a><br /></dt>
-<dd><p>Non-blocking variant of <a class="reference internal" href="#log__macros_8hpp_1a3b6d7cd3d6c5e7106330a354c3edc1e8"><span class="std std-ref">XTR_LOG_TS</span></a>. The message will be discarded if the sink is full. If a message is dropped a warning will appear in the log. </p>
+<dd><p>Non-blocking variant of <a class="reference internal" href="#log__macros_8hpp_1a3b6d7cd3d6c5e7106330a354c3edc1e8"><span class="std std-ref">XTR_LOG_TS</span></a>. The message will be discarded if the sink is full. If a message is dropped a warning will appear in the log.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>SINK</strong> – The <a class="reference internal" href="#classxtr_1_1sink"><span class="std std-ref">xtr::sink</span></a> to log to.</p></li>
+<li><p><strong>TS</strong> – The timestamp to apply to the log statement. </p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="cpp macro">
 <dt class="sig sig-object cpp" id="c.XTR_TRY_LOGL_TS">
 <span class="target" id="log__macros_8hpp_1a4239a91810270a972fbe37584e9a892e"></span><span class="sig-name descname"><span class="n"><span class="pre">XTR_TRY_LOGL_TS</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">LEVEL</span></span>, <span class="n"><span class="pre">SINK</span></span>, <span class="n"><span class="pre">TS</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XTR_TRY_LOGL_TS" title="Link to this definition"></a><br /></dt>
 <dd><p>Non-blocking variant of <a class="reference internal" href="#log__macros_8hpp_1a4239a91810270a972fbe37584e9a892e"><span class="std std-ref">XTR_TRY_LOGL_TS</span></a>. The message will be discarded if the sink is full. If a message is dropped a warning will appear in the log.</p>
-<p><ul class="simple">
-<li><p>LEVEL: The unqualified log level name, for example simply “info” or “error”. </p></li>
-<li><p>TS: The timestamp to apply to the log statement. </p></li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>LEVEL</strong> – The unqualified log level name, for example simply “info” or “error”.</p></li>
+<li><p><strong>SINK</strong> – The <a class="reference internal" href="#classxtr_1_1sink"><span class="std std-ref">xtr::sink</span></a> to log to.</p></li>
+<li><p><strong>TS</strong> – The timestamp to apply to the log statement. </p></li>
 </ul>
-</p>
+</dd>
+</dl>
 </dd></dl>
 
 </section>
@@ -434,14 +520,18 @@ logging. Use these macros if accurate timestamps are required.</p>
 <dt class="sig sig-object cpp" id="_CPPv4I0EN3xtr6logger6loggerEPKcRR5ClockNSt6stringE17log_level_style_t14option_flags_t">
 <span id="_CPPv3I0EN3xtr6logger6loggerEPKcRR5ClockNSt6stringE17log_level_style_t14option_flags_t"></span><span id="_CPPv2I0EN3xtr6logger6loggerEPKcRR5ClockNSt6stringE17log_level_style_t14option_flags_t"></span><span class="k"><span class="pre">template</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">typename</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Clock</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">chrono</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">system_clock</span></span><span class="p"><span class="pre">&gt;</span></span><br /><span class="target" id="classxtr_1_1logger_1a89f22af07a8ea88e13cedc7e36a4b78f"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="k"><span class="pre">explicit</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">logger</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n sig-param"><span class="pre">path</span></span>, <a class="reference internal" href="#_CPPv4I0EN3xtr6logger6loggerEPKcRR5ClockNSt6stringE17log_level_style_t14option_flags_t" title="xtr::logger::logger::Clock"><span class="n"><span class="pre">Clock</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">clock</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I0EN3xtr6logger6loggerEPKcRR5ClockNSt6stringE17log_level_style_t14option_flags_t" title="xtr::logger::logger::Clock"><span class="n"><span class="pre">Clock</span></span></a><span class="p"><span class="pre">(</span></span><span class="p"><span class="pre">)</span></span>, <span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">command_path</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N3xtr20default_command_pathEv" title="xtr::default_command_path"><span class="n"><span class="pre">default_command_path</span></span></a><span class="p"><span class="pre">(</span></span><span class="p"><span class="pre">)</span></span>, <a class="reference internal" href="#_CPPv4N3xtr17log_level_style_tE" title="xtr::log_level_style_t"><span class="n"><span class="pre">log_level_style_t</span></span></a><span class="w"> </span><span class="n sig-param"><span class="pre">level_style</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N3xtr23default_log_level_styleE11log_level_t" title="xtr::default_log_level_style"><span class="n"><span class="pre">default_log_level_style</span></span></a>, <a class="reference internal" href="#_CPPv4N3xtr14option_flags_tE" title="xtr::option_flags_t"><span class="n"><span class="pre">option_flags_t</span></span></a><span class="w"> </span><span class="n sig-param"><span class="pre">options</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N3xtr14option_flags_tE" title="xtr::option_flags_t"><span class="n"><span class="pre">option_flags_t</span></span></a><span class="p"><span class="pre">::</span></span><a class="reference internal" href="#_CPPv4N3xtr14option_flags_t4noneE" title="xtr::option_flags_t::none"><span class="n"><span class="pre">none</span></span></a><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4I0EN3xtr6logger6loggerEPKcRR5ClockNSt6stringE17log_level_style_t14option_flags_t" title="Link to this definition"></a><br /></dt>
 <dd><p>Path constructor. The first argument is the path to a file which should be opened and logged to. The file will be opened in append mode, and will be created if it does not exist. Errors will be written to stdout.</p>
-<p><ul class="simple">
-<li><p>path: The path of a file to write log statements to. </p></li>
-<li><p>clock:<span class="target" id="classxtr_1_1logger_1clock_arg"></span> A function returning the current time of day as a std::timespec. This function will be invoked when creating timestamps for log statements produced by the basic log macros— please see the <a class="reference external" href="guide.html#basic-time-source">basic time source</a> section of the user guide for details. The default clock is std::chrono::system_clock. </p></li>
-<li><p>command_path:<span class="target" id="classxtr_1_1logger_1command_path_arg"></span> The path where the local domain socket used to communicate with <a class="reference external" href="xtrctl.html">xtrctl</a> should be created. The default behaviour is to create sockets in $XDG_RUNTIME_DIR (if set, otherwise “/run/user/&lt;uid&gt;”). If that directory does not exist or is inaccessible then $TMPDIR (if set, otherwise “/tmp”) will be used instead. See <a class="reference internal" href="#namespacextr_1aa3b454efeb9ce06b9847840199b4848b"><span class="std std-ref">default_command_path</span></a> for further details. To prevent a socket from being created, pass <a class="reference internal" href="#namespacextr_1a87617320edefd34c134af57b4c4f1704"><span class="std std-ref">null_command_path</span></a>. </p></li>
-<li><p>level_style: The log level style that will be used to prefix each log statement—please refer to the <a class="reference internal" href="#namespacextr_1adc7f88f1bb8a0b81ac9dfe9822800ddb"><span class="std std-ref">log_level_style_t</span></a> documentation for details. </p></li>
-<li><p>options: Logger options, see <a class="reference internal" href="#namespacextr_1aad8b41fb64bc0427ecf9bd7e8ab4dede"><span class="std std-ref">option_flags_t</span></a>. </p></li>
+<p><span class="target" id="classxtr_1_1logger_1clock_arg"></span><span class="target" id="classxtr_1_1logger_1command_path_arg"></span></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> – The path of a file to write log statements to.</p></li>
+<li><p><strong>clock</strong> – A function returning the current time of day as a std::timespec. This function will be invoked when creating timestamps for log statements produced by the basic log macros— please see the <a class="reference external" href="guide.html#basic-time-source">basic time source</a> section of the user guide for details. The default clock is std::chrono::system_clock.</p></li>
+<li><p><strong>command_path</strong> – The path where the local domain socket used to communicate with <a class="reference external" href="xtrctl.html">xtrctl</a> should be created. The default behaviour is to create sockets in $XDG_RUNTIME_DIR (if set, otherwise “/run/user/&lt;uid&gt;”). If that directory does not exist or is inaccessible then $TMPDIR (if set, otherwise “/tmp”) will be used instead. See <a class="reference internal" href="#namespacextr_1aa3b454efeb9ce06b9847840199b4848b"><span class="std std-ref">default_command_path</span></a> for further details. To prevent a socket from being created, pass <a class="reference internal" href="#namespacextr_1a87617320edefd34c134af57b4c4f1704"><span class="std std-ref">null_command_path</span></a>.</p></li>
+<li><p><strong>level_style</strong> – The log level style that will be used to prefix each log statement—please refer to the <a class="reference internal" href="#namespacextr_1a60416b519ed67954fa3742f44a330a89"><span class="std std-ref">log_level_style_t</span></a> documentation for details.</p></li>
+<li><p><strong>options</strong> – Logger options, see <a class="reference internal" href="#namespacextr_1aad8b41fb64bc0427ecf9bd7e8ab4dede"><span class="std std-ref">option_flags_t</span></a>. </p></li>
 </ul>
-</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="cpp function">
@@ -449,51 +539,60 @@ logging. Use these macros if accurate timestamps are required.</p>
 <span id="_CPPv3I0EN3xtr6logger6loggerEP4FILERR5ClockNSt6stringE17log_level_style_t14option_flags_t"></span><span id="_CPPv2I0EN3xtr6logger6loggerEP4FILERR5ClockNSt6stringE17log_level_style_t14option_flags_t"></span><span class="k"><span class="pre">template</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">typename</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Clock</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">chrono</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">system_clock</span></span><span class="p"><span class="pre">&gt;</span></span><br /><span class="target" id="classxtr_1_1logger_1a3c7d7c136d5a9ad054779c8cfebe0d1d"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="k"><span class="pre">explicit</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">logger</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">FILE</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n sig-param"><span class="pre">stream</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="n"><span class="pre">stderr</span></span>, <a class="reference internal" href="#_CPPv4I0EN3xtr6logger6loggerEP4FILERR5ClockNSt6stringE17log_level_style_t14option_flags_t" title="xtr::logger::logger::Clock"><span class="n"><span class="pre">Clock</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">clock</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I0EN3xtr6logger6loggerEP4FILERR5ClockNSt6stringE17log_level_style_t14option_flags_t" title="xtr::logger::logger::Clock"><span class="n"><span class="pre">Clock</span></span></a><span class="p"><span class="pre">(</span></span><span class="p"><span class="pre">)</span></span>, <span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">command_path</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N3xtr20default_command_pathEv" title="xtr::default_command_path"><span class="n"><span class="pre">default_command_path</span></span></a><span class="p"><span class="pre">(</span></span><span class="p"><span class="pre">)</span></span>, <a class="reference internal" href="#_CPPv4N3xtr17log_level_style_tE" title="xtr::log_level_style_t"><span class="n"><span class="pre">log_level_style_t</span></span></a><span class="w"> </span><span class="n sig-param"><span class="pre">level_style</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N3xtr23default_log_level_styleE11log_level_t" title="xtr::default_log_level_style"><span class="n"><span class="pre">default_log_level_style</span></span></a>, <a class="reference internal" href="#_CPPv4N3xtr14option_flags_tE" title="xtr::option_flags_t"><span class="n"><span class="pre">option_flags_t</span></span></a><span class="w"> </span><span class="n sig-param"><span class="pre">options</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N3xtr14option_flags_tE" title="xtr::option_flags_t"><span class="n"><span class="pre">option_flags_t</span></span></a><span class="p"><span class="pre">::</span></span><a class="reference internal" href="#_CPPv4N3xtr14option_flags_t4noneE" title="xtr::option_flags_t::none"><span class="n"><span class="pre">none</span></span></a><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4I0EN3xtr6logger6loggerEP4FILERR5ClockNSt6stringE17log_level_style_t14option_flags_t" title="Link to this definition"></a><br /></dt>
 <dd><p>Stream constructor.</p>
 <p>It is expected that this constructor will be used with streams such as stdout or stderr. If a stream that has been opened by the user is to be passed to the logger then the <a class="reference internal" href="#classxtr_1_1logger_1stream-with-reopen-ctor"><span class="std std-ref">stream constructor with reopen path</span></a> constructor is recommended instead, as this will mean that the log file can be rotated—please refer to the xtrctl documentation for the <a class="reference external" href="xtrctl.html#reopening-log-files">reopening log files</a> command for details.</p>
-<p><ul class="simple">
-<li><p>stream: The stream to write log statements to. </p></li>
-<li><p>clock: Please refer to the <a class="reference internal" href="#classxtr_1_1logger_1clock_arg"><span class="std std-ref">description</span></a> above. </p></li>
-<li><p>command_path: Please refer to the <a class="reference internal" href="#classxtr_1_1logger_1command_path_arg"><span class="std std-ref">description</span></a> above. </p></li>
-<li><p>level_style: The log level style that will be used to prefix each log statement—please refer to the <a class="reference internal" href="#namespacextr_1adc7f88f1bb8a0b81ac9dfe9822800ddb"><span class="std std-ref">log_level_style_t</span></a> documentation for details. </p></li>
-<li><p>options: Logger options, see <a class="reference internal" href="#namespacextr_1aad8b41fb64bc0427ecf9bd7e8ab4dede"><span class="std std-ref">option_flags_t</span></a>. </p></li>
-</ul>
-</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>Reopening the log file via the <a class="reference external" href="xtrctl.html#rotating-log-files">xtrctl</a> tool is <em>not</em> supported if this constructor is used.</p>
 </div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>stream</strong> – The stream to write log statements to.</p></li>
+<li><p><strong>clock</strong> – Please refer to the <a class="reference internal" href="#classxtr_1_1logger_1clock_arg"><span class="std std-ref">description</span></a> above.</p></li>
+<li><p><strong>command_path</strong> – Please refer to the <a class="reference internal" href="#classxtr_1_1logger_1command_path_arg"><span class="std std-ref">description</span></a> above.</p></li>
+<li><p><strong>level_style</strong> – The log level style that will be used to prefix each log statement—please refer to the <a class="reference internal" href="#namespacextr_1a60416b519ed67954fa3742f44a330a89"><span class="std std-ref">log_level_style_t</span></a> documentation for details.</p></li>
+<li><p><strong>options</strong> – Logger options, see <a class="reference internal" href="#namespacextr_1aad8b41fb64bc0427ecf9bd7e8ab4dede"><span class="std std-ref">option_flags_t</span></a>. </p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="cpp function">
 <dt class="sig sig-object cpp" id="_CPPv4I0EN3xtr6logger6loggerENSt6stringEP4FILERR5ClockNSt6stringE17log_level_style_t14option_flags_t">
 <span id="_CPPv3I0EN3xtr6logger6loggerENSt6stringEP4FILERR5ClockNSt6stringE17log_level_style_t14option_flags_t"></span><span id="_CPPv2I0EN3xtr6logger6loggerENSt6stringEP4FILERR5ClockNSt6stringE17log_level_style_t14option_flags_t"></span><span class="k"><span class="pre">template</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">typename</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Clock</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">chrono</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">system_clock</span></span><span class="p"><span class="pre">&gt;</span></span><br /><span class="target" id="classxtr_1_1logger_1ab036b584f16bb4b5eec55e500fb93f99"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">logger</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">reopen_path</span></span>, <span class="n"><span class="pre">FILE</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n sig-param"><span class="pre">stream</span></span>, <a class="reference internal" href="#_CPPv4I0EN3xtr6logger6loggerENSt6stringEP4FILERR5ClockNSt6stringE17log_level_style_t14option_flags_t" title="xtr::logger::logger::Clock"><span class="n"><span class="pre">Clock</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">clock</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I0EN3xtr6logger6loggerENSt6stringEP4FILERR5ClockNSt6stringE17log_level_style_t14option_flags_t" title="xtr::logger::logger::Clock"><span class="n"><span class="pre">Clock</span></span></a><span class="p"><span class="pre">(</span></span><span class="p"><span class="pre">)</span></span>, <span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">command_path</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N3xtr20default_command_pathEv" title="xtr::default_command_path"><span class="n"><span class="pre">default_command_path</span></span></a><span class="p"><span class="pre">(</span></span><span class="p"><span class="pre">)</span></span>, <a class="reference internal" href="#_CPPv4N3xtr17log_level_style_tE" title="xtr::log_level_style_t"><span class="n"><span class="pre">log_level_style_t</span></span></a><span class="w"> </span><span class="n sig-param"><span class="pre">level_style</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N3xtr23default_log_level_styleE11log_level_t" title="xtr::default_log_level_style"><span class="n"><span class="pre">default_log_level_style</span></span></a>, <a class="reference internal" href="#_CPPv4N3xtr14option_flags_tE" title="xtr::option_flags_t"><span class="n"><span class="pre">option_flags_t</span></span></a><span class="w"> </span><span class="n sig-param"><span class="pre">options</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N3xtr14option_flags_tE" title="xtr::option_flags_t"><span class="n"><span class="pre">option_flags_t</span></span></a><span class="p"><span class="pre">::</span></span><a class="reference internal" href="#_CPPv4N3xtr14option_flags_t4noneE" title="xtr::option_flags_t::none"><span class="n"><span class="pre">none</span></span></a><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4I0EN3xtr6logger6loggerENSt6stringEP4FILERR5ClockNSt6stringE17log_level_style_t14option_flags_t" title="Link to this definition"></a><br /></dt>
 <dd><p><span class="target" id="classxtr_1_1logger_1stream-with-reopen-ctor"></span> Stream constructor with reopen path.</p>
-<p><ul class="simple">
-<li><p>reopen_path: The path of the file associated with the stream argument. This path will be used to reopen the stream if requested via the xtrctl <a class="reference external" href="xtrctl.html#reopening-log-files">reopen command</a>. Pass <a class="reference internal" href="#namespacextr_1a2d114b47712f1720d195475122cfa99d"><span class="std std-ref">null_reopen_path</span></a> if no filename is associated with the stream. </p></li>
-<li><p>stream: The stream to write log statements to. </p></li>
-<li><p>clock: Please refer to the <a class="reference internal" href="#classxtr_1_1logger_1clock_arg"><span class="std std-ref">description</span></a> above. </p></li>
-<li><p>command_path: Please refer to the <a class="reference internal" href="#classxtr_1_1logger_1command_path_arg"><span class="std std-ref">description</span></a> above. </p></li>
-<li><p>level_style: The log level style that will be used to prefix each log statement—please refer to the <a class="reference internal" href="#namespacextr_1adc7f88f1bb8a0b81ac9dfe9822800ddb"><span class="std std-ref">log_level_style_t</span></a> documentation for details. </p></li>
-<li><p>options: Logger options, see <a class="reference internal" href="#namespacextr_1aad8b41fb64bc0427ecf9bd7e8ab4dede"><span class="std std-ref">option_flags_t</span></a>. </p></li>
-</ul>
-</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>Reopening the log file via the <a class="reference external" href="xtrctl.html#rotating-log-files">xtrctl</a> tool is supported, with the reopen_path argument specifying the path to reopen.</p>
 </div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>reopen_path</strong> – The path of the file associated with the stream argument. This path will be used to reopen the stream if requested via the xtrctl <a class="reference external" href="xtrctl.html#reopening-log-files">reopen command</a>. Pass <a class="reference internal" href="#namespacextr_1a2d114b47712f1720d195475122cfa99d"><span class="std std-ref">null_reopen_path</span></a> if no filename is associated with the stream.</p></li>
+<li><p><strong>stream</strong> – The stream to write log statements to.</p></li>
+<li><p><strong>clock</strong> – Please refer to the <a class="reference internal" href="#classxtr_1_1logger_1clock_arg"><span class="std std-ref">description</span></a> above.</p></li>
+<li><p><strong>command_path</strong> – Please refer to the <a class="reference internal" href="#classxtr_1_1logger_1command_path_arg"><span class="std std-ref">description</span></a> above.</p></li>
+<li><p><strong>level_style</strong> – The log level style that will be used to prefix each log statement—please refer to the <a class="reference internal" href="#namespacextr_1a60416b519ed67954fa3742f44a330a89"><span class="std std-ref">log_level_style_t</span></a> documentation for details.</p></li>
+<li><p><strong>options</strong> – Logger options, see <a class="reference internal" href="#namespacextr_1aad8b41fb64bc0427ecf9bd7e8ab4dede"><span class="std std-ref">option_flags_t</span></a>. </p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="cpp function">
 <dt class="sig sig-object cpp" id="_CPPv4I0EN3xtr6logger6loggerE21storage_interface_ptrRR5ClockNSt6stringE17log_level_style_t14option_flags_t">
 <span id="_CPPv3I0EN3xtr6logger6loggerE21storage_interface_ptrRR5ClockNSt6stringE17log_level_style_t14option_flags_t"></span><span id="_CPPv2I0EN3xtr6logger6loggerE21storage_interface_ptrRR5ClockNSt6stringE17log_level_style_t14option_flags_t"></span><span class="k"><span class="pre">template</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">typename</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Clock</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">chrono</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">system_clock</span></span><span class="p"><span class="pre">&gt;</span></span><br /><span class="target" id="classxtr_1_1logger_1afab57bf8ce907af0944cc7ee95ad0d41"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="k"><span class="pre">explicit</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">logger</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4N3xtr21storage_interface_ptrE" title="xtr::storage_interface_ptr"><span class="n"><span class="pre">storage_interface_ptr</span></span></a><span class="w"> </span><span class="n sig-param"><span class="pre">storage</span></span>, <a class="reference internal" href="#_CPPv4I0EN3xtr6logger6loggerE21storage_interface_ptrRR5ClockNSt6stringE17log_level_style_t14option_flags_t" title="xtr::logger::logger::Clock"><span class="n"><span class="pre">Clock</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">clock</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I0EN3xtr6logger6loggerE21storage_interface_ptrRR5ClockNSt6stringE17log_level_style_t14option_flags_t" title="xtr::logger::logger::Clock"><span class="n"><span class="pre">Clock</span></span></a><span class="p"><span class="pre">(</span></span><span class="p"><span class="pre">)</span></span>, <span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">command_path</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N3xtr20default_command_pathEv" title="xtr::default_command_path"><span class="n"><span class="pre">default_command_path</span></span></a><span class="p"><span class="pre">(</span></span><span class="p"><span class="pre">)</span></span>, <a class="reference internal" href="#_CPPv4N3xtr17log_level_style_tE" title="xtr::log_level_style_t"><span class="n"><span class="pre">log_level_style_t</span></span></a><span class="w"> </span><span class="n sig-param"><span class="pre">level_style</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N3xtr23default_log_level_styleE11log_level_t" title="xtr::default_log_level_style"><span class="n"><span class="pre">default_log_level_style</span></span></a>, <a class="reference internal" href="#_CPPv4N3xtr14option_flags_tE" title="xtr::option_flags_t"><span class="n"><span class="pre">option_flags_t</span></span></a><span class="w"> </span><span class="n sig-param"><span class="pre">options</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N3xtr14option_flags_tE" title="xtr::option_flags_t"><span class="n"><span class="pre">option_flags_t</span></span></a><span class="p"><span class="pre">::</span></span><a class="reference internal" href="#_CPPv4N3xtr14option_flags_t4noneE" title="xtr::option_flags_t::none"><span class="n"><span class="pre">none</span></span></a><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4I0EN3xtr6logger6loggerE21storage_interface_ptrRR5ClockNSt6stringE17log_level_style_t14option_flags_t" title="Link to this definition"></a><br /></dt>
 <dd><p><span class="target" id="classxtr_1_1logger_1back-end-ctor"></span> Custom back-end constructor (please refer to the <a class="reference external" href="guide.html#custom-back-ends">custom back-ends</a> section of the user guide for further details on implementing a custom back-end).</p>
-<p><ul class="simple">
-<li><p>storage: Unique pointer to an object implementing the <a class="reference internal" href="#structxtr_1_1storage__interface"><span class="std std-ref">storage_interface</span></a> interface. The logger will invoke methods on this object from the background thread in order to write log data to whatever underlying storage medium is implemented by the object, such as disk, network, dot-matrix printer etc. </p></li>
-<li><p>clock: Please refer to the <a class="reference internal" href="#classxtr_1_1logger_1clock_arg"><span class="std std-ref">description</span></a> above. </p></li>
-<li><p>command_path: Please refer to the <a class="reference internal" href="#classxtr_1_1logger_1command_path_arg"><span class="std std-ref">description</span></a> above. </p></li>
-<li><p>level_style: The log level style that will be used to prefix each log statement—please refer to the <a class="reference internal" href="#namespacextr_1adc7f88f1bb8a0b81ac9dfe9822800ddb"><span class="std std-ref">log_level_style_t</span></a> documentation for details. </p></li>
-<li><p>options: Logger options, see <a class="reference internal" href="#namespacextr_1aad8b41fb64bc0427ecf9bd7e8ab4dede"><span class="std std-ref">option_flags_t</span></a>. </p></li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>storage</strong> – Unique pointer to an object implementing the <a class="reference internal" href="#structxtr_1_1storage__interface"><span class="std std-ref">storage_interface</span></a> interface. The logger will invoke methods on this object from the background thread in order to write log data to whatever underlying storage medium is implemented by the object, such as disk, network, dot-matrix printer etc.</p></li>
+<li><p><strong>clock</strong> – Please refer to the <a class="reference internal" href="#classxtr_1_1logger_1clock_arg"><span class="std std-ref">description</span></a> above.</p></li>
+<li><p><strong>command_path</strong> – Please refer to the <a class="reference internal" href="#classxtr_1_1logger_1command_path_arg"><span class="std std-ref">description</span></a> above.</p></li>
+<li><p><strong>level_style</strong> – The log level style that will be used to prefix each log statement—please refer to the <a class="reference internal" href="#namespacextr_1a60416b519ed67954fa3742f44a330a89"><span class="std std-ref">log_level_style_t</span></a> documentation for details.</p></li>
+<li><p><strong>options</strong> – Logger options, see <a class="reference internal" href="#namespacextr_1aad8b41fb64bc0427ecf9bd7e8ab4dede"><span class="std std-ref">option_flags_t</span></a>. </p></li>
 </ul>
-</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="cpp function">
@@ -526,7 +625,7 @@ logging. Use these macros if accurate timestamps are required.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>s</strong> – The sink to register. </p></li>
+<li><p><strong>s</strong> – The sink to register.</p></li>
 <li><p><strong>name</strong> – The name for the given sink.</p></li>
 </ul>
 </dd>
@@ -545,7 +644,7 @@ logging. Use these macros if accurate timestamps are required.</p>
 <dl class="cpp function">
 <dt class="sig sig-object cpp" id="_CPPv4N3xtr6logger19set_log_level_styleE17log_level_style_t">
 <span id="_CPPv3N3xtr6logger19set_log_level_styleE17log_level_style_t"></span><span id="_CPPv2N3xtr6logger19set_log_level_styleE17log_level_style_t"></span><span id="xtr::logger::set_log_level_style__log_level_style_t"></span><span class="target" id="classxtr_1_1logger_1a03c976cd4f6ee9c55ab42adc512fe55e"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">set_log_level_style</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4N3xtr17log_level_style_tE" title="xtr::log_level_style_t"><span class="n"><span class="pre">log_level_style_t</span></span></a><span class="w"> </span><span class="n sig-param"><span class="pre">level_style</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">noexcept</span></span><a class="headerlink" href="#_CPPv4N3xtr6logger19set_log_level_styleE17log_level_style_t" title="Link to this definition"></a><br /></dt>
-<dd><p>Sets the logger log level style—please refer to the <a class="reference internal" href="#namespacextr_1adc7f88f1bb8a0b81ac9dfe9822800ddb"><span class="std std-ref">log_level_style_t</span></a> documentation for details. </p>
+<dd><p>Sets the logger log level style—please refer to the <a class="reference internal" href="#namespacextr_1a60416b519ed67954fa3742f44a330a89"><span class="std std-ref">log_level_style_t</span></a> documentation for details. </p>
 </dd></dl>
 
 <dl class="cpp function">
@@ -706,7 +805,7 @@ logging. Use these macros if accurate timestamps are required.</p>
 Refer to the <a class="reference external" href="guide.html#custom-formatters">custom formatters</a> section of the user guide for example use. </p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>value</strong> – The value to copy and wrap for stream-based formatting. </p>
+<dd class="field-odd"><p><strong>value</strong> – The value to copy and wrap for stream-based formatting.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>A wrapper object suitable for passing as an argument to a log macro such as <a class="reference internal" href="#log__macros_8hpp_1afccfe93e240adc0620c7c82918263fb2"><span class="std std-ref">XTR_LOG</span></a>.</p>
@@ -722,7 +821,7 @@ Refer to the <a class="reference external" href="guide.html#custom-formatters">c
 Refer to the <a class="reference external" href="guide.html#custom-formatters">custom formatters</a> section of the user guide for example use. </p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>value</strong> – The value to copy and wrap for stream-based formatting. </p>
+<dd class="field-odd"><p><strong>value</strong> – The value to copy and wrap for stream-based formatting.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>A wrapper object suitable for passing as an argument to a log macro such as <a class="reference internal" href="#log__macros_8hpp_1afccfe93e240adc0620c7c82918263fb2"><span class="std std-ref">XTR_LOG</span></a>.</p>
@@ -784,20 +883,20 @@ disabled. Fatal log statements will still call
 <h2>Log Level Styles<a class="headerlink" href="#log-level-styles" title="Link to this heading"></a></h2>
 <dl class="cpp type">
 <dt class="sig sig-object cpp" id="_CPPv4N3xtr17log_level_style_tE">
-<span id="_CPPv3N3xtr17log_level_style_tE"></span><span id="_CPPv2N3xtr17log_level_style_tE"></span><span class="target" id="namespacextr_1adc7f88f1bb8a0b81ac9dfe9822800ddb"></span><span class="k"><span class="pre">using</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">xtr</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">log_level_style_t</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="p"><span class="pre">(</span></span><span class="p"><span class="pre">*</span></span><span class="p"><span class="pre">)</span></span><span class="p"><span class="pre">(</span></span><a class="reference internal" href="#_CPPv4N3xtr11log_level_tE" title="xtr::log_level_t"><span class="n"><span class="pre">log_level_t</span></span></a><span class="p"><span class="pre">)</span></span><a class="headerlink" href="#_CPPv4N3xtr17log_level_style_tE" title="Link to this definition"></a><br /></dt>
+<span id="_CPPv3N3xtr17log_level_style_tE"></span><span id="_CPPv2N3xtr17log_level_style_tE"></span><span class="target" id="namespacextr_1a60416b519ed67954fa3742f44a330a89"></span><span class="k"><span class="pre">using</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">xtr</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">log_level_style_t</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="p"><span class="pre">(</span></span><span class="p"><span class="pre">*</span></span><span class="p"><span class="pre">)</span></span><span class="p"><span class="pre">(</span></span><a class="reference internal" href="#_CPPv4N3xtr11log_level_tE" title="xtr::log_level_t"><span class="n"><span class="pre">log_level_t</span></span></a><span class="p"><span class="pre">)</span></span><a class="headerlink" href="#_CPPv4N3xtr17log_level_style_tE" title="Link to this definition"></a><br /></dt>
 <dd><p>Log level styles are used to customise the formatting used when prefixing log statements with their associated log level (see <a class="reference internal" href="#namespacextr_1afb0918f4447c35720ed0eb78fbd054b5"><span class="std std-ref">log_level_t</span></a>). Styles are simply function pointers—to provide a custom style, define a function returning a string literal and accepting a single argument of type <a class="reference internal" href="#namespacextr_1afb0918f4447c35720ed0eb78fbd054b5"><span class="std std-ref">log_level_t</span></a> and pass the function to <a class="reference internal" href="#classxtr_1_1logger_1a89f22af07a8ea88e13cedc7e36a4b78f"><span class="std std-ref">logger::logger</span></a> or <a class="reference internal" href="#classxtr_1_1logger_1a03c976cd4f6ee9c55ab42adc512fe55e"><span class="std std-ref">logger::set_log_level_style</span></a>. The values returned by the function will be prefixed to log statements produced by the logger. Two formatters are provided, the default formatter <a class="reference internal" href="#namespacextr_1ae01b200b11d63e0e9215a547ac1f8f33"><span class="std std-ref">default_log_level_style</span></a> and a Systemd compatible style <a class="reference internal" href="#namespacextr_1aa03b79e09dfe31bccb7658e20dbbcac8"><span class="std std-ref">systemd_log_level_style</span></a>. </p>
 </dd></dl>
 
 <dl class="cpp function">
 <dt class="sig sig-object cpp" id="_CPPv4N3xtr23default_log_level_styleE11log_level_t">
 <span id="_CPPv3N3xtr23default_log_level_styleE11log_level_t"></span><span id="_CPPv2N3xtr23default_log_level_styleE11log_level_t"></span><span id="xtr::default_log_level_style__log_level_t"></span><span class="target" id="namespacextr_1ae01b200b11d63e0e9215a547ac1f8f33"></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-prename descclassname"><span class="n"><span class="pre">xtr</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">default_log_level_style</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4N3xtr11log_level_tE" title="xtr::log_level_t"><span class="n"><span class="pre">log_level_t</span></span></a><span class="w"> </span><span class="n sig-param"><span class="pre">level</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xtr23default_log_level_styleE11log_level_t" title="Link to this definition"></a><br /></dt>
-<dd><p>The default log level style (see <a class="reference internal" href="#namespacextr_1adc7f88f1bb8a0b81ac9dfe9822800ddb"><span class="std std-ref">log_level_style_t</span></a>). Returns a single upper-case character representing the log level followed by a space, e.g. “E “, “W “, “I “ for <a class="reference internal" href="#namespacextr_1afb0918f4447c35720ed0eb78fbd054b5acb5e100e5a9a3e7f6d1fd97512215282"><span class="std std-ref">log_level_t::error</span></a>, <a class="reference internal" href="#namespacextr_1afb0918f4447c35720ed0eb78fbd054b5a7b83d3f08fa392b79e3f553b585971cd"><span class="std std-ref">log_level_t::warning</span></a>, <a class="reference internal" href="#namespacextr_1afb0918f4447c35720ed0eb78fbd054b5acaf9b6b99962bf5c2264824231d7a40c"><span class="std std-ref">log_level_t::info</span></a> and so on. </p>
+<dd><p>The default log level style (see <a class="reference internal" href="#namespacextr_1a60416b519ed67954fa3742f44a330a89"><span class="std std-ref">log_level_style_t</span></a>). Returns a single upper-case character representing the log level followed by a space, e.g. “E “, “W “, “I “ for <a class="reference internal" href="#namespacextr_1afb0918f4447c35720ed0eb78fbd054b5acb5e100e5a9a3e7f6d1fd97512215282"><span class="std std-ref">log_level_t::error</span></a>, <a class="reference internal" href="#namespacextr_1afb0918f4447c35720ed0eb78fbd054b5a7b83d3f08fa392b79e3f553b585971cd"><span class="std std-ref">log_level_t::warning</span></a>, <a class="reference internal" href="#namespacextr_1afb0918f4447c35720ed0eb78fbd054b5acaf9b6b99962bf5c2264824231d7a40c"><span class="std std-ref">log_level_t::info</span></a> and so on. </p>
 </dd></dl>
 
 <dl class="cpp function">
 <dt class="sig sig-object cpp" id="_CPPv4N3xtr23systemd_log_level_styleE11log_level_t">
 <span id="_CPPv3N3xtr23systemd_log_level_styleE11log_level_t"></span><span id="_CPPv2N3xtr23systemd_log_level_styleE11log_level_t"></span><span id="xtr::systemd_log_level_style__log_level_t"></span><span class="target" id="namespacextr_1aa03b79e09dfe31bccb7658e20dbbcac8"></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-prename descclassname"><span class="n"><span class="pre">xtr</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">systemd_log_level_style</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4N3xtr11log_level_tE" title="xtr::log_level_t"><span class="n"><span class="pre">log_level_t</span></span></a><span class="w"> </span><span class="n sig-param"><span class="pre">level</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xtr23systemd_log_level_styleE11log_level_t" title="Link to this definition"></a><br /></dt>
-<dd><p>Systemd log level style (see <a class="reference internal" href="#namespacextr_1adc7f88f1bb8a0b81ac9dfe9822800ddb"><span class="std std-ref">log_level_style_t</span></a>). Returns strings as described in <a class="reference external" href="https://man7.org/linux/man-pages/man3/sd-daemon.3.html">sd-daemon(3)</a>, e.g. “&lt;0&gt;”, “&lt;1&gt;”, “&lt;2&gt;” etc. </p>
+<dd><p>Systemd log level style (see <a class="reference internal" href="#namespacextr_1a60416b519ed67954fa3742f44a330a89"><span class="std std-ref">log_level_style_t</span></a>). Returns strings as described in <a class="reference external" href="https://man7.org/linux/man-pages/man3/sd-daemon.3.html">sd-daemon(3)</a>, e.g. “&lt;0&gt;”, “&lt;1&gt;”, “&lt;2&gt;” etc. </p>
 </dd></dl>
 
 </section>
@@ -858,14 +957,17 @@ disabled. Fatal log statements will still call
 <dt class="sig sig-object cpp" id="_CPPv4N3xtr19io_uring_fd_storage19io_uring_fd_storageEiNSt6stringENSt6size_tENSt6size_tENSt6size_tE">
 <span id="_CPPv3N3xtr19io_uring_fd_storage19io_uring_fd_storageEiNSt6stringENSt6size_tENSt6size_tENSt6size_tE"></span><span id="_CPPv2N3xtr19io_uring_fd_storage19io_uring_fd_storageEiNSt6stringENSt6size_tENSt6size_tENSt6size_tE"></span><span id="xtr::io_uring_fd_storage::io_uring_fd_storage__i.ss.std::s.std::s.std::s"></span><span class="target" id="classxtr_1_1io__uring__fd__storage_1a7016e1e7522138f280f9f444b7000b92"></span><span class="k"><span class="pre">explicit</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">io_uring_fd_storage</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">fd</span></span>, <span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">reopen_path</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N3xtr16null_reopen_pathE" title="xtr::null_reopen_path"><span class="n"><span class="pre">null_reopen_path</span></span></a>, <span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">buffer_capacity</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N3xtr19io_uring_fd_storage23default_buffer_capacityE" title="xtr::io_uring_fd_storage::default_buffer_capacity"><span class="n"><span class="pre">default_buffer_capacity</span></span></a>, <span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">queue_size</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N3xtr19io_uring_fd_storage18default_queue_sizeE" title="xtr::io_uring_fd_storage::default_queue_size"><span class="n"><span class="pre">default_queue_size</span></span></a>, <span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">batch_size</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N3xtr19io_uring_fd_storage18default_batch_sizeE" title="xtr::io_uring_fd_storage::default_batch_size"><span class="n"><span class="pre">default_batch_size</span></span></a><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xtr19io_uring_fd_storage19io_uring_fd_storageEiNSt6stringENSt6size_tENSt6size_tENSt6size_tE" title="Link to this definition"></a><br /></dt>
 <dd><p>File descriptor constructor.</p>
-<p><ul class="simple">
-<li><p>fd: File descriptor to write to. This will be duplicated via a call to <a class="reference external" href="https://www.man7.org/linux/man-pages/man2/dup.2.html">dup(2)</a>, so callers may close the file descriptor immediately after this constructor returns if desired. </p></li>
-<li><p>reopen_path: The path of the file associated with the fd argument. This path will be used to reopen the file if requested via the xtrctl <a class="reference external" href="xtrctl.html#reopening-log-files">reopen command</a>. Pass <a class="reference internal" href="#namespacextr_1a2d114b47712f1720d195475122cfa99d"><span class="std std-ref">null_reopen_path</span></a> if no filename is associated with the file descriptor. </p></li>
-<li><p>buffer_capacity: The size in bytes of a single io_uring buffer. </p></li>
-<li><p>queue_size: The size of the io_uring submission queue. </p></li>
-<li><p>batch_size: The number of buffers to collect before submitting the buffers to io_uring. If <a class="reference internal" href="#config_8hpp_1a77d07b4b54338fce132a411093d00f49"><span class="std std-ref">XTR_IO_URING_POLL</span></a> is set to 1 in xtr/config.hpp then this parameter has no effect. </p></li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fd</strong> – File descriptor to write to. This will be duplicated via a call to <a class="reference external" href="https://www.man7.org/linux/man-pages/man2/dup.2.html">dup(2)</a>, so callers may close the file descriptor immediately after this constructor returns if desired.</p></li>
+<li><p><strong>reopen_path</strong> – The path of the file associated with the fd argument. This path will be used to reopen the file if requested via the xtrctl <a class="reference external" href="xtrctl.html#reopening-log-files">reopen command</a>. Pass <a class="reference internal" href="#namespacextr_1a2d114b47712f1720d195475122cfa99d"><span class="std std-ref">null_reopen_path</span></a> if no filename is associated with the file descriptor.</p></li>
+<li><p><strong>buffer_capacity</strong> – The size in bytes of a single io_uring buffer.</p></li>
+<li><p><strong>queue_size</strong> – The size of the io_uring submission queue.</p></li>
+<li><p><strong>batch_size</strong> – The number of buffers to collect before submitting the buffers to io_uring. If <a class="reference internal" href="#config_8hpp_1a77d07b4b54338fce132a411093d00f49"><span class="std std-ref">XTR_IO_URING_POLL</span></a> is set to 1 in xtr/config.hpp then this parameter has no effect. </p></li>
 </ul>
-</p>
+</dd>
+</dl>
 </dd></dl>
 
 </div>
@@ -873,19 +975,19 @@ disabled. Fatal log statements will still call
 <p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-static-attributes">Public Static Attributes</p>
 <dl class="cpp var">
 <dt class="sig sig-object cpp" id="_CPPv4N3xtr19io_uring_fd_storage23default_buffer_capacityE">
-<span id="_CPPv3N3xtr19io_uring_fd_storage23default_buffer_capacityE"></span><span id="_CPPv2N3xtr19io_uring_fd_storage23default_buffer_capacityE"></span><span id="xtr::io_uring_fd_storage::default_buffer_capacity__std::s"></span><span class="target" id="classxtr_1_1io__uring__fd__storage_1a713185a40b7e1f336c5fcd255bd1319e"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">constexpr</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">default_buffer_capacity</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">64</span></span><span class="w"> </span><span class="o"><span class="pre">*</span></span><span class="w"> </span><span class="m"><span class="pre">1024</span></span><a class="headerlink" href="#_CPPv4N3xtr19io_uring_fd_storage23default_buffer_capacityE" title="Link to this definition"></a><br /></dt>
+<span id="_CPPv3N3xtr19io_uring_fd_storage23default_buffer_capacityE"></span><span id="_CPPv2N3xtr19io_uring_fd_storage23default_buffer_capacityE"></span><span id="xtr::io_uring_fd_storage::default_buffer_capacity__std::s"></span><span class="target" id="classxtr_1_1io__uring__fd__storage_1a713185a40b7e1f336c5fcd255bd1319e"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">constexpr</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">default_buffer_capacity</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">64UL</span></span><span class="w"> </span><span class="o"><span class="pre">*</span></span><span class="w"> </span><span class="m"><span class="pre">1024UL</span></span><a class="headerlink" href="#_CPPv4N3xtr19io_uring_fd_storage23default_buffer_capacityE" title="Link to this definition"></a><br /></dt>
 <dd><p>Default value for the buffer_capacity constructor argument. </p>
 </dd></dl>
 
 <dl class="cpp var">
 <dt class="sig sig-object cpp" id="_CPPv4N3xtr19io_uring_fd_storage18default_queue_sizeE">
-<span id="_CPPv3N3xtr19io_uring_fd_storage18default_queue_sizeE"></span><span id="_CPPv2N3xtr19io_uring_fd_storage18default_queue_sizeE"></span><span id="xtr::io_uring_fd_storage::default_queue_size__std::s"></span><span class="target" id="classxtr_1_1io__uring__fd__storage_1a60708dc51fa5504248c83dfa8b190822"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">constexpr</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">default_queue_size</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">1024</span></span><a class="headerlink" href="#_CPPv4N3xtr19io_uring_fd_storage18default_queue_sizeE" title="Link to this definition"></a><br /></dt>
+<span id="_CPPv3N3xtr19io_uring_fd_storage18default_queue_sizeE"></span><span id="_CPPv2N3xtr19io_uring_fd_storage18default_queue_sizeE"></span><span id="xtr::io_uring_fd_storage::default_queue_size__std::s"></span><span class="target" id="classxtr_1_1io__uring__fd__storage_1a60708dc51fa5504248c83dfa8b190822"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">constexpr</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">default_queue_size</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">1024UL</span></span><a class="headerlink" href="#_CPPv4N3xtr19io_uring_fd_storage18default_queue_sizeE" title="Link to this definition"></a><br /></dt>
 <dd><p>Default value for the queue_size constructor argument. </p>
 </dd></dl>
 
 <dl class="cpp var">
 <dt class="sig sig-object cpp" id="_CPPv4N3xtr19io_uring_fd_storage18default_batch_sizeE">
-<span id="_CPPv3N3xtr19io_uring_fd_storage18default_batch_sizeE"></span><span id="_CPPv2N3xtr19io_uring_fd_storage18default_batch_sizeE"></span><span id="xtr::io_uring_fd_storage::default_batch_size__std::s"></span><span class="target" id="classxtr_1_1io__uring__fd__storage_1a937345bcb92510ceb952185b3344f88e"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">constexpr</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">default_batch_size</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">32</span></span><a class="headerlink" href="#_CPPv4N3xtr19io_uring_fd_storage18default_batch_sizeE" title="Link to this definition"></a><br /></dt>
+<span id="_CPPv3N3xtr19io_uring_fd_storage18default_batch_sizeE"></span><span id="_CPPv2N3xtr19io_uring_fd_storage18default_batch_sizeE"></span><span id="xtr::io_uring_fd_storage::default_batch_size__std::s"></span><span class="target" id="classxtr_1_1io__uring__fd__storage_1a937345bcb92510ceb952185b3344f88e"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">constexpr</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">default_batch_size</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">32UL</span></span><a class="headerlink" href="#_CPPv4N3xtr19io_uring_fd_storage18default_batch_sizeE" title="Link to this definition"></a><br /></dt>
 <dd><p>Default value for the batch_size constructor argument. </p>
 </dd></dl>
 
@@ -902,12 +1004,15 @@ disabled. Fatal log statements will still call
 <dt class="sig sig-object cpp" id="_CPPv4N3xtr16posix_fd_storage16posix_fd_storageEiNSt6stringENSt6size_tE">
 <span id="_CPPv3N3xtr16posix_fd_storage16posix_fd_storageEiNSt6stringENSt6size_tE"></span><span id="_CPPv2N3xtr16posix_fd_storage16posix_fd_storageEiNSt6stringENSt6size_tE"></span><span id="xtr::posix_fd_storage::posix_fd_storage__i.ss.std::s"></span><span class="target" id="classxtr_1_1posix__fd__storage_1a5657b279460ea5298e04b476f3d385b7"></span><span class="k"><span class="pre">explicit</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">posix_fd_storage</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">fd</span></span>, <span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">reopen_path</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N3xtr16null_reopen_pathE" title="xtr::null_reopen_path"><span class="n"><span class="pre">null_reopen_path</span></span></a>, <span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">buffer_capacity</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N3xtr16posix_fd_storage23default_buffer_capacityE" title="xtr::posix_fd_storage::default_buffer_capacity"><span class="n"><span class="pre">default_buffer_capacity</span></span></a><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xtr16posix_fd_storage16posix_fd_storageEiNSt6stringENSt6size_tE" title="Link to this definition"></a><br /></dt>
 <dd><p>File descriptor constructor.</p>
-<p><ul class="simple">
-<li><p>fd: File descriptor to write to. This will be duplicated via a call to <a class="reference external" href="https://www.man7.org/linux/man-pages/man2/dup.2.html">dup(2)</a>, so callers may close the file descriptor immediately after this constructor returns if desired. </p></li>
-<li><p>reopen_path: The path of the file associated with the fd argument. This path will be used to reopen the file if requested via the xtrctl <a class="reference external" href="xtrctl.html#reopening-log-files">reopen command</a>. Pass <a class="reference internal" href="#namespacextr_1a2d114b47712f1720d195475122cfa99d"><span class="std std-ref">null_reopen_path</span></a> if no filename is associated with the file descriptor. </p></li>
-<li><p>buffer_capacity: The size in bytes of the internal write buffer. </p></li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fd</strong> – File descriptor to write to. This will be duplicated via a call to <a class="reference external" href="https://www.man7.org/linux/man-pages/man2/dup.2.html">dup(2)</a>, so callers may close the file descriptor immediately after this constructor returns if desired.</p></li>
+<li><p><strong>reopen_path</strong> – The path of the file associated with the fd argument. This path will be used to reopen the file if requested via the xtrctl <a class="reference external" href="xtrctl.html#reopening-log-files">reopen command</a>. Pass <a class="reference internal" href="#namespacextr_1a2d114b47712f1720d195475122cfa99d"><span class="std std-ref">null_reopen_path</span></a> if no filename is associated with the file descriptor.</p></li>
+<li><p><strong>buffer_capacity</strong> – The size in bytes of the internal write buffer. </p></li>
 </ul>
-</p>
+</dd>
+</dl>
 </dd></dl>
 
 </div>
@@ -915,7 +1020,7 @@ disabled. Fatal log statements will still call
 <p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-static-attributes">Public Static Attributes</p>
 <dl class="cpp var">
 <dt class="sig sig-object cpp" id="_CPPv4N3xtr16posix_fd_storage23default_buffer_capacityE">
-<span id="_CPPv3N3xtr16posix_fd_storage23default_buffer_capacityE"></span><span id="_CPPv2N3xtr16posix_fd_storage23default_buffer_capacityE"></span><span id="xtr::posix_fd_storage::default_buffer_capacity__std::s"></span><span class="target" id="classxtr_1_1posix__fd__storage_1adf912ed99e533d604e44896d9b5bf1fb"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">constexpr</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">default_buffer_capacity</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">64</span></span><span class="w"> </span><span class="o"><span class="pre">*</span></span><span class="w"> </span><span class="m"><span class="pre">1024</span></span><a class="headerlink" href="#_CPPv4N3xtr16posix_fd_storage23default_buffer_capacityE" title="Link to this definition"></a><br /></dt>
+<span id="_CPPv3N3xtr16posix_fd_storage23default_buffer_capacityE"></span><span id="_CPPv2N3xtr16posix_fd_storage23default_buffer_capacityE"></span><span id="xtr::posix_fd_storage::default_buffer_capacity__std::s"></span><span class="target" id="classxtr_1_1posix__fd__storage_1adf912ed99e533d604e44896d9b5bf1fb"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">constexpr</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">default_buffer_capacity</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">64UL</span></span><span class="w"> </span><span class="o"><span class="pre">*</span></span><span class="w"> </span><span class="m"><span class="pre">1024UL</span></span><a class="headerlink" href="#_CPPv4N3xtr16posix_fd_storage23default_buffer_capacityE" title="Link to this definition"></a><br /></dt>
 <dd><p>Default value for the buffer_capacity constructor argument. </p>
 </dd></dl>
 
@@ -931,23 +1036,29 @@ disabled. Fatal log statements will still call
 <dl class="cpp function">
 <dt class="sig sig-object cpp" id="_CPPv4N3xtr15make_fd_storageEP4FILENSt6stringE">
 <span id="_CPPv3N3xtr15make_fd_storageEP4FILENSt6stringE"></span><span id="_CPPv2N3xtr15make_fd_storageEP4FILENSt6stringE"></span><span id="xtr::make_fd_storage__FILEP.ss"></span><span class="target" id="namespacextr_1ab23f69698b248accae624468b680676d"></span><a class="reference internal" href="#_CPPv4N3xtr21storage_interface_ptrE" title="xtr::storage_interface_ptr"><span class="n"><span class="pre">storage_interface_ptr</span></span></a><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">xtr</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">make_fd_storage</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">FILE</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n sig-param"><span class="pre">fp</span></span>, <span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">reopen_path</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N3xtr16null_reopen_pathE" title="xtr::null_reopen_path"><span class="n"><span class="pre">null_reopen_path</span></span></a><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xtr15make_fd_storageEP4FILENSt6stringE" title="Link to this definition"></a><br /></dt>
-<dd><p>Creates a storage interface object from a file descriptor and reopen path. Either an instance of <a class="reference internal" href="#classxtr_1_1io__uring__fd__storage"><span class="std std-ref">io_uring_fd_storage</span></a> or <a class="reference internal" href="#classxtr_1_1posix__fd__storage"><span class="std std-ref">posix_fd_storage</span></a> will be created, refer to <a class="reference internal" href="#namespacextr_1adf467234be0533ac1bc9c6f25a0f1fb4"><span class="std std-ref">make_fd_storage(const char*)</span></a> for details.</p>
-<p><ul class="simple">
-<li><p>fd: File handle to write to. The underlying file descriptor will be duplicated via a call to <a class="reference external" href="https://www.man7.org/linux/man-pages/man2/dup.2.html">dup(2)</a>, so callers may close the file handle immediately after this function returns if desired. </p></li>
-<li><p>reopen_path: The path of the file associated with the fp argument. This path will be used to reopen the file if requested via the xtrctl <a class="reference external" href="xtrctl.html#reopening-log-files">reopen command</a>. Pass <a class="reference internal" href="#namespacextr_1a2d114b47712f1720d195475122cfa99d"><span class="std std-ref">null_reopen_path</span></a> if no filename is associated with the file handle. </p></li>
+<dd><p>Creates a storage interface object from a file descriptor and reopen path. Either an instance of <a class="reference internal" href="#classxtr_1_1io__uring__fd__storage"><span class="std std-ref">io_uring_fd_storage</span></a> or <a class="reference internal" href="#classxtr_1_1posix__fd__storage"><span class="std std-ref">posix_fd_storage</span></a> will be created, refer to <a class="reference internal" href="#namespacextr_1adf467234be0533ac1bc9c6f25a0f1fb4"><span class="std std-ref">make_fd_storage(constchar*)</span></a> for details.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fd</strong> – File handle to write to. The underlying file descriptor will be duplicated via a call to <a class="reference external" href="https://www.man7.org/linux/man-pages/man2/dup.2.html">dup(2)</a>, so callers may close the file handle immediately after this function returns if desired.</p></li>
+<li><p><strong>reopen_path</strong> – The path of the file associated with the fp argument. This path will be used to reopen the file if requested via the xtrctl <a class="reference external" href="xtrctl.html#reopening-log-files">reopen command</a>. Pass <a class="reference internal" href="#namespacextr_1a2d114b47712f1720d195475122cfa99d"><span class="std std-ref">null_reopen_path</span></a> if no filename is associated with the file handle. </p></li>
 </ul>
-</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="cpp function">
 <dt class="sig sig-object cpp" id="_CPPv4N3xtr15make_fd_storageEiNSt6stringE">
 <span id="_CPPv3N3xtr15make_fd_storageEiNSt6stringE"></span><span id="_CPPv2N3xtr15make_fd_storageEiNSt6stringE"></span><span id="xtr::make_fd_storage__i.ss"></span><span class="target" id="namespacextr_1a65671ea509ff46b96c077b49762fb52a"></span><a class="reference internal" href="#_CPPv4N3xtr21storage_interface_ptrE" title="xtr::storage_interface_ptr"><span class="n"><span class="pre">storage_interface_ptr</span></span></a><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">xtr</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">make_fd_storage</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">fd</span></span>, <span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">reopen_path</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N3xtr16null_reopen_pathE" title="xtr::null_reopen_path"><span class="n"><span class="pre">null_reopen_path</span></span></a><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xtr15make_fd_storageEiNSt6stringE" title="Link to this definition"></a><br /></dt>
-<dd><p>Creates a storage interface object from a file descriptor and reopen path. Either an instance of <a class="reference internal" href="#classxtr_1_1io__uring__fd__storage"><span class="std std-ref">io_uring_fd_storage</span></a> or <a class="reference internal" href="#classxtr_1_1posix__fd__storage"><span class="std std-ref">posix_fd_storage</span></a> will be created, refer to <a class="reference internal" href="#namespacextr_1adf467234be0533ac1bc9c6f25a0f1fb4"><span class="std std-ref">make_fd_storage(const char*)</span></a> for details.</p>
-<p><ul class="simple">
-<li><p>fd: File descriptor to write to. This will be duplicated via a call to <a class="reference external" href="https://www.man7.org/linux/man-pages/man2/dup.2.html">dup(2)</a>, so callers may close the file descriptor immediately after this function returns if desired. </p></li>
-<li><p>reopen_path: The path of the file associated with the fd argument. This path will be used to reopen the file if requested via the xtrctl <a class="reference external" href="xtrctl.html#reopening-log-files">reopen command</a>. Pass <a class="reference internal" href="#namespacextr_1a2d114b47712f1720d195475122cfa99d"><span class="std std-ref">null_reopen_path</span></a> if no filename is associated with the file descriptor. </p></li>
+<dd><p>Creates a storage interface object from a file descriptor and reopen path. Either an instance of <a class="reference internal" href="#classxtr_1_1io__uring__fd__storage"><span class="std std-ref">io_uring_fd_storage</span></a> or <a class="reference internal" href="#classxtr_1_1posix__fd__storage"><span class="std std-ref">posix_fd_storage</span></a> will be created, refer to <a class="reference internal" href="#namespacextr_1adf467234be0533ac1bc9c6f25a0f1fb4"><span class="std std-ref">make_fd_storage(constchar*)</span></a> for details.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fd</strong> – File descriptor to write to. This will be duplicated via a call to <a class="reference external" href="https://www.man7.org/linux/man-pages/man2/dup.2.html">dup(2)</a>, so callers may close the file descriptor immediately after this function returns if desired.</p></li>
+<li><p><strong>reopen_path</strong> – The path of the file associated with the fd argument. This path will be used to reopen the file if requested via the xtrctl <a class="reference external" href="xtrctl.html#reopening-log-files">reopen command</a>. Pass <a class="reference internal" href="#namespacextr_1a2d114b47712f1720d195475122cfa99d"><span class="std std-ref">null_reopen_path</span></a> if no filename is associated with the file descriptor. </p></li>
 </ul>
-</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="cpp var">
