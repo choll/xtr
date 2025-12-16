@@ -2217,7 +2217,7 @@ public:
     {
     }
 
-    virtual ~matcher() {};
+    virtual ~matcher(){};
 };
 
 #include <cstddef>
@@ -3333,9 +3333,8 @@ namespace xtr::detail
         requires(tuple_like<T>)
     struct is_allocated<T>
     {
-        static constexpr bool value =
-            []<std::size_t... Is>(std::index_sequence<Is...>)
-        {
+        static constexpr bool value = []<std::size_t... Is>(
+                                          std::index_sequence<Is...>) {
             return (is_allocated<std::tuple_element_t<Is, T>>::value || ...);
         }(std::make_index_sequence<std::tuple_size_v<T>>{});
     };
