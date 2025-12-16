@@ -60,6 +60,7 @@ for file in \
     include/xtr/io/io_uring_fd_storage.hpp \
     include/xtr/io/fd_storage.hpp \
     include/xtr/logger.hpp \
+    include/xtr/detail/concepts.hpp \
     include/xtr/formatters.hpp \
     include/xtr/streamed.hpp;
 do

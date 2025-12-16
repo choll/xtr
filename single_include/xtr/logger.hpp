@@ -1504,7 +1504,7 @@ namespace xtr::detail
     }
 
     template<auto Format, auto Level, typename State, typename Func>
-    std::byte* trampolineS(
+    std::byte* trampolineV(
         buffer& buf,
         std::byte* record,
         State&,
@@ -1697,7 +1697,7 @@ private:
     void post(Func&& func) noexcept(XTR_NOTHROW_INGESTIBLE(Func, func));
 
     template<auto Format, auto Level, typename Tags, typename... Args>
-    void post_with_str_table(Args&&... args) noexcept(
+    void post_variable_len(Args&&... args) noexcept(
         (XTR_NOTHROW_INGESTIBLE(Args, args) && ...));
 
     template<typename Func>
@@ -1748,13 +1748,13 @@ void xtr::sink::log_impl(Args&&... args) noexcept(
         std::is_same<std::remove_cvref_t<Args>, std::string_view>...,
         std::is_same<std::remove_cvref_t<Args>, std::string>...>;
     if constexpr (is_str)
-        post_with_str_table<Format, Level, Tags>(std::forward<Args>(args)...);
+        post_variable_len<Format, Level, Tags>(std::forward<Args>(args)...);
     else
         post<Format, Level, Tags>(make_lambda<Tags>(std::forward<Args>(args)...));
 }
 
 template<auto Format, auto Level, typename Tags, typename... Args>
-void xtr::sink::post_with_str_table(Args&&... args) noexcept(
+void xtr::sink::post_variable_len(Args&&... args) noexcept(
     (XTR_NOTHROW_INGESTIBLE(Args, args) && ...))
 {
     using lambda_t = decltype(make_lambda<Tags>(detail::build_string_table<Tags>(
@@ -1782,7 +1782,7 @@ void xtr::sink::post_with_str_table(Args&&... args) noexcept(
     auto str_cur = str_pos;
     auto str_end = s.end();
 
-    copy(s.begin(), &detail::trampolineS<Format, Level, detail::consumer, lambda_t>);
+    copy(s.begin(), &detail::trampolineV<Format, Level, detail::consumer, lambda_t>);
     copy(
         func_pos,
         make_lambda<Tags>(detail::build_string_table<Tags>(
@@ -2217,7 +2217,7 @@ public:
     {
     }
 
-    virtual ~matcher(){};
+    virtual ~matcher() {};
 };
 
 #include <cstddef>
@@ -3303,6 +3303,47 @@ private:
     friend sink;
 };
 
+#include <utility>
+
+namespace xtr::detail
+{
+    template<typename T>
+    concept iterable = requires(T t) {
+        std::begin(t);
+        std::end(t);
+    };
+
+    template<typename T>
+    concept associative_container = requires(T t) { typename T::mapped_type; };
+
+    template<typename T>
+    concept tuple_like = requires(T t) { std::tuple_size<T>(); };
+
+    template<typename T>
+    struct is_allocated;
+
+    template<typename T>
+        requires(!tuple_like<T>)
+    struct is_allocated<T>
+    {
+        static constexpr bool value = requires { typename T::allocator_type; };
+    };
+
+    template<typename T>
+        requires(tuple_like<T>)
+    struct is_allocated<T>
+    {
+        static constexpr bool value =
+            []<std::size_t... Is>(std::index_sequence<Is...>)
+        {
+            return (is_allocated<std::tuple_element_t<Is, T>>::value || ...);
+        }(std::make_index_sequence<std::tuple_size_v<T>>{});
+    };
+
+    template<typename T>
+    concept allocated = is_allocated<T>::value;
+}
+
 #include <algorithm>
 #include <cstddef>
 #include <type_traits>
@@ -3311,23 +3352,11 @@ private:
 #include <fmt/compile.h>
 #include <fmt/format.h>
 
-template<typename T>
-concept iterable = requires(T t) {
-    std::begin(t);
-    std::end(t);
-};
-
-template<typename T>
-concept associative_container = requires(T t) { typename T::mapped_type; };
-
-template<typename T>
-concept tuple_like = requires(T t) { std::tuple_size<T>(); };
-
 namespace fmt
 {
 
     template<typename T>
-        requires tuple_like<T> && (!iterable<T>)
+        requires xtr::detail::tuple_like<T> && (!xtr::detail::iterable<T>)
     struct formatter<T>
     {
         template<typename ParseContext>
@@ -3362,7 +3391,7 @@ namespace fmt
         }
     };
 
-    template<associative_container T>
+    template<xtr::detail::associative_container T>
     struct formatter<T>
     {
         template<typename ParseContext>
@@ -3396,8 +3425,9 @@ namespace fmt
     };
 
     template<typename T>
-        requires iterable<T> && (!std::is_constructible_v<T, const char*>) &&
-                 (!associative_container<T>)
+        requires xtr::detail::iterable<T> &&
+                 (!std::is_constructible_v<T, const char*>) &&
+                 (!xtr::detail::associative_container<T>)
     struct formatter<T>
     {
         template<typename ParseContext>
