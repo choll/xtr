@@ -1,4 +1,5 @@
-.\" Man page generated from reStructuredText.
+.\" Man page generated from reStructuredText
+.\" by the Docutils 0.22.4 manpage writer.
 .
 .
 .nr rst2man-indent-level 0
@@ -27,7 +28,7 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .in \\n[rst2man-indent\\n[rst2man-indent-level]]u
 ..
-.TH "XTRCTL" "1" "December 2025" "" "xtr"
+.TH "XTRCTL" "1" "January 2026" "" "xtr"
 .SH NAME
 xtrctl \- Control tool for the xtr logger
 .SH SYNOPSIS
@@ -50,16 +51,14 @@ log messages are displayed. For example:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 ExampleName (info) 64K capacity, 0K used, 0 dropped
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
 For an explanation of \fIpattern\fP and \fIoptions\fP please refer to the
-see \fI\%PATTERNS\fP and see \fI\%OPTIONS\fP sections.
+see PATTERNS and see OPTIONS sections.
 .SS Setting Log Levels
 .sp
 xtrctl level <level> [options] [pattern] <socket path>
@@ -67,7 +66,7 @@ xtrctl level <level> [options] [pattern] <socket path>
 The level command sets the log level to \fIlevel\fP for sinks matching the given
 pattern, or for all sinks if no pattern is specified. Valid values for \fIlevel\fP
 are \(aqnone\(aq, \(aqfatal\(aq, \(aqerror\(aq, \(aqwarning\(aq, \(aqinfo\(aq or \(aqdebug\(aq (please refer to the
-\fI\%log levels\fP section of the API reference or \fBlibxtr\fP(3)).
+log levels \%<#\:log-levels> section of the API reference or \fBlibxtr\fP(3)).
 .SS Reopening Log Files
 .sp
 xtrctl reopen <socket path>
@@ -79,8 +78,7 @@ the \fIpostrotate\fP script defined in logrotate\(aqs configuration file:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 /path/to/your/log {
     rotate 5
     weekly
@@ -88,8 +86,7 @@ the \fIpostrotate\fP script defined in logrotate\(aqs configuration file:
         xtrctl reopen /path/to/xtrctl/socket
     endscript
 }
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .SH PATTERNS
@@ -99,7 +96,7 @@ that may be used to selectively apply the command to sinks with names matching
 the given pattern. If no pattern is specified then the command applies to all
 sinks. By default the pattern is interpreted as a basic regular expression,
 to use an extended regular expression or wildcard please refer to the
-\fI\%OPTIONS\fP section.
+OPTIONS section.
 .SH OPTIONS
 .sp
 The \fIstatus\fP and \fIlevel\fP commands support the following options:
@@ -116,11 +113,11 @@ Interpret \fIpattern\fP options as shell wildcard patterns (see \fBglob\fP(7)).
 .UNINDENT
 .SH SOCKET PATHS
 .sp
-Please refer to the documentation for \fI\%xtr::default_command_path()\fP in
+Please refer to the documentation for \fBxtr::default_command_path()\fP \%<#\:_CPPv4N3xtr20default_command_pathEv> in
 the API reference or \fBlibxtr\fP(3) for an explanation of how the default
 socket path is constructed. Custom command paths may be specified either by
-passing an argument to \fI\%xtr::logger::logger()\fP or by calling
-\fI\%xtr::logger::set_command_path()\fP, the documentation for both may also
+passing an argument to \fBxtr::logger::logger()\fP \%<#\:_CPPv4I0EN3xtr6logger6loggerEPKcRR5ClockNSt6stringE17log_level_style_t14option_flags_t> or by calling
+\fBxtr::logger::set_command_path()\fP \%<#\:_CPPv4N3xtr6logger16set_command_pathENSt6stringE>, the documentation for both may also
 be found in the API reference or \fBlibxtr\fP(3).
 .SH EXAMPLES
 .sp
@@ -128,16 +125,14 @@ Querying the status of all sinks:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 > xtrctl status /run/user/1000/xtrctl.7852.0
 Test0 (info) 64K capacity, 0K used, 0 dropped
 Test1 (info) 64K capacity, 0K used, 0 dropped
 Test2 (info) 64K capacity, 0K used, 0 dropped
 Test3 (info) 64K capacity, 0K used, 0 dropped
 Test4 (info) 64K capacity, 0K used, 0 dropped
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
@@ -145,12 +140,10 @@ Setting the level of all sinks to \(aqerror\(aq:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 > xtrctl level error /run/user/1000/xtrctl.7852.0
 Success
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
@@ -158,12 +151,10 @@ Setting the level of sinks matching a pattern to \(aqwarning\(aq:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 > xtrctl level warning \(aqTest[0\-2]\(aq /run/user/1000/xtrctl.7852.0
 Success
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
@@ -171,14 +162,12 @@ Querying the status of sinks matching a pattern:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 > xtrctl status \(aqTest[0\-2]\(aq /run/user/1000/xtrctl.7852.0
 Test0 (warning) 64K capacity, 0K used, 0 dropped
 Test1 (warning) 64K capacity, 0K used, 0 dropped
 Test2 (warning) 64K capacity, 0K used, 0 dropped
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .SH ACCESSING XTRCTL VIA CONAN
@@ -187,21 +176,18 @@ Add a \fIvirtualenv\fP generator, for example if using conanfile.txt:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 [generators]
 virtualenv
 \&...etc..
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
 After running \fBconan install\fP run \fBsource activate.sh\fP and xtrctl
 should be in your $PATH.
-.SH AUTHOR
+.SH Author
 Chris E. Holloway
-.SH COPYRIGHT
+.SH Copyright
 2022, Chris E. Holloway
-.\" Generated by docutils manpage writer.
-.
+.\" End of generated man page.
