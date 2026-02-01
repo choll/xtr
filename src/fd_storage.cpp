@@ -38,6 +38,16 @@
 #include <sys/syscall.h>
 #include <unistd.h>
 
+namespace xtr::detail
+{
+    XTR_FUNC
+    bool is_seekable(int fd)
+    {
+        struct ::stat st;
+        return ::fstat(fd, &st) == 0 && S_ISREG(st.st_mode);
+    }
+}
+
 XTR_FUNC
 xtr::storage_interface_ptr xtr::make_fd_storage(const char* path)
 {
@@ -66,7 +76,9 @@ xtr::storage_interface_ptr xtr::make_fd_storage(int fd, std::string reopen_path)
     errno = 0;
     (void)syscall(__NR_io_uring_setup, 0, nullptr);
 
-    if (errno != ENOSYS)
+    // io_uring is disabled on non-seekable files as the io_uring backend
+    // relies on writing to specific file offsets.
+    if (detail::is_seekable(fd) && errno != ENOSYS)
     {
 #if __cpp_exceptions
         try
