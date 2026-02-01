@@ -44,7 +44,6 @@ void xtr::detail::throw_runtime_error_fmt(const char* format, ...)
 {
     va_list args;
     va_start(args, format);
-    ;
     char buf[1024];
     std::vsnprintf(buf, sizeof(buf), format, args);
     va_end(args);
@@ -72,7 +71,6 @@ void xtr::detail::throw_system_error_fmt(int errnum, const char* format, ...)
 {
     va_list args;
     va_start(args, format);
-    ;
     char buf[1024];
     std::vsnprintf(buf, sizeof(buf), format, args);
     va_end(args);
