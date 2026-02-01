@@ -4140,6 +4140,15 @@ inline void xtr::detail::fd_storage_base::replace_fd(int newfd) noexcept
 #include <sys/syscall.h>
 #include <unistd.h>
 
+namespace xtr::detail
+{
+    inline bool is_seekable(int fd)
+    {
+        struct ::stat st;
+        return ::fstat(fd, &st) == 0 && S_ISREG(st.st_mode);
+    }
+}
+
 inline xtr::storage_interface_ptr xtr::make_fd_storage(const char* path)
 {
     const int fd = XTR_TEMP_FAILURE_RETRY(::open(
@@ -4164,7 +4173,7 @@ inline xtr::storage_interface_ptr xtr::make_fd_storage(int fd, std::string reope
     errno = 0;
     (void)syscall(__NR_io_uring_setup, 0, nullptr);
 
-    if (errno != ENOSYS)
+    if (detail::is_seekable(fd) && errno != ENOSYS)
     {
 #if __cpp_exceptions
         try
@@ -4439,7 +4448,7 @@ retry:
 
     if (errnum != 0) [[unlikely]]
     {
-        std::fprintf(
+        (void)std::fprintf(
             stderr,
             "xtr::io_uring_fd_storage::wait_for_one_cqe: "
             "io_uring_peek_cqe/io_uring_wait_cqe failed: %s\n",
@@ -4463,7 +4472,7 @@ retry:
     {
         if (res < 0)
         {
-            std::fprintf(
+            (void)std::fprintf(
                 stderr,
                 "xtr::io_uring_fd_storage::wait_for_one_cqe: "
                 "Error: close(2) failed during reopen: %s\n",
@@ -4480,7 +4489,7 @@ retry:
 
     if (res < 0) [[unlikely]]
     {
-        std::fprintf(
+        (void)std::fprintf(
             stderr,
             "xtr::io_uring_fd_storage::wait_for_one_cqe: "
             "Error: Write of %u bytes at offset %zu to \"%s\" (fd %d) failed: "
