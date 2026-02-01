@@ -88,7 +88,6 @@ namespace fmt
             if (!value.empty())
             {
                 auto it = std::begin(value);
-                ;
                 fmt::format_to(ctx.out(), FMT_COMPILE("{}: {}"), it->first, it->second);
                 ++it;
                 while (it != std::end(value))
