@@ -3,7 +3,6 @@
 #include <benchmark/benchmark.h>
 
 #include <cerrno>
-#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <ctime>
@@ -47,6 +46,14 @@ namespace
         }
         return int(result);
     }
+
+    // These are all mutable so that they can be used with DoNotOptimize()
+    const char* c_str_arg{"Hello"};
+    std::string_view sv_arg{"Hello"};
+    std::string str_arg{"Hello"};
+    int int_arg = 42;
+    long long_arg = 42L;
+    double double_arg = 42.0;
 }
 
 // The logger has a fixed size ring buffer, msgsize is to ensure that
@@ -81,15 +88,31 @@ namespace
     }                                                                     \
     BENCHMARK(NAME);
 
-const std::string s{"Hello"};
-
 LOG_BENCH(logger_benchmark, XTR_LOG(p, "Test"), 8)
 LOG_BENCH(logger_benchmark_tsc, XTR_LOG_TSC(p, "Test"), 16)
 LOG_BENCH(logger_benchmark_clock_realtime_coarse, XTR_LOG_RTC(p, "Test"), 24)
-LOG_BENCH(logger_benchmark_int, XTR_LOG(p, "Test {}", 42), 16)
-LOG_BENCH(logger_benchmark_long, XTR_LOG(p, "Test {}", 42L), 16)
-LOG_BENCH(logger_benchmark_double, XTR_LOG(p, "Test {}", 42.0), 16)
-LOG_BENCH(logger_benchmark_c_str, XTR_LOG(p, "Test {}", "Hello"), 32)
-LOG_BENCH(logger_benchmark_str_view, XTR_LOG(p, "Test {}", std::string_view{"Hello"}), 32)
-LOG_BENCH(logger_benchmark_str, XTR_LOG(p, "Test {}", s), 32)
+LOG_BENCH(
+    logger_benchmark_int,
+    (benchmark::DoNotOptimize(int_arg), XTR_LOG(p, "Test {}", int_arg)),
+    16)
+LOG_BENCH(
+    logger_benchmark_long,
+    (benchmark::DoNotOptimize(long_arg), XTR_LOG(p, "Test {}", long_arg)),
+    16)
+LOG_BENCH(
+    logger_benchmark_double,
+    (benchmark::DoNotOptimize(double_arg), XTR_LOG(p, "Test {}", double_arg)),
+    16)
+LOG_BENCH(
+    logger_benchmark_c_str,
+    (benchmark::DoNotOptimize(c_str_arg), XTR_LOG(p, "Test {}", c_str_arg)),
+    32)
+LOG_BENCH(
+    logger_benchmark_str_view,
+    (benchmark::DoNotOptimize(sv_arg), XTR_LOG(p, "Test {}", sv_arg)),
+    32)
+LOG_BENCH(
+    logger_benchmark_str,
+    (benchmark::DoNotOptimize(str_arg), XTR_LOG(p, "Test {}", str_arg)),
+    32)
 LOG_BENCH(logger_benchmark_non_blocking, XTR_TRY_LOG(p, "Test"), 8)
