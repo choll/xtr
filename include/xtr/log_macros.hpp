@@ -316,8 +316,6 @@
             xtr::detail::string{":"} +                                                      \
             xtr::detail::string{XTR_XSTR(__LINE__) ": " FORMAT "\n"};                       \
         using xtr::nocopy;                                                                  \
-        using xtr::streamed_copy;                                                           \
-        using xtr::streamed_ref;                                                            \
         using xtr::vcopy;                                                                   \
         (SINK).template log<FMT_COMPILE(xtr_fmt.str), xtr::log_level_t::LEVEL, void(TAGS)>( \
             __VA_ARGS__);                                                                   \

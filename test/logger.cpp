@@ -1136,13 +1136,13 @@ TEST_CASE_METHOD(
 TEST_CASE_METHOD(fixture, "logger streams formatter test", "[logger]")
 {
     streams_format s{10, 20};
-    XTR_LOG(s_, "Streams {}", streamed_copy(s)), line_ = __LINE__;
+    XTR_LOG(s_, "Streams {}", xtr::streamed_copy(s)), line_ = __LINE__;
     REQUIRE(
         last_line() ==
         fmt::format(
             "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Streams (10, 20)",
             line_));
-    XTR_LOG(s_, "Streams {}", streamed_ref(s)), line_ = __LINE__;
+    XTR_LOG(s_, "Streams {}", xtr::streamed_ref(s)), line_ = __LINE__;
     REQUIRE(
         last_line() ==
         fmt::format(
@@ -1267,7 +1267,7 @@ TEST_CASE_METHOD(fixture, "logger error handling test", "[logger]")
     xtrd::file_descriptor saved_stderr(::dup(STDERR_FILENO));
     REQUIRE(dup2(errbuf.fd_.get(), STDERR_FILENO) == STDERR_FILENO);
 
-    XTR_LOG(s_, "Test {}", streamed_copy(thrower{}));
+    XTR_LOG(s_, "Test {}", xtr::streamed_copy(thrower{}));
     s_.sync();
 
     errbuf.push_lines(errors);
@@ -1327,7 +1327,7 @@ TEST_CASE_METHOD(fixture, "logger argument destruction test", "[logger]")
     {
         auto p{std::make_shared<int>(42)};
         w = p;
-        XTR_LOG(s_, "Test {}", streamed_copy(p)), line_ = __LINE__;
+        XTR_LOG(s_, "Test {}", xtr::streamed_copy(p)), line_ = __LINE__;
         sync();
         REQUIRE(!lines_.empty());
     }
@@ -1376,27 +1376,27 @@ TEST_CASE_METHOD(fixture, "logger no macro test", "[logger]")
 TEST_CASE_METHOD(fixture, "logger alignment test", "[logger]")
 {
     // clang-format off
-    XTR_LOG(s_, "Test {}", streamed_copy(align_format<4>{42})), line_ = __LINE__;
+    XTR_LOG(s_, "Test {}", xtr::streamed_copy(align_format<4>{42})), line_ = __LINE__;
     REQUIRE(
         last_line() ==
         fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42", line_));
 
-    XTR_LOG(s_, "Test {}", streamed_copy(align_format<8>{42})), line_ = __LINE__;
+    XTR_LOG(s_, "Test {}", xtr::streamed_copy(align_format<8>{42})), line_ = __LINE__;
     REQUIRE(
         last_line() ==
         fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42", line_));
 
-    XTR_LOG(s_, "Test {}", streamed_copy(align_format<16>{42})), line_ = __LINE__;
+    XTR_LOG(s_, "Test {}", xtr::streamed_copy(align_format<16>{42})), line_ = __LINE__;
     REQUIRE(
         last_line() ==
         fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42", line_));
 
-    XTR_LOG(s_, "Test {}", streamed_copy(align_format<32>{42})), line_ = __LINE__;
+    XTR_LOG(s_, "Test {}", xtr::streamed_copy(align_format<32>{42})), line_ = __LINE__;
     REQUIRE(
         last_line() ==
         fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42", line_));
 
-    XTR_LOG(s_, "Test {}", streamed_copy(align_format<64>{42})), line_ = __LINE__;
+    XTR_LOG(s_, "Test {}", xtr::streamed_copy(align_format<64>{42})), line_ = __LINE__;
     REQUIRE(
         last_line() ==
         fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42", line_));
@@ -1406,7 +1406,7 @@ TEST_CASE_METHOD(fixture, "logger alignment test", "[logger]")
 TEST_CASE_METHOD(fixture, "logger argument move test", "[logger]")
 {
     non_copyable nc(42);
-    XTR_LOG(s_, "Test {}", streamed_copy(std::move(nc))), line_ = __LINE__;
+    XTR_LOG(s_, "Test {}", xtr::streamed_copy(std::move(nc))), line_ = __LINE__;
     REQUIRE(
         last_line() ==
         fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test 42", line_));
@@ -3146,7 +3146,7 @@ TEST_CASE_METHOD(fixture, "logger vcopy overflow test", "[logger]")
         auto sp{std::make_shared<int>(42)};
         w = sp;
         // clang-format off
-        XTR_LOG(s_, "Test {} {}", streamed_copy(sp), vcopy(*p, size)), line_ = __LINE__;
+        XTR_LOG(s_, "Test {} {}", xtr::streamed_copy(sp), vcopy(*p, size)), line_ = __LINE__;
         // clang-format on
         REQUIRE(
             last_line() ==
@@ -3162,7 +3162,7 @@ TEST_CASE_METHOD(fixture, "logger vcopy overflow test", "[logger]")
         auto sp{std::make_shared<int>(42)};
         w = sp;
         // clang-format off
-        XTR_LOG(s_, "Test {} {}", streamed_copy(sp), vcopy(*p, size + 1)), line_ = __LINE__;
+        XTR_LOG(s_, "Test {} {}", xtr::streamed_copy(sp), vcopy(*p, size + 1)), line_ = __LINE__;
         // clang-format on
     }
 
