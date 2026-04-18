@@ -213,11 +213,14 @@ namespace
     struct fixture
     {
         fixture() :
+            fixture(std::in_place, test_clock{&clock_nanos_}, xtr::null_command_path)
+        {
+        }
+
+        template<typename... Args>
+        fixture(std::in_place_t, Args&&... args) :
             storage_(new container_storage(m_, lines_)),
-            log_(
-                xtr::storage_interface_ptr(storage_),
-                test_clock{&clock_nanos_},
-                xtr::null_command_path)
+            log_(xtr::storage_interface_ptr(storage_), std::forward<Args>(args)...)
         {
         }
 
@@ -276,7 +279,7 @@ namespace
     {
         pump_io_fixture() :
             fixture(
-                std::make_unique<container_storage>(m_, lines_),
+                std::in_place,
                 test_clock{&clock_nanos_},
                 xtr::null_command_path,
                 xtr::default_log_level_style,
