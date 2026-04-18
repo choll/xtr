@@ -332,12 +332,7 @@ template<typename T>
 void xtr::sink::copy(std::byte* pos, T&& value) noexcept(XTR_NOTHROW_INGESTIBLE(T, value))
 {
     assert(std::uintptr_t(pos) % alignof(T) == 0);
-#if defined(__cpp_lib_assume_aligned)
     pos = static_cast<std::byte*>(std::assume_aligned<alignof(T)>(pos));
-#else
-    // This can be removed when libc++ supports assume_aligned
-    pos = static_cast<std::byte*>(__builtin_assume_aligned(pos, alignof(T)));
-#endif
     ::new (pos) std::remove_reference_t<T>(std::forward<T>(value));
 }
 
