@@ -60,6 +60,7 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#string-arguments">String Arguments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#variable-length-arguments">Variable-Length Arguments</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#log-levels">Log Levels</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#debug-log-statements">Debug Log Statements</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#fatal-log-statements">Fatal Log Statements</a></li>
@@ -295,6 +296,27 @@ copied. The user is then responsible for ensuring that the string data remains
 valid long enough for the logger to process the log statement. Note that only
 the string data must remain valid—so for <span class="cpp-expr sig sig-inline cpp"><span class="n">std</span><span class="p">::</span><span class="n">string_view</span></span> the
 object itself does not need to remain valid, just the data it references.</p>
+</section>
+<section id="variable-length-arguments">
+<span id="variable-length-args"></span><h2>Variable-Length Arguments<a class="headerlink" href="#variable-length-arguments" title="Link to this heading"></a></h2>
+<p>Objects whose total size is known only at runtime—for example a struct with
+a flexible array member—may be logged by wrapping them in a call to
+<a class="reference internal" href="api.html#_CPPv4I0EN3xtr5vcopyEDaRK1TNSt6size_tE" title="xtr::vcopy"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">xtr::vcopy()</span></code></a>, passing the object and its total byte size:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">struct</span><span class="w"> </span><span class="nc">packet</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="kt">size_t</span><span class="w"> </span><span class="n">size</span><span class="p">;</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">data</span><span class="p">[];</span>
+<span class="p">};</span>
+
+<span class="c1">// Allocate `p` with `sizeof(packet) + n * sizeof(int)` bytes...</span>
+<span class="n">XTR_LOG</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Got {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">vcopy</span><span class="p">(</span><span class="o">*</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="n">total_size</span><span class="p">));</span>
+</pre></div>
+</div>
+<p>The object’s bytes are copied into the sink via memcpy, so the type must
+be trivially copyable. A formatter for the type must still be provided.</p>
+<p>Unlike string arguments (which may be truncated when the sink is full),
+vcopy arguments cannot truncate: if the ring buffer cannot accommodate
+the full object, the entire log record is dropped and the sink’s dropped
+message counter is incremented.</p>
 </section>
 <section id="log-levels">
 <h2>Log Levels<a class="headerlink" href="#log-levels" title="Link to this heading"></a></h2>

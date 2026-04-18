@@ -95,6 +95,11 @@ Stream Formatting Wrappers
 
 .. doxygenfunction:: xtr::streamed_ref
 
+Variable-Length Copy
+--------------------
+
+.. doxygenfunction:: xtr::vcopy
+
 .. _log-levels:
 
 Log Levels
