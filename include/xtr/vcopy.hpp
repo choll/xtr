@@ -18,35 +18,34 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef XTR_DETAIL_VCOPY_HPP
-#define XTR_DETAIL_VCOPY_HPP
+#ifndef XTR_VCOPY_HPP
+#define XTR_VCOPY_HPP
+
+#include "detail/vcopy_wrapper.hpp"
 
 #include <cstddef>
 #include <type_traits>
 
-namespace xtr::detail
+namespace xtr
 {
+    /**
+     * vcopy copies a variable-length trivially-copyable object (e.g. a struct
+     * with a flexible array member) into the sink. `size` is the total number
+     * of bytes to copy starting at `arg`, which must be at least `sizeof(T)`
+     * and must include any trailing data beyond the fixed portion of `T`.
+     * Because the entire object is memcpy'd as-is, `T` must be trivially
+     * copyable. Unlike string arguments, vcopy cannot truncate: if the sink's
+     * ring buffer cannot hold the object, the entire log record is dropped
+     * and the dropped-message counter is incremented. Please see the
+     * <a href="guide.html#variable-length-arguments">variable-length
+     * arguments</a> section of the user guide for further details.
+     */
     template<typename T>
-    struct vcopy_wrapper
+        requires std::is_trivially_copyable_v<T>
+    inline auto vcopy(const T& arg, std::size_t size)
     {
-        // Note that vcopy() requires T to be trivially copyable, which also
-        // implies trivially destructible.
-        const T& value;
-        std::size_t size;
-    };
-
-    template<typename T>
-    struct is_vcopy : std::false_type
-    {
-    };
-
-    template<typename T>
-    struct is_vcopy<vcopy_wrapper<T>> : std::true_type
-    {
-    };
-
-    static_assert(is_vcopy<vcopy_wrapper<int>>::value);
-    static_assert(!is_vcopy<int>::value);
+        return detail::vcopy_wrapper{arg, size};
+    }
 }
 
 #endif

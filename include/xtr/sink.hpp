@@ -30,6 +30,7 @@
 #include "detail/trampolines.hpp"
 #include "detail/transform_args.hpp"
 #include "log_level.hpp"
+#include "log_macros.hpp"
 
 #include <atomic>
 #include <cassert>
@@ -262,7 +263,8 @@ void xtr::sink::log_impl(Args&&... args) noexcept(
         detail::is_c_string<decltype(std::forward<Args>(args))>...,
         std::is_same<std::remove_cvref_t<Args>, std::string_view>...,
         std::is_same<std::remove_cvref_t<Args>, std::string>...>;
-    constexpr bool is_vcopy = std::disjunction_v<detail::is_vcopy<Args>...>;
+    constexpr bool is_vcopy =
+        std::disjunction_v<detail::is_vcopy_wrapper<Args>...>;
     if constexpr (is_str || is_vcopy)
         post_variable_len<Format, Level, Tags>(std::forward<Args>(args)...);
     else

@@ -23,15 +23,12 @@
 
 #include "command_path.hpp"
 #include "detail/consumer.hpp"
-#include "detail/string_ref.hpp"
-#include "detail/vcopy.hpp"
+#include "detail/tsc.hpp"
 #include "io/fd_storage.hpp"
 #include "io/storage_interface.hpp"
 #include "log_level.hpp"
-#include "log_macros.hpp"
 #include "pump_io_stats.hpp"
 #include "sink.hpp"
-#include "xtr/detail/tsc.hpp"
 
 #include <atomic>
 #include <chrono>
@@ -72,41 +69,6 @@ namespace xtr
          */
         disable_worker_thread
     };
-
-    /**
-     * nocopy is used to specify that a string argument should be passed by
-     * reference instead of by value, so that `arg` becomes `nocopy(arg)`. Note
-     * that by default, all strings including C strings and std::string_view are
-     * copied. In order to pass strings by reference they must be wrapped in a
-     * call to nocopy. Please see the <a
-     * href="guide.html#passing-arguments-by-value-or-reference"> passing
-     * arguments by value or reference</a> and <a href="guide.html#string-arguments">string
-     * arguments</a> sections of the user guide for further details.
-     */
-    template<typename T>
-    inline auto nocopy(const T& arg)
-    {
-        return detail::string_ref(arg);
-    }
-
-    /**
-     * vcopy copies a variable-length trivially-copyable object (e.g. a struct
-     * with a flexible array member) into the sink. `size` is the total number
-     * of bytes to copy starting at `arg`, which must be at least `sizeof(T)`
-     * and must include any trailing data beyond the fixed portion of `T`.
-     * Because the entire object is memcpy'd as-is, `T` must be trivially
-     * copyable. Unlike string arguments, vcopy cannot truncate: if the sink's
-     * ring buffer cannot hold the object, the entire log record is dropped
-     * and the dropped-message counter is incremented. Please see the
-     * <a href="guide.html#variable-length-arguments">variable-length
-     * arguments</a> section of the user guide for further details.
-     */
-    template<typename T>
-        requires std::is_trivially_copyable_v<T>
-    inline auto vcopy(const T& arg, std::size_t size)
-    {
-        return detail::vcopy_wrapper{arg, size};
-    }
 }
 
 /**

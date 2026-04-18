@@ -35,7 +35,9 @@ for file in \
     include/xtr/detail/buffer.hpp \
     include/xtr/detail/print.hpp \
     include/xtr/detail/string.hpp \
-    include/xtr/detail/vcopy.hpp \
+    include/xtr/detail/vcopy_wrapper.hpp \
+    include/xtr/vcopy.hpp \
+    include/xtr/nocopy.hpp \
     include/xtr/detail/transform_args.hpp \
     include/xtr/detail/trampolines.hpp \
     include/xtr/detail/strzcpy.hpp \

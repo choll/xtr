@@ -26,6 +26,9 @@
 #include "detail/string.hpp"
 #include "detail/tags.hpp"
 #include "detail/tsc.hpp"
+#include "nocopy.hpp"
+#include "streamed.hpp"
+#include "vcopy.hpp"
 
 #include <fmt/compile.h>
 
