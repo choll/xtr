@@ -668,6 +668,12 @@ Refer to the custom formatters \%<guide\:.html#\:custom-formatters> section of t
 A wrapper object suitable for passing as an argument to a log macro such as XTR_LOG\&.
 .UNINDENT
 .UNINDENT
+.SH VARIABLE-LENGTH COPY
+.INDENT 0.0
+.TP
+.B template<typename T> inline auto xtr::vcopy(const T &arg, std::size_t size) 
+vcopy copies a variable\-length trivially\-copyable object (e.g. a struct with a flexible array member) into the sink. \fBsize\fP is the total number of bytes to copy starting at \fBarg\fP, which must be at least \fBsizeof(T)\fP and must include any trailing data beyond the fixed portion of \fBT\fP\&. Because the entire object is memcpy\(aqd as\-is, \fBT\fP must be trivially copyable. Unlike string arguments, vcopy cannot truncate: if the sink\(aqs ring buffer cannot hold the object, the entire log record is dropped and the dropped\-message counter is incremented. Please see the variable\-length arguments \%<guide\:.html#\:variable-length-arguments> section of the user guide for further details. 
+.UNINDENT
 .SH LOG LEVELS
 .INDENT 0.0
 .TP

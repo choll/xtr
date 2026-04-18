@@ -130,6 +130,10 @@
 <li class="toctree-l3"><a class="reference internal" href="#_CPPv4I0EN3xtr12streamed_refEN6detail16streamed_wrapperIRK1TEERK1T"><code class="docutils literal notranslate"><span class="pre">streamed_ref()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#variable-length-copy">Variable-Length Copy</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#_CPPv4I0EN3xtr5vcopyEDaRK1TNSt6size_tE"><code class="docutils literal notranslate"><span class="pre">vcopy()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#log-levels">Log Levels</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#_CPPv4N3xtr11log_level_tE"><code class="docutils literal notranslate"><span class="pre">log_level_t</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xtr11log_level_t4noneE"><code class="docutils literal notranslate"><span class="pre">none</span></code></a></li>
@@ -829,6 +833,15 @@ Refer to the <a class="reference external" href="guide.html#custom-formatters">c
 <dd class="field-even"><p>A wrapper object suitable for passing as an argument to a log macro such as <a class="reference internal" href="#log__macros_8hpp_1afccfe93e240adc0620c7c82918263fb2"><span class="std std-ref">XTR_LOG</span></a>.</p>
 </dd>
 </dl>
+</dd></dl>
+
+</section>
+<section id="variable-length-copy">
+<h2>Variable-Length Copy<a class="headerlink" href="#variable-length-copy" title="Link to this heading"></a></h2>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4I0EN3xtr5vcopyEDaRK1TNSt6size_tE">
+<span id="_CPPv3I0EN3xtr5vcopyERK1TNSt6size_tE"></span><span id="_CPPv2I0EN3xtr5vcopyERK1TNSt6size_tE"></span><span class="k"><span class="pre">template</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">typename</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">T</span></span></span><span class="p"><span class="pre">&gt;</span></span><br /><span class="target" id="namespacextr_1aaed8fabdd5c37a6cb5814472d01f4214"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">auto</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">xtr</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">vcopy</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I0EN3xtr5vcopyEDaRK1TNSt6size_tE" title="xtr::vcopy::T"><span class="n"><span class="pre">T</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">arg</span></span>, <span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">size</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4I0EN3xtr5vcopyEDaRK1TNSt6size_tE" title="Link to this definition"></a><br /></dt>
+<dd><p>vcopy copies a variable-length trivially-copyable object (e.g. a struct with a flexible array member) into the sink. <code class="docutils literal notranslate"><span class="pre">size</span></code> is the total number of bytes to copy starting at <code class="docutils literal notranslate"><span class="pre">arg</span></code>, which must be at least <code class="docutils literal notranslate"><span class="pre">sizeof(T)</span></code> and must include any trailing data beyond the fixed portion of <code class="docutils literal notranslate"><span class="pre">T</span></code>. Because the entire object is memcpy’d as-is, <code class="docutils literal notranslate"><span class="pre">T</span></code> must be trivially copyable. Unlike string arguments, vcopy cannot truncate: if the sink’s ring buffer cannot hold the object, the entire log record is dropped and the dropped-message counter is incremented. Please see the <a class="reference external" href="guide.html#variable-length-arguments">variable-length arguments</a> section of the user guide for further details. </p>
 </dd></dl>
 
 </section>
