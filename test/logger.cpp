@@ -24,7 +24,6 @@
 #include "xtr/streamed.hpp"
 
 #include "xtr/detail/commands/frame.hpp"
-#include "xtr/detail/commands/message_id.hpp"
 #include "xtr/detail/commands/requests.hpp"
 #include "xtr/detail/commands/responses.hpp"
 #include "xtr/detail/config.hpp"
@@ -49,6 +48,7 @@
 #include <chrono>
 #include <cmath>
 #include <condition_variable>
+#include <cstddef>
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
@@ -415,6 +415,12 @@ namespace
         int y;
     };
 
+    struct variable_length_struct
+    {
+        std::size_t size;
+        __extension__ int data[];
+    };
+
     struct non_copyable
     {
         explicit non_copyable(int x) :
@@ -545,6 +551,29 @@ namespace fmt
         {
             b.wait();
             return fmt::format_to(ctx.out(), "<blocker>");
+        }
+    };
+
+    template<>
+    struct formatter<variable_length_struct>
+    {
+        template<typename ParseContext>
+        constexpr auto parse(ParseContext& ctx)
+        {
+            return ctx.begin();
+        }
+
+        template<typename FormatContext>
+        auto format(const variable_length_struct& v, FormatContext& ctx) const
+        {
+            fmt::format_to(ctx.out(), "[");
+            if (v.size > 0)
+            {
+                fmt::format_to(ctx.out(), FMT_COMPILE("{}"), v.data[0]);
+                for (std::size_t i = 1; i != v.size; ++i)
+                    fmt::format_to(ctx.out(), FMT_COMPILE(", {}"), v.data[i]);
+            }
+            return fmt::format_to(ctx.out(), "]");
         }
     };
 }
@@ -3063,4 +3092,88 @@ TEST_CASE_METHOD(pump_io_fixture, "logger pump_io test", "[logger]")
         last_line() ==
         fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test", line_));
     REQUIRE(n_events >= 1); // Sink creation, sync() create events
+}
+
+TEST_CASE_METHOD(fixture, "logger vcopy test", "[logger]")
+{
+    const std::size_t n = 4;
+    alignas(variable_length_struct)
+        std::byte storage[sizeof(variable_length_struct) + sizeof(int) * n];
+
+    auto& vls = *reinterpret_cast<variable_length_struct*>(storage);
+
+    vls.size = n;
+    for (std::size_t i = 0; i != n; ++i)
+        vls.data[i] = static_cast<int>(i + 1);
+
+    XTR_LOG(s_, "Test {}", vcopy(vls, sizeof(storage))), line_ = __LINE__;
+    REQUIRE(
+        last_line() ==
+        fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test [1, 2, 3, 4]", line_));
+}
+
+TEST_CASE_METHOD(fixture, "logger vcopy overflow test", "[logger]")
+{
+    // 8 is for the variable_length_entry<> plus 4 bytes of alignment
+    const std::size_t record_size =
+        sizeof(void*) + sizeof(std::shared_ptr<int>) + 8;
+    const std::size_t size = s_.capacity() - record_size;
+
+    struct deleter
+    {
+        void operator()(variable_length_struct* ptr) const
+        {
+            ::operator delete(ptr);
+        }
+    };
+
+    std::unique_ptr<variable_length_struct, deleter> p{
+        static_cast<variable_length_struct*>(::operator new(size))};
+
+    // Format as [] to keep things simple
+    p->size = 0;
+
+    // A shared_ptr is logged while holding a weak reference to the object. If
+    // the logger destructed the shared_ptr correctly then after the log message
+    // has been processed the weak reference will have expired. This is done to
+    // verify that when the log record is abandoned/dropped any objects that
+    // were already copied into the log record are destructed via the overflow
+    // path in sink::post_variable_len. Note that the first log statement's
+    // shared_ptr will be destructed by the consumer thread---it logs a
+    // shared_ptr so that the record sizes are the same, allowing the overflow
+    // test to increase the size by 1 byte.
+    std::weak_ptr<int> w;
+
+    // Log a message that fits exactly into the available capacity
+    {
+        auto sp{std::make_shared<int>(42)};
+        w = sp;
+        // clang-format off
+        XTR_LOG(s_, "Test {} {}", xtr::streamed_copy(sp), vcopy(*p, size)), line_ = __LINE__;
+        // clang-format on
+        REQUIRE(
+            last_line() ==
+            fmt::format(
+                "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test {} []",
+                line_,
+                fmt::streamed(sp)));
+    }
+    REQUIRE(w.expired());
+
+    // Log a message that requires one byte more than the available capacity
+    {
+        auto sp{std::make_shared<int>(42)};
+        w = sp;
+        // clang-format off
+        XTR_LOG(s_, "Test {} {}", xtr::streamed_copy(sp), vcopy(*p, size + 1)), line_ = __LINE__;
+        // clang-format on
+    }
+
+    // sync() is required to ensure that the dropped count is picked up
+    sync();
+
+    REQUIRE(
+        last_line() ==
+        fmt::format("W 2000-01-01 01:02:03.123456 Name: 1 messages dropped"));
+    REQUIRE(w.expired());
 }

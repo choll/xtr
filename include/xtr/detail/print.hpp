@@ -27,8 +27,8 @@
 #include <fmt/compile.h>
 #include <fmt/format.h>
 
+#include <exception>
 #include <iterator>
-#include <stdexcept>
 #include <string>
 #include <string_view>
 

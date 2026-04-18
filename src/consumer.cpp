@@ -133,7 +133,7 @@ bool xtr::detail::consumer::run_once(pump_io_stats* stats) noexcept
 
         std::size_t n_dropped;
         if (sinks_[i]->buf_.read_span().empty() &&
-            (n_dropped = sinks_[i]->buf_.dropped_count()) > 0)
+            (n_dropped = sinks_[i]->dropped_count()) > 0)
         {
             detail::print(
                 buf,

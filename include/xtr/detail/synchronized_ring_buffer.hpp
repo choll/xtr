@@ -187,7 +187,6 @@ public:
         wrnread_plus_capacity_ = capacity();
         wrnwritten_ = 0;
         nread_plus_capacity_ = capacity();
-        dropped_count_ = 0;
     }
 
     constexpr size_type capacity() const noexcept
@@ -228,10 +227,7 @@ public:
         }
 
         if (is_non_blocking_v<Tags> && sz < minsize) [[unlikely]]
-        {
-            dropped_count_.fetch_add(1, std::memory_order_relaxed);
             return span{};
-        }
 
         // span must always begin in the first mapping
         assert(b >= begin());
@@ -305,11 +301,6 @@ public:
         return begin() + capacity();
     }
 
-    std::size_t dropped_count() noexcept
-    {
-        return dropped_count_.exchange(0, std::memory_order_relaxed);
-    }
-
 private:
     static_assert(
         is_dynamic ||
@@ -362,9 +353,6 @@ private:
     // Reader data, note that the first member of mirrored_memory_mapping
     // is a pointer to the mapping:
     mirrored_memory_mapping m_;
-
-    // Written by both the reader and writer
-    alignas(cacheline_size) std::atomic<size_type> dropped_count_{};
 };
 
 #endif

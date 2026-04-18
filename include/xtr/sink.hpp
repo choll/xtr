@@ -26,9 +26,9 @@
 #include "detail/buffer.hpp"
 #include "detail/is_c_string.hpp"
 #include "detail/print.hpp"
-#include "detail/string_table.hpp"
 #include "detail/synchronized_ring_buffer.hpp"
 #include "detail/trampolines.hpp"
+#include "detail/transform_args.hpp"
 #include "log_level.hpp"
 
 #include <atomic>
@@ -202,6 +202,15 @@ private:
     auto make_lambda(Args&&... args) noexcept(
         (XTR_NOTHROW_INGESTIBLE(Args, args) && ...));
 
+    std::size_t dropped_count() noexcept
+    {
+        // The branch here is so that the consumer thread doesn't unnecessarily
+        // dirty the cache line that holds dropped_count_.
+        if (dropped_count_.load(std::memory_order_relaxed) == 0)
+            return 0;
+        return dropped_count_.exchange(0, std::memory_order_relaxed);
+    }
+
     using ring_buffer = detail::synchronized_ring_buffer<XTR_SINK_CAPACITY>;
 
     static_assert(
@@ -210,6 +219,11 @@ private:
         "XTR_SINK_CAPACITY is too large");
 
     ring_buffer buf_;
+    std::atomic<std::size_t> dropped_count_{};
+    // level_ is not aligned even though it could be on the same cache line as
+    // dropped_count_ (which can be modified by the consumer thread) because
+    // neither variable is mutated during normal logging operations (no dropped
+    // messages), so it isn't worth increasing the size of the sink object.
     std::atomic<log_level_t> level_;
     bool open_ = false;
 
@@ -231,7 +245,10 @@ void xtr::sink::log_impl() noexcept
     // the lambda captures nothing it still has a non-zero size).
     const ring_buffer::span s = buf_.write_span_spec<Tags>(sizeof(fptr_t));
     if (detail::is_non_blocking_v<Tags> && s.empty()) [[unlikely]]
+    {
+        dropped_count_.fetch_add(1, std::memory_order_relaxed);
         return;
+    }
     copy(s.begin(), &detail::trampoline0<Format, Level, detail::consumer>);
     buf_.reduce_writable(sizeof(fptr_t));
 }
@@ -245,7 +262,8 @@ void xtr::sink::log_impl(Args&&... args) noexcept(
         detail::is_c_string<decltype(std::forward<Args>(args))>...,
         std::is_same<std::remove_cvref_t<Args>, std::string_view>...,
         std::is_same<std::remove_cvref_t<Args>, std::string>...>;
-    if constexpr (is_str)
+    constexpr bool is_vcopy = std::disjunction_v<detail::is_vcopy<Args>...>;
+    if constexpr (is_str || is_vcopy)
         post_variable_len<Format, Level, Tags>(std::forward<Args>(args)...);
     else
         post<Format, Level, Tags>(make_lambda<Tags>(std::forward<Args>(args)...));
@@ -255,10 +273,11 @@ template<auto Format, auto Level, typename Tags, typename... Args>
 void xtr::sink::post_variable_len(Args&&... args) noexcept(
     (XTR_NOTHROW_INGESTIBLE(Args, args) && ...))
 {
-    using lambda_t = decltype(make_lambda<Tags>(detail::build_string_table<Tags>(
+    using lambda_t = decltype(make_lambda<Tags>(detail::transform_args<Tags>(
         std::declval<std::byte*&>(),
         std::declval<std::byte*&>(),
         buf_,
+        std::declval<bool&>(),
         std::forward<Args>(args))...));
 
     ring_buffer::span s = buf_.write_span_spec();
@@ -268,29 +287,42 @@ void xtr::sink::post_variable_len(Args&&... args) noexcept(
         func_pos = align<alignof(lambda_t)>(func_pos);
 
     static_assert(alignof(char) == 1);
-    const auto str_pos = func_pos + sizeof(lambda_t);
-    const auto size = ring_buffer::size_type(str_pos - s.begin());
+    const auto vlen_pos = func_pos + sizeof(lambda_t);
+    const auto size = ring_buffer::size_type(vlen_pos - s.begin());
 
     if (s.size() < size) [[unlikely]]
         s = buf_.write_span<Tags>(size);
 
     if (detail::is_non_blocking_v<Tags> && s.empty()) [[unlikely]]
+    {
+        dropped_count_.fetch_add(1, std::memory_order_relaxed);
         return;
+    }
 
-    // str_cur and str_end are mutated by build_string_table as the table is built
-    auto str_cur = str_pos;
-    auto str_end = s.end();
+    // vlen_cur and vlen_end are mutated by transform_args as the variable
+    // length area is built.
+    auto vlen_cur = vlen_pos;
+    auto vlen_end = s.end();
+    bool overflow = false;
 
     copy(s.begin(), &detail::trampolineV<Format, Level, detail::consumer, lambda_t>);
     copy(
         func_pos,
-        make_lambda<Tags>(detail::build_string_table<Tags>(
-            str_cur,
-            str_end,
+        make_lambda<Tags>(detail::transform_args<Tags>(
+            vlen_cur,
+            vlen_end,
             buf_,
+            overflow,
             std::forward<Args>(args))...));
 
-    const auto next = detail::align<alignof(fptr_t)>(str_cur);
+    if (overflow) [[unlikely]]
+    {
+        std::destroy_at(reinterpret_cast<lambda_t*>(func_pos));
+        dropped_count_.fetch_add(1, std::memory_order_relaxed);
+        return;
+    }
+
+    const auto next = detail::align<alignof(fptr_t)>(vlen_cur);
     const auto total_size = ring_buffer::size_type(next - s.begin());
 
     buf_.reduce_writable(total_size);
@@ -325,7 +357,10 @@ void xtr::sink::post(Func&& func) noexcept(XTR_NOTHROW_INGESTIBLE(Func, func))
         s = buf_.write_span<Tags>(size);
 
     if (detail::is_non_blocking_v<Tags> && s.empty()) [[unlikely]]
+    {
+        dropped_count_.fetch_add(1, std::memory_order_relaxed);
         return;
+    }
 
     copy(s.begin(), &detail::trampolineN<Format, Level, detail::consumer, Func>);
     copy(func_pos, std::forward<Func>(func));
@@ -358,7 +393,7 @@ auto xtr::sink::make_lambda(Args&&... args) noexcept(
                 fmt,
                 level,
                 name,
-                detail::transform_string_table_entry(record, args)...);
+                detail::reconstruct_args(record, args)...);
         }
         else
         {
@@ -368,7 +403,7 @@ auto xtr::sink::make_lambda(Args&&... args) noexcept(
                 level,
                 ts,
                 name,
-                detail::transform_string_table_entry(record, args)...);
+                detail::reconstruct_args(record, args)...);
         }
     };
 }
