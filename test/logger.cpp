@@ -569,7 +569,6 @@ namespace fmt
             return fmt::format_to(ctx.out(), "]");
         }
     };
-
 }
 
 using namespace fmt::literals;
