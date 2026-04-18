@@ -213,7 +213,11 @@ namespace
     struct fixture
     {
         fixture() :
-            fixture(std::in_place, test_clock{&clock_nanos_}, xtr::null_command_path)
+            storage_(new container_storage(m_, lines_)),
+            log_(
+                xtr::storage_interface_ptr(storage_),
+                test_clock{&clock_nanos_},
+                xtr::null_command_path)
         {
         }
 
