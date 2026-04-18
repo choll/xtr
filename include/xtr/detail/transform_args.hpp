@@ -60,6 +60,12 @@ namespace xtr::detail
     template<typename T>
     struct variable_length_entry
     {
+        // See comment on the corresponding string_table_entry constructor
+        explicit variable_length_entry(std::size_t sz) :
+            size(std::uint32_t(sz))
+        {
+        }
+
         std::uint32_t size;
     };
 
