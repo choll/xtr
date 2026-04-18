@@ -1352,17 +1352,61 @@ namespace xtr::detail
     };
 
     template<typename T>
-    struct is_vcopy : std::false_type
+    struct is_vcopy_wrapper : std::false_type
     {
     };
 
     template<typename T>
-    struct is_vcopy<vcopy_wrapper<T>> : std::true_type
+    struct is_vcopy_wrapper<vcopy_wrapper<T>> : std::true_type
     {
     };
 
-    static_assert(is_vcopy<vcopy_wrapper<int>>::value);
-    static_assert(!is_vcopy<int>::value);
+    static_assert(is_vcopy_wrapper<vcopy_wrapper<int>>::value);
+    static_assert(!is_vcopy_wrapper<int>::value);
+}
+
+#include <cstddef>
+#include <type_traits>
+
+namespace xtr
+{
+    /**
+     * vcopy copies a variable-length trivially-copyable object (e.g. a struct
+     * with a flexible array member) into the sink. `size` is the total number
+     * of bytes to copy starting at `arg`, which must be at least `sizeof(T)`
+     * and must include any trailing data beyond the fixed portion of `T`.
+     * Because the entire object is memcpy'd as-is, `T` must be trivially
+     * copyable. Unlike string arguments, vcopy cannot truncate: if the sink's
+     * ring buffer cannot hold the object, the entire log record is dropped
+     * and the dropped-message counter is incremented. Please see the
+     * <a href="guide.html#variable-length-arguments">variable-length
+     * arguments</a> section of the user guide for further details.
+     */
+    template<typename T>
+        requires std::is_trivially_copyable_v<T>
+    inline auto vcopy(const T& arg, std::size_t size)
+    {
+        return detail::vcopy_wrapper{arg, size};
+    }
+}
+
+namespace xtr
+{
+    /**
+     * nocopy is used to specify that a string argument should be passed by
+     * reference instead of by value, so that `arg` becomes `nocopy(arg)`. Note
+     * that by default, all strings including C strings and std::string_view are
+     * copied. In order to pass strings by reference they must be wrapped in a
+     * call to nocopy. Please see the <a
+     * href="guide.html#passing-arguments-by-value-or-reference"> passing
+     * arguments by value or reference</a> and <a href="guide.html#string-arguments">string
+     * arguments</a> sections of the user guide for further details.
+     */
+    template<typename T>
+    inline auto nocopy(const T& arg)
+    {
+        return detail::string_ref(arg);
+    }
 }
 
 #include <concepts>
@@ -1824,7 +1868,8 @@ void xtr::sink::log_impl(Args&&... args) noexcept(
         detail::is_c_string<decltype(std::forward<Args>(args))>...,
         std::is_same<std::remove_cvref_t<Args>, std::string_view>...,
         std::is_same<std::remove_cvref_t<Args>, std::string>...>;
-    constexpr bool is_vcopy = std::disjunction_v<detail::is_vcopy<Args>...>;
+    constexpr bool is_vcopy =
+        std::disjunction_v<detail::is_vcopy_wrapper<Args>...>;
     if constexpr (is_str || is_vcopy)
         post_variable_len<Format, Level, Tags>(std::forward<Args>(args)...);
     else
@@ -3063,41 +3108,6 @@ namespace xtr
          */
         disable_worker_thread
     };
-
-    /**
-     * nocopy is used to specify that a string argument should be passed by
-     * reference instead of by value, so that `arg` becomes `nocopy(arg)`. Note
-     * that by default, all strings including C strings and std::string_view are
-     * copied. In order to pass strings by reference they must be wrapped in a
-     * call to nocopy. Please see the <a
-     * href="guide.html#passing-arguments-by-value-or-reference"> passing
-     * arguments by value or reference</a> and <a href="guide.html#string-arguments">string
-     * arguments</a> sections of the user guide for further details.
-     */
-    template<typename T>
-    inline auto nocopy(const T& arg)
-    {
-        return detail::string_ref(arg);
-    }
-
-    /**
-     * vcopy copies a variable-length trivially-copyable object (e.g. a struct
-     * with a flexible array member) into the sink. `size` is the total number
-     * of bytes to copy starting at `arg`, which must be at least `sizeof(T)`
-     * and must include any trailing data beyond the fixed portion of `T`.
-     * Because the entire object is memcpy'd as-is, `T` must be trivially
-     * copyable. Unlike string arguments, vcopy cannot truncate: if the sink's
-     * ring buffer cannot hold the object, the entire log record is dropped
-     * and the dropped-message counter is incremented. Please see the
-     * <a href="guide.html#variable-length-arguments">variable-length
-     * arguments</a> section of the user guide for further details.
-     */
-    template<typename T>
-        requires std::is_trivially_copyable_v<T>
-    inline auto vcopy(const T& arg, std::size_t size)
-    {
-        return detail::vcopy_wrapper{arg, size};
-    }
 }
 
 /**
