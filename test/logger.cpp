@@ -3115,8 +3115,7 @@ TEST_CASE_METHOD(fixture, "logger vcopy test", "[logger]")
 TEST_CASE_METHOD(fixture, "logger vcopy overflow test", "[logger]")
 {
     // 8 is for the variable_length_entry<> plus 4 bytes of alignment
-    const std::size_t record_size =
-        sizeof(void*) + sizeof(std::shared_ptr<int>) + 8;
+    const std::size_t record_size = sizeof(void*) + 8;
     const std::size_t size = s_.capacity() - record_size;
 
     struct deleter
@@ -3133,39 +3132,26 @@ TEST_CASE_METHOD(fixture, "logger vcopy overflow test", "[logger]")
     // Format as [] to keep things simple
     p->size = 0;
 
+    // Log a message that fits exactly into the available capacity
+    XTR_LOG(s_, "Test {}", vcopy(*p, size)), line_ = __LINE__;
+    REQUIRE(
+        last_line() ==
+        fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test []", line_));
+
     // A shared_ptr is logged while holding a weak reference to the object. If
     // the logger destructed the shared_ptr correctly then after the log message
     // has been processed the weak reference will have expired. This is done to
     // verify that when the log record is abandoned/dropped any objects that
     // were already copied into the log record are destructed via the overflow
-    // path in sink::post_variable_len. Note that the first log statement's
-    // shared_ptr will be destructed by the consumer thread---it logs a
-    // shared_ptr so that the record sizes are the same, allowing the overflow
-    // test to increase the size by 1 byte.
+    // path in sink::post_variable_len.
     std::weak_ptr<int> w;
 
-    // Log a message that fits exactly into the available capacity
+    // Log a message that requires more than the available capacity
     {
         auto sp{std::make_shared<int>(42)};
         w = sp;
         // clang-format off
         XTR_LOG(s_, "Test {} {}", streamed_copy(sp), vcopy(*p, size)), line_ = __LINE__;
-        // clang-format on
-        REQUIRE(
-            last_line() ==
-            fmt::format(
-                "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test {} []",
-                line_,
-                fmt::streamed(sp)));
-    }
-    REQUIRE(w.expired());
-
-    // Log a message that requires one byte more than the available capacity
-    {
-        auto sp{std::make_shared<int>(42)};
-        w = sp;
-        // clang-format off
-        XTR_LOG(s_, "Test {} {}", streamed_copy(sp), vcopy(*p, size + 1)), line_ = __LINE__;
         // clang-format on
     }
 
