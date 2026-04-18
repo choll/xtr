@@ -3116,15 +3116,12 @@ TEST_CASE_METHOD(fixture, "logger vcopy overflow test", "[logger]")
     {
         void operator()(variable_length_struct* ptr) const
         {
-            ::operator delete(ptr, size_);
+            ::operator delete(ptr);
         }
-
-        std::size_t size_;
     };
 
     std::unique_ptr<variable_length_struct, deleter> p{
-        static_cast<variable_length_struct*>(::operator new(size)),
-        deleter{size}};
+        static_cast<variable_length_struct*>(::operator new(size))};
 
     // Format as [] to keep things simple
     p->size = 0;
