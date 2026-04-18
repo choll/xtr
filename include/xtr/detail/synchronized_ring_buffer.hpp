@@ -70,17 +70,18 @@ namespace xtr::detail
     inline constexpr std::size_t cacheline_size = 64;
 
 #if defined(XTR_ENABLE_TEST_STATIC_ASSERTIONS)
-    static_assert(std::is_same_v<std::uint8_t, least_uint_t<0UL>>);
-    static_assert(std::is_same_v<std::uint8_t, least_uint_t<255UL>>);
+    static_assert(std::is_same<std::uint8_t, least_uint_t<0UL>>::value);
+    static_assert(std::is_same<std::uint8_t, least_uint_t<255UL>>::value);
 
-    static_assert(std::is_same_v<std::uint16_t, least_uint_t<256UL>>);
-    static_assert(std::is_same_v<std::uint16_t, least_uint_t<65535UL>>);
+    static_assert(std::is_same<std::uint16_t, least_uint_t<256UL>>::value);
+    static_assert(std::is_same<std::uint16_t, least_uint_t<65535UL>>::value);
 
-    static_assert(std::is_same_v<std::uint32_t, least_uint_t<65536UL>>);
-    static_assert(std::is_same_v<std::uint32_t, least_uint_t<4294967295UL>>);
+    static_assert(std::is_same<std::uint32_t, least_uint_t<65536UL>>::value);
+    static_assert(std::is_same<std::uint32_t, least_uint_t<4294967295UL>>::value);
 
-    static_assert(std::is_same_v<std::uint64_t, least_uint_t<4294967296UL>>);
-    static_assert(std::is_same_v<std::uint64_t, least_uint_t<18446744073709551615UL>>);
+    static_assert(std::is_same<std::uint64_t, least_uint_t<4294967296UL>>::value);
+    static_assert(
+        std::is_same<std::uint64_t, least_uint_t<18446744073709551615UL>>::value);
 #endif
 
     template<typename T, typename SizeType>
