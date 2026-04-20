@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 #include "xtr/io/detail/fd_storage_base.hpp"
+#include "xtr/io/detail/open.hpp"
 #include "xtr/detail/retry.hpp"
 #include "xtr/detail/throw.hpp"
 
@@ -57,11 +58,7 @@ int xtr::detail::fd_storage_base::reopen() noexcept
     if (reopen_path_ == null_reopen_path)
         return ENOENT;
 
-    const int newfd = XTR_TEMP_FAILURE_RETRY(
-        ::open(
-            reopen_path_.c_str(),
-            O_CREAT | O_APPEND | O_WRONLY,
-            S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH));
+    const int newfd = detail::open_at_end(reopen_path_.c_str());
 
     if (newfd == -1)
         return errno;

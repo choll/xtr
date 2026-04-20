@@ -32,6 +32,8 @@
 #include <limits>
 #include <vector>
 
+#include <unistd.h>
+
 XTR_FUNC
 xtr::io_uring_fd_storage::io_uring_fd_storage(
     int fd,
@@ -149,9 +151,7 @@ void xtr::io_uring_fd_storage::submit_buffer(char* data, std::size_t size)
 
     io_uring_sqe* sqe = get_sqe();
 
-    // Per https://github.com/axboe/liburing/issues/507#issuecomment-1005869351
-    // using seek offsets is preferred over appending (via passing an offset of
-    // -1).
+    // Use fixed offsets to make resubmitting buffers simple
     ::io_uring_prep_write_fixed(
         sqe,
         fd_.get(),
@@ -161,6 +161,20 @@ void xtr::io_uring_fd_storage::submit_buffer(char* data, std::size_t size)
         buf->index_);
 
     ::io_uring_sqe_set_data(sqe, buf);
+
+    // Hardlink to the next SQE so writes complete in offset order. Without
+    // this, out-of-order completion can briefly leave holes in the file that
+    // confuse tools tailing the log. HARDLINK (not LINK) is used so that a
+    // failed or short write does not cancel subsequent queued writes.
+    sqe->flags |= IOSQE_IO_HARDLINK;
+
+    // First SQE of a batch drains the prior batch before starting. When
+    // combined with inter-batch hardlinking via IOSQE_IO_HARDLINK all buffers
+    // should be written in strict sequential order, with the exception of
+    // resubmitted buffers (which should never happen on a regular disk). If a
+    // buffer is resubmitted there would be a brief hole in the file.
+    if (batch_index_ % batch_size_ == 0)
+        sqe->flags |= IOSQE_IO_DRAIN;
 
     offset_ += size;
     ++pending_cqe_count_;
@@ -172,16 +186,17 @@ void xtr::io_uring_fd_storage::submit_buffer(char* data, std::size_t size)
 XTR_FUNC
 void xtr::io_uring_fd_storage::replace_fd(int newfd) noexcept
 {
-    // As write events might be in-flight, closing the file descriptor must
-    // be queued up behind any pending writes. IOSQE_IO_DRAIN is used to
-    // ensure that all previous writes complete before closing.
-    io_uring_sqe* sqe = get_sqe();
-    ::io_uring_prep_close(sqe, fd_.release());
-    sqe->flags |= IOSQE_IO_DRAIN;
-    ++pending_cqe_count_;
-    io_uring_submit_func_(&ring_);
+    // Wait for in-flight requests to complete before replacing. This must be
+    // done because an in-flight request could fail and be resubmitted---if
+    // that happens after the fd is replaced then the request would be
+    // resubmitted with the wrong fd.
+    while (pending_cqe_count_ > 0)
+        wait_for_one_cqe();
 
     fd_storage_base::replace_fd(newfd);
+
+    const ::off_t end = ::lseek(newfd, 0, SEEK_CUR);
+    offset_ = std::size_t(end != -1 ? end : 0L);
 }
 
 XTR_FUNC
@@ -201,7 +216,7 @@ void xtr::io_uring_fd_storage::allocate_buffers(std::size_t queue_size)
     {
         std::byte* storage =
             buffer_storage_.get() + buffer::size(buffer_capacity_) * i;
-        buffer* buf = ::new (storage) buffer;
+        auto* buf = ::new (storage) buffer;
         buf->index_ = int(i);
         iov.push_back({buf->data_, buffer_capacity_});
         // Push the buffer to the end of free_list_:
@@ -277,22 +292,6 @@ retry:
         std::move(deleter));
 
     ::io_uring_cqe_seen(&ring_, cqe);
-
-    if (!buf) // close operation queued by replace_fd()
-    {
-        // If close(2) failed, there is nothing to be done except report an
-        // error, as the state of the file descriptor is ambiguous (according
-        // to POSIX).
-        if (res < 0)
-        {
-            (void)std::fprintf(
-                stderr,
-                "xtr::io_uring_fd_storage::wait_for_one_cqe: "
-                "Error: close(2) failed during reopen: %s\n",
-                std::strerror(-res));
-        }
-        return;
-    }
 
     if (res == -EAGAIN) [[unlikely]]
     {

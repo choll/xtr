@@ -449,4 +449,53 @@ TEST_CASE_METHOD(fixture, "write error test", "[fd_storage]")
     storage_->submit_buffer(span.data(), span.size());
     flush_and_sync();
 }
+
+TEST_CASE_METHOD(fixture, "reopen resets file offset", "[fd_storage]")
+{
+    {
+        const auto span = storage_->allocate_buffer();
+        storage_->submit_buffer(span.data(), span.size());
+    }
+    flush_and_sync();
+
+    REQUIRE(::unlink(tmp_.path_.c_str()) == 0);
+    REQUIRE(storage_->reopen() == 0);
+
+    {
+        const auto span = storage_->allocate_buffer();
+        storage_->submit_buffer(span.data(), span.size());
+    }
+    flush_and_sync();
+
+    struct stat st{};
+    REQUIRE(::stat(tmp_.path_.c_str(), &st) == 0);
+    REQUIRE(
+        st.st_size == ::off_t(xtr::io_uring_fd_storage::default_buffer_capacity));
+}
+
+TEST_CASE_METHOD(fixture, "reopen on same file appends to end", "[fd_storage]")
+{
+    {
+        const auto span = storage_->allocate_buffer();
+        storage_->submit_buffer(span.data(), span.size());
+    }
+    flush_and_sync();
+
+    // Reopen with the file still in place. offset_ must be re-seeded from the
+    // new fd's end-of-file so the next write appends rather than overwriting
+    // byte 0.
+    REQUIRE(storage_->reopen() == 0);
+
+    {
+        const auto span = storage_->allocate_buffer();
+        storage_->submit_buffer(span.data(), span.size());
+    }
+    flush_and_sync();
+
+    struct stat st{};
+    REQUIRE(::stat(tmp_.path_.c_str(), &st) == 0);
+    REQUIRE(
+        st.st_size ==
+        ::off_t(xtr::io_uring_fd_storage::default_buffer_capacity * 2));
+}
 #endif

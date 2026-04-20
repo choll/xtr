@@ -65,6 +65,7 @@ add_library(${PROJECT_NAME} src/buffer.cpp
                             src/matcher.cpp
                             src/memory_mapping.cpp
                             src/mirrored_memory_mapping.cpp
+                            src/open.cpp
                             src/pagesize.cpp
                             src/posix_fd_storage.cpp
                             src/regex_matcher.cpp
