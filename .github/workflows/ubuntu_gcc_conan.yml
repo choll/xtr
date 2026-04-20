@@ -15,7 +15,7 @@ jobs:
         pic: [1, 0]
         rtti: [1, 0]
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: install conan
       run: |
         pip install --user conan
