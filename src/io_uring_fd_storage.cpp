@@ -81,6 +81,7 @@ xtr::io_uring_fd_storage::io_uring_fd_storage(
     }
 
     allocate_buffers(queue_size);
+    set_offset();
 }
 
 XTR_FUNC
@@ -186,6 +187,8 @@ void xtr::io_uring_fd_storage::submit_buffer(char* data, std::size_t size)
 XTR_FUNC
 void xtr::io_uring_fd_storage::replace_fd(int newfd) noexcept
 {
+    flush();
+
     // Wait for in-flight requests to complete before replacing. This must be
     // done because an in-flight request could fail and be resubmitted---if
     // that happens after the fd is replaced then the request would be
@@ -194,8 +197,14 @@ void xtr::io_uring_fd_storage::replace_fd(int newfd) noexcept
         wait_for_one_cqe();
 
     fd_storage_base::replace_fd(newfd);
+    set_offset();
+}
 
-    const ::off_t end = ::lseek(newfd, 0, SEEK_CUR);
+XTR_FUNC
+void xtr::io_uring_fd_storage::set_offset() noexcept
+{
+    assert(fd_);
+    const ::off_t end = ::lseek(fd_.get(), 0, SEEK_CUR);
     offset_ = std::size_t(end != -1 ? end : 0L);
 }
 

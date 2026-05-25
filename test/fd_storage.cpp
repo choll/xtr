@@ -19,9 +19,10 @@
 // SOFTWARE.
 
 #include "xtr/config.hpp"
+#include "xtr/detail/memory_mapping.hpp"
 
 #if XTR_USE_IO_URING
-#include "xtr/io/fd_storage.hpp"
+#include "xtr/io/detail/open.hpp"
 #include "xtr/io/io_uring_fd_storage.hpp"
 
 #include "temp_file.hpp"
@@ -29,6 +30,7 @@
 #include <catch2/catch.hpp>
 #include <liburing.h>
 
+#include <algorithm>
 #include <cerrno>
 #include <functional>
 #include <iostream>
@@ -117,6 +119,74 @@ namespace
             peek_cqe_hook = io_uring_peek_cqe;
         }
 
+        void send_buffer()
+        {
+            std::span<char> span;
+            XTR_REQUIRE_NOERROR(span = storage_->allocate_buffer());
+            std::ranges::fill(span, fill_++);
+            XTR_REQUIRE_NOERROR(storage_->submit_buffer(span.data(), span.size()));
+        }
+
+        std::size_t buffer_size() const
+        {
+            return xtr::io_uring_fd_storage::default_buffer_capacity;
+        }
+
+        std::size_t file_size(const char* path) const
+        {
+            struct stat st{};
+            REQUIRE(::stat(path, &st) == 0);
+            return std::size_t(st.st_size);
+        }
+
+        bool verify_file_contents(std::size_t buffer_count) const
+        {
+            return verify_file_contents(buffer_count, tmp_.path_.c_str());
+        }
+
+        bool verify_file_contents(
+            std::size_t buffer_count,
+            const char* path) const
+        {
+            const std::size_t size = file_size(path);
+
+            CAPTURE(size);
+            CAPTURE(buffer_count * buffer_size());
+
+            if (buffer_count * buffer_size() != size)
+                return false;
+
+            xtr::detail::file_descriptor fd(path, O_RDONLY);
+            xtr::detail::memory_mapping
+                m(nullptr, size, PROT_READ, MAP_PRIVATE, fd.get());
+
+            auto begin = static_cast<const char*>(m.get());
+            auto end = begin + buffer_size();
+
+            for (std::size_t i = 0; i != buffer_count; ++i)
+            {
+                const auto fill = static_cast<unsigned char>(i);
+                CAPTURE(i);
+                CAPTURE(fill);
+                if (!std::all_of(
+                        begin,
+                        end,
+                        [=](unsigned char c) { return c == fill; }))
+                {
+                    return false;
+                }
+                begin += buffer_size();
+                end += buffer_size();
+            }
+
+            return true;
+        }
+
+        void flush()
+        {
+            storage_->flush();
+        }
+
         void flush_and_sync()
         {
             storage_->flush();
@@ -125,6 +195,7 @@ namespace
 
         temp_file tmp_;
         xtr::storage_interface_ptr storage_;
+        unsigned char fill_ = 0;
     };
 }
 
@@ -142,20 +213,17 @@ TEST_CASE_METHOD(fixture, "write test", "[fd_storage]")
     {
         const int ret = io_uring_wait_cqe(ring, cqe);
         ++cqe_count;
-        REQUIRE((*cqe)->res == xtr::io_uring_fd_storage::default_buffer_capacity);
+        REQUIRE(std::size_t((*cqe)->res) == buffer_size());
         return ret;
     };
 
     for (std::size_t i = 0; i < n; ++i)
-    {
-        std::span<char> span;
-        XTR_REQUIRE_NOERROR(span = storage_->allocate_buffer());
-        XTR_REQUIRE_NOERROR(storage_->submit_buffer(span.data(), span.size()));
-    }
+        send_buffer();
 
     flush_and_sync();
 
     REQUIRE(cqe_count == n);
+    REQUIRE(verify_file_contents(n));
 }
 
 TEST_CASE_METHOD(fixture, "write more than queue size test", "[fd_storage]")
@@ -172,20 +240,17 @@ TEST_CASE_METHOD(fixture, "write more than queue size test", "[fd_storage]")
     {
         const int ret = io_uring_wait_cqe(ring, cqe);
         ++cqe_count;
-        REQUIRE((*cqe)->res == xtr::io_uring_fd_storage::default_buffer_capacity);
+        REQUIRE(std::size_t((*cqe)->res) == buffer_size());
         return ret;
     };
 
     for (std::size_t i = 0; i < n; ++i)
-    {
-        std::span<char> span;
-        XTR_REQUIRE_NOERROR(span = storage_->allocate_buffer());
-        XTR_REQUIRE_NOERROR(storage_->submit_buffer(span.data(), span.size()));
-    }
+        send_buffer();
 
     flush_and_sync();
 
     REQUIRE(cqe_count == n);
+    REQUIRE(verify_file_contents(n));
 }
 
 TEST_CASE_METHOD(fixture, "reopen with writes queued", "[fd_storage]")
@@ -201,10 +266,7 @@ TEST_CASE_METHOD(fixture, "reopen with writes queued", "[fd_storage]")
     // Queue up a large number of writes so that some are (almost) guaranteed
     // to still be in flight when reopen() is called.
     for (std::size_t i = 0; i < xtr::io_uring_fd_storage::default_queue_size; ++i)
-    {
-        const auto span = storage_->allocate_buffer();
-        storage_->submit_buffer(span.data(), span.size());
-    }
+        send_buffer();
 
     io_uring_submit(saved_ring); // release all buffers at once
     REQUIRE(storage_->reopen() == 0);
@@ -214,17 +276,14 @@ TEST_CASE_METHOD(fixture, "reopen with writes queued", "[fd_storage]")
     // (1) CQEs from the first loop are retrieved and checked for errors
     // (2) Writing to the new file is tested
     for (std::size_t i = 0; i < xtr::io_uring_fd_storage::default_queue_size; ++i)
-    {
-        std::span<char> span;
-        XTR_REQUIRE_NOERROR(span = storage_->allocate_buffer());
-        storage_->submit_buffer(span.data(), span.size());
-    }
+        send_buffer();
 }
 
 TEST_CASE_METHOD(fixture, "submission queue full on submit", "[fd_storage]")
 {
-    // First send a close operation so that there is a completion event to wait on
-    REQUIRE(storage_->reopen() == 0);
+    // First send a buffer so that there is a completion event to wait on
+    send_buffer();
+    flush();
 
     // Return null when an SQE is requested (submission queue full) to cause
     // progress to block/spin waiting for a CQE to complete (which implies a
@@ -253,44 +312,7 @@ TEST_CASE_METHOD(fixture, "submission queue full on submit", "[fd_storage]")
     };
 
     // Try to submit a buffer, get_sqe returns null so wait_cqe should be called
-    const auto span = storage_->allocate_buffer();
-    storage_->submit_buffer(span.data(), span.size());
-
-    REQUIRE(wait_cqe_called);
-}
-
-TEST_CASE_METHOD(fixture, "submission queue full on reopen", "[fd_storage]")
-{
-    // First send a close operation so that there is a completion event to wait on
-    REQUIRE(storage_->reopen() == 0);
-
-    // Return null when an SQE is requested to cause progress to block/spin
-    // waiting for a CQE to complete (which implies a SQE is then available)
-    get_sqe_hook = [&](io_uring*) { return nullptr; };
-
-    bool wait_cqe_called = false;
-
-#if XTR_IO_URING_POLL
-    sqring_wait_hook =
-#else
-    wait_cqe_hook =
-#endif
-        [&](auto... args)
-    {
-        if (!wait_cqe_called)
-        {
-            wait_cqe_called = true;
-            get_sqe_hook = io_uring_get_sqe;
-        }
-#if XTR_IO_URING_POLL
-        return io_uring_sqring_wait(args...);
-#else
-        return io_uring_wait_cqe(args...);
-#endif
-    };
-
-    // Try to reopen, get_sqe returns null so wait_cqe should be called
-    REQUIRE(storage_->reopen() == 0);
+    send_buffer();
 
     REQUIRE(wait_cqe_called);
 }
@@ -336,6 +358,8 @@ TEST_CASE_METHOD(fixture, "short write test", "[fd_storage]")
     storage_->submit_buffer(span.data(), span.size());
     flush_and_sync();
 
+    REQUIRE(verify_file_contents(1));
+
     REQUIRE(sqe_count == 2);
     REQUIRE(cqe_count == 2);
     REQUIRE(submit_count == 2);
@@ -343,8 +367,6 @@ TEST_CASE_METHOD(fixture, "short write test", "[fd_storage]")
 
 TEST_CASE_METHOD(fixture, "EAGAIN test", "[fd_storage]")
 {
-    std::cerr << "Note: Log message to stderr is expected\n";
-
     std::size_t sqe_count = 0;
     std::size_t cqe_count = 0;
     std::size_t submit_count = 0;
@@ -382,53 +404,12 @@ TEST_CASE_METHOD(fixture, "EAGAIN test", "[fd_storage]")
     storage_->submit_buffer(span.data(), span.size());
     flush_and_sync();
 
+    REQUIRE(verify_file_contents(1));
+
     // Request should be resubmitted
     REQUIRE(sqe_count == 2);
     REQUIRE(cqe_count == 2);
     REQUIRE(submit_count == 2);
-}
-
-TEST_CASE_METHOD(fixture, "close fail test", "[fd_storage]")
-{
-    std::cerr << "Note: Log message to stderr is expected\n";
-
-    std::size_t sqe_count = 0;
-    std::size_t cqe_count = 0;
-    std::size_t submit_count = 0;
-
-    get_sqe_hook = [&](io_uring* ring)
-    {
-        ++sqe_count;
-        return io_uring_get_sqe(ring);
-    };
-
-#if XTR_IO_URING_POLL
-    peek_cqe_hook =
-#else
-    wait_cqe_hook =
-#endif
-        [&](auto ring, auto cqe)
-    {
-        const int ret = io_uring_wait_cqe(ring, cqe);
-        ++cqe_count;
-        REQUIRE(::io_uring_cqe_get_data(*cqe) == nullptr);
-        (*cqe)->res = -EIO;
-        return ret;
-    };
-
-    submit_hook = [&](io_uring* ring)
-    {
-        ++submit_count;
-        return io_uring_submit(ring);
-    };
-
-    REQUIRE(storage_->reopen() == 0);
-    storage_->sync();
-
-    // Request should not be resubmitted
-    REQUIRE(sqe_count == 1);
-    REQUIRE(cqe_count == 1);
-    REQUIRE(submit_count == 1);
 }
 
 TEST_CASE_METHOD(fixture, "write error test", "[fd_storage]")
@@ -445,40 +426,45 @@ TEST_CASE_METHOD(fixture, "write error test", "[fd_storage]")
         return ret;
     };
 
-    const auto span = storage_->allocate_buffer();
-    storage_->submit_buffer(span.data(), span.size());
+    std::cerr << "Note: Log message to stderr is expected\n";
+
+    send_buffer();
     flush_and_sync();
+}
+
+TEST_CASE_METHOD(fixture, "reopen with unsent buffers", "[fd_storage]")
+{
+    // Send without a flush
+    send_buffer();
+
+    REQUIRE(storage_->reopen() == 0);
+
+    REQUIRE(verify_file_contents(1));
 }
 
 TEST_CASE_METHOD(fixture, "reopen resets file offset", "[fd_storage]")
 {
-    {
-        const auto span = storage_->allocate_buffer();
-        storage_->submit_buffer(span.data(), span.size());
-    }
+    send_buffer();
     flush_and_sync();
 
-    REQUIRE(::unlink(tmp_.path_.c_str()) == 0);
+    const std::string rotated = tmp_.path_ + ".1";
+    REQUIRE(::rename(tmp_.path_.c_str(), rotated.c_str()) == 0);
+
     REQUIRE(storage_->reopen() == 0);
 
-    {
-        const auto span = storage_->allocate_buffer();
-        storage_->submit_buffer(span.data(), span.size());
-    }
+    fill_ = 0;
+    send_buffer();
     flush_and_sync();
 
-    struct stat st{};
-    REQUIRE(::stat(tmp_.path_.c_str(), &st) == 0);
-    REQUIRE(
-        st.st_size == ::off_t(xtr::io_uring_fd_storage::default_buffer_capacity));
+    REQUIRE(verify_file_contents(1));
+    REQUIRE(verify_file_contents(1, rotated.c_str()));
+
+    REQUIRE(::unlink(rotated.c_str()) == 0);
 }
 
 TEST_CASE_METHOD(fixture, "reopen on same file appends to end", "[fd_storage]")
 {
-    {
-        const auto span = storage_->allocate_buffer();
-        storage_->submit_buffer(span.data(), span.size());
-    }
+    send_buffer();
     flush_and_sync();
 
     // Reopen with the file still in place. offset_ must be re-seeded from the
@@ -486,16 +472,27 @@ TEST_CASE_METHOD(fixture, "reopen on same file appends to end", "[fd_storage]")
     // byte 0.
     REQUIRE(storage_->reopen() == 0);
 
-    {
-        const auto span = storage_->allocate_buffer();
-        storage_->submit_buffer(span.data(), span.size());
-    }
+    send_buffer();
     flush_and_sync();
 
-    struct stat st{};
-    REQUIRE(::stat(tmp_.path_.c_str(), &st) == 0);
-    REQUIRE(
-        st.st_size ==
-        ::off_t(xtr::io_uring_fd_storage::default_buffer_capacity * 2));
+    REQUIRE(verify_file_contents(2));
+}
+
+TEST_CASE_METHOD(fixture, "open existing file appends to end", "[fd_storage]")
+{
+    send_buffer();
+
+    storage_.reset();
+
+    xtr::detail::file_descriptor fd(
+        xtr::detail::open_at_end(tmp_.path_.c_str()));
+    REQUIRE(fd);
+
+    storage_ = std::make_unique<test_fd_storage>(fd.release(), tmp_.path_);
+
+    send_buffer();
+    flush_and_sync();
+
+    REQUIRE(verify_file_contents(2));
 }
 #endif

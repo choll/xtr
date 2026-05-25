@@ -144,6 +144,8 @@ public:
 protected:
     void replace_fd(int newfd) noexcept final;
 
+    void set_offset() noexcept;
+
 private:
     void allocate_buffers(std::size_t queue_size);
 
