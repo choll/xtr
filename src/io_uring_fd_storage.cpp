@@ -108,7 +108,6 @@ xtr::io_uring_fd_storage::io_uring_fd_storage(
 XTR_FUNC
 xtr::io_uring_fd_storage::~io_uring_fd_storage()
 {
-    flush();
     sync();
     ::io_uring_queue_exit(&ring_);
 }
@@ -123,6 +122,7 @@ void xtr::io_uring_fd_storage::flush()
 XTR_FUNC
 void xtr::io_uring_fd_storage::sync() noexcept
 {
+    flush();
     while (pending_cqe_count_ > 0)
         wait_for_one_cqe();
     fd_storage_base::sync();
@@ -205,7 +205,19 @@ void xtr::io_uring_fd_storage::set_offset() noexcept
 {
     assert(fd_);
     const ::off_t end = ::lseek(fd_.get(), 0, SEEK_CUR);
-    offset_ = std::size_t(end != -1 ? end : 0L);
+    if (end == -1) [[unlikely]]
+    {
+        (void)std::fprintf(
+            stderr,
+            "xtr::io_uring_fd_storage::set_offset: lseek on \"%s\" (fd %d) "
+            "failed: %s\n",
+            reopen_path_.c_str(),
+            fd_.get(),
+            std::strerror(errno));
+        offset_ = 0;
+        return;
+    }
+    offset_ = std::size_t(end);
 }
 
 XTR_FUNC
