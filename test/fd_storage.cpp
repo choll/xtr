@@ -19,9 +19,9 @@
 // SOFTWARE.
 
 #include "xtr/config.hpp"
-#include "xtr/detail/memory_mapping.hpp"
 
 #if XTR_USE_IO_URING
+#include "xtr/detail/memory_mapping.hpp"
 #include "xtr/io/detail/open.hpp"
 #include "xtr/io/io_uring_fd_storage.hpp"
 
@@ -144,9 +144,7 @@ namespace
             return verify_file_contents(buffer_count, tmp_.path_.c_str());
         }
 
-        bool verify_file_contents(
-            std::size_t buffer_count,
-            const char* path) const
+        bool verify_file_contents(std::size_t buffer_count, const char* path) const
         {
             const std::size_t size = file_size(path);
 
@@ -484,8 +482,7 @@ TEST_CASE_METHOD(fixture, "open existing file appends to end", "[fd_storage]")
 
     storage_.reset();
 
-    xtr::detail::file_descriptor fd(
-        xtr::detail::open_at_end(tmp_.path_.c_str()));
+    xtr::detail::file_descriptor fd(xtr::detail::open_at_end(tmp_.path_.c_str()));
     REQUIRE(fd);
 
     storage_ = std::make_unique<test_fd_storage>(fd.release(), tmp_.path_);
