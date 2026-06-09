@@ -185,9 +185,8 @@ namespace
             storage_->flush();
         }
 
-        void flush_and_sync()
+        void sync()
         {
-            storage_->flush();
             storage_->sync();
         }
 
@@ -218,7 +217,7 @@ TEST_CASE_METHOD(fixture, "write test", "[fd_storage]")
     for (std::size_t i = 0; i < n; ++i)
         send_buffer();
 
-    flush_and_sync();
+    sync();
 
     REQUIRE(cqe_count == n);
     REQUIRE(verify_file_contents(n));
@@ -245,7 +244,7 @@ TEST_CASE_METHOD(fixture, "write more than queue size test", "[fd_storage]")
     for (std::size_t i = 0; i < n; ++i)
         send_buffer();
 
-    flush_and_sync();
+    sync();
 
     REQUIRE(cqe_count == n);
     REQUIRE(verify_file_contents(n));
@@ -354,7 +353,7 @@ TEST_CASE_METHOD(fixture, "short write test", "[fd_storage]")
     const auto span = storage_->allocate_buffer();
     REQUIRE(span.size() > missing_size);
     storage_->submit_buffer(span.data(), span.size());
-    flush_and_sync();
+    sync();
 
     REQUIRE(verify_file_contents(1));
 
@@ -400,7 +399,7 @@ TEST_CASE_METHOD(fixture, "EAGAIN test", "[fd_storage]")
     };
 
     storage_->submit_buffer(span.data(), span.size());
-    flush_and_sync();
+    sync();
 
     REQUIRE(verify_file_contents(1));
 
@@ -427,7 +426,7 @@ TEST_CASE_METHOD(fixture, "write error test", "[fd_storage]")
     std::cerr << "Note: Log message to stderr is expected\n";
 
     send_buffer();
-    flush_and_sync();
+    sync();
 }
 
 TEST_CASE_METHOD(fixture, "reopen with unsent buffers", "[fd_storage]")
@@ -443,7 +442,7 @@ TEST_CASE_METHOD(fixture, "reopen with unsent buffers", "[fd_storage]")
 TEST_CASE_METHOD(fixture, "reopen resets file offset", "[fd_storage]")
 {
     send_buffer();
-    flush_and_sync();
+    sync();
 
     const std::string rotated = tmp_.path_ + ".1";
     REQUIRE(::rename(tmp_.path_.c_str(), rotated.c_str()) == 0);
@@ -452,7 +451,7 @@ TEST_CASE_METHOD(fixture, "reopen resets file offset", "[fd_storage]")
 
     fill_ = 0;
     send_buffer();
-    flush_and_sync();
+    sync();
 
     REQUIRE(verify_file_contents(1));
     REQUIRE(verify_file_contents(1, rotated.c_str()));
@@ -463,7 +462,7 @@ TEST_CASE_METHOD(fixture, "reopen resets file offset", "[fd_storage]")
 TEST_CASE_METHOD(fixture, "reopen on same file appends to end", "[fd_storage]")
 {
     send_buffer();
-    flush_and_sync();
+    sync();
 
     // Reopen with the file still in place. offset_ must be re-seeded from the
     // new fd's end-of-file so the next write appends rather than overwriting
@@ -471,7 +470,7 @@ TEST_CASE_METHOD(fixture, "reopen on same file appends to end", "[fd_storage]")
     REQUIRE(storage_->reopen() == 0);
 
     send_buffer();
-    flush_and_sync();
+    sync();
 
     REQUIRE(verify_file_contents(2));
 }
@@ -488,7 +487,7 @@ TEST_CASE_METHOD(fixture, "open existing file appends to end", "[fd_storage]")
     storage_ = std::make_unique<test_fd_storage>(fd.release(), tmp_.path_);
 
     send_buffer();
-    flush_and_sync();
+    sync();
 
     REQUIRE(verify_file_contents(2));
 }
