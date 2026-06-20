@@ -658,18 +658,17 @@ namespace xtr::detail
     inline constexpr std::size_t cacheline_size = 64;
 
 #if defined(XTR_ENABLE_TEST_STATIC_ASSERTIONS)
-    static_assert(std::is_same<std::uint8_t, least_uint_t<0UL>>::value);
-    static_assert(std::is_same<std::uint8_t, least_uint_t<255UL>>::value);
+    static_assert(std::is_same_v<std::uint8_t, least_uint_t<0UL>>);
+    static_assert(std::is_same_v<std::uint8_t, least_uint_t<255UL>>);
 
-    static_assert(std::is_same<std::uint16_t, least_uint_t<256UL>>::value);
-    static_assert(std::is_same<std::uint16_t, least_uint_t<65535UL>>::value);
+    static_assert(std::is_same_v<std::uint16_t, least_uint_t<256UL>>);
+    static_assert(std::is_same_v<std::uint16_t, least_uint_t<65535UL>>);
 
-    static_assert(std::is_same<std::uint32_t, least_uint_t<65536UL>>::value);
-    static_assert(std::is_same<std::uint32_t, least_uint_t<4294967295UL>>::value);
+    static_assert(std::is_same_v<std::uint32_t, least_uint_t<65536UL>>);
+    static_assert(std::is_same_v<std::uint32_t, least_uint_t<4294967295UL>>);
 
-    static_assert(std::is_same<std::uint64_t, least_uint_t<4294967296UL>>::value);
-    static_assert(
-        std::is_same<std::uint64_t, least_uint_t<18446744073709551615UL>>::value);
+    static_assert(std::is_same_v<std::uint64_t, least_uint_t<4294967296UL>>);
+    static_assert(std::is_same_v<std::uint64_t, least_uint_t<18446744073709551615UL>>);
 #endif
 
     template<typename T, typename SizeType>
@@ -776,7 +775,6 @@ public:
         wrnread_plus_capacity_ = capacity();
         wrnwritten_ = 0;
         nread_plus_capacity_ = capacity();
-        dropped_count_ = 0;
     }
 
     constexpr size_type capacity() const noexcept
@@ -815,10 +813,7 @@ public:
         }
 
         if (is_non_blocking_v<Tags> && sz < minsize) [[unlikely]]
-        {
-            dropped_count_.fetch_add(1, std::memory_order_relaxed);
             return span{};
-        }
 
         assert(b >= begin());
         assert(b < end());
@@ -882,11 +877,6 @@ public:
         return begin() + capacity();
     }
 
-    std::size_t dropped_count() noexcept
-    {
-        return dropped_count_.exchange(0, std::memory_order_relaxed);
-    }
-
 private:
     static_assert(
         is_dynamic ||
@@ -928,8 +918,6 @@ private:
 
     alignas(cacheline_size) std::atomic<size_type> nread_plus_capacity_{};
     mirrored_memory_mapping m_;
-
-    alignas(cacheline_size) std::atomic<size_type> dropped_count_{};
 };
 
 #include <cstdint>
@@ -1211,8 +1199,8 @@ private:
 #include <fmt/compile.h>
 #include <fmt/format.h>
 
+#include <exception>
 #include <iterator>
-#include <stdexcept>
 #include <string>
 #include <string_view>
 
@@ -1351,6 +1339,76 @@ namespace xtr::detail
 #endif
 }
 
+#include <cstddef>
+#include <type_traits>
+
+namespace xtr::detail
+{
+    template<typename T>
+    struct vcopy_wrapper
+    {
+        const T& value;
+        std::size_t size;
+    };
+
+    template<typename T>
+    struct is_vcopy_wrapper : std::false_type
+    {
+    };
+
+    template<typename T>
+    struct is_vcopy_wrapper<vcopy_wrapper<T>> : std::true_type
+    {
+    };
+
+    static_assert(is_vcopy_wrapper<vcopy_wrapper<int>>::value);
+    static_assert(!is_vcopy_wrapper<int>::value);
+}
+
+#include <cstddef>
+#include <type_traits>
+
+namespace xtr
+{
+    /**
+     * vcopy copies a variable-length trivially-copyable object (e.g. a struct
+     * with a flexible array member) into the sink. `size` is the total number
+     * of bytes to copy starting at `arg`, which must be at least `sizeof(T)`
+     * and must include any trailing data beyond the fixed portion of `T`.
+     * Because the entire object is memcpy'd as-is, `T` must be trivially
+     * copyable. Unlike string arguments, vcopy cannot truncate: if the sink's
+     * ring buffer cannot hold the object, the entire log record is dropped
+     * and the dropped-message counter is incremented. Please see the
+     * <a href="guide.html#variable-length-arguments">variable-length
+     * arguments</a> section of the user guide for further details.
+     */
+    template<typename T>
+        requires std::is_trivially_copyable_v<T>
+    inline auto vcopy(const T& arg, std::size_t size)
+    {
+        return detail::vcopy_wrapper{arg, size};
+    }
+}
+
+namespace xtr
+{
+    /**
+     * nocopy is used to specify that a string argument should be passed by
+     * reference instead of by value, so that `arg` becomes `nocopy(arg)`. Note
+     * that by default, all strings including C strings and std::string_view are
+     * copied. In order to pass strings by reference they must be wrapped in a
+     * call to nocopy. Please see the <a
+     * href="guide.html#passing-arguments-by-value-or-reference"> passing
+     * arguments by value or reference</a> and <a href="guide.html#string-arguments">string
+     * arguments</a> sections of the user guide for further details.
+     */
+    template<typename T>
+    inline auto nocopy(const T& arg)
+    {
+        return detail::string_ref(arg);
+    }
+}
+
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
@@ -1377,13 +1435,32 @@ namespace xtr::detail
     };
 
     template<typename T>
-        requires(!std::same_as<std::remove_cvref_t<T>, string_table_entry>)
-    T&& transform_string_table_entry(const std::byte*, T&& value)
+    struct variable_length_entry
+    {
+        explicit variable_length_entry(std::size_t sz) :
+            size(std::uint32_t(sz))
+        {
+        }
+
+        std::uint32_t size;
+    };
+
+    template<typename T>
+    T&& reconstruct_args(const std::byte*, T&& value)
     {
         return std::forward<T>(value);
     }
 
-    inline string_ref<std::string_view> transform_string_table_entry(
+    template<typename T>
+    inline const T& reconstruct_args(std::byte*& pos, variable_length_entry<T> entry)
+    {
+        pos = align<alignof(T)>(pos);
+        const T& value = *reinterpret_cast<const T*>(pos);
+        pos += entry.size;
+        return value;
+    }
+
+    inline string_ref<std::string_view> reconstruct_args(
         std::byte*& pos, string_table_entry entry)
     {
         if (entry.size == string_table_entry::truncated) [[unlikely]]
@@ -1393,64 +1470,97 @@ namespace xtr::detail
         return string_ref<std::string_view>(str);
     }
 
+    template<typename Tags, typename Buffer>
+    __attribute__((always_inline)) inline bool wait_for_capacity(
+        std::byte*& end, std::byte* min_end, Buffer& buf)
+    {
+        while (end < min_end) [[unlikely]]
+        {
+            pause();
+            const auto s = buf.write_span();
+            if (s.end() < min_end) [[unlikely]]
+            {
+                if (s.size() == buf.capacity() || is_non_blocking_v<Tags>)
+                    return false;
+            }
+            end = s.end();
+        }
+        return true;
+    }
+
+    template<typename Tags, typename Buffer>
+    __attribute__((always_inline)) inline bool copy(
+        std::byte*& pos, std::byte*& end, Buffer& buf, const void* value, std::size_t length)
+    {
+        std::byte* value_end = pos + length;
+        if (!wait_for_capacity<Tags>(end, value_end, buf)) [[unlikely]]
+            return false;
+        std::memcpy(pos, value, length);
+        pos += length;
+        return true;
+    }
+
     template<typename Tags, typename T, typename Buffer>
-        requires(std::is_rvalue_reference_v<decltype(std::forward<T>(std::declval<T>()))> &&
-                 std::same_as<std::remove_cvref_t<T>, std::string>) ||
-                (!is_c_string<T>::value &&
-                 !std::same_as<std::remove_cvref_t<T>, std::string> &&
-                 !std::same_as<std::remove_cvref_t<T>, std::string_view>)
-    T&& build_string_table(std::byte*&, std::byte*&, Buffer&, T&& value)
+    __attribute__((always_inline)) inline bool copy(
+        std::byte*& pos, std::byte*& end, Buffer& buf, T&& value)
+    {
+        std::byte* value_end = pos + sizeof(T);
+        if (!wait_for_capacity<Tags>(end, value_end, buf)) [[unlikely]]
+            return false;
+        ::new (pos) std::remove_reference_t<T>(std::forward<T>(value));
+        pos += sizeof(T);
+        return true;
+    }
+
+    template<typename Tags, typename T, typename Buffer>
+        requires(
+            (std::is_rvalue_reference_v<decltype(std::forward<T>(std::declval<T>()))> &&
+             std::same_as<std::remove_cvref_t<T>, std::string>) ||
+            (!is_c_string<T>::value &&
+             !std::same_as<std::remove_cvref_t<T>, std::string> &&
+             !std::same_as<std::remove_cvref_t<T>, std::string_view>))
+    T&& transform_args(std::byte*&, std::byte*&, Buffer&, bool&, T&& value)
     {
         return std::forward<T>(value);
+    }
+
+    template<typename Tags, typename T, typename Buffer>
+    variable_length_entry<T> transform_args(
+        std::byte*& pos,
+        std::byte*& end,
+        Buffer& buf,
+        bool& overflow,
+        detail::vcopy_wrapper<T> vc)
+    {
+        pos = align<alignof(T)>(pos);
+        if (!copy<Tags>(pos, end, buf, &vc.value, vc.size)) [[unlikely]]
+            overflow = true;
+        return variable_length_entry<T>(vc.size);
     }
 
     template<typename Tags, typename Buffer, typename String>
         requires std::same_as<String, std::string> ||
                  std::same_as<String, std::string_view>
-    string_table_entry build_string_table(
-        std::byte*& pos, std::byte*& end, Buffer& buf, const String& sv)
+    string_table_entry transform_args(
+        std::byte*& pos, std::byte*& end, Buffer& buf, bool&, const String& str)
     {
-        std::byte* str_end = pos + sv.length();
-        while (end < str_end) [[unlikely]]
-        {
-            pause();
-            const auto s = buf.write_span();
-            if (s.end() < str_end) [[unlikely]]
-            {
-                if (s.size() == buf.capacity() || is_non_blocking_v<Tags>)
-                    return string_table_entry{string_table_entry::truncated};
-            }
-            end = s.end();
-        }
-
-        std::memcpy(pos, sv.data(), sv.length());
-        pos += sv.length();
-
-        return string_table_entry(sv.length());
+        if (!copy<Tags>(pos, end, buf, str.data(), str.length())) [[unlikely]]
+            return string_table_entry{string_table_entry::truncated};
+        return string_table_entry(str.length());
     }
 
     template<typename Tags, typename Buffer>
-    string_table_entry build_string_table(
-        std::byte*& pos, std::byte*& end, Buffer& buf, const char* str)
+    string_table_entry transform_args(
+        std::byte*& pos, std::byte*& end, Buffer& buf, bool&, const char* str)
     {
         std::byte* begin = pos;
         while (*str != '\0')
         {
-            while (pos == end) [[unlikely]]
+            if (!copy<Tags>(pos, end, buf, *str++)) [[unlikely]]
             {
-                pause();
-                const auto s = buf.write_span();
-                if (s.end() == end) [[unlikely]]
-                {
-                    if (s.size() == buf.capacity() || is_non_blocking_v<Tags>)
-                    {
-                        pos = begin;
-                        return string_table_entry{string_table_entry::truncated};
-                    }
-                }
-                end = s.end();
+                pos = begin;
+                return string_table_entry{string_table_entry::truncated};
             }
-            ::new (pos++) char(*str++);
         }
         return string_table_entry(std::size_t(pos - begin));
     }
@@ -1707,6 +1817,13 @@ private:
     auto make_lambda(Args&&... args) noexcept(
         (XTR_NOTHROW_INGESTIBLE(Args, args) && ...));
 
+    std::size_t dropped_count() noexcept
+    {
+        if (dropped_count_.load(std::memory_order_relaxed) == 0)
+            return 0;
+        return dropped_count_.exchange(0, std::memory_order_relaxed);
+    }
+
     using ring_buffer = detail::synchronized_ring_buffer<XTR_SINK_CAPACITY>;
 
     static_assert(
@@ -1715,6 +1832,7 @@ private:
         "XTR_SINK_CAPACITY is too large");
 
     ring_buffer buf_;
+    std::atomic<std::size_t> dropped_count_{};
     std::atomic<log_level_t> level_;
     bool open_ = false;
 
@@ -1733,7 +1851,10 @@ void xtr::sink::log_impl() noexcept
 {
     const ring_buffer::span s = buf_.write_span_spec<Tags>(sizeof(fptr_t));
     if (detail::is_non_blocking_v<Tags> && s.empty()) [[unlikely]]
+    {
+        dropped_count_.fetch_add(1, std::memory_order_relaxed);
         return;
+    }
     copy(s.begin(), &detail::trampoline0<Format, Level, detail::consumer>);
     buf_.reduce_writable(sizeof(fptr_t));
 }
@@ -1747,7 +1868,9 @@ void xtr::sink::log_impl(Args&&... args) noexcept(
         detail::is_c_string<decltype(std::forward<Args>(args))>...,
         std::is_same<std::remove_cvref_t<Args>, std::string_view>...,
         std::is_same<std::remove_cvref_t<Args>, std::string>...>;
-    if constexpr (is_str)
+    constexpr bool is_vcopy =
+        std::disjunction_v<detail::is_vcopy_wrapper<Args>...>;
+    if constexpr (is_str || is_vcopy)
         post_variable_len<Format, Level, Tags>(std::forward<Args>(args)...);
     else
         post<Format, Level, Tags>(make_lambda<Tags>(std::forward<Args>(args)...));
@@ -1757,10 +1880,11 @@ template<auto Format, auto Level, typename Tags, typename... Args>
 void xtr::sink::post_variable_len(Args&&... args) noexcept(
     (XTR_NOTHROW_INGESTIBLE(Args, args) && ...))
 {
-    using lambda_t = decltype(make_lambda<Tags>(detail::build_string_table<Tags>(
+    using lambda_t = decltype(make_lambda<Tags>(detail::transform_args<Tags>(
         std::declval<std::byte*&>(),
         std::declval<std::byte*&>(),
         buf_,
+        std::declval<bool&>(),
         std::forward<Args>(args))...));
 
     ring_buffer::span s = buf_.write_span_spec();
@@ -1770,28 +1894,40 @@ void xtr::sink::post_variable_len(Args&&... args) noexcept(
         func_pos = align<alignof(lambda_t)>(func_pos);
 
     static_assert(alignof(char) == 1);
-    const auto str_pos = func_pos + sizeof(lambda_t);
-    const auto size = ring_buffer::size_type(str_pos - s.begin());
+    const auto vlen_pos = func_pos + sizeof(lambda_t);
+    const auto size = ring_buffer::size_type(vlen_pos - s.begin());
 
     if (s.size() < size) [[unlikely]]
         s = buf_.write_span<Tags>(size);
 
     if (detail::is_non_blocking_v<Tags> && s.empty()) [[unlikely]]
+    {
+        dropped_count_.fetch_add(1, std::memory_order_relaxed);
         return;
+    }
 
-    auto str_cur = str_pos;
-    auto str_end = s.end();
+    auto vlen_cur = vlen_pos;
+    auto vlen_end = s.end();
+    bool overflow = false;
 
     copy(s.begin(), &detail::trampolineV<Format, Level, detail::consumer, lambda_t>);
     copy(
         func_pos,
-        make_lambda<Tags>(detail::build_string_table<Tags>(
-            str_cur,
-            str_end,
+        make_lambda<Tags>(detail::transform_args<Tags>(
+            vlen_cur,
+            vlen_end,
             buf_,
+            overflow,
             std::forward<Args>(args))...));
 
-    const auto next = detail::align<alignof(fptr_t)>(str_cur);
+    if (overflow) [[unlikely]]
+    {
+        std::destroy_at(reinterpret_cast<lambda_t*>(func_pos));
+        dropped_count_.fetch_add(1, std::memory_order_relaxed);
+        return;
+    }
+
+    const auto next = detail::align<alignof(fptr_t)>(vlen_cur);
     const auto total_size = ring_buffer::size_type(next - s.begin());
 
     buf_.reduce_writable(total_size);
@@ -1801,11 +1937,7 @@ template<typename T>
 void xtr::sink::copy(std::byte* pos, T&& value) noexcept(XTR_NOTHROW_INGESTIBLE(T, value))
 {
     assert(std::uintptr_t(pos) % alignof(T) == 0);
-#if defined(__cpp_lib_assume_aligned)
     pos = static_cast<std::byte*>(std::assume_aligned<alignof(T)>(pos));
-#else
-    pos = static_cast<std::byte*>(__builtin_assume_aligned(pos, alignof(T)));
-#endif
     ::new (pos) std::remove_reference_t<T>(std::forward<T>(value));
 }
 
@@ -1825,7 +1957,10 @@ void xtr::sink::post(Func&& func) noexcept(XTR_NOTHROW_INGESTIBLE(Func, func))
         s = buf_.write_span<Tags>(size);
 
     if (detail::is_non_blocking_v<Tags> && s.empty()) [[unlikely]]
+    {
+        dropped_count_.fetch_add(1, std::memory_order_relaxed);
         return;
+    }
 
     copy(s.begin(), &detail::trampolineN<Format, Level, detail::consumer, Func>);
     copy(func_pos, std::forward<Func>(func));
@@ -1852,7 +1987,7 @@ auto xtr::sink::make_lambda(Args&&... args) noexcept(
                 fmt,
                 level,
                 name,
-                detail::transform_string_table_entry(record, args)...);
+                detail::reconstruct_args(record, args)...);
         }
         else
         {
@@ -1862,7 +1997,7 @@ auto xtr::sink::make_lambda(Args&&... args) noexcept(
                 level,
                 ts,
                 name,
-                detail::transform_string_table_entry(record, args)...);
+                detail::reconstruct_args(record, args)...);
         }
     };
 }
@@ -2649,6 +2784,9 @@ namespace xtr
             xtr::detail::string{":"} +                                                      \
             xtr::detail::string{XTR_XSTR(__LINE__) ": " FORMAT "\n"};                       \
         using xtr::nocopy;                                                                  \
+        using xtr::streamed_copy;                                                           \
+        using xtr::streamed_ref;                                                            \
+        using xtr::vcopy;                                                                   \
         (SINK).template log<FMT_COMPILE(xtr_fmt.str), xtr::log_level_t::LEVEL, void(TAGS)>( \
             __VA_ARGS__);                                                                   \
     }))
@@ -2970,22 +3108,6 @@ namespace xtr
          */
         disable_worker_thread
     };
-
-    /**
-     * nocopy is used to specify that a string argument should be passed by
-     * reference instead of by value, so that `arg` becomes `nocopy(arg)`. Note
-     * that by default, all strings including C strings and std::string_view are
-     * copied. In order to pass strings by reference they must be wrapped in a
-     * call to nocopy. Please see the <a
-     * href="guide.html#passing-arguments-by-value-or-reference"> passing
-     * arguments by value or reference</a> and <a href="guide.html#string-arguments">string
-     * arguments</a> sections of the user guide for further details.
-     */
-    template<typename T>
-    inline auto nocopy(const T& arg)
-    {
-        return detail::string_ref(arg);
-    }
 }
 
 /**
@@ -3318,29 +3440,6 @@ namespace xtr::detail
 
     template<typename T>
     concept tuple_like = requires(T t) { std::tuple_size<T>(); };
-
-    template<typename T>
-    struct is_allocated;
-
-    template<typename T>
-        requires(!tuple_like<T>)
-    struct is_allocated<T>
-    {
-        static constexpr bool value = requires { typename T::allocator_type; };
-    };
-
-    template<typename T>
-        requires(tuple_like<T>)
-    struct is_allocated<T>
-    {
-        static constexpr bool value = []<std::size_t... Is>(
-                                          std::index_sequence<Is...>) {
-            return (is_allocated<std::tuple_element_t<Is, T>>::value || ...);
-        }(std::make_index_sequence<std::tuple_size_v<T>>{});
-    };
-
-    template<typename T>
-    concept allocated = is_allocated<T>::value;
 }
 
 #include <algorithm>
@@ -3406,7 +3505,6 @@ namespace fmt
             if (!value.empty())
             {
                 auto it = std::begin(value);
-                ;
                 fmt::format_to(ctx.out(), FMT_COMPILE("{}: {}"), it->first, it->second);
                 ++it;
                 while (it != std::end(value))
@@ -3442,7 +3540,6 @@ namespace fmt
             if (!value.empty())
             {
                 auto it = std::begin(value);
-                ;
                 fmt::format_to(ctx.out(), FMT_COMPILE("{}"), *it++);
                 while (it != std::end(value))
                     fmt::format_to(ctx.out(), FMT_COMPILE(", {}"), *it++);
@@ -3960,7 +4057,7 @@ inline bool xtr::detail::consumer::run_once(pump_io_stats* stats) noexcept
 
         std::size_t n_dropped;
         if (sinks_[i]->buf_.read_span().empty() &&
-            (n_dropped = sinks_[i]->buf_.dropped_count()) > 0)
+            (n_dropped = sinks_[i]->dropped_count()) > 0)
         {
             detail::print(
                 buf,
@@ -4164,6 +4261,15 @@ inline void xtr::detail::fd_storage_base::replace_fd(int newfd) noexcept
 #include <sys/syscall.h>
 #include <unistd.h>
 
+namespace xtr::detail
+{
+    inline bool is_seekable(int fd)
+    {
+        struct ::stat st;
+        return ::fstat(fd, &st) == 0 && S_ISREG(st.st_mode);
+    }
+}
+
 inline xtr::storage_interface_ptr xtr::make_fd_storage(const char* path)
 {
     const int fd = XTR_TEMP_FAILURE_RETRY(::open(
@@ -4188,7 +4294,7 @@ inline xtr::storage_interface_ptr xtr::make_fd_storage(int fd, std::string reope
     errno = 0;
     (void)syscall(__NR_io_uring_setup, 0, nullptr);
 
-    if (errno != ENOSYS)
+    if (detail::is_seekable(fd) && errno != ENOSYS)
     {
 #if __cpp_exceptions
         try
@@ -4463,7 +4569,7 @@ retry:
 
     if (errnum != 0) [[unlikely]]
     {
-        std::fprintf(
+        (void)std::fprintf(
             stderr,
             "xtr::io_uring_fd_storage::wait_for_one_cqe: "
             "io_uring_peek_cqe/io_uring_wait_cqe failed: %s\n",
@@ -4487,7 +4593,7 @@ retry:
     {
         if (res < 0)
         {
-            std::fprintf(
+            (void)std::fprintf(
                 stderr,
                 "xtr::io_uring_fd_storage::wait_for_one_cqe: "
                 "Error: close(2) failed during reopen: %s\n",
@@ -4504,7 +4610,7 @@ retry:
 
     if (res < 0) [[unlikely]]
     {
-        std::fprintf(
+        (void)std::fprintf(
             stderr,
             "xtr::io_uring_fd_storage::wait_for_one_cqe: "
             "Error: Write of %u bytes at offset %zu to \"%s\" (fd %d) failed: "
@@ -5078,7 +5184,6 @@ inline void xtr::detail::throw_runtime_error_fmt(const char* format, ...)
 {
     va_list args;
     va_start(args, format);
-    ;
     char buf[1024];
     std::vsnprintf(buf, sizeof(buf), format, args);
     va_end(args);
@@ -5104,7 +5209,6 @@ inline void xtr::detail::throw_system_error_fmt(int errnum, const char* format, 
 {
     va_list args;
     va_start(args, format);
-    ;
     char buf[1024];
     std::vsnprintf(buf, sizeof(buf), format, args);
     va_end(args);

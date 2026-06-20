@@ -15,7 +15,7 @@ jobs:
         pic: [1, 0]
         rtti: [1, 0]
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     - name: init submodules
       run: git submodule init
@@ -30,7 +30,7 @@ jobs:
     - name: coverage
       run: make -j2 DEBUG=1 COVERAGE=1 check
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v1
+      uses: codecov/codecov-action@v4
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         flags: unittests

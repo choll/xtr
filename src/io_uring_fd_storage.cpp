@@ -258,7 +258,7 @@ retry:
 
     if (errnum != 0) [[unlikely]]
     {
-        std::fprintf(
+        (void)std::fprintf(
             stderr,
             "xtr::io_uring_fd_storage::wait_for_one_cqe: "
             "io_uring_peek_cqe/io_uring_wait_cqe failed: %s\n",
@@ -285,7 +285,7 @@ retry:
         // to POSIX).
         if (res < 0)
         {
-            std::fprintf(
+            (void)std::fprintf(
                 stderr,
                 "xtr::io_uring_fd_storage::wait_for_one_cqe: "
                 "Error: close(2) failed during reopen: %s\n",
@@ -302,7 +302,7 @@ retry:
 
     if (res < 0) [[unlikely]]
     {
-        std::fprintf(
+        (void)std::fprintf(
             stderr,
             "xtr::io_uring_fd_storage::wait_for_one_cqe: "
             "Error: Write of %u bytes at offset %zu to \"%s\" (fd %d) failed: "
