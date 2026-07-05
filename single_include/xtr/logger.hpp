@@ -851,7 +851,11 @@ public:
 
     void reduce_readable(size_type nbytes) noexcept
     {
-        nread_plus_capacity_.fetch_add(nbytes, std::memory_order_release);
+
+        nread_plus_capacity_.store(
+            nread_plus_capacity_.load(std::memory_order_relaxed) + nbytes,
+            std::memory_order_release);
+
 #if !defined(XTR_THREAD_SANITIZER_ENABLED)
         assert(nread_plus_capacity_.load() - nwritten_.load() <= capacity());
 #endif
@@ -1695,8 +1699,8 @@ namespace xtr
 class xtr::sink
 {
 private:
-    using fptr_t = std::byte* (*)(detail::buffer& buf, // output buffer
-                                  std::byte* record,   // pointer to log record
+    using fptr_t = std::byte* (*)(detail::buffer & buf, // output buffer
+                                  std::byte* record,    // pointer to log record
                                   detail::consumer&,
                                   const char* timestamp,
                                   std::string& name) noexcept;
@@ -2352,7 +2356,7 @@ public:
     {
     }
 
-    virtual ~matcher(){};
+    virtual ~matcher() {};
 };
 
 #include <cstddef>
@@ -2808,7 +2812,7 @@ public:
     int reopen() noexcept override;
 
 protected:
-    virtual void replace_fd(int newfd) noexcept;
+    virtual void replace_fd(file_descriptor fd) noexcept;
 
     std::string reopen_path_;
     detail::file_descriptor fd_;
@@ -2864,6 +2868,9 @@ public:
     {
     }
 
+protected:
+    void replace_fd(detail::file_descriptor fd) noexcept final;
+
 private:
     std::unique_ptr<char[]> buf_;
     std::size_t buffer_capacity_;
@@ -2881,6 +2888,25 @@ private:
 namespace xtr
 {
     class io_uring_fd_storage;
+
+    namespace detail
+    {
+        class unique_io_uring
+        {
+        public:
+            explicit unique_io_uring(std::size_t queue_size);
+
+            unique_io_uring(const unique_io_uring&) = delete;
+            unique_io_uring& operator=(const unique_io_uring&) = delete;
+
+            ~unique_io_uring();
+
+            io_uring* get() noexcept;
+
+        private:
+            io_uring ring_;
+        };
+    }
 }
 
 /**
@@ -2910,7 +2936,7 @@ private:
     struct buffer
     {
         int index_;     // io_uring_prep_write_fixed accepts indexes as int
-        unsigned size_; // io_uring_cqe::res is an unsigned int
+        unsigned size_; // io_uring_cqe::res is an int
         std::size_t offset_;
         std::size_t file_offset_;
         buffer* next_;
@@ -2953,7 +2979,8 @@ public:
      * @param fd: File descriptor to write to. This will be duplicated via a
      * call to <a href="https://www.man7.org/linux/man-pages/man2/dup.2.html">dup(2)</a>,
      * so callers may close the file descriptor immediately after this
-     * constructor returns if desired.
+     * constructor returns if desired. The file descriptor must be seekable
+     * and must not have O_APPEND set.
      *
      * @param reopen_path: The path of the file associated with the fd argument.
      * This path will be used to reopen the file if requested via the xtrctl
@@ -2986,7 +3013,9 @@ public:
     void submit_buffer(char* data, std::size_t size) final;
 
 protected:
-    void replace_fd(int newfd) noexcept final;
+    void replace_fd(detail::file_descriptor fd) noexcept final;
+
+    void set_offset() noexcept;
 
 private:
     void allocate_buffers(std::size_t queue_size);
@@ -2999,7 +3028,7 @@ private:
 
     void free_buffer(buffer* buf);
 
-    io_uring ring_;
+    detail::unique_io_uring ring_;
     std::size_t buffer_capacity_;
     std::size_t batch_size_;
     std::size_t batch_index_ = 0;
@@ -3016,7 +3045,18 @@ private:
 
 #endif
 
-#include <cstddef>
+namespace xtr::detail
+{
+    file_descriptor open_at_end(const char* path) noexcept;
+
+    bool is_seekable(int fd) noexcept;
+
+    bool is_append(int fd) noexcept;
+
+    bool set_append(int fd) noexcept;
+}
+
+#include <cstdio>
 #include <string>
 
 namespace xtr
@@ -3440,6 +3480,7 @@ namespace xtr::detail
 
     template<typename T>
     concept tuple_like = requires(T t) { std::tuple_size<T>(); };
+
 }
 
 #include <algorithm>
@@ -3791,10 +3832,11 @@ inline void xtr::detail::command_dispatcher::send(
 
 inline void xtr::detail::command_dispatcher::process_commands(int timeout) noexcept
 {
-    int nfds = XTR_TEMP_FAILURE_RETRY(::poll(
-        reinterpret_cast<::pollfd*>(&pollfds_[0]),
-        ::nfds_t(pollfds_.size()),
-        timeout));
+    int nfds = XTR_TEMP_FAILURE_RETRY(
+        ::poll(
+            reinterpret_cast<::pollfd*>(&pollfds_[0]),
+            ::nfds_t(pollfds_.size()),
+            timeout));
 
     if (nfds == -1)
     {
@@ -4231,22 +4273,19 @@ inline int xtr::detail::fd_storage_base::reopen() noexcept
     if (reopen_path_ == null_reopen_path)
         return ENOENT;
 
-    const int newfd = XTR_TEMP_FAILURE_RETRY(::open(
-        reopen_path_.c_str(),
-        O_CREAT | O_APPEND | O_WRONLY,
-        S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH));
+    auto fd = detail::open_at_end(reopen_path_.c_str());
 
-    if (newfd == -1)
+    if (!fd)
         return errno;
 
-    replace_fd(newfd);
+    replace_fd(std::move(fd));
 
     return 0;
 }
 
-inline void xtr::detail::fd_storage_base::replace_fd(int newfd) noexcept
+inline void xtr::detail::fd_storage_base::replace_fd(file_descriptor fd) noexcept
 {
-    fd_.reset(newfd);
+    fd_ = std::move(fd);
 }
 
 #include <fmt/compile.h>
@@ -4254,33 +4293,66 @@ inline void xtr::detail::fd_storage_base::replace_fd(int newfd) noexcept
 
 #include <cerrno>
 #include <memory>
+#include <string_view>
 #include <utility>
 
-#include <fcntl.h>
-#include <sys/stat.h>
+#include <sys/mman.h>
 #include <sys/syscall.h>
 #include <unistd.h>
 
 namespace xtr::detail
 {
-    inline bool is_seekable(int fd)
+#if XTR_USE_IO_URING
+    inline bool is_io_uring_working()
     {
-        struct ::stat st;
-        return ::fstat(fd, &st) == 0 && S_ISREG(st.st_mode);
+        constexpr std::string_view magic = "io_uring is working";
+        constexpr std::size_t buf_capacity = 32;
+
+        file_descriptor memfd(::memfd_create("xtr_health_check", MFD_CLOEXEC));
+
+        if (!memfd)
+            return false;
+
+#if __cpp_exceptions
+        try
+#endif
+        {
+            io_uring_fd_storage storage(
+                memfd.get(),
+                null_reopen_path,
+                buf_capacity,
+                /* queue_size= */ 2,
+                /* batch_size= */ 1);
+            const std::span<char> span = storage.allocate_buffer();
+            magic.copy(span.data(), magic.size());
+            storage.submit_buffer(span.data(), magic.size());
+            storage.sync();
+        }
+#if __cpp_exceptions
+        catch (const std::exception&)
+        {
+            return false;
+        }
+#endif
+
+        char buf[buf_capacity];
+        const ::ssize_t nread = ::pread(memfd.get(), buf, sizeof(buf), 0);
+        return nread >= 0 && std::string_view(buf, std::size_t(nread)) == magic;
     }
+#endif
+
+    storage_interface_ptr make_fd_storage(
+        int fd, std::string reopen_path, bool fd_created);
 }
 
 inline xtr::storage_interface_ptr xtr::make_fd_storage(const char* path)
 {
-    const int fd = XTR_TEMP_FAILURE_RETRY(::open(
-        path,
-        O_CREAT | O_APPEND | O_WRONLY,
-        S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH));
+    const auto fd = detail::open_at_end(path);
 
-    if (fd == -1)
+    if (!fd)
         detail::throw_system_error_fmt(errno, "Failed to open `%s'", path);
 
-    return make_fd_storage(fd, path);
+    return detail::make_fd_storage(fd.get(), path, /* fd_created= */ true);
 }
 
 inline xtr::storage_interface_ptr xtr::make_fd_storage(FILE* fp, std::string reopen_path)
@@ -4290,11 +4362,19 @@ inline xtr::storage_interface_ptr xtr::make_fd_storage(FILE* fp, std::string reo
 
 inline xtr::storage_interface_ptr xtr::make_fd_storage(int fd, std::string reopen_path)
 {
+    return detail::make_fd_storage(fd, std::move(reopen_path), /* fd_created= */ false);
+}
+
+inline xtr::storage_interface_ptr xtr::detail::make_fd_storage(
+    int fd, std::string reopen_path, bool fd_created)
+{
 #if XTR_USE_IO_URING
     errno = 0;
     (void)syscall(__NR_io_uring_setup, 0, nullptr);
+    const bool has_io_uring = errno != ENOSYS;
 
-    if (detail::is_seekable(fd) && errno != ENOSYS)
+    if (has_io_uring && detail::is_seekable(fd) && !detail::is_append(fd) &&
+        detail::is_io_uring_working())
     {
 #if __cpp_exceptions
         try
@@ -4307,13 +4387,23 @@ inline xtr::storage_interface_ptr xtr::make_fd_storage(int fd, std::string reope
         {
             fmt::print(
                 stderr,
-                FMT_COMPILE("Falling back to posix_fd_storage due to "
-                            "io_uring_fd_storage error: {}\n"),
+                FMT_COMPILE(
+                    "Falling back to posix_fd_storage due to "
+                    "io_uring_fd_storage error: {}\n"),
                 e.what());
         }
 #endif
     }
 #endif
+
+    if (fd_created && !detail::set_append(fd))
+    {
+        detail::throw_system_error_fmt(
+            errno,
+            "Failed to set O_APPEND on `%s'",
+            reopen_path.c_str());
+    }
+
     return std::make_unique<posix_fd_storage>(fd, std::move(reopen_path));
 }
 
@@ -4363,6 +4453,36 @@ inline void xtr::detail::file_descriptor::reset(int fd) noexcept
 #include <limits>
 #include <vector>
 
+#include <unistd.h>
+
+inline xtr::detail::unique_io_uring::unique_io_uring(std::size_t queue_size)
+{
+    const int flags =
+#if XTR_IO_URING_POLL
+        IORING_SETUP_SQPOLL;
+#else
+        0;
+#endif
+
+    if (const int errnum =
+            ::io_uring_queue_init(unsigned(queue_size), &ring_, flags))
+    {
+        throw_system_error_fmt(
+            -errnum,
+            "xtr::detail::unique_io_uring: io_uring_queue_init failed");
+    }
+}
+
+inline xtr::detail::unique_io_uring::~unique_io_uring()
+{
+    ::io_uring_queue_exit(&ring_);
+}
+
+inline io_uring* xtr::detail::unique_io_uring::get() noexcept
+{
+    return &ring_;
+}
+
 inline xtr::io_uring_fd_storage::io_uring_fd_storage(
     int fd,
     std::string reopen_path,
@@ -4375,6 +4495,7 @@ inline xtr::io_uring_fd_storage::io_uring_fd_storage(
     io_uring_sqring_wait_func_t io_uring_sqring_wait_func,
     io_uring_peek_cqe_func_t io_uring_peek_cqe_func) :
     fd_storage_base(fd, std::move(reopen_path)),
+    ring_(queue_size),
     buffer_capacity_(buffer_capacity),
     batch_size_(batch_size),
     io_uring_submit_func_(io_uring_submit_func),
@@ -4392,23 +4513,17 @@ inline xtr::io_uring_fd_storage::io_uring_fd_storage(
     if (batch_size == 0)
         detail::throw_invalid_argument("batch_size cannot be zero");
 
-    const int flags =
-#if XTR_IO_URING_POLL
-        IORING_SETUP_SQPOLL;
-#else
-        0;
-#endif
+    if (batch_size > queue_size)
+        detail::throw_invalid_argument("batch_size cannot exceed queue size");
 
-    if (const int errnum =
-            ::io_uring_queue_init(unsigned(queue_size), &ring_, flags))
-    {
-        detail::throw_system_error_fmt(
-            -errnum,
-            "xtr::io_uring_fd_storage::io_uring_fd_storage: "
-            "io_uring_queue_init failed");
-    }
+    if (!detail::is_seekable(fd))
+        detail::throw_invalid_argument("File descriptor is not seekable");
+
+    if (detail::is_append(fd))
+        detail::throw_invalid_argument("File descriptor has O_APPEND set");
 
     allocate_buffers(queue_size);
+    set_offset();
 }
 
 inline xtr::io_uring_fd_storage::io_uring_fd_storage(
@@ -4433,18 +4548,18 @@ inline xtr::io_uring_fd_storage::io_uring_fd_storage(
 
 inline xtr::io_uring_fd_storage::~io_uring_fd_storage()
 {
-    flush();
     sync();
-    ::io_uring_queue_exit(&ring_);
 }
 
 inline void xtr::io_uring_fd_storage::flush()
 {
-    io_uring_submit_func_(&ring_);
+    io_uring_submit_func_(ring_.get());
+    batch_index_ = 0;
 }
 
 inline void xtr::io_uring_fd_storage::sync() noexcept
 {
+    flush();
     while (pending_cqe_count_ > 0)
         wait_for_one_cqe();
     fd_storage_base::sync();
@@ -4482,22 +4597,46 @@ inline void xtr::io_uring_fd_storage::submit_buffer(char* data, std::size_t size
 
     ::io_uring_sqe_set_data(sqe, buf);
 
+    sqe->flags |= IOSQE_IO_HARDLINK;
+
+    if (batch_index_ % batch_size_ == 0)
+        sqe->flags |= IOSQE_IO_DRAIN;
+
     offset_ += size;
     ++pending_cqe_count_;
 
     if (++batch_index_ % batch_size_ == 0)
-        io_uring_submit_func_(&ring_);
+        io_uring_submit_func_(ring_.get());
 }
 
-inline void xtr::io_uring_fd_storage::replace_fd(int newfd) noexcept
+inline void xtr::io_uring_fd_storage::replace_fd(detail::file_descriptor fd) noexcept
 {
-    io_uring_sqe* sqe = get_sqe();
-    ::io_uring_prep_close(sqe, fd_.release());
-    sqe->flags |= IOSQE_IO_DRAIN;
-    ++pending_cqe_count_;
-    io_uring_submit_func_(&ring_);
+    flush();
 
-    fd_storage_base::replace_fd(newfd);
+    while (pending_cqe_count_ > 0)
+        wait_for_one_cqe();
+
+    fd_storage_base::replace_fd(std::move(fd));
+    set_offset();
+}
+
+inline void xtr::io_uring_fd_storage::set_offset() noexcept
+{
+    assert(fd_);
+    const ::off_t end = ::lseek(fd_.get(), 0, SEEK_CUR);
+    if (end == -1) [[unlikely]]
+    {
+        (void)std::fprintf(
+            stderr,
+            "xtr::io_uring_fd_storage::set_offset: lseek on \"%s\" (fd %d) "
+            "failed: %s\n",
+            reopen_path_.c_str(),
+            fd_.get(),
+            std::strerror(errno));
+        offset_ = 0;
+        return;
+    }
+    offset_ = std::size_t(end);
 }
 
 inline void xtr::io_uring_fd_storage::allocate_buffers(std::size_t queue_size)
@@ -4516,7 +4655,7 @@ inline void xtr::io_uring_fd_storage::allocate_buffers(std::size_t queue_size)
     {
         std::byte* storage =
             buffer_storage_.get() + buffer::size(buffer_capacity_) * i;
-        buffer* buf = ::new (storage) buffer;
+        auto* buf = ::new (storage) buffer;
         buf->index_ = int(i);
         iov.push_back({buf->data_, buffer_capacity_});
         *next = buf;
@@ -4527,7 +4666,7 @@ inline void xtr::io_uring_fd_storage::allocate_buffers(std::size_t queue_size)
     assert(free_list_ != nullptr);
 
     if (const int errnum =
-            ::io_uring_register_buffers(&ring_, &iov[0], unsigned(iov.size())))
+            ::io_uring_register_buffers(ring_.get(), &iov[0], unsigned(iov.size())))
     {
         detail::throw_system_error_fmt(
             -errnum,
@@ -4540,12 +4679,12 @@ inline io_uring_sqe* xtr::io_uring_fd_storage::get_sqe()
 {
     io_uring_sqe* sqe;
 
-    while ((sqe = io_uring_get_sqe_func_(&ring_)) == nullptr)
+    while ((sqe = io_uring_get_sqe_func_(ring_.get())) == nullptr)
     {
 #if XTR_IO_URING_POLL
-        io_uring_sqring_wait_func_(&ring_);
+        io_uring_sqring_wait_func_(ring_.get());
 #else
-        wait_for_one_cqe();
+        flush();
 #endif
     }
 
@@ -4561,10 +4700,13 @@ inline void xtr::io_uring_fd_storage::wait_for_one_cqe()
 
 retry:
 #if XTR_IO_URING_POLL
-    while ((errnum = io_uring_peek_cqe_func_(&ring_, &cqe)) == -EAGAIN)
+    while ((errnum = io_uring_peek_cqe_func_(ring_.get(), &cqe)) == -EAGAIN)
         ;
 #else
-    errnum = io_uring_wait_cqe_func_(&ring_, &cqe);
+    do
+    {
+        errnum = io_uring_wait_cqe_func_(ring_.get(), &cqe);
+    } while (errnum == -EINTR);
 #endif
 
     if (errnum != 0) [[unlikely]]
@@ -4587,20 +4729,7 @@ retry:
         static_cast<buffer*>(::io_uring_cqe_get_data(cqe)),
         std::move(deleter));
 
-    ::io_uring_cqe_seen(&ring_, cqe);
-
-    if (!buf) // close operation queued by replace_fd()
-    {
-        if (res < 0)
-        {
-            (void)std::fprintf(
-                stderr,
-                "xtr::io_uring_fd_storage::wait_for_one_cqe: "
-                "Error: close(2) failed during reopen: %s\n",
-                std::strerror(-res));
-        }
-        return;
-    }
+    ::io_uring_cqe_seen(ring_.get(), cqe);
 
     if (res == -EAGAIN) [[unlikely]]
     {
@@ -4640,11 +4769,7 @@ inline void xtr::io_uring_fd_storage::resubmit_buffer(buffer* buf, unsigned nwri
     buf->offset_ += nwritten;
     buf->file_offset_ += nwritten;
 
-    assert(io_uring_sq_space_left(&ring_) >= 1);
-
-    io_uring_sqe* sqe = io_uring_get_sqe_func_(&ring_);
-
-    assert(sqe != nullptr);
+    io_uring_sqe* sqe = get_sqe();
 
     ::io_uring_prep_write_fixed(
         sqe,
@@ -4658,7 +4783,7 @@ inline void xtr::io_uring_fd_storage::resubmit_buffer(buffer* buf, unsigned nwri
 
     ++pending_cqe_count_;
 
-    io_uring_submit_func_(&ring_);
+    io_uring_submit_func_(ring_.get());
 }
 
 inline void xtr::io_uring_fd_storage::free_buffer(buffer* buf)
@@ -4985,6 +5110,43 @@ inline xtr::detail::mirrored_memory_mapping::~mirrored_memory_mapping()
     }
 }
 
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
+inline xtr::detail::file_descriptor xtr::detail::open_at_end(const char* path) noexcept
+{
+    const int fd = XTR_TEMP_FAILURE_RETRY(
+        ::open(
+            path,
+            O_CREAT | O_WRONLY,
+            S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH));
+
+    if (fd != -1)
+        (void)::lseek(fd, 0, SEEK_END);
+
+    return file_descriptor(fd);
+}
+
+inline bool xtr::detail::is_seekable(int fd) noexcept
+{
+    return ::lseek(fd, 0, SEEK_CUR) != -1;
+}
+
+inline bool xtr::detail::is_append(int fd) noexcept
+{
+    const int flags = ::fcntl(fd, F_GETFL);
+    return flags != -1 && (flags & O_APPEND);
+}
+
+inline bool xtr::detail::set_append(int fd) noexcept
+{
+    const int flags = ::fcntl(fd, F_GETFL);
+    if (flags == -1)
+        return false;
+    return ::fcntl(fd, F_SETFL, flags | O_APPEND) == 0;
+}
+
 #include <cerrno>
 
 #include <unistd.h>
@@ -4998,6 +5160,8 @@ inline std::size_t xtr::detail::align_to_page_size(std::size_t length)
 }
 
 #include <cerrno>
+#include <cstdio>
+#include <cstring>
 #include <memory>
 #include <utility>
 
@@ -5014,6 +5178,21 @@ inline xtr::posix_fd_storage::posix_fd_storage(
 inline std::span<char> xtr::posix_fd_storage::allocate_buffer()
 {
     return {buf_.get(), buffer_capacity_};
+}
+
+inline void xtr::posix_fd_storage::replace_fd(detail::file_descriptor fd) noexcept
+{
+    if (!detail::set_append(fd.get()))
+    {
+        (void)std::fprintf(
+            stderr,
+            "xtr::posix_fd_storage::replace_fd: Failed to set O_APPEND on "
+            "\"%s\" (fd %d): %s\n",
+            reopen_path_.c_str(),
+            fd.get(),
+            std::strerror(errno));
+    }
+    fd_storage_base::replace_fd(std::move(fd));
 }
 
 inline void xtr::posix_fd_storage::submit_buffer(char* buf, std::size_t size)
