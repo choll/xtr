@@ -520,7 +520,7 @@ TEST_CASE_METHOD(fixture, "open existing file appends to end", "[fd_storage]")
     xtr::detail::file_descriptor fd(xtr::detail::open_at_end(tmp_.path_.c_str()));
     REQUIRE(fd);
 
-    storage_ = std::make_unique<test_fd_storage>(fd.release(), tmp_.path_);
+    storage_ = std::make_unique<test_fd_storage>(fd.get(), tmp_.path_);
 
     send_buffer();
     sync();
