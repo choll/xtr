@@ -58,18 +58,18 @@ int xtr::detail::fd_storage_base::reopen() noexcept
     if (reopen_path_ == null_reopen_path)
         return ENOENT;
 
-    const int newfd = detail::open_at_end(reopen_path_.c_str());
+    auto fd = detail::open_at_end(reopen_path_.c_str());
 
-    if (newfd == -1)
+    if (!fd)
         return errno;
 
-    replace_fd(newfd);
+    replace_fd(std::move(fd));
 
     return 0;
 }
 
 XTR_FUNC
-void xtr::detail::fd_storage_base::replace_fd(int newfd) noexcept
+void xtr::detail::fd_storage_base::replace_fd(file_descriptor fd) noexcept
 {
-    fd_.reset(newfd);
+    fd_ = std::move(fd);
 }

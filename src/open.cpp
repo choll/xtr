@@ -26,7 +26,7 @@
 #include <unistd.h>
 
 XTR_FUNC
-int xtr::detail::open_at_end(const char* path)
+xtr::detail::file_descriptor xtr::detail::open_at_end(const char* path) noexcept
 {
     // O_APPEND is not used because io_uring_fd_storage relies on writing
     // buffers to specific offsets---if O_APPEND is used then the offsets
@@ -41,5 +41,27 @@ int xtr::detail::open_at_end(const char* path)
     if (fd != -1)
         (void)::lseek(fd, 0, SEEK_END);
 
-    return fd;
+    return file_descriptor(fd);
+}
+
+XTR_FUNC
+bool xtr::detail::is_seekable(int fd) noexcept
+{
+    return ::lseek(fd, 0, SEEK_CUR) != -1;
+}
+
+XTR_FUNC
+bool xtr::detail::is_append(int fd) noexcept
+{
+    const int flags = ::fcntl(fd, F_GETFL);
+    return flags != -1 && (flags & O_APPEND);
+}
+
+XTR_FUNC
+bool xtr::detail::set_append(int fd) noexcept
+{
+    const int flags = ::fcntl(fd, F_GETFL);
+    if (flags == -1)
+        return false;
+    return ::fcntl(fd, F_SETFL, flags | O_APPEND) == 0;
 }

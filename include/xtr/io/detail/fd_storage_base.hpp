@@ -41,7 +41,7 @@ public:
     int reopen() noexcept override;
 
 protected:
-    virtual void replace_fd(int newfd) noexcept;
+    virtual void replace_fd(file_descriptor fd) noexcept;
 
     std::string reopen_path_;
     detail::file_descriptor fd_;

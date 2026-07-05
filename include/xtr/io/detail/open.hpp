@@ -21,9 +21,17 @@
 #ifndef XTR_IO_DETAIL_OPEN_HPP
 #define XTR_IO_DETAIL_OPEN_HPP
 
+#include "xtr/detail/file_descriptor.hpp"
+
 namespace xtr::detail
 {
-    int open_at_end(const char* path);
+    file_descriptor open_at_end(const char* path) noexcept;
+
+    bool is_seekable(int fd) noexcept;
+
+    bool is_append(int fd) noexcept;
+
+    bool set_append(int fd) noexcept;
 }
 
 #endif

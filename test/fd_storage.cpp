@@ -20,24 +20,31 @@
 
 #include "xtr/config.hpp"
 
-#if XTR_USE_IO_URING
 #include "xtr/detail/memory_mapping.hpp"
 #include "xtr/io/detail/open.hpp"
+#include "xtr/io/fd_storage.hpp"
 #include "xtr/io/io_uring_fd_storage.hpp"
+#include "xtr/io/posix_fd_storage.hpp"
 
 #include "temp_file.hpp"
 
 #include <catch2/catch.hpp>
+#if XTR_USE_IO_URING
 #include <liburing.h>
+#endif
 
 #include <algorithm>
 #include <cerrno>
 #include <functional>
 #include <iostream>
+#include <stdexcept>
+#include <vector>
 
 #include <dlfcn.h>
 #include <sys/stat.h>
 #include <unistd.h>
+
+#if XTR_USE_IO_URING
 
 #if __cpp_exceptions
 #define XTR_REQUIRE_NOERROR(X) REQUIRE_NOTHROW(X)
@@ -278,40 +285,69 @@ TEST_CASE_METHOD(fixture, "reopen with writes queued", "[fd_storage]")
 
 TEST_CASE_METHOD(fixture, "submission queue full on submit", "[fd_storage]")
 {
-    // First send a buffer so that there is a completion event to wait on
-    send_buffer();
-    flush();
-
     // Return null when an SQE is requested (submission queue full) to cause
-    // progress to block/spin waiting for a CQE to complete (which implies a
-    // SQE is then available)
+    // progress to block/spin until an SQE is available
     get_sqe_hook = [&](io_uring*) { return nullptr; };
 
-    bool wait_cqe_called = false;
+    bool submit_called = false;
 
 #if XTR_IO_URING_POLL
     sqring_wait_hook =
 #else
-    wait_cqe_hook =
+    submit_hook =
 #endif
         [&](auto... args)
     {
-        if (!wait_cqe_called)
+        if (!submit_called)
         {
-            wait_cqe_called = true;
+            submit_called = true;
             get_sqe_hook = io_uring_get_sqe;
         }
 #if XTR_IO_URING_POLL
         return io_uring_sqring_wait(args...);
 #else
-        return io_uring_wait_cqe(args...);
+        return io_uring_submit(args...);
 #endif
     };
 
-    // Try to submit a buffer, get_sqe returns null so wait_cqe should be called
+    // Try to submit a buffer, get_sqe returns null so submit should be called
     send_buffer();
 
-    REQUIRE(wait_cqe_called);
+    REQUIRE(submit_called);
+}
+
+TEST_CASE_METHOD(fixture, "sqe flags test", "[fd_storage]")
+{
+    std::vector<io_uring_sqe*> sqes;
+
+    get_sqe_hook = [&](io_uring* ring)
+    {
+        io_uring_sqe* const sqe = io_uring_get_sqe(ring);
+        sqes.push_back(sqe);
+        return sqe;
+    };
+
+    send_buffer();
+    send_buffer();
+    flush();
+    send_buffer();
+
+    REQUIRE(sqes.size() == 3);
+
+    // All writes are hardlinked so that they complete in order
+    REQUIRE((sqes[0]->flags & IOSQE_IO_HARDLINK) != 0);
+    REQUIRE((sqes[1]->flags & IOSQE_IO_HARDLINK) != 0);
+    REQUIRE((sqes[2]->flags & IOSQE_IO_HARDLINK) != 0);
+
+    // The first SQE of each batch has IOSQE_IO_DRAIN set, with flush()
+    // ending the current batch
+    REQUIRE((sqes[0]->flags & IOSQE_IO_DRAIN) != 0);
+    REQUIRE((sqes[1]->flags & IOSQE_IO_DRAIN) == 0);
+    REQUIRE((sqes[2]->flags & IOSQE_IO_DRAIN) != 0);
+
+    sync();
+
+    REQUIRE(verify_file_contents(3));
 }
 
 TEST_CASE_METHOD(fixture, "short write test", "[fd_storage]")
@@ -491,4 +527,63 @@ TEST_CASE_METHOD(fixture, "open existing file appends to end", "[fd_storage]")
 
     REQUIRE(verify_file_contents(2));
 }
+
+#if __cpp_exceptions
+TEST_CASE("non-seekable fd is rejected", "[fd_storage]")
+{
+    int fds[2];
+    REQUIRE(::pipe(fds) == 0);
+    xtr::detail::file_descriptor rfd(fds[0]);
+    xtr::detail::file_descriptor wfd(fds[1]);
+
+    REQUIRE_THROWS_AS(
+        xtr::io_uring_fd_storage(wfd.get()),
+        std::invalid_argument);
+}
+
+TEST_CASE("O_APPEND fd is rejected", "[fd_storage]")
+{
+    temp_file tmp;
+    xtr::detail::file_descriptor fd(tmp.path_.c_str(), O_WRONLY | O_APPEND);
+    REQUIRE(fd);
+
+    REQUIRE_THROWS_AS(
+        xtr::io_uring_fd_storage(fd.get(), tmp.path_),
+        std::invalid_argument);
+}
 #endif
+#endif
+
+TEST_CASE("make_fd_storage falls back to posix_fd_storage for pipes", "[fd_storage]")
+{
+    int fds[2];
+    REQUIRE(::pipe(fds) == 0);
+    xtr::detail::file_descriptor rfd(fds[0]);
+    xtr::detail::file_descriptor wfd(fds[1]);
+
+    const auto storage = xtr::make_fd_storage(wfd.get());
+
+    REQUIRE(dynamic_cast<xtr::posix_fd_storage*>(storage.get()) != nullptr);
+}
+
+TEST_CASE("posix_fd_storage truncate test", "[fd_storage]")
+{
+    temp_file tmp;
+    xtr::posix_fd_storage storage(tmp.fd_.get(), tmp.path_);
+
+    // Reopen so that the storage holds a library-created fd (with O_APPEND)
+    REQUIRE(storage.reopen() == 0);
+
+    char c = 'x';
+    storage.submit_buffer(&c, 1);
+
+    // If O_APPEND is not set then this write would land at offset 1,
+    // leaving a hole
+    REQUIRE(::truncate(tmp.path_.c_str(), 0) == 0);
+
+    storage.submit_buffer(&c, 1);
+
+    struct stat st{};
+    REQUIRE(::stat(tmp.path_.c_str(), &st) == 0);
+    REQUIRE(st.st_size == 1);
+}

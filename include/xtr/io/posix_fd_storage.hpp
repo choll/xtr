@@ -73,6 +73,9 @@ public:
     {
     }
 
+protected:
+    void replace_fd(detail::file_descriptor fd) noexcept final;
+
 private:
     std::unique_ptr<char[]> buf_;
     std::size_t buffer_capacity_;
