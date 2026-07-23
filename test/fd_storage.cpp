@@ -445,6 +445,53 @@ TEST_CASE_METHOD(fixture, "EAGAIN test", "[fd_storage]")
     REQUIRE(submit_count == 2);
 }
 
+TEST_CASE_METHOD(fixture, "ECANCELED test", "[fd_storage]")
+{
+    std::size_t sqe_count = 0;
+    std::size_t cqe_count = 0;
+    std::size_t submit_count = 0;
+    io_uring_sqe* sqe;
+
+    get_sqe_hook = [&](io_uring* ring)
+    {
+        ++sqe_count;
+        return sqe = io_uring_get_sqe(ring);
+    };
+
+#if XTR_IO_URING_POLL
+    peek_cqe_hook =
+#else
+    wait_cqe_hook =
+#endif
+        [&](auto ring, auto cqe)
+    {
+        const int ret = io_uring_wait_cqe(ring, cqe);
+        if (++cqe_count == 1)
+            (*cqe)->res = -ECANCELED;
+        return ret;
+    };
+
+    const auto span = storage_->allocate_buffer();
+
+    submit_hook = [&](io_uring* ring)
+    {
+        ++submit_count;
+        // Full buffer should be resubmitted
+        REQUIRE(sqe->len == span.size());
+        return io_uring_submit(ring);
+    };
+
+    storage_->submit_buffer(span.data(), span.size());
+    sync();
+
+    REQUIRE(verify_file_contents(1));
+
+    // Request should be resubmitted
+    REQUIRE(sqe_count == 2);
+    REQUIRE(cqe_count == 2);
+    REQUIRE(submit_count == 2);
+}
+
 TEST_CASE_METHOD(fixture, "write error test", "[fd_storage]")
 {
 #if XTR_IO_URING_POLL

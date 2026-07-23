@@ -344,7 +344,8 @@ public:
      * to @ref logger::logger then this function must be called in order to
      * process messages written to the logger. Users may call this function from
      * a thread of their choosing and may interleave calls with other background
-     * tasks that their program needs to perform.
+     * tasks that their program needs to perform. Once it has been called from
+     * a given thread it must continue to be called from the same thread.
      *
      * For best results when interleaving with other tasks ensure that io_uring
      * mode is enabled (so that I/O will be performed asynchronously leaving

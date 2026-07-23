@@ -851,11 +851,7 @@ public:
 
     void reduce_readable(size_type nbytes) noexcept
     {
-
-        nread_plus_capacity_.store(
-            nread_plus_capacity_.load(std::memory_order_relaxed) + nbytes,
-            std::memory_order_release);
-
+        nread_plus_capacity_.fetch_add(nbytes, std::memory_order_release);
 #if !defined(XTR_THREAD_SANITIZER_ENABLED)
         assert(nread_plus_capacity_.load() - nwritten_.load() <= capacity());
 #endif
@@ -3415,7 +3411,8 @@ public:
      * to @ref logger::logger then this function must be called in order to
      * process messages written to the logger. Users may call this function from
      * a thread of their choosing and may interleave calls with other background
-     * tasks that their program needs to perform.
+     * tasks that their program needs to perform. Once it has been called from
+     * a given thread it must continue to be called from the same thread.
      *
      * For best results when interleaving with other tasks ensure that io_uring
      * mode is enabled (so that I/O will be performed asynchronously leaving
@@ -4115,7 +4112,11 @@ inline bool xtr::detail::consumer::run_once(pump_io_stats* stats) noexcept
     }
 
     if (sinks_.empty())
+    {
+        buf.flush();
+        buf.storage().sync();
         destruct_latch_.count_down();
+    }
 
     if (stats != nullptr)
         stats->n_events = n_events;
@@ -4731,7 +4732,7 @@ retry:
 
     ::io_uring_cqe_seen(ring_.get(), cqe);
 
-    if (res == -EAGAIN) [[unlikely]]
+    if (res == -EAGAIN || res == -ECANCELED) [[unlikely]]
     {
         resubmit_buffer(buf.release(), 0);
         goto retry;

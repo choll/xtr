@@ -349,7 +349,10 @@ retry:
 
     ::io_uring_cqe_seen(ring_.get(), cqe);
 
-    if (res == -EAGAIN) [[unlikely]]
+    // ECANCELED can occur if the thread that submitted the request exited
+    // before the request completed, which should only happen if pump_io is
+    // used and the user thread is restarted.
+    if (res == -EAGAIN || res == -ECANCELED) [[unlikely]]
     {
         resubmit_buffer(buf.release(), 0);
         goto retry;
