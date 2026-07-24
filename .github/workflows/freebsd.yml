@@ -65,6 +65,8 @@ jobs:
             release: "15.1"
             prepare: pkg install -y gmake gcc14
             run: |
+              mkdir -p /tmp/bin && ln -s /usr/local/bin/gmake /tmp/bin/make
+              export PATH=/tmp/bin:$PATH
               CXX=g++14 RANLIB=gcc-ranlib14 AR=gcc-ar14 gmake
               CXX=g++14 RANLIB=gcc-ranlib14 AR=gcc-ar14 gmake check
           - name: clang-15
