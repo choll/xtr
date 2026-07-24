@@ -22,7 +22,7 @@ jobs:
               CXX=clang++18 RANLIB=llvm-ranlib18 AR=llvm-ar18 gmake check
           - name: gcc-cmake
             prepare: |
-              pkg install -y gmake cmake gcc14 llvm18 devel/py-pip py311-sqlite3
+              pkg install -y gmake cmake gcc14 llvm18 devel/py-pip py312-sqlite3
               ln -s /usr/local/bin/clang-format18 /usr/local/bin/clang-format
             run: |
               pip install --user conan
@@ -36,7 +36,7 @@ jobs:
               cmake --build . --target test
           - name: clang-cmake
             prepare: |
-              pkg install -y gmake cmake llvm18 binutils devel/py-pip py311-sqlite3
+              pkg install -y gmake cmake llvm18 binutils devel/py-pip py312-sqlite3
               ln -s /usr/local/bin/clang-format18 /usr/bin/clang-format
             run: |
               pip install --user conan
@@ -58,7 +58,7 @@ jobs:
 
       - uses: vmactions/freebsd-vm@v1
         with:
-          release: "14.3"
+          release: "14.4"
           usesh: true
           prepare: ${{ matrix.prepare }}
           run: ${{ matrix.run }}
