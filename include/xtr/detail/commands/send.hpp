@@ -42,7 +42,7 @@ inline ::ssize_t xtr::detail::command_send(int fd, const void* buf, std::size_t 
     iov.iov_base = const_cast<void*>(buf);
     iov.iov_len = nbytes;
 
-    return XTR_TEMP_FAILURE_RETRY(::sendmsg(fd, &hdr, MSG_NOSIGNAL));
+    return XTR_TEMP_FAILURE_RETRY(::sendmsg(fd, &hdr, MSG_NOSIGNAL | MSG_EOR));
 }
 
 #endif

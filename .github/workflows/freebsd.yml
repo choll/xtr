@@ -1,0 +1,104 @@
+name: freebsd
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: gcc
+            release: "15.1"
+            prepare: pkg install -y gmake gcc14
+            run: |
+              CXX=g++14 RANLIB=gcc-ranlib14 AR=gcc-ar14 gmake
+              CXX=g++14 RANLIB=gcc-ranlib14 AR=gcc-ar14 gmake check
+          - name: clang
+            release: "15.1"
+            prepare: pkg install -y gmake
+            run: |
+              CXX=clang++ RANLIB=llvm-ranlib AR=llvm-ar gmake
+              CXX=clang++ RANLIB=llvm-ranlib AR=llvm-ar gmake check
+          - name: gcc-conan
+            release: "15.1"
+            prepare: |
+              pkg install -y gmake cmake gcc14 llvm18 devel/py-pip py312-sqlite3
+              ln -s /usr/local/bin/clang-format18 /usr/local/bin/clang-format
+            run: |
+              pip install --user conan
+              export CC=gcc14 CXX=g++14 RANLIB=gcc-ranlib14 AR=gcc-ar14 PATH=~/.local/bin:$PATH
+              conan profile detect
+              conan install . --build missing -s compiler.libcxx=libstdc++11
+              gmake all
+              gmake check
+          - name: clang-conan
+            release: "15.1"
+            prepare: |
+              pkg install -y gmake cmake llvm18 devel/py-pip py312-sqlite3
+              ln -s /usr/local/bin/clang-format18 /usr/bin/clang-format
+            run: |
+              pip install --user conan
+              export CC=clang CXX=clang++ RANLIB=llvm-ranlib AR=llvm-ar PATH=~/.local/bin:$PATH
+              conan profile detect
+              conan install . --build missing
+              gmake all
+              gmake check
+          - name: gcc-cmake
+            release: "15.1"
+            prepare: |
+              pkg install -y gmake cmake gcc14 llvm18 devel/py-pip py312-sqlite3
+              ln -s /usr/local/bin/clang-format18 /usr/local/bin/clang-format
+            run: |
+              pip install --user conan
+              export CC=gcc14 CXX=g++14 RANLIB=gcc-ranlib14 AR=gcc-ar14 PATH=~/.local/bin:$PATH
+              mkdir build && cd build
+              conan profile detect
+              conan install .. -g CMakeDeps -g CMakeToolchain --output-folder=${PWD} --build missing -s compiler.libcxx=libstdc++11
+              cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake -DBUILD_TESTING=ON -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INSTALL_PREFIX=/tmp/install -DCMAKE_AR=`which $AR` -DCMAKE_RANLIB=`which $RANLIB`
+              cmake --build .
+              cmake --build . --target install
+              cmake --build . --target test
+          - name: clang-cmake
+            release: "15.1"
+            prepare: |
+              pkg install -y gmake cmake llvm18 devel/py-pip py312-sqlite3
+              ln -s /usr/local/bin/clang-format18 /usr/bin/clang-format
+            run: |
+              pip install --user conan
+              export CC=clang CXX=clang++ RANLIB=llvm-ranlib AR=llvm-ar PATH=~/.local/bin:$PATH
+              mkdir build && cd build
+              conan profile detect
+              conan install .. -g CMakeDeps -g CMakeToolchain --output-folder=${PWD} --build missing
+              cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake -DBUILD_TESTING=ON -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INSTALL_PREFIX=/tmp/install -DCMAKE_AR=`which $AR` -DCMAKE_RANLIB=`which $RANLIB`
+              cmake --build .
+              cmake --build . --target install
+              cmake --build . --target test
+          - name: gcc-14
+            release: "14.4"
+            prepare: pkg install -y gmake gcc14
+            run: |
+              CXX=g++14 RANLIB=gcc-ranlib14 AR=gcc-ar14 gmake
+              CXX=g++14 RANLIB=gcc-ranlib14 AR=gcc-ar14 gmake check
+          - name: clang-14
+            release: "14.4"
+            prepare: pkg install -y gmake
+            run: |
+              CXX=clang++ RANLIB=llvm-ranlib AR=llvm-ar gmake
+              CXX=clang++ RANLIB=llvm-ranlib AR=llvm-ar gmake check
+
+    name: freebsd-${{ matrix.name }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - uses: vmactions/freebsd-vm@v1
+        with:
+          release: ${{ matrix.release }}
+          usesh: true
+          prepare: ${{ matrix.prepare }}
+          run: ${{ matrix.run }}

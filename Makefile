@@ -32,7 +32,6 @@ CXXFLAGS += \
 	-std=c++20 -Wall -Wextra -Wconversion -Wshadow -Wcast-qual -Wformat=2 \
 	-pedantic -pipe -pthread
 CPPFLAGS += -MMD -MP -I include $(FMT_CPPFLAGS) $(LIBURING_CPPFLAGS) -DXTR_FUNC=
-LDFLAGS += -fuse-ld=gold
 LDLIBS += -lxtr
 
 TEST_CPPFLAGS = $(CATCH2_CPPFLAGS)
