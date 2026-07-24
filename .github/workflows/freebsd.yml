@@ -11,19 +11,19 @@ jobs:
       matrix:
         include:
           - name: gcc
-            release: "14.4"
+            release: "15.1"
             prepare: pkg install -y gmake gcc14
             run: |
               CXX=g++14 RANLIB=gcc-ranlib14 AR=gcc-ar14 gmake
               CXX=g++14 RANLIB=gcc-ranlib14 AR=gcc-ar14 gmake check
           - name: clang
-            release: "14.4"
+            release: "15.1"
             prepare: pkg install -y gmake
             run: |
               CXX=clang++ RANLIB=llvm-ranlib AR=llvm-ar gmake
               CXX=clang++ RANLIB=llvm-ranlib AR=llvm-ar gmake check
           - name: gcc-conan
-            release: "14.4"
+            release: "15.1"
             prepare: |
               pkg install -y gmake cmake gcc14 llvm18 devel/py-pip py312-sqlite3
               ln -s /usr/local/bin/clang-format18 /usr/local/bin/clang-format
@@ -35,9 +35,9 @@ jobs:
               gmake all
               gmake check
           - name: clang-conan
-            release: "14.4"
+            release: "15.1"
             prepare: |
-              pkg install -y gmake cmake llvm18 binutils devel/py-pip py312-sqlite3
+              pkg install -y gmake cmake llvm18 devel/py-pip py312-sqlite3
               ln -s /usr/local/bin/clang-format18 /usr/bin/clang-format
             run: |
               pip install --user conan
@@ -47,7 +47,7 @@ jobs:
               gmake all
               gmake check
           - name: gcc-cmake
-            release: "14.4"
+            release: "15.1"
             prepare: |
               pkg install -y gmake cmake gcc14 llvm18 devel/py-pip py312-sqlite3
               ln -s /usr/local/bin/clang-format18 /usr/local/bin/clang-format
@@ -61,24 +61,10 @@ jobs:
               cmake --build .
               cmake --build . --target install
               cmake --build . --target test
-          - name: gcc-15
-            release: "15.1"
-            prepare: pkg install -y gmake gcc14
-            run: |
-              mkdir -p /tmp/bin && ln -s /usr/local/bin/gmake /tmp/bin/make
-              export PATH=/tmp/bin:$PATH
-              CXX=g++14 RANLIB=gcc-ranlib14 AR=gcc-ar14 gmake
-              CXX=g++14 RANLIB=gcc-ranlib14 AR=gcc-ar14 gmake check
-          - name: clang-15
-            release: "15.1"
-            prepare: pkg install -y gmake
-            run: |
-              CXX=clang++ RANLIB=llvm-ranlib AR=llvm-ar gmake
-              CXX=clang++ RANLIB=llvm-ranlib AR=llvm-ar gmake check
           - name: clang-cmake
-            release: "14.4"
+            release: "15.1"
             prepare: |
-              pkg install -y gmake cmake llvm18 binutils devel/py-pip py312-sqlite3
+              pkg install -y gmake cmake llvm18 devel/py-pip py312-sqlite3
               ln -s /usr/local/bin/clang-format18 /usr/bin/clang-format
             run: |
               pip install --user conan
@@ -90,6 +76,18 @@ jobs:
               cmake --build .
               cmake --build . --target install
               cmake --build . --target test
+          - name: gcc-14
+            release: "14.4"
+            prepare: pkg install -y gmake gcc14
+            run: |
+              CXX=g++14 RANLIB=gcc-ranlib14 AR=gcc-ar14 gmake
+              CXX=g++14 RANLIB=gcc-ranlib14 AR=gcc-ar14 gmake check
+          - name: clang-14
+            release: "14.4"
+            prepare: pkg install -y gmake
+            run: |
+              CXX=clang++ RANLIB=llvm-ranlib AR=llvm-ar gmake
+              CXX=clang++ RANLIB=llvm-ranlib AR=llvm-ar gmake check
 
     name: freebsd-${{ matrix.name }}
 
