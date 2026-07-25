@@ -53,12 +53,18 @@ BENCH_CPPFLAGS = $(call PKG_CONFIG_CFLAGS,$(BENCH_PKG_CONFIG_LIBS))
 BENCH_LDFLAGS = $(shell $(PKG_CONFIG) --libs-only-L $(BENCH_PKG_CONFIG_LIBS))
 BENCH_LDLIBS = $(shell $(PKG_CONFIG) --libs-only-l $(BENCH_PKG_CONFIG_LIBS))
 
+# AR is compared to 'ar' rather than set via ?= because make defines a default
+# value for it, which ?= would not override.
 ifneq (,$(findstring clang,$(CXX)))
 	RANLIB ?= llvm-ranlib
-	AR ?= llvm-ar
+	ifeq ($(AR),ar)
+		AR := llvm-ar
+	endif
 else
 	RANLIB ?= gcc-ranlib
-	AR ?= gcc-ar
+	ifeq ($(AR),ar)
+		AR := gcc-ar
+	endif
 endif
 
 ifeq ($(PIC), 1)
