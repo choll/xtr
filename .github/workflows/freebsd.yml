@@ -27,6 +27,7 @@ jobs:
             run: |
               export CC=gcc14 CXX=g++14 AR=gcc-ar14 RANLIB=gcc-ranlib14
               gmake conan-profile
+              cat conan_profile_freebsd >> ~/.conan2/profiles/default
               gmake
               gmake check
           - name: clang
@@ -35,6 +36,7 @@ jobs:
             run: |
               export CC=clang CXX=clang++ AR=llvm-ar RANLIB=llvm-ranlib
               gmake conan-profile
+              cat conan_profile_freebsd >> ~/.conan2/profiles/default
               gmake
               gmake check
           - name: gcc-cmake
@@ -42,6 +44,7 @@ jobs:
             packages: gmake pkgconf cmake python3 py312-sqlite3 gcc14
             run: |
               CC=gcc14 CXX=g++14 gmake conan-profile
+              cat conan_profile_freebsd >> ~/.conan2/profiles/default
               CONAN=$PWD/build/.venv/bin/conan
               mkdir -p build/cmake && cd build/cmake
               export CC=gcc14 CXX=g++14 RANLIB=gcc-ranlib14 AR=gcc-ar14
@@ -55,6 +58,7 @@ jobs:
             packages: gmake pkgconf cmake python3 py312-sqlite3
             run: |
               gmake conan-profile
+              cat conan_profile_freebsd >> ~/.conan2/profiles/default
               CONAN=$PWD/build/.venv/bin/conan
               mkdir -p build/cmake && cd build/cmake
               export CC=clang CXX=clang++ RANLIB=llvm-ranlib AR=llvm-ar
@@ -69,6 +73,7 @@ jobs:
             run: |
               export CC=gcc14 CXX=g++14 AR=gcc-ar14 RANLIB=gcc-ranlib14
               gmake conan-profile
+              cat conan_profile_freebsd >> ~/.conan2/profiles/default
               gmake
               gmake check
           - name: clang-14
@@ -77,6 +82,7 @@ jobs:
             run: |
               export CC=clang CXX=clang++ AR=llvm-ar RANLIB=llvm-ranlib
               gmake conan-profile
+              cat conan_profile_freebsd >> ~/.conan2/profiles/default
               gmake
               gmake check
 

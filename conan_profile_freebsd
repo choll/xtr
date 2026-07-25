@@ -1,0 +1,3 @@
+# The ConanCenter CMake package is broken on FreeBSD, so we bypass it here.
+[platform_tool_requires]
+cmake/3.31.12
