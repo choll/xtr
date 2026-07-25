@@ -21,8 +21,11 @@
 #include "xtr/io/posix_fd_storage.hpp"
 #include "xtr/detail/retry.hpp"
 #include "xtr/detail/throw.hpp"
+#include "xtr/io/detail/open.hpp"
 
 #include <cerrno>
+#include <cstdio>
+#include <cstring>
 #include <memory>
 #include <utility>
 
@@ -41,6 +44,24 @@ XTR_FUNC
 std::span<char> xtr::posix_fd_storage::allocate_buffer()
 {
     return {buf_.get(), buffer_capacity_};
+}
+
+XTR_FUNC
+void xtr::posix_fd_storage::replace_fd(detail::file_descriptor fd) noexcept
+{
+    // File descriptors passed to replace_fd are created by reopen() so may
+    // be modified. O_APPEND is set so that copy-truncate log rotation works.
+    if (!detail::set_append(fd.get()))
+    {
+        (void)std::fprintf(
+            stderr,
+            "xtr::posix_fd_storage::replace_fd: Failed to set O_APPEND on "
+            "\"%s\" (fd %d): %s\n",
+            reopen_path_.c_str(),
+            fd.get(),
+            std::strerror(errno));
+    }
+    fd_storage_base::replace_fd(std::move(fd));
 }
 
 XTR_FUNC

@@ -37,6 +37,25 @@
 namespace xtr
 {
     class io_uring_fd_storage;
+
+    namespace detail
+    {
+        class unique_io_uring
+        {
+        public:
+            explicit unique_io_uring(std::size_t queue_size);
+
+            unique_io_uring(const unique_io_uring&) = delete;
+            unique_io_uring& operator=(const unique_io_uring&) = delete;
+
+            ~unique_io_uring();
+
+            io_uring* get() noexcept;
+
+        private:
+            io_uring ring_;
+        };
+    }
 }
 
 /**
@@ -66,7 +85,7 @@ private:
     struct buffer
     {
         int index_;     // io_uring_prep_write_fixed accepts indexes as int
-        unsigned size_; // io_uring_cqe::res is an unsigned int
+        unsigned size_; // io_uring_cqe::res is an int
         std::size_t offset_;
         std::size_t file_offset_;
         buffer* next_;
@@ -109,7 +128,8 @@ public:
      * @param fd: File descriptor to write to. This will be duplicated via a
      * call to <a href="https://www.man7.org/linux/man-pages/man2/dup.2.html">dup(2)</a>,
      * so callers may close the file descriptor immediately after this
-     * constructor returns if desired.
+     * constructor returns if desired. The file descriptor must be seekable
+     * and must not have O_APPEND set.
      *
      * @param reopen_path: The path of the file associated with the fd argument.
      * This path will be used to reopen the file if requested via the xtrctl
@@ -142,7 +162,9 @@ public:
     void submit_buffer(char* data, std::size_t size) final;
 
 protected:
-    void replace_fd(int newfd) noexcept final;
+    void replace_fd(detail::file_descriptor fd) noexcept final;
+
+    void set_offset() noexcept;
 
 private:
     void allocate_buffers(std::size_t queue_size);
@@ -155,7 +177,7 @@ private:
 
     void free_buffer(buffer* buf);
 
-    io_uring ring_;
+    detail::unique_io_uring ring_;
     std::size_t buffer_capacity_;
     std::size_t batch_size_;
     std::size_t batch_index_ = 0;

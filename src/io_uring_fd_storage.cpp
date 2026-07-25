@@ -22,6 +22,7 @@
 
 #if XTR_USE_IO_URING
 #include "xtr/detail/throw.hpp"
+#include "xtr/io/detail/open.hpp"
 #include "xtr/io/io_uring_fd_storage.hpp"
 
 #include <liburing.h>
@@ -31,6 +32,39 @@
 #include <cstring>
 #include <limits>
 #include <vector>
+
+#include <unistd.h>
+
+XTR_FUNC
+xtr::detail::unique_io_uring::unique_io_uring(std::size_t queue_size)
+{
+    const int flags =
+#if XTR_IO_URING_POLL
+        IORING_SETUP_SQPOLL;
+#else
+        0;
+#endif
+
+    if (const int errnum =
+            ::io_uring_queue_init(unsigned(queue_size), &ring_, flags))
+    {
+        throw_system_error_fmt(
+            -errnum,
+            "xtr::detail::unique_io_uring: io_uring_queue_init failed");
+    }
+}
+
+XTR_FUNC
+xtr::detail::unique_io_uring::~unique_io_uring()
+{
+    ::io_uring_queue_exit(&ring_);
+}
+
+XTR_FUNC
+io_uring* xtr::detail::unique_io_uring::get() noexcept
+{
+    return &ring_;
+}
 
 XTR_FUNC
 xtr::io_uring_fd_storage::io_uring_fd_storage(
@@ -45,6 +79,7 @@ xtr::io_uring_fd_storage::io_uring_fd_storage(
     io_uring_sqring_wait_func_t io_uring_sqring_wait_func,
     io_uring_peek_cqe_func_t io_uring_peek_cqe_func) :
     fd_storage_base(fd, std::move(reopen_path)),
+    ring_(queue_size),
     buffer_capacity_(buffer_capacity),
     batch_size_(batch_size),
     io_uring_submit_func_(io_uring_submit_func),
@@ -62,23 +97,20 @@ xtr::io_uring_fd_storage::io_uring_fd_storage(
     if (batch_size == 0)
         detail::throw_invalid_argument("batch_size cannot be zero");
 
-    const int flags =
-#if XTR_IO_URING_POLL
-        IORING_SETUP_SQPOLL;
-#else
-        0;
-#endif
+    if (batch_size > queue_size)
+        detail::throw_invalid_argument("batch_size cannot exceed queue size");
 
-    if (const int errnum =
-            ::io_uring_queue_init(unsigned(queue_size), &ring_, flags))
-    {
-        detail::throw_system_error_fmt(
-            -errnum,
-            "xtr::io_uring_fd_storage::io_uring_fd_storage: "
-            "io_uring_queue_init failed");
-    }
+    if (!detail::is_seekable(fd))
+        detail::throw_invalid_argument("File descriptor is not seekable");
+
+    // On Linux if a file is opened with O_APPEND then the file offsets
+    // passed to io_uring are ignored, breaking buffer resubmission and
+    // file offset accounting.
+    if (detail::is_append(fd))
+        detail::throw_invalid_argument("File descriptor has O_APPEND set");
 
     allocate_buffers(queue_size);
+    set_offset();
 }
 
 XTR_FUNC
@@ -105,21 +137,23 @@ xtr::io_uring_fd_storage::io_uring_fd_storage(
 XTR_FUNC
 xtr::io_uring_fd_storage::~io_uring_fd_storage()
 {
-    flush();
     sync();
-    ::io_uring_queue_exit(&ring_);
 }
 
 XTR_FUNC
 void xtr::io_uring_fd_storage::flush()
 {
     // SQEs may have been prepared but not submitted, due to batching
-    io_uring_submit_func_(&ring_);
+    io_uring_submit_func_(ring_.get());
+    // Reset batch_index_ so that the next batch sets IOSQE_IO_DRAIN on the
+    // first SQE
+    batch_index_ = 0;
 }
 
 XTR_FUNC
 void xtr::io_uring_fd_storage::sync() noexcept
 {
+    flush();
     while (pending_cqe_count_ > 0)
         wait_for_one_cqe();
     fd_storage_base::sync();
@@ -149,9 +183,7 @@ void xtr::io_uring_fd_storage::submit_buffer(char* data, std::size_t size)
 
     io_uring_sqe* sqe = get_sqe();
 
-    // Per https://github.com/axboe/liburing/issues/507#issuecomment-1005869351
-    // using seek offsets is preferred over appending (via passing an offset of
-    // -1).
+    // Use fixed offsets to make resubmitting buffers simple
     ::io_uring_prep_write_fixed(
         sqe,
         fd_.get(),
@@ -162,26 +194,61 @@ void xtr::io_uring_fd_storage::submit_buffer(char* data, std::size_t size)
 
     ::io_uring_sqe_set_data(sqe, buf);
 
+    // Hardlink to the next SQE so writes complete in offset order. Without
+    // this, out-of-order completion can briefly leave holes in the file that
+    // confuse tools tailing the log. HARDLINK (not LINK) is used so that a
+    // failed or short write does not cancel subsequent queued writes.
+    sqe->flags |= IOSQE_IO_HARDLINK;
+
+    // First SQE of a batch drains the prior batch before starting. When
+    // combined with intra-batch hardlinking via IOSQE_IO_HARDLINK all buffers
+    // should be written in strict sequential order, with the exception of
+    // resubmitted buffers (which should never happen on a regular disk). If a
+    // buffer is resubmitted there would be a brief hole in the file.
+    if (batch_index_ % batch_size_ == 0)
+        sqe->flags |= IOSQE_IO_DRAIN;
+
     offset_ += size;
     ++pending_cqe_count_;
 
     if (++batch_index_ % batch_size_ == 0)
-        io_uring_submit_func_(&ring_);
+        io_uring_submit_func_(ring_.get());
 }
 
 XTR_FUNC
-void xtr::io_uring_fd_storage::replace_fd(int newfd) noexcept
+void xtr::io_uring_fd_storage::replace_fd(detail::file_descriptor fd) noexcept
 {
-    // As write events might be in-flight, closing the file descriptor must
-    // be queued up behind any pending writes. IOSQE_IO_DRAIN is used to
-    // ensure that all previous writes complete before closing.
-    io_uring_sqe* sqe = get_sqe();
-    ::io_uring_prep_close(sqe, fd_.release());
-    sqe->flags |= IOSQE_IO_DRAIN;
-    ++pending_cqe_count_;
-    io_uring_submit_func_(&ring_);
+    flush();
 
-    fd_storage_base::replace_fd(newfd);
+    // Wait for in-flight requests to complete before replacing. This must be
+    // done because an in-flight request could fail and be resubmitted---if
+    // that happens after the fd is replaced then the request would be
+    // resubmitted with the wrong fd.
+    while (pending_cqe_count_ > 0)
+        wait_for_one_cqe();
+
+    fd_storage_base::replace_fd(std::move(fd));
+    set_offset();
+}
+
+XTR_FUNC
+void xtr::io_uring_fd_storage::set_offset() noexcept
+{
+    assert(fd_);
+    const ::off_t end = ::lseek(fd_.get(), 0, SEEK_CUR);
+    if (end == -1) [[unlikely]]
+    {
+        (void)std::fprintf(
+            stderr,
+            "xtr::io_uring_fd_storage::set_offset: lseek on \"%s\" (fd %d) "
+            "failed: %s\n",
+            reopen_path_.c_str(),
+            fd_.get(),
+            std::strerror(errno));
+        offset_ = 0;
+        return;
+    }
+    offset_ = std::size_t(end);
 }
 
 XTR_FUNC
@@ -201,7 +268,7 @@ void xtr::io_uring_fd_storage::allocate_buffers(std::size_t queue_size)
     {
         std::byte* storage =
             buffer_storage_.get() + buffer::size(buffer_capacity_) * i;
-        buffer* buf = ::new (storage) buffer;
+        auto* buf = ::new (storage) buffer;
         buf->index_ = int(i);
         iov.push_back({buf->data_, buffer_capacity_});
         // Push the buffer to the end of free_list_:
@@ -213,7 +280,7 @@ void xtr::io_uring_fd_storage::allocate_buffers(std::size_t queue_size)
     assert(free_list_ != nullptr);
 
     if (const int errnum =
-            ::io_uring_register_buffers(&ring_, &iov[0], unsigned(iov.size())))
+            ::io_uring_register_buffers(ring_.get(), &iov[0], unsigned(iov.size())))
     {
         detail::throw_system_error_fmt(
             -errnum,
@@ -227,13 +294,14 @@ io_uring_sqe* xtr::io_uring_fd_storage::get_sqe()
 {
     io_uring_sqe* sqe;
 
-    while ((sqe = io_uring_get_sqe_func_(&ring_)) == nullptr)
+    while ((sqe = io_uring_get_sqe_func_(ring_.get())) == nullptr)
     {
 #if XTR_IO_URING_POLL
-        io_uring_sqring_wait_func_(&ring_);
+        io_uring_sqring_wait_func_(ring_.get());
 #else
-        // Waiting for a CQE seems to be the only option here
-        wait_for_one_cqe();
+        // This should never happen, if it does calling flush is all we can do
+        // to free up SQEs.
+        flush();
 #endif
     }
 
@@ -250,10 +318,13 @@ void xtr::io_uring_fd_storage::wait_for_one_cqe()
 
 retry:
 #if XTR_IO_URING_POLL
-    while ((errnum = io_uring_peek_cqe_func_(&ring_, &cqe)) == -EAGAIN)
+    while ((errnum = io_uring_peek_cqe_func_(ring_.get(), &cqe)) == -EAGAIN)
         ;
 #else
-    errnum = io_uring_wait_cqe_func_(&ring_, &cqe);
+    do
+    {
+        errnum = io_uring_wait_cqe_func_(ring_.get(), &cqe);
+    } while (errnum == -EINTR);
 #endif
 
     if (errnum != 0) [[unlikely]]
@@ -276,25 +347,12 @@ retry:
         static_cast<buffer*>(::io_uring_cqe_get_data(cqe)),
         std::move(deleter));
 
-    ::io_uring_cqe_seen(&ring_, cqe);
+    ::io_uring_cqe_seen(ring_.get(), cqe);
 
-    if (!buf) // close operation queued by replace_fd()
-    {
-        // If close(2) failed, there is nothing to be done except report an
-        // error, as the state of the file descriptor is ambiguous (according
-        // to POSIX).
-        if (res < 0)
-        {
-            (void)std::fprintf(
-                stderr,
-                "xtr::io_uring_fd_storage::wait_for_one_cqe: "
-                "Error: close(2) failed during reopen: %s\n",
-                std::strerror(-res));
-        }
-        return;
-    }
-
-    if (res == -EAGAIN) [[unlikely]]
+    // ECANCELED can occur if the thread that submitted the request exited
+    // before the request completed, which should only happen if pump_io is
+    // used and the user thread is restarted.
+    if (res == -EAGAIN || res == -ECANCELED) [[unlikely]]
     {
         resubmit_buffer(buf.release(), 0);
         goto retry;
@@ -333,15 +391,7 @@ void xtr::io_uring_fd_storage::resubmit_buffer(buffer* buf, unsigned nwritten)
     buf->offset_ += nwritten;
     buf->file_offset_ += nwritten;
 
-    assert(io_uring_sq_space_left(&ring_) >= 1);
-
-    // Don't call get_sqe() as this function is only called from
-    // wait_for_one_cqe, so space in the submission queue must be available (and
-    // if this is incorrect, calling get_sqe() might have problems due to it
-    // calling wait_for_one_cqe).
-    io_uring_sqe* sqe = io_uring_get_sqe_func_(&ring_);
-
-    assert(sqe != nullptr);
+    io_uring_sqe* sqe = get_sqe();
 
     ::io_uring_prep_write_fixed(
         sqe,
@@ -355,7 +405,7 @@ void xtr::io_uring_fd_storage::resubmit_buffer(buffer* buf, unsigned nwritten)
 
     ++pending_cqe_count_;
 
-    io_uring_submit_func_(&ring_);
+    io_uring_submit_func_(ring_.get());
 }
 
 XTR_FUNC

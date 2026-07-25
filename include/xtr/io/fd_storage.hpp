@@ -23,7 +23,7 @@
 
 #include "xtr/io/storage_interface.hpp"
 
-#include <cstddef>
+#include <cstdio>
 #include <string>
 
 namespace xtr
