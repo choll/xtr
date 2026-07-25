@@ -176,9 +176,9 @@ DEPS = $(OBJS:.o=.d) $(TEST_OBJS:.o=.d) $(BENCH_OBJS:.o=.d) $(XTRCTL_OBJS:.o=.d)
 INCLUDES = \
 	$(wildcard include/xtr/*.hpp) \
 	$(wildcard include/xtr/detail/*.hpp) \
-	$(wildcard include/xtr/detail/commands/*.hpp \
+	$(wildcard include/xtr/detail/commands/*.hpp) \
 	$(wildcard include/xtr/io/*.hpp) \
-	$(wildcard include/xtr/io/detail/*.hpp))
+	$(wildcard include/xtr/io/detail/*.hpp)
 
 $(TARGET): $(OBJS)
 	$(AR) rc $@ $^
@@ -230,11 +230,14 @@ single_include/xtr/logger.hpp: $(SRCS) $(INCLUDES)
 single_include: single_include/xtr/logger.hpp
 
 install: $(TARGET) $(XTRCTL_TARGET) docs
-	mkdir -p $(PREFIX)/lib $(PREFIX)/bin $(PREFIX)/include/xtr/detail $(PREFIX)/man/man1 $(PREFIX)/man/man3
+	mkdir -p $(PREFIX)/lib $(PREFIX)/bin $(PREFIX)/include/xtr/detail/commands $(PREFIX)/include/xtr/io/detail $(PREFIX)/man/man1 $(PREFIX)/man/man3
 	install $(TARGET) $(PREFIX)/lib
 	install $(XTRCTL_TARGET) $(PREFIX)/bin
 	install --mode=644  include/xtr/*.hpp $(PREFIX)/include/xtr/
 	install --mode=644 include/xtr/detail/*.hpp $(PREFIX)/include/xtr/detail/
+	install --mode=644 include/xtr/detail/commands/*.hpp $(PREFIX)/include/xtr/detail/commands/
+	install --mode=644 include/xtr/io/*.hpp $(PREFIX)/include/xtr/io/
+	install --mode=644 include/xtr/io/detail/*.hpp $(PREFIX)/include/xtr/io/detail/
 	install --mode=644 $(MAN3_PAGES) $(PREFIX)/man/man3
 	install --mode=644 $(MAN1_PAGES) $(PREFIX)/man/man1
 
@@ -250,10 +253,10 @@ build/doxygen/xml/index.xml: docs-src/Doxyfile $(INCLUDES)
 	@mkdir -p $(@D)
 	doxygen $<
 
-$(HTML_DOC_PAGES): $(DOCS_SRCS) build/doxygen/xml/index.xml
+$(HTML_DOC_PAGES) &: $(DOCS_SRCS) build/doxygen/xml/index.xml
 	sphinx-build -W -b html docs-src docs
 
-$(MAN_PAGES): $(DOCS_SRCS) build/doxygen/xml/index.xml
+$(MAN_PAGES) &: $(DOCS_SRCS) build/doxygen/xml/index.xml
 	sphinx-build -W -b man docs-src docs
 
 docs: $(HTML_DOC_PAGES) $(MAN_PAGES)

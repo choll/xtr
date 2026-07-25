@@ -25,22 +25,21 @@ jobs:
       matrix:
         except: [1, 0]
         pic: [1, 0]
-        rtti: [1, 0]
     steps:
     - uses: actions/checkout@v4
       with:
         submodules: true
 
     - name: make
-      run: make -j$(nproc) EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}} RTTI=${{matrix.rtti}}
+      run: make -j$(nproc) EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}}
     - name: test
-      run: make -j$(nproc) EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}} RTTI=${{matrix.rtti}} check
+      run: make -j$(nproc) EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}} check
 
     - name: coverage
-      if: matrix.except == 1 && matrix.pic == 0 && matrix.rtti == 0
+      if: matrix.except == 1 && matrix.pic == 0
       run: make -j$(nproc) DEBUG=1 COVERAGE=1 check
     - name: Upload coverage to Codecov
-      if: matrix.except == 1 && matrix.pic == 0 && matrix.rtti == 0
+      if: matrix.except == 1 && matrix.pic == 0
       uses: codecov/codecov-action@v4
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
@@ -54,16 +53,15 @@ jobs:
       matrix:
         except: [1, 0]
         pic: [1, 0]
-        rtti: [1, 0]
     steps:
     - uses: actions/checkout@v4
       with:
         submodules: true
 
     - name: make
-      run: CXX=clang++-$CLANG_VERSION AR=llvm-ar-$CLANG_VERSION RANLIB=llvm-ranlib-$CLANG_VERSION make -j$(nproc) EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}} RTTI=${{matrix.rtti}}
+      run: CXX=clang++-$CLANG_VERSION AR=llvm-ar-$CLANG_VERSION RANLIB=llvm-ranlib-$CLANG_VERSION make -j$(nproc) EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}}
     - name: test
-      run: CXX=clang++-$CLANG_VERSION AR=llvm-ar-$CLANG_VERSION RANLIB=llvm-ranlib-$CLANG_VERSION make -j$(nproc) EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}} RTTI=${{matrix.rtti}} check
+      run: CXX=clang++-$CLANG_VERSION AR=llvm-ar-$CLANG_VERSION RANLIB=llvm-ranlib-$CLANG_VERSION make -j$(nproc) EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}} check
 
   gcc-conan:
     runs-on: ubuntu-latest
