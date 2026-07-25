@@ -1,0 +1,194 @@
+name: Ubuntu
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CLANG_VERSION: 18
+
+jobs:
+  gcc:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        except: [1, 0]
+        pic: [1, 0]
+        rtti: [1, 0]
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: true
+
+    - name: make
+      run: make -j$(nproc) EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}} RTTI=${{matrix.rtti}}
+    - name: test
+      run: make -j$(nproc) EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}} RTTI=${{matrix.rtti}} check
+
+    - name: coverage
+      if: matrix.except == 1 && matrix.pic == 0 && matrix.rtti == 0
+      run: make -j$(nproc) DEBUG=1 COVERAGE=1 check
+    - name: Upload coverage to Codecov
+      if: matrix.except == 1 && matrix.pic == 0 && matrix.rtti == 0
+      uses: codecov/codecov-action@v4
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        flags: unittests
+
+  clang:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        except: [1, 0]
+        pic: [1, 0]
+        rtti: [1, 0]
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: true
+
+    - name: make
+      run: CXX=clang++-$CLANG_VERSION AR=llvm-ar-$CLANG_VERSION RANLIB=llvm-ranlib-$CLANG_VERSION make -j$(nproc) EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}} RTTI=${{matrix.rtti}}
+    - name: test
+      run: CXX=clang++-$CLANG_VERSION AR=llvm-ar-$CLANG_VERSION RANLIB=llvm-ranlib-$CLANG_VERSION make -j$(nproc) EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}} RTTI=${{matrix.rtti}} check
+
+  gcc-conan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        uring: [1, 0]
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/cache@v4
+      with:
+        path: ~/.conan2/p
+        key: conan-${{ github.job }}-${{ hashFiles('conanfile.py') }}
+    - name: install conan
+      run: |
+        pip install --user conan
+        conan profile detect
+    - name: install dependencies
+      run: conan install . --build missing -s compiler.libcxx=libstdc++11
+    - name: make
+      run: URING=${{matrix.uring}} make -j$(nproc) all
+    - name: test
+      run: URING=${{matrix.uring}} make -j$(nproc) check
+
+  clang-conan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        uring: [1, 0]
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/cache@v4
+      with:
+        path: ~/.conan2/p
+        key: conan-${{ github.job }}-${{ hashFiles('conanfile.py') }}
+    - name: setup clang-format
+      run: sudo ln -sf /usr/bin/clang-format-$CLANG_VERSION /usr/local/bin/clang-format
+    - name: install conan
+      run: |
+        pip install --user conan
+        CC=clang-$CLANG_VERSION CXX=clang++-$CLANG_VERSION conan profile detect
+    - name: install dependencies
+      run: CC=clang-$CLANG_VERSION CXX=clang++-$CLANG_VERSION conan install . --build missing -s compiler=clang -s compiler.version=$CLANG_VERSION -s compiler.libcxx=libstdc++11
+    - name: make
+      run: URING=${{matrix.uring}} CXX=clang++-$CLANG_VERSION AR=llvm-ar-$CLANG_VERSION RANLIB=llvm-ranlib-$CLANG_VERSION make -j$(nproc) all
+    - name: test
+      run: URING=${{matrix.uring}} CXX=clang++-$CLANG_VERSION AR=llvm-ar-$CLANG_VERSION RANLIB=llvm-ranlib-$CLANG_VERSION make -j$(nproc) check
+
+  gcc-cmake:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/cache@v4
+      with:
+        path: ~/.conan2/p
+        key: conan-${{ github.job }}-${{ hashFiles('conanfile.py') }}
+    - name: install conan
+      run: |
+        pip install --user conan
+        conan profile detect
+    - name: build with cmake
+      run: |
+        mkdir build && cd build
+        conan install .. -g CMakeDeps -g CMakeToolchain --output-folder=${PWD} --build missing -s compiler.libcxx=libstdc++11
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake -DBUILD_TESTING=ON -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INSTALL_PREFIX=/tmp/install
+        cmake --build . -j $(nproc)
+    - name: test
+      run: cd build/ && cmake --build . --target test
+    - name: install
+      run: cd build/ && cmake --build . --target install
+
+  clang-cmake:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/cache@v4
+      with:
+        path: ~/.conan2/p
+        key: conan-${{ github.job }}-${{ hashFiles('conanfile.py') }}
+    - name: install conan
+      run: |
+        pip install --user conan
+        CC=clang-$CLANG_VERSION CXX=clang++-$CLANG_VERSION conan profile detect
+    - name: build with cmake
+      run: |
+        mkdir build && cd build
+        CC=clang-$CLANG_VERSION CXX=clang++-$CLANG_VERSION conan install .. -g CMakeDeps -g CMakeToolchain --output-folder=${PWD} --build missing -s compiler=clang -s compiler.version=$CLANG_VERSION -s compiler.libcxx=libstdc++11
+        CC=clang-$CLANG_VERSION CXX=clang++-$CLANG_VERSION cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake -DBUILD_TESTING=ON -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INSTALL_PREFIX=/tmp/install
+        cmake --build . -j $(nproc)
+    - name: test
+      run: cd build/ && cmake --build . --target test
+    - name: install
+      run: cd build/ && cmake --build . --target install
+
+  gcc-sanitizer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        sanitizer: [address, undefined, thread]
+        except: [1, 0]
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: true
+    - name: sanitizer
+      run: make -j$(nproc) EXCEPTIONS=${{matrix.except}} SANITIZER=${{matrix.sanitizer}} check
+
+  clang-sanitizer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        sanitizer: [address, undefined, thread]
+        except: [1, 0]
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: true
+    - name: sanitizer
+      run: CXX=clang++-$CLANG_VERSION AR=llvm-ar-$CLANG_VERSION RANLIB=llvm-ranlib-$CLANG_VERSION make -j$(nproc) EXCEPTIONS=${{matrix.except}} SANITIZER=${{matrix.sanitizer}} check
