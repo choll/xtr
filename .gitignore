@@ -42,3 +42,4 @@ conaninfo.txt
 graph_info.json
 single_include/xtr/logger.hpp.sav
 compile_commands.json
+.cache
