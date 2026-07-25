@@ -23,14 +23,14 @@ jobs:
         include:
           - name: gcc
             release: "15.1"
-            packages: gmake pkgconf python3 gcc14
+            packages: gmake pkgconf cmake python3 gcc14
             run: |
               CC=gcc14 CXX=g++14 gmake conan-profile
               CXX=g++14 RANLIB=gcc-ranlib14 AR=gcc-ar14 gmake
               CXX=g++14 RANLIB=gcc-ranlib14 AR=gcc-ar14 gmake check
           - name: clang
             release: "15.1"
-            packages: gmake pkgconf python3
+            packages: gmake pkgconf cmake python3
             run: |
               gmake conan-profile
               CXX=clang++ RANLIB=llvm-ranlib AR=llvm-ar gmake
@@ -63,14 +63,14 @@ jobs:
               cmake --build . --target test
           - name: gcc-14
             release: "14.4"
-            packages: gmake pkgconf python3 gcc14
+            packages: gmake pkgconf cmake python3 gcc14
             run: |
               CC=gcc14 CXX=g++14 gmake conan-profile
               CXX=g++14 RANLIB=gcc-ranlib14 AR=gcc-ar14 gmake
               CXX=g++14 RANLIB=gcc-ranlib14 AR=gcc-ar14 gmake check
           - name: clang-14
             release: "14.4"
-            packages: gmake pkgconf python3
+            packages: gmake pkgconf cmake python3
             run: |
               gmake conan-profile
               CXX=clang++ RANLIB=llvm-ranlib AR=llvm-ar gmake
