@@ -1,5 +1,4 @@
--include conandeps.mk
-
+CXX ?= g++
 PREFIX ?= /usr/local
 EXCEPTIONS ?= 1
 COVERAGE ?= 0
@@ -9,62 +8,50 @@ PIC ?= 0
 LTO ?= 1
 URING ?= auto
 
-GOOGLE_BENCH_CPPFLAGS = $(addprefix -isystem, $(CONAN_INCLUDE_DIRS_BENCHMARK) $(GOOGLE_BENCH_INCLUDE_DIR))
-GOOGLE_BENCH_LDFLAGS = $(addprefix -L, $(CONAN_LIB_DIRS_BENCHMARK) $(GOOGLE_BENCH_LIB_DIR))
-CATCH2_CPPFLAGS = $(addprefix -isystem, $(CONAN_INCLUDE_DIRS_CATCH2) $(CATCH2_INCLUDE_DIR))
-FMT_CPPFLAGS = $(addprefix -isystem, $(CONAN_INCLUDE_DIRS_FMT) $(FMT_INCLUDE_DIR))
-FMT_LDFLAGS = $(addprefix -L, $(CONAN_LIB_DIRS_FMT) $(FMT_LIB_DIR))
-LIBURING_CPPFLAGS = $(addprefix -isystem, $(CONAN_INCLUDE_DIRS_LIBURING) $(LIBURING_INCLUDE_DIR))
-LIBURING_LDFLAGS = $(addprefix -L, $(CONAN_LIB_DIRS_LIBURING) $(LIBURING_LIB_DIR))
+BUILD_TAG := $(notdir $(CXX))
+BUILD_DIR = build/$(BUILD_TAG)
+VENV_DIR = build/.venv
+PKG_CONFIG_DIR = build/pkgconfig
+CONAN ?= $(VENV_DIR)/bin/conan
+PIP ?= $(VENV_DIR)/bin/pip
+# Note that anything using $(PKG_CONFIG) must use recursive assignment,
+# i.e. "FOO = x". This is because the build itself produces pkg-config
+# .pc files, so non-recursive assignment would run pkg-config before
+# the files exist.
+PKG_CONFIG ?= PKG_CONFIG_PATH=$(PKG_CONFIG_DIR) pkg-config
+PKG_CONFIG_CFLAGS = $(patsubst -I%,-isystem%,$(shell $(PKG_CONFIG) --cflags $(1)))
 
-BUILD_DIR := build/$(notdir $(CXX))
+PKG_CONFIG_LIBS := fmt
+TEST_PKG_CONFIG_LIBS := catch2
+BENCH_PKG_CONFIG_LIBS := benchmark
 
-# CXXFLAGS may be set by Conan or other tools, so only set debug/optimization
-# flags if CXXFLAGS is not set.
-ifeq ($(CXXFLAGS),)
-	DEBUG_CXXFLAGS = -O0 -ggdb
-	DEBUG_CPPFLAGS = -DXTR_ENABLE_TEST_STATIC_ASSERTIONS
-	OPT_CXXFLAGS = -O3 -march=native
-	OPT_CPPFLAGS = -DNDEBUG
-endif
+PKG_CONFIG_FILES = \
+	$(PKG_CONFIG_LIBS:%=$(PKG_CONFIG_DIR)/%.pc) \
+	$(TEST_PKG_CONFIG_LIBS:%=$(PKG_CONFIG_DIR)/%.pc) \
+	$(BENCH_PKG_CONFIG_LIBS:%=$(PKG_CONFIG_DIR)/%.pc)
 
-CXXFLAGS += \
-	-std=c++20 -Wall -Wextra -Wconversion -Wshadow -Wcast-qual -Wformat=2 \
-	-pedantic -pipe -pthread
-CPPFLAGS += -MMD -MP -I include $(FMT_CPPFLAGS) $(LIBURING_CPPFLAGS) -DXTR_FUNC=
-LDLIBS += -lxtr
-
-TEST_CPPFLAGS = $(CATCH2_CPPFLAGS)
-TEST_LDFLAGS = -L $(BUILD_DIR) $(FMT_LDFLAGS) $(LIBURING_LDFLAGS)
-TEST_LDLIBS = -ldl $(addprefix -l, $(CONAN_LIBS_LIBURING))
-
-BENCH_CPPFLAGS = $(GOOGLE_BENCH_CPPFLAGS)
-BENCH_LDFLAGS = -L $(BUILD_DIR) $(GOOGLE_BENCH_LDFLAGS) $(FMT_LDFLAGS) $(LIBURING_LDFLAGS)
-BENCH_LDLIBS = -lbenchmark $(addprefix -l, $(CONAN_LIBS_LIBURING))
-
-XTRCTL_LDFLAGS = -L $(BUILD_DIR) $(FMT_LDFLAGS) $(LIBURING_LDFLAGS)
-
+DEBUG_CXXFLAGS = -O0 -ggdb
+DEBUG_CPPFLAGS = -DXTR_ENABLE_TEST_STATIC_ASSERTIONS
+OPT_CXXFLAGS = -O3 -march=native
+OPT_CPPFLAGS = -DNDEBUG
 COVERAGE_CXXFLAGS = --coverage -DNDEBUG
 
-ifeq ($(FMT_CPPFLAGS),)
-	# Use the libfmt submodule if it is present and no include directory for
-	# libfmt has been configured (including via Conan).
-	ifneq ($(wildcard third_party/fmt/include),)
-		SUBMODULES_FLAG := 1
-	endif
-	ifneq (,$(wildcard /usr/lib/x86_64-linux-gnu/liburing.so))
-		LDLIBS += -luring
-	endif
-endif
+CXXFLAGS = \
+	-std=c++20 -Wall -Wextra -Wconversion -Wshadow -Wcast-qual -Wformat=2 \
+	-pedantic -pipe -pthread
+CPPFLAGS = -MMD -MP -I include -DXTR_FUNC= \
+	$(call PKG_CONFIG_CFLAGS,$(PKG_CONFIG_LIBS))
+LDFLAGS = -L $(BUILD_DIR) \
+	$(shell $(PKG_CONFIG) --libs-only-L $(PKG_CONFIG_LIBS))
+LDLIBS = -lxtr $(shell $(PKG_CONFIG) --libs-only-l $(PKG_CONFIG_LIBS))
 
-ifneq ($(SUBMODULES_FLAG),)
-	FMT_CPPFLAGS += -DFMT_HEADER_ONLY
-	CPPFLAGS += -isystem third_party/include
-else ifneq ($(CONAN_LIBS_FMT),)
-	LDLIBS += -l$(CONAN_LIBS_FMT)
-else
-	LDLIBS += -lfmt
-endif
+TEST_CPPFLAGS = $(call PKG_CONFIG_CFLAGS,$(TEST_PKG_CONFIG_LIBS))
+TEST_LDFLAGS = $(shell $(PKG_CONFIG) --libs-only-L $(TEST_PKG_CONFIG_LIBS))
+TEST_LDLIBS = -ldl $(shell $(PKG_CONFIG) --libs-only-l $(TEST_PKG_CONFIG_LIBS))
+
+BENCH_CPPFLAGS = $(call PKG_CONFIG_CFLAGS,$(BENCH_PKG_CONFIG_LIBS))
+BENCH_LDFLAGS = $(shell $(PKG_CONFIG) --libs-only-L $(BENCH_PKG_CONFIG_LIBS))
+BENCH_LDLIBS = $(shell $(PKG_CONFIG) --libs-only-l $(BENCH_PKG_CONFIG_LIBS))
 
 ifneq (,$(findstring clang,$(CXX)))
 	RANLIB ?= llvm-ranlib
@@ -76,31 +63,39 @@ endif
 
 ifeq ($(PIC), 1)
 	CXXFLAGS += -fPIC
-	BUILD_DIR := $(BUILD_DIR)-pic
+	BUILD_TAG := $(BUILD_TAG)-pic
 endif
 
 ifeq ($(LTO), 1)
 	CXXFLAGS += -flto=auto
-	BUILD_DIR := $(BUILD_DIR)-lto
+	BUILD_TAG := $(BUILD_TAG)-lto
 endif
 
-ifneq ($(URING), auto)
+# liburing is only available on Linux, so 'auto' resolves to enabled there and
+# disabled everywhere else, matching the __has_include check in config.hpp.
+ifeq ($(URING), auto)
+	ifeq ($(shell uname -s), Linux)
+		URING_ENABLED := 1
+	else
+		URING_ENABLED := 0
+	endif
+else
+	URING_ENABLED := $(URING)
 	CXXFLAGS += -DXTR_USE_IO_URING=$(URING)
 	ifeq ($(URING), 1)
-		ifneq ($(SUBMODULES_FLAG),)
-			LDLIBS += -luring
-		else
-			LDLIBS += $(addprefix -l, $(CONAN_LIBS_LIBURING))
-		endif
-		BUILD_DIR := $(BUILD_DIR)-uring
+		BUILD_TAG := $(BUILD_TAG)-uring
 	else
-		BUILD_DIR := $(BUILD_DIR)-no-uring
+		BUILD_TAG := $(BUILD_TAG)-no-uring
 	endif
+endif
+
+ifeq ($(URING_ENABLED), 1)
+	PKG_CONFIG_LIBS += liburing
 endif
 
 ifeq ($(COVERAGE), 1)
 	CXXFLAGS += $(COVERAGE_CXXFLAGS)
-	BUILD_DIR := $(BUILD_DIR)-coverage
+	BUILD_TAG := $(BUILD_TAG)-coverage
 	COVERAGE_DATA = \
 		$(SRCS:%=$(BUILD_DIR)/%.gcno) $(SRCS:%=$(BUILD_DIR)/%.gcda) \
 		$(TEST_SRCS:%=$(BUILD_DIR)/%.gcno) $(TEST_SRCS:%=$(BUILD_DIR)/%.gcda)
@@ -109,26 +104,26 @@ endif
 ifeq ($(RELDEBUG), 1)
 	CXXFLAGS += $(DEBUG_CXXFLAGS) $(OPT_CXXFLAGS)
 	CPPFLAGS += $(DEBUG_CPPFLAGS) $(OPT_CPPFLAGS)
-	BUILD_DIR := $(BUILD_DIR)-reldebug
+	BUILD_TAG := $(BUILD_TAG)-reldebug
 else ifeq ($(DEBUG), 1)
 	CXXFLAGS += $(DEBUG_CXXFLAGS)
 	CPPFLAGS += $(DEBUG_CPPFLAGS)
-	BUILD_DIR := $(BUILD_DIR)-debug
+	BUILD_TAG := $(BUILD_TAG)-debug
 else
 	CXXFLAGS += $(OPT_CXXFLAGS)
 	CPPFLAGS += $(OPT_CPPFLAGS)
-	BUILD_DIR := $(BUILD_DIR)-release
+	BUILD_TAG := $(BUILD_TAG)-release
 endif
 
 ifneq ($(SANITIZER),)
 	CXXFLAGS += -fno-omit-frame-pointer -fsanitize=$(SANITIZER) -fno-sanitize-recover=all
 	LDFLAGS += -fsanitize=$(SANITIZER)
-	BUILD_DIR := $(BUILD_DIR)-$(SANITIZER)-sanitizer
+	BUILD_TAG := $(BUILD_TAG)-$(SANITIZER)-sanitizer
 endif
 
 ifeq ($(EXCEPTIONS), 0)
 	CXXFLAGS += -fno-exceptions
-	BUILD_DIR := $(BUILD_DIR)-no-exceptions
+	BUILD_TAG := $(BUILD_TAG)-no-exceptions
 endif
 
 TARGET = $(BUILD_DIR)/libxtr.a
@@ -185,29 +180,41 @@ $(TARGET): $(OBJS)
 	$(RANLIB) $@
 
 $(TEST_TARGET): $(TARGET) $(TEST_OBJS)
-	$(LINK.cc) -o $@ $(TEST_LDFLAGS) $(TEST_OBJS) $(LDLIBS) $(TEST_LDLIBS)
+	$(LINK.cc) -o $@ $(TEST_OBJS) $(TEST_LDFLAGS) $(LDLIBS) $(TEST_LDLIBS)
 
 $(BENCH_TARGET): $(TARGET) $(BENCH_OBJS)
-	$(LINK.cc) -o $@ $(BENCH_LDFLAGS) $(BENCH_OBJS) $(LDLIBS) $(BENCH_LDLIBS)
+	$(LINK.cc) -o $@ $(BENCH_OBJS) $(BENCH_LDFLAGS) $(LDLIBS) $(BENCH_LDLIBS)
 
 $(XTRCTL_TARGET): $(TARGET) $(XTRCTL_OBJS)
-	$(LINK.cc) -o $@ $(XTRCTL_LDFLAGS) $(XTRCTL_OBJS) $(LDLIBS)
+	$(LINK.cc) -o $@ $(XTRCTL_OBJS) $(LDLIBS)
 
-$(OBJS): $(BUILD_DIR)/%.cpp.o: %.cpp
+$(OBJS): $(BUILD_DIR)/%.cpp.o: %.cpp $(PKG_CONFIG_FILES)
 	@mkdir -p $(@D)
 	$(CXX) -o $@ -c $(CPPFLAGS) $(CXXFLAGS) $<
 
-$(TEST_OBJS): $(BUILD_DIR)/%.cpp.o: %.cpp
+$(TEST_OBJS): $(BUILD_DIR)/%.cpp.o: %.cpp $(PKG_CONFIG_FILES)
 	@mkdir -p $(@D)
 	$(CXX) -o $@ -c $(CPPFLAGS) $(TEST_CPPFLAGS) $(CXXFLAGS) $<
 
-$(BENCH_OBJS): $(BUILD_DIR)/%.cpp.o: %.cpp
+$(BENCH_OBJS): $(BUILD_DIR)/%.cpp.o: %.cpp $(PKG_CONFIG_FILES)
 	@mkdir -p $(@D)
 	$(CXX) -o $@ -c $(CPPFLAGS) $(BENCH_CPPFLAGS) $(CXXFLAGS) $<
 
-$(XTRCTL_OBJS): $(BUILD_DIR)/%.cpp.o: %.cpp
+$(XTRCTL_OBJS): $(BUILD_DIR)/%.cpp.o: %.cpp $(PKG_CONFIG_FILES)
 	@mkdir -p $(@D)
 	$(CXX) -o $@ -c $(CPPFLAGS) $(CXXFLAGS) $<
+
+$(CONAN) $(PIP) &: requirements.txt
+	python3 -m venv $(VENV_DIR)
+	$(PIP) install --force-reinstall -r $<
+
+$(PKG_CONFIG_FILES) &: conanfile.py $(CONAN)
+	@mkdir -p $(PKG_CONFIG_DIR)
+	$(CONAN) install --envs-generation=false --build=missing \
+		--output-folder=$(PKG_CONFIG_DIR) $<
+
+conan-profile: $(CONAN)
+	$(CONAN) profile detect --exist-ok
 
 all: $(TARGET) $(TEST_TARGET) $(BENCH_TARGET) $(XTRCTL_TARGET) single_include
 
@@ -233,18 +240,21 @@ install: $(TARGET) $(XTRCTL_TARGET) docs
 	mkdir -p $(PREFIX)/lib $(PREFIX)/bin $(PREFIX)/include/xtr/detail/commands $(PREFIX)/include/xtr/io/detail $(PREFIX)/man/man1 $(PREFIX)/man/man3
 	install $(TARGET) $(PREFIX)/lib
 	install $(XTRCTL_TARGET) $(PREFIX)/bin
-	install --mode=644  include/xtr/*.hpp $(PREFIX)/include/xtr/
-	install --mode=644 include/xtr/detail/*.hpp $(PREFIX)/include/xtr/detail/
-	install --mode=644 include/xtr/detail/commands/*.hpp $(PREFIX)/include/xtr/detail/commands/
-	install --mode=644 include/xtr/io/*.hpp $(PREFIX)/include/xtr/io/
-	install --mode=644 include/xtr/io/detail/*.hpp $(PREFIX)/include/xtr/io/detail/
-	install --mode=644 $(MAN3_PAGES) $(PREFIX)/man/man3
-	install --mode=644 $(MAN1_PAGES) $(PREFIX)/man/man1
+	install -m 644 include/xtr/*.hpp $(PREFIX)/include/xtr/
+	install -m 644include/xtr/detail/*.hpp $(PREFIX)/include/xtr/detail/
+	install -m 644include/xtr/detail/commands/*.hpp $(PREFIX)/include/xtr/detail/commands/
+	install -m 644include/xtr/io/*.hpp $(PREFIX)/include/xtr/io/
+	install -m 644include/xtr/io/detail/*.hpp $(PREFIX)/include/xtr/io/detail/
+	install -m 644$(MAN3_PAGES) $(PREFIX)/man/man3
+	install -m 644$(MAN1_PAGES) $(PREFIX)/man/man1
 
 clean:
 	$(RM) $(TARGET) $(TEST_TARGET) $(BENCH_TARGET) $(XTRCTL_TARGET) \
 	$(OBJS) $(TEST_OBJS) $(BENCH_OBJS) $(XTRCTL_OBJS) \
 	$(DEPS) $(COVERAGE_DATA)
+
+distclean:
+	$(RM) -r build
 
 coverage_report: $(BUILD_DIR)/coverage_report/index.html
 	xdg-open $< 2> /dev/null
@@ -270,8 +280,9 @@ ifeq ($(COVERAGE), 0)
 endif
 	$<
 	@mkdir -p $(@D)
-	gcovr --exclude test --exclude third_party --html-details $@ -r .
+	gcovr --exclude test --html-details $@ -r .
 
 -include $(DEPS)
 
-.PHONY: all check benchmark single_include install clean coverage_report docs
+.PHONY: all check benchmark benchmark_cpu conan-profile single_include \
+	install clean clean-docs distclean coverage_report docs xtrctl

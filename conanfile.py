@@ -1,17 +1,13 @@
 from conan import ConanFile
-from conan.tools.gnu import MakeDeps
 
 class Conan(ConanFile):
     name = "xtr"
     settings = "os", "arch", "compiler", "build_type"
+    generators = "PkgConfigDeps"
 
     def requirements(self):
-        self.requires("fmt/11.1.4", transitive_headers=True, transitive_libs=True)
+        self.requires("fmt/12.1.0", transitive_headers=True, transitive_libs=True)
         if self.settings.os == "Linux":
             self.requires("liburing/2.4")
-        self.requires("benchmark/1.6.0")
+        self.requires("benchmark/1.9.5")
         self.requires("catch2/2.13.9")
-
-    def generate(self):
-        make_toolchain = MakeDeps(self)
-        make_toolchain.generate()

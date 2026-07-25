@@ -15,6 +15,10 @@ concurrency:
 
 env:
   CLANG_VERSION: 18
+  # The io_uring tests register 64MiB of buffers, which exceeds the runner's
+  # RLIMIT_MEMLOCK.
+  URING: 0
+  APT_PACKAGES: pkg-config python3-venv
 
 jobs:
   gcc:
@@ -27,11 +31,16 @@ jobs:
         pic: [1, 0]
     steps:
     - uses: actions/checkout@v4
+    - uses: actions/cache@v4
       with:
-        submodules: true
-
+        path: ~/.conan2/p
+        key: conan-${{ github.job }}-${{ hashFiles('conanfile.py', 'requirements.txt') }}
+    - name: install dependencies
+      run: |
+        sudo apt-get update && sudo apt-get install -y --no-install-recommends $APT_PACKAGES
+        make conan-profile
     - name: make
-      run: make -j$(nproc) EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}}
+      run: make -j$(nproc) EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}} all
     - name: test
       run: make -j$(nproc) EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}} check
 
@@ -55,63 +64,18 @@ jobs:
         pic: [1, 0]
     steps:
     - uses: actions/checkout@v4
+    - uses: actions/cache@v4
       with:
-        submodules: true
-
+        path: ~/.conan2/p
+        key: conan-${{ github.job }}-${{ hashFiles('conanfile.py', 'requirements.txt') }}
+    - name: install dependencies
+      run: |
+        sudo apt-get update && sudo apt-get install -y --no-install-recommends $APT_PACKAGES
+        CC=clang-$CLANG_VERSION CXX=clang++-$CLANG_VERSION make conan-profile
     - name: make
-      run: CXX=clang++-$CLANG_VERSION AR=llvm-ar-$CLANG_VERSION RANLIB=llvm-ranlib-$CLANG_VERSION make -j$(nproc) EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}}
+      run: CXX=clang++-$CLANG_VERSION AR=llvm-ar-$CLANG_VERSION RANLIB=llvm-ranlib-$CLANG_VERSION make -j$(nproc) EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}} all
     - name: test
       run: CXX=clang++-$CLANG_VERSION AR=llvm-ar-$CLANG_VERSION RANLIB=llvm-ranlib-$CLANG_VERSION make -j$(nproc) EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}} check
-
-  gcc-conan:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    strategy:
-      fail-fast: false
-      matrix:
-        uring: [1, 0]
-    steps:
-    - uses: actions/checkout@v4
-    - uses: actions/cache@v4
-      with:
-        path: ~/.conan2/p
-        key: conan-${{ github.job }}-${{ hashFiles('conanfile.py') }}
-    - name: install conan
-      run: |
-        pip install --user conan
-        conan profile detect
-    - name: install dependencies
-      run: conan install . --build missing -s compiler.libcxx=libstdc++11
-    - name: make
-      run: URING=${{matrix.uring}} make -j$(nproc) all
-    - name: test
-      run: URING=${{matrix.uring}} make -j$(nproc) check
-
-  clang-conan:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    strategy:
-      fail-fast: false
-      matrix:
-        uring: [1, 0]
-    steps:
-    - uses: actions/checkout@v4
-    - uses: actions/cache@v4
-      with:
-        path: ~/.conan2/p
-        key: conan-${{ github.job }}-${{ hashFiles('conanfile.py') }}
-    - name: setup clang-format
-      run: sudo ln -sf /usr/bin/clang-format-$CLANG_VERSION /usr/local/bin/clang-format
-    - name: install conan
-      run: |
-        pip install --user conan
-        CC=clang-$CLANG_VERSION CXX=clang++-$CLANG_VERSION conan profile detect
-    - name: install dependencies
-      run: CC=clang-$CLANG_VERSION CXX=clang++-$CLANG_VERSION conan install . --build missing -s compiler=clang -s compiler.version=$CLANG_VERSION -s compiler.libcxx=libstdc++11
-    - name: make
-      run: URING=${{matrix.uring}} CXX=clang++-$CLANG_VERSION AR=llvm-ar-$CLANG_VERSION RANLIB=llvm-ranlib-$CLANG_VERSION make -j$(nproc) all
-    - name: test
-      run: URING=${{matrix.uring}} CXX=clang++-$CLANG_VERSION AR=llvm-ar-$CLANG_VERSION RANLIB=llvm-ranlib-$CLANG_VERSION make -j$(nproc) check
 
   gcc-cmake:
     runs-on: ubuntu-latest
@@ -121,21 +85,22 @@ jobs:
     - uses: actions/cache@v4
       with:
         path: ~/.conan2/p
-        key: conan-${{ github.job }}-${{ hashFiles('conanfile.py') }}
-    - name: install conan
+        key: conan-${{ github.job }}-${{ hashFiles('conanfile.py', 'requirements.txt') }}
+    - name: install dependencies
       run: |
-        pip install --user conan
-        conan profile detect
+        sudo apt-get update && sudo apt-get install -y --no-install-recommends $APT_PACKAGES
+        make conan-profile
     - name: build with cmake
       run: |
-        mkdir build && cd build
-        conan install .. -g CMakeDeps -g CMakeToolchain --output-folder=${PWD} --build missing -s compiler.libcxx=libstdc++11
-        cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake -DBUILD_TESTING=ON -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INSTALL_PREFIX=/tmp/install
+        CONAN=$PWD/build/.venv/bin/conan
+        mkdir -p build/cmake && cd build/cmake
+        $CONAN install ../.. -g CMakeDeps -g CMakeToolchain --output-folder=${PWD} --build missing -s compiler.libcxx=libstdc++11
+        cmake ../.. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake -DBUILD_TESTING=ON -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INSTALL_PREFIX=/tmp/install
         cmake --build . -j $(nproc)
     - name: test
-      run: cd build/ && cmake --build . --target test
+      run: cd build/cmake && cmake --build . --target test
     - name: install
-      run: cd build/ && cmake --build . --target install
+      run: cd build/cmake && cmake --build . --target install
 
   clang-cmake:
     runs-on: ubuntu-latest
@@ -145,21 +110,22 @@ jobs:
     - uses: actions/cache@v4
       with:
         path: ~/.conan2/p
-        key: conan-${{ github.job }}-${{ hashFiles('conanfile.py') }}
-    - name: install conan
+        key: conan-${{ github.job }}-${{ hashFiles('conanfile.py', 'requirements.txt') }}
+    - name: install dependencies
       run: |
-        pip install --user conan
-        CC=clang-$CLANG_VERSION CXX=clang++-$CLANG_VERSION conan profile detect
+        sudo apt-get update && sudo apt-get install -y --no-install-recommends $APT_PACKAGES
+        CC=clang-$CLANG_VERSION CXX=clang++-$CLANG_VERSION make conan-profile
     - name: build with cmake
       run: |
-        mkdir build && cd build
-        CC=clang-$CLANG_VERSION CXX=clang++-$CLANG_VERSION conan install .. -g CMakeDeps -g CMakeToolchain --output-folder=${PWD} --build missing -s compiler=clang -s compiler.version=$CLANG_VERSION -s compiler.libcxx=libstdc++11
-        CC=clang-$CLANG_VERSION CXX=clang++-$CLANG_VERSION cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake -DBUILD_TESTING=ON -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INSTALL_PREFIX=/tmp/install
+        CONAN=$PWD/build/.venv/bin/conan
+        mkdir -p build/cmake && cd build/cmake
+        $CONAN install ../.. -g CMakeDeps -g CMakeToolchain --output-folder=${PWD} --build missing -s compiler=clang -s compiler.version=$CLANG_VERSION -s compiler.libcxx=libstdc++11
+        CC=clang-$CLANG_VERSION CXX=clang++-$CLANG_VERSION cmake ../.. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake -DBUILD_TESTING=ON -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INSTALL_PREFIX=/tmp/install
         cmake --build . -j $(nproc)
     - name: test
-      run: cd build/ && cmake --build . --target test
+      run: cd build/cmake && cmake --build . --target test
     - name: install
-      run: cd build/ && cmake --build . --target install
+      run: cd build/cmake && cmake --build . --target install
 
   gcc-sanitizer:
     runs-on: ubuntu-latest
@@ -171,8 +137,14 @@ jobs:
         except: [1, 0]
     steps:
     - uses: actions/checkout@v4
+    - uses: actions/cache@v4
       with:
-        submodules: true
+        path: ~/.conan2/p
+        key: conan-${{ github.job }}-${{ hashFiles('conanfile.py', 'requirements.txt') }}
+    - name: install dependencies
+      run: |
+        sudo apt-get update && sudo apt-get install -y --no-install-recommends $APT_PACKAGES
+        make conan-profile
     - name: sanitizer
       run: make -j$(nproc) EXCEPTIONS=${{matrix.except}} SANITIZER=${{matrix.sanitizer}} check
 
@@ -186,7 +158,13 @@ jobs:
         except: [1, 0]
     steps:
     - uses: actions/checkout@v4
+    - uses: actions/cache@v4
       with:
-        submodules: true
+        path: ~/.conan2/p
+        key: conan-${{ github.job }}-${{ hashFiles('conanfile.py', 'requirements.txt') }}
+    - name: install dependencies
+      run: |
+        sudo apt-get update && sudo apt-get install -y --no-install-recommends $APT_PACKAGES
+        CC=clang-$CLANG_VERSION CXX=clang++-$CLANG_VERSION make conan-profile
     - name: sanitizer
       run: CXX=clang++-$CLANG_VERSION AR=llvm-ar-$CLANG_VERSION RANLIB=llvm-ranlib-$CLANG_VERSION make -j$(nproc) EXCEPTIONS=${{matrix.except}} SANITIZER=${{matrix.sanitizer}} check
