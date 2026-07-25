@@ -1,4 +1,4 @@
-name: freebsd
+name: FreeBSD
 
 on:
   push:
