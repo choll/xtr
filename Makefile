@@ -241,12 +241,12 @@ install: $(TARGET) $(XTRCTL_TARGET) docs
 	install $(TARGET) $(PREFIX)/lib
 	install $(XTRCTL_TARGET) $(PREFIX)/bin
 	install -m 644 include/xtr/*.hpp $(PREFIX)/include/xtr/
-	install -m 644include/xtr/detail/*.hpp $(PREFIX)/include/xtr/detail/
-	install -m 644include/xtr/detail/commands/*.hpp $(PREFIX)/include/xtr/detail/commands/
-	install -m 644include/xtr/io/*.hpp $(PREFIX)/include/xtr/io/
-	install -m 644include/xtr/io/detail/*.hpp $(PREFIX)/include/xtr/io/detail/
-	install -m 644$(MAN3_PAGES) $(PREFIX)/man/man3
-	install -m 644$(MAN1_PAGES) $(PREFIX)/man/man1
+	install -m 644 include/xtr/detail/*.hpp $(PREFIX)/include/xtr/detail/
+	install -m 644 include/xtr/detail/commands/*.hpp $(PREFIX)/include/xtr/detail/commands/
+	install -m 644 include/xtr/io/*.hpp $(PREFIX)/include/xtr/io/
+	install -m 644 include/xtr/io/detail/*.hpp $(PREFIX)/include/xtr/io/detail/
+	install -m 644 $(MAN3_PAGES) $(PREFIX)/man/man3
+	install -m 644 $(MAN1_PAGES) $(PREFIX)/man/man1
 
 clean:
 	$(RM) $(TARGET) $(TEST_TARGET) $(BENCH_TARGET) $(XTRCTL_TARGET) \
