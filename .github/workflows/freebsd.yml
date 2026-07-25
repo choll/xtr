@@ -89,5 +89,9 @@ jobs:
         with:
           release: ${{ matrix.release }}
           usesh: true
-          prepare: pkg install -y ${{ matrix.packages }}
+          prepare: |
+            pkg install -y ${{ matrix.packages }}
+            # Conan requires the sqlite3 module, which is packaged separately
+            # and named after the default python version.
+            pkg install -y $(python3 -c 'import sys; v = sys.version_info; print(f"py{v.major}{v.minor}-sqlite3")')
           run: ${{ matrix.run }}
