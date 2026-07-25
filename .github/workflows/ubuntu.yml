@@ -69,13 +69,26 @@ jobs:
         path: ~/.conan2/p
         key: conan-${{ github.job }}-${{ hashFiles('conanfile.py', 'requirements.txt') }}
     - name: install dependencies
+      env:
+        CC: clang-${{ env.CLANG_VERSION }}
+        CXX: clang++-${{ env.CLANG_VERSION }}
       run: |
         sudo apt-get update && sudo apt-get install -y --no-install-recommends $APT_PACKAGES
-        CC=clang-$CLANG_VERSION CXX=clang++-$CLANG_VERSION make conan-profile
+        make conan-profile
     - name: make
-      run: CXX=clang++-$CLANG_VERSION AR=llvm-ar-$CLANG_VERSION RANLIB=llvm-ranlib-$CLANG_VERSION make -j$(nproc) EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}} all
+      env:
+        CC: clang-${{ env.CLANG_VERSION }}
+        CXX: clang++-${{ env.CLANG_VERSION }}
+        AR: llvm-ar-${{ env.CLANG_VERSION }}
+        RANLIB: llvm-ranlib-${{ env.CLANG_VERSION }}
+      run: make -j$(nproc) EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}} all
     - name: test
-      run: CXX=clang++-$CLANG_VERSION AR=llvm-ar-$CLANG_VERSION RANLIB=llvm-ranlib-$CLANG_VERSION make -j$(nproc) EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}} check
+      env:
+        CC: clang-${{ env.CLANG_VERSION }}
+        CXX: clang++-${{ env.CLANG_VERSION }}
+        AR: llvm-ar-${{ env.CLANG_VERSION }}
+        RANLIB: llvm-ranlib-${{ env.CLANG_VERSION }}
+      run: make -j$(nproc) EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}} check
 
   gcc-cmake:
     runs-on: ubuntu-latest
@@ -112,15 +125,21 @@ jobs:
         path: ~/.conan2/p
         key: conan-${{ github.job }}-${{ hashFiles('conanfile.py', 'requirements.txt') }}
     - name: install dependencies
+      env:
+        CC: clang-${{ env.CLANG_VERSION }}
+        CXX: clang++-${{ env.CLANG_VERSION }}
       run: |
         sudo apt-get update && sudo apt-get install -y --no-install-recommends $APT_PACKAGES
-        CC=clang-$CLANG_VERSION CXX=clang++-$CLANG_VERSION make conan-profile
+        make conan-profile
     - name: build with cmake
+      env:
+        CC: clang-${{ env.CLANG_VERSION }}
+        CXX: clang++-${{ env.CLANG_VERSION }}
       run: |
         CONAN=$PWD/build/.venv/bin/conan
         mkdir -p build/cmake && cd build/cmake
         $CONAN install ../.. -g CMakeDeps -g CMakeToolchain --output-folder=${PWD} --build missing -s compiler=clang -s compiler.version=$CLANG_VERSION -s compiler.libcxx=libstdc++11
-        CC=clang-$CLANG_VERSION CXX=clang++-$CLANG_VERSION cmake ../.. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake -DBUILD_TESTING=ON -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INSTALL_PREFIX=/tmp/install
+        cmake ../.. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake -DBUILD_TESTING=ON -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INSTALL_PREFIX=/tmp/install
         cmake --build . -j $(nproc)
     - name: test
       run: cd build/cmake && cmake --build . --target test
@@ -163,8 +182,16 @@ jobs:
         path: ~/.conan2/p
         key: conan-${{ github.job }}-${{ hashFiles('conanfile.py', 'requirements.txt') }}
     - name: install dependencies
+      env:
+        CC: clang-${{ env.CLANG_VERSION }}
+        CXX: clang++-${{ env.CLANG_VERSION }}
       run: |
         sudo apt-get update && sudo apt-get install -y --no-install-recommends $APT_PACKAGES
-        CC=clang-$CLANG_VERSION CXX=clang++-$CLANG_VERSION make conan-profile
+        make conan-profile
     - name: sanitizer
-      run: CXX=clang++-$CLANG_VERSION AR=llvm-ar-$CLANG_VERSION RANLIB=llvm-ranlib-$CLANG_VERSION make -j$(nproc) EXCEPTIONS=${{matrix.except}} SANITIZER=${{matrix.sanitizer}} check
+      env:
+        CC: clang-${{ env.CLANG_VERSION }}
+        CXX: clang++-${{ env.CLANG_VERSION }}
+        AR: llvm-ar-${{ env.CLANG_VERSION }}
+        RANLIB: llvm-ranlib-${{ env.CLANG_VERSION }}
+      run: make -j$(nproc) EXCEPTIONS=${{matrix.except}} SANITIZER=${{matrix.sanitizer}} check
