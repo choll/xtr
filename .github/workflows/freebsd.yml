@@ -23,7 +23,7 @@ jobs:
         include:
           - name: gcc
             release: "15.1"
-            packages: gmake pkgconf cmake python3 gcc14
+            packages: gmake pkgconf cmake python3 py312-sqlite3 gcc14
             run: |
               export CC=gcc14 CXX=g++14 AR=gcc-ar14 RANLIB=gcc-ranlib14
               gmake conan-profile
@@ -31,7 +31,7 @@ jobs:
               gmake check
           - name: clang
             release: "15.1"
-            packages: gmake pkgconf cmake python3
+            packages: gmake pkgconf cmake python3 py312-sqlite3
             run: |
               export CC=clang CXX=clang++ AR=llvm-ar RANLIB=llvm-ranlib
               gmake conan-profile
@@ -39,7 +39,7 @@ jobs:
               gmake check
           - name: gcc-cmake
             release: "15.1"
-            packages: gmake pkgconf cmake python3 gcc14
+            packages: gmake pkgconf cmake python3 py312-sqlite3 gcc14
             run: |
               CC=gcc14 CXX=g++14 gmake conan-profile
               CONAN=$PWD/build/.venv/bin/conan
@@ -52,7 +52,7 @@ jobs:
               cmake --build . --target test
           - name: clang-cmake
             release: "15.1"
-            packages: gmake pkgconf cmake python3
+            packages: gmake pkgconf cmake python3 py312-sqlite3
             run: |
               gmake conan-profile
               CONAN=$PWD/build/.venv/bin/conan
@@ -65,7 +65,7 @@ jobs:
               cmake --build . --target test
           - name: gcc-14
             release: "14.4"
-            packages: gmake pkgconf cmake python3 gcc14
+            packages: gmake pkgconf cmake python3 py312-sqlite3 gcc14
             run: |
               export CC=gcc14 CXX=g++14 AR=gcc-ar14 RANLIB=gcc-ranlib14
               gmake conan-profile
@@ -73,7 +73,7 @@ jobs:
               gmake check
           - name: clang-14
             release: "14.4"
-            packages: gmake pkgconf cmake python3
+            packages: gmake pkgconf cmake python3 py312-sqlite3
             run: |
               export CC=clang CXX=clang++ AR=llvm-ar RANLIB=llvm-ranlib
               gmake conan-profile
@@ -89,9 +89,5 @@ jobs:
         with:
           release: ${{ matrix.release }}
           usesh: true
-          prepare: |
-            pkg install -y ${{ matrix.packages }}
-            # Conan requires the sqlite3 module, which is packaged separately
-            # and named after the default python version.
-            pkg install -y $(python3 -c 'import sys; v = sys.version_info; print(f"py{v.major}{v.minor}-sqlite3")')
+          prepare: pkg install -y ${{ matrix.packages }}
           run: ${{ matrix.run }}
