@@ -1,4 +1,4 @@
-// Copyright 2022 Chris E. Holloway
+// Copyright 2026 Chris E. Holloway
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,33 +18,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef XTR_IO_DETAIL_FD_STORAGE_BASE_HPP
-#define XTR_IO_DETAIL_FD_STORAGE_BASE_HPP
+#ifndef XTR_IO_DETAIL_OPEN_HPP
+#define XTR_IO_DETAIL_OPEN_HPP
 
 #include "xtr/detail/file_descriptor.hpp"
-#include "xtr/io/storage_interface.hpp"
-
-#include <string>
 
 namespace xtr::detail
 {
-    class fd_storage_base;
+    file_descriptor open_at_end(const char* path) noexcept;
+
+    bool is_seekable(int fd) noexcept;
+
+    bool is_append(int fd) noexcept;
+
+    bool set_append(int fd) noexcept;
 }
-
-class xtr::detail::fd_storage_base : public storage_interface
-{
-public:
-    fd_storage_base(int fd, std::string reopen_path);
-
-    void sync() noexcept override;
-
-    int reopen() noexcept override;
-
-protected:
-    virtual void replace_fd(file_descriptor fd) noexcept;
-
-    std::string reopen_path_;
-    detail::file_descriptor fd_;
-};
 
 #endif

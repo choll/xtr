@@ -1,4 +1,4 @@
-// Copyright 2022 Chris E. Holloway
+// Copyright 2026 Chris E. Holloway
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,58 +18,50 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "xtr/io/detail/fd_storage_base.hpp"
 #include "xtr/io/detail/open.hpp"
 #include "xtr/detail/retry.hpp"
-#include "xtr/detail/throw.hpp"
-
-#include <utility>
 
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
 XTR_FUNC
-xtr::detail::fd_storage_base::fd_storage_base(int fd, std::string reopen_path) :
-    reopen_path_(std::move(reopen_path)),
-    // The input file descriptor is duplicated so that there is no ambiguity
-    // regarding ownership of the fd---we effectively increment a reference
-    // count that we are responsible for decrementing later, and the user
-    // remains responsible for decrementing their own reference count.
-    fd_(::dup(fd))
+xtr::detail::file_descriptor xtr::detail::open_at_end(const char* path) noexcept
 {
-    if (!fd_)
-    {
-        detail::throw_system_error_fmt(
-            errno,
-            "xtr::detail::fd_storage_base::fd_storage_base: dup(2) failed");
-    }
+    // O_APPEND is not used because io_uring_fd_storage relies on writing
+    // buffers to specific offsets---if O_APPEND is used then the offsets
+    // would be ignored.
+    const int fd = XTR_TEMP_FAILURE_RETRY(
+        ::open(
+            path,
+            O_CREAT | O_WRONLY,
+            S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH));
+
+    // Seek to retain O_APPEND open behaviour
+    if (fd != -1)
+        (void)::lseek(fd, 0, SEEK_END);
+
+    return file_descriptor(fd);
 }
 
 XTR_FUNC
-void xtr::detail::fd_storage_base::sync() noexcept
+bool xtr::detail::is_seekable(int fd) noexcept
 {
-    XTR_TEMP_FAILURE_RETRY(::fsync(fd_.get()));
+    return ::lseek(fd, 0, SEEK_CUR) != -1;
 }
 
 XTR_FUNC
-int xtr::detail::fd_storage_base::reopen() noexcept
+bool xtr::detail::is_append(int fd) noexcept
 {
-    if (reopen_path_ == null_reopen_path)
-        return ENOENT;
-
-    auto fd = detail::open_at_end(reopen_path_.c_str());
-
-    if (!fd)
-        return errno;
-
-    replace_fd(std::move(fd));
-
-    return 0;
+    const int flags = ::fcntl(fd, F_GETFL);
+    return flags != -1 && (flags & O_APPEND);
 }
 
 XTR_FUNC
-void xtr::detail::fd_storage_base::replace_fd(file_descriptor fd) noexcept
+bool xtr::detail::set_append(int fd) noexcept
 {
-    fd_ = std::move(fd);
+    const int flags = ::fcntl(fd, F_GETFL);
+    if (flags == -1)
+        return false;
+    return ::fcntl(fd, F_SETFL, flags | O_APPEND) == 0;
 }

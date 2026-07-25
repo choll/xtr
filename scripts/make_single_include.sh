@@ -61,6 +61,7 @@ for file in \
     include/xtr/io/detail/fd_storage_base.hpp \
     include/xtr/io/posix_fd_storage.hpp \
     include/xtr/io/io_uring_fd_storage.hpp \
+    include/xtr/io/detail/open.hpp \
     include/xtr/io/fd_storage.hpp \
     include/xtr/logger.hpp \
     include/xtr/detail/concepts.hpp \
@@ -84,6 +85,7 @@ grep -hEv '^ *//|^#include "' \
     src/matcher.cpp \
     src/memory_mapping.cpp \
     src/mirrored_memory_mapping.cpp \
+    src/open.cpp \
     src/pagesize.cpp \
     src/posix_fd_storage.cpp \
     src/regex_matcher.cpp \
