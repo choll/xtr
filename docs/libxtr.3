@@ -511,7 +511,7 @@ Sets the default log level. Sinks created via future calls to get_sink will be c
 .INDENT 7.0
 .TP
 .B bool pump_io(pump_io_stats *stats = nullptr) 
-If the option_flags_t::disable_worker_thread option has been passed to logger::logger then this function must be called in order to process messages written to the logger. Users may call this function from a thread of their choosing and may interleave calls with other background tasks that their program needs to perform.
+If the option_flags_t::disable_worker_thread option has been passed to logger::logger then this function must be called in order to process messages written to the logger. Users may call this function from a thread of their choosing and may interleave calls with other background tasks that their program needs to perform. Once it has been called from a given thread it must continue to be called from the same thread.
 .sp
 For best results when interleaving with other tasks ensure that io_uring mode is enabled (so that I/O will be performed asynchronously leaving more time for other tasks to run). See XTR_USE_IO_URING for details on enabling io_uring.
 .sp
@@ -784,7 +784,7 @@ File descriptor constructor.
 .B Parameters
 .INDENT 7.0
 .IP \(bu 2
-\fBfd\fP \-\- File descriptor to write to. This will be duplicated via a call to dup(2) \%<https://\:www\:.man7\:.org/\:linux/\:man-pages/\:man2/\:dup\:.2\:.html>, so callers may close the file descriptor immediately after this constructor returns if desired.
+\fBfd\fP \-\- File descriptor to write to. This will be duplicated via a call to dup(2) \%<https://\:www\:.man7\:.org/\:linux/\:man-pages/\:man2/\:dup\:.2\:.html>, so callers may close the file descriptor immediately after this constructor returns if desired. The file descriptor must be seekable and must not have O_APPEND set.
 .IP \(bu 2
 \fBreopen_path\fP \-\- The path of the file associated with the fd argument. This path will be used to reopen the file if requested via the xtrctl reopen command \%<xtrctl\:.html#\:reopening-log-files>\&. Pass null_reopen_path if no filename is associated with the file descriptor.
 .IP \(bu 2
