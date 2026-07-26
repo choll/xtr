@@ -21,16 +21,12 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: install packages
-      run: |
-        sudo apt-get install doxygen
-        pip install 'sphinx<7.2'
-        pip install breathe
-        pip install sphinx-rtd-theme
+      run: sudo apt-get update && sudo apt-get install -y --no-install-recommends doxygen python3-venv
     - name: make docs
-      run: make -B docs
+      run: make docs
     - name: Commit changes
       if: github.ref == 'refs/heads/master'
-      uses: EndBug/add-and-commit@v9
+      uses: EndBug/add-and-commit@a94899bca583c204427a224a7af87c02f9b325d5 # v9
       with:
         author_name: github-actions
         author_email: github-actions@github.com
