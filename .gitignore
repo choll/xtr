@@ -35,10 +35,7 @@
 build
 docs/.doctrees
 docs/.buildinfo
-conan.lock
-conanbuildinfo.mak
-conanbuildinfo.txt
-conaninfo.txt
-graph_info.json
 single_include/xtr/logger.hpp.sav
 compile_commands.json
+.cache
+.ropeproject

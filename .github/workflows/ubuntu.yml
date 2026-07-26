@@ -1,0 +1,197 @@
+name: Ubuntu
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CLANG_VERSION: 18
+  # The io_uring tests register 64MiB of buffers, which exceeds the runner's
+  # RLIMIT_MEMLOCK.
+  URING: 0
+  APT_PACKAGES: pkg-config python3-venv
+
+jobs:
+  gcc:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        except: [1, 0]
+        pic: [1, 0]
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/cache@v4
+      with:
+        path: ~/.conan2/p
+        key: conan-${{ github.job }}-${{ hashFiles('conanfile.py', 'requirements.txt') }}
+    - name: install dependencies
+      run: |
+        sudo apt-get update && sudo apt-get install -y --no-install-recommends $APT_PACKAGES
+        make conan-profile
+    - name: make
+      run: make -j$(nproc) EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}} all
+    - name: test
+      run: make -j$(nproc) EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}} check
+
+    - name: coverage
+      if: matrix.except == 1 && matrix.pic == 0
+      run: make -j$(nproc) DEBUG=1 COVERAGE=1 check
+    - name: Upload coverage to Codecov
+      if: matrix.except == 1 && matrix.pic == 0
+      uses: codecov/codecov-action@v4
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        flags: unittests
+
+  clang:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        except: [1, 0]
+        pic: [1, 0]
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/cache@v4
+      with:
+        path: ~/.conan2/p
+        key: conan-${{ github.job }}-${{ hashFiles('conanfile.py', 'requirements.txt') }}
+    - name: install dependencies
+      env:
+        CC: clang-${{ env.CLANG_VERSION }}
+        CXX: clang++-${{ env.CLANG_VERSION }}
+      run: |
+        sudo apt-get update && sudo apt-get install -y --no-install-recommends $APT_PACKAGES
+        make conan-profile
+    - name: make
+      env:
+        CC: clang-${{ env.CLANG_VERSION }}
+        CXX: clang++-${{ env.CLANG_VERSION }}
+        AR: llvm-ar-${{ env.CLANG_VERSION }}
+        RANLIB: llvm-ranlib-${{ env.CLANG_VERSION }}
+      run: make -j$(nproc) EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}} all
+    - name: test
+      env:
+        CC: clang-${{ env.CLANG_VERSION }}
+        CXX: clang++-${{ env.CLANG_VERSION }}
+        AR: llvm-ar-${{ env.CLANG_VERSION }}
+        RANLIB: llvm-ranlib-${{ env.CLANG_VERSION }}
+      run: make -j$(nproc) EXCEPTIONS=${{matrix.except}} PIC=${{matrix.pic}} check
+
+  gcc-cmake:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/cache@v4
+      with:
+        path: ~/.conan2/p
+        key: conan-${{ github.job }}-${{ hashFiles('conanfile.py', 'requirements.txt') }}
+    - name: install dependencies
+      run: |
+        sudo apt-get update && sudo apt-get install -y --no-install-recommends $APT_PACKAGES
+        make conan-profile
+    - name: build with cmake
+      run: |
+        CONAN=$PWD/build/.venv/bin/conan
+        mkdir -p build/cmake && cd build/cmake
+        $CONAN install ../.. -g CMakeDeps -g CMakeToolchain --output-folder=${PWD} --build missing -s compiler.libcxx=libstdc++11
+        cmake ../.. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake -DBUILD_TESTING=ON -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INSTALL_PREFIX=/tmp/install
+        cmake --build . -j $(nproc)
+    - name: test
+      run: cd build/cmake && cmake --build . --target test
+    - name: install
+      run: cd build/cmake && cmake --build . --target install
+
+  clang-cmake:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/cache@v4
+      with:
+        path: ~/.conan2/p
+        key: conan-${{ github.job }}-${{ hashFiles('conanfile.py', 'requirements.txt') }}
+    - name: install dependencies
+      env:
+        CC: clang-${{ env.CLANG_VERSION }}
+        CXX: clang++-${{ env.CLANG_VERSION }}
+      run: |
+        sudo apt-get update && sudo apt-get install -y --no-install-recommends $APT_PACKAGES
+        make conan-profile
+    - name: build with cmake
+      env:
+        CC: clang-${{ env.CLANG_VERSION }}
+        CXX: clang++-${{ env.CLANG_VERSION }}
+      run: |
+        CONAN=$PWD/build/.venv/bin/conan
+        mkdir -p build/cmake && cd build/cmake
+        $CONAN install ../.. -g CMakeDeps -g CMakeToolchain --output-folder=${PWD} --build missing -s compiler=clang -s compiler.version=$CLANG_VERSION -s compiler.libcxx=libstdc++11
+        cmake ../.. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake -DBUILD_TESTING=ON -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INSTALL_PREFIX=/tmp/install
+        cmake --build . -j $(nproc)
+    - name: test
+      run: cd build/cmake && cmake --build . --target test
+    - name: install
+      run: cd build/cmake && cmake --build . --target install
+
+  gcc-sanitizer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        sanitizer: [address, undefined, thread]
+        except: [1, 0]
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/cache@v4
+      with:
+        path: ~/.conan2/p
+        key: conan-${{ github.job }}-${{ hashFiles('conanfile.py', 'requirements.txt') }}
+    - name: install dependencies
+      run: |
+        sudo apt-get update && sudo apt-get install -y --no-install-recommends $APT_PACKAGES
+        make conan-profile
+    - name: sanitizer
+      run: make -j$(nproc) EXCEPTIONS=${{matrix.except}} SANITIZER=${{matrix.sanitizer}} check
+
+  clang-sanitizer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        sanitizer: [address, undefined, thread]
+        except: [1, 0]
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/cache@v4
+      with:
+        path: ~/.conan2/p
+        key: conan-${{ github.job }}-${{ hashFiles('conanfile.py', 'requirements.txt') }}
+    - name: install dependencies
+      env:
+        CC: clang-${{ env.CLANG_VERSION }}
+        CXX: clang++-${{ env.CLANG_VERSION }}
+      run: |
+        sudo apt-get update && sudo apt-get install -y --no-install-recommends $APT_PACKAGES
+        make conan-profile
+    - name: sanitizer
+      env:
+        CC: clang-${{ env.CLANG_VERSION }}
+        CXX: clang++-${{ env.CLANG_VERSION }}
+        AR: llvm-ar-${{ env.CLANG_VERSION }}
+        RANLIB: llvm-ranlib-${{ env.CLANG_VERSION }}
+      run: make -j$(nproc) EXCEPTIONS=${{matrix.except}} SANITIZER=${{matrix.sanitizer}} check

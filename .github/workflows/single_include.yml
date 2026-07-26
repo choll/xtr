@@ -6,26 +6,35 @@ on:
   pull_request:
     branches: [ master ]
 
+permissions:
+  contents: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
     - uses: actions/checkout@v4
 
-    - name: init submodules
-      run: git submodule init
-    - name: update submodules
-      run: git submodule update
+    - name: install dependencies
+      run: |
+        sudo apt-get update && sudo apt-get install -y --no-install-recommends pkg-config python3-venv
+        make conan-profile
+        make build/pkgconfig/fmt.pc
 
     - name: make header
       run: make -B single_include
 
     - name: build
-      run: g++ -DFMT_HEADER_ONLY -DXTR_USE_IO_URING=0 -std=c++20 -Wall -pedantic test/single_include.cpp -I single_include -isystem third_party/include -pthread -o /dev/null
+      run: g++ -DXTR_USE_IO_URING=0 -std=c++20 -Wall -pedantic test/single_include.cpp -I single_include $(PKG_CONFIG_PATH=build/pkgconfig pkg-config --cflags --libs fmt) -pthread -o /dev/null
 
     - name: Commit changes
       if: github.ref == 'refs/heads/master'
-      uses: EndBug/add-and-commit@v9
+      uses: EndBug/add-and-commit@a94899bca583c204427a224a7af87c02f9b325d5 # v9
       with:
         author_name: github-actions
         author_email: github-actions@github.com

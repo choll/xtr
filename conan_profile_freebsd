@@ -1,0 +1,4 @@
+# The ConanCenter CMake package is broken on FreeBSD. It can be bypassed by
+# appending the below to ~/.conan2/profiles/default.
+[platform_tool_requires]
+cmake/3.31.12

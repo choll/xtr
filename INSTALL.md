@@ -1,9 +1,13 @@
 ## Dependencies
 
 * [libfmt](https://github.com/fmtlib/fmt)
+* [liburing](https://github.com/axboe/liburing) (optional, for the io\_uring back-end)
 * [Catch2](https://github.com/catchorg/Catch2) (optional, for unit tests)
 * [Google Benchmark](https://github.com/google/benchmark) (optional, for benchmarks)
 * [Gcovr](https://github.com/gcovr/gcovr) (optional, for local code coverage reports)
+
+Python and pkg-config are required to build, as dependencies are installed
+via [Conan](https://conan.io) and located via pkg-config.
 
 ---
 
@@ -29,40 +33,27 @@ See `single_include/xtr/logger.hpp`
 
 ### Satisfying build dependencies with Conan
 
-A `conanfile.py` is provided for use with Conan. Run `conan install .` to
-install all dependencies, then use make to build and install:
+Dependencies are installed via Conan, which the makefile installs into a
+virtualenv under `build/`, so only Python and pkg-config are required. A Conan
+profile is needed before the first build:
 
 ```
+make conan-profile
 make
 make install
 ```
 
 The installation directory can be overridden via the `PREFIX` option.
-
-### Satisfying build dependencies with Git submodules
-
-If you do not want to use Conan but want to get started quickly then
-the repository submodules can be used to satisfy dependencies:
-
-```
-git submodule init
-git submodule update
-```
-
-Then use make to build and install:
-
-```
-make
-make install
-```
-
-The installation directory can be overridden via the `PREFIX` option.
-
-Note that if submodules are used only libfmt and Catch2 are provided, and libfmt is used in header-only mode.
 
 ### Satisfying build dependencies manually
 
-See the list of makefile path options [below](#makefile-paths).
+Dependencies are located via pkg-config, so to build against libraries already
+installed on the system, use the system pkg-config and disable the Conan
+generated files:
+
+```
+make PKG_CONFIG=pkg-config PKG_CONFIG_FILES=
+```
 
 ### Makefile options
 
@@ -75,50 +66,38 @@ Name         | Description                    | Default value
 `PIC`        | Set to 1 to build with -fPIC (position independent code, may be required if you want to link the produced static library in your own shared object) | 0
 `LTO`        | Set to 1 to build with LTO (link-time optimization) | 1
 `DEBUG`      | Set to 1 to produce a debug build | 0
-`RELDEBUG`   | Set to 1 to produce a release-debug build (optimized with debug symbols) | 1
+`RELDEBUG`   | Set to 1 to produce a release-debug build (optimized with debug symbols) | 0
+`URING`      | Set to 1 or 0 to force the io\_uring back-end on or off | `auto`
+`PKG_CONFIG` | pkg-config command used to locate dependencies | `PKG_CONFIG_PATH=build/pkgconfig pkg-config`
 
 ### Makefile targets
 
 Name                     | Description         | Required dependencies
 -------------------------|---------------------|------------------
-`all` / default          | Build library       | libfmt
+default                  | Build library       | libfmt
+`all`                    | Build the library, tests, benchmarks, xtrctl and the single include header | libfmt, Catch2, Google Benchmark
 `check`                  | Build and run tests | libfmt, Catch2
 `benchmark`              | Build and run benchmarks | libfmt, Google Benchmark
 `coverage_report`        | Create a local code coverage report | libfmt, Catch2, gcovr
+`conan-profile`          | Create a Conan profile, if none exists |
 `install`                | Install the library under `PREFIX` |
-
-### Makefile paths
-
-The following makefile options can be used to set the include and library
-search paths for build dependencies if they have been installed to non-standard
-locations (if you are using Conan or submodules then you don't need to use
-these).
-
-Name                       | Description | Required by targets
----------------------------|-------------|--------------------
-`FMT_INCLUDE_DIR`          | Path to the libfmt include directory | All targets
-`FMT_LIB_DIR`              | Path to the libfmt lib directory | All targets
-`CATCH2_INCLUDE_DIR`       | Path to the Catch2 include directory | `test`, `run_test`, `coverage_html`
-`GOOGLE_BENCH_INCLUDE_DIR` | Path to the Google Benchmark include directory | `benchmark`, `run_benchmark`
-`GOOGLE_BENCH_LIB_DIR`     | Path to the Google Benchmark lib directory | `benchmark`, `run_benchmark`
-`LIBURING_INCLUDE_DIR` | Path to the liburing include directory | All targets, optional
-`LIBURING_LIB_DIR`     | Path to the liburing lib directory | All targets, optional
+`clean`                  | Remove build output for the current configuration |
+`distclean`              | Remove `build`, including the Conan virtualenv |
 
 ### Building with CMake
 
-Besides Makefile, you can also use CMake for building. All dependencies can be solved by Conan:
+You may also use CMake for building. All dependencies can be solved by Conan:
 
 ```
-mkdir build && cd build/
-conan install .. -g cmake_find_package
-cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MODULE_PATH=${PWD} -DBUILD_TESTING=ON
+mkdir -p build/cmake && cd build/cmake
+conan install ../.. -g CMakeDeps -g CMakeToolchain --output-folder=${PWD} --build missing
+cmake ../.. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake -DBUILD_TESTING=ON
 cmake --build .
 cmake --build . --target test
 cmake --build . --target install
 ```
 
-The Conan client will install all dependencies listed in `conanfile.py` and generate Findxxx.cmake files, which will be loaded by CMake.
+The Conan client will install all dependencies listed in `conanfile.py` and generate the config files that CMake's `find_package` will load.
 By default, CMake will build all project on `Debug` mode, but you can set `Release` instead.
-The `CMAKE_MODULE_PATH` is required to locale the find cmake file generated by Conan.
 Also, `BUILD_TESTING` by default is disabled, without this option, the project will not build testing.
 The target install folder can be customized by `CMAKE_INSTALL_PREFIX` definition
