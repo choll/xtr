@@ -215,10 +215,10 @@ $(CONAN) $(PIP) $(SPHINX) &: requirements.txt
 	python3 -m venv $(VENV_DIR)
 	$(PIP) install --force-reinstall -r $<
 
-$(PKG_CONFIG_FILES) &: conanfile.py $(CONAN)
+$(PKG_CONFIG_FILES) &: conanfile.py $(CONAN) conan.lock
 	@mkdir -p $(PKG_CONFIG_DIR)
 	$(CONAN) install --envs-generation=false --build=missing \
-		--output-folder=$(PKG_CONFIG_DIR) $<
+		--output-folder=$(PKG_CONFIG_DIR) --lockfile=conan.lock $<
 
 conan-profile: $(CONAN)
 	$(CONAN) profile detect --exist-ok
