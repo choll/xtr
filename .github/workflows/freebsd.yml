@@ -48,7 +48,7 @@ jobs:
               CONAN=$PWD/build/.venv/bin/conan
               mkdir -p build/cmake && cd build/cmake
               export CC=gcc14 CXX=g++14 RANLIB=gcc-ranlib14 AR=gcc-ar14
-              $CONAN install ../.. -g CMakeDeps -g CMakeToolchain --output-folder=${PWD} --build missing -s compiler.libcxx=libstdc++11
+              $CONAN install ../.. -g CMakeDeps -g CMakeToolchain --output-folder=${PWD} --build missing --lockfile-partial -s compiler.libcxx=libstdc++11
               cmake ../.. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake -DBUILD_TESTING=ON -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INSTALL_PREFIX=/tmp/install -DCMAKE_AR=`which $AR` -DCMAKE_RANLIB=`which $RANLIB`
               cmake --build .
               cmake --build . --target install
@@ -62,7 +62,7 @@ jobs:
               CONAN=$PWD/build/.venv/bin/conan
               mkdir -p build/cmake && cd build/cmake
               export CC=clang CXX=clang++ RANLIB=llvm-ranlib AR=llvm-ar
-              $CONAN install ../.. -g CMakeDeps -g CMakeToolchain --output-folder=${PWD} --build missing
+              $CONAN install ../.. -g CMakeDeps -g CMakeToolchain --output-folder=${PWD} --build missing --lockfile-partial
               cmake ../.. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake -DBUILD_TESTING=ON -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INSTALL_PREFIX=/tmp/install -DCMAKE_AR=`which $AR` -DCMAKE_RANLIB=`which $RANLIB`
               cmake --build .
               cmake --build . --target install
