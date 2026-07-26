@@ -14,6 +14,7 @@ VENV_DIR = build/.venv
 PKG_CONFIG_DIR = build/pkgconfig
 CONAN ?= $(VENV_DIR)/bin/conan
 PIP ?= $(VENV_DIR)/bin/pip
+SPHINX ?= $(VENV_DIR)/bin/sphinx-build
 # Note that anything using $(PKG_CONFIG) must use recursive assignment,
 # i.e. "FOO = x". This is because the build itself produces pkg-config
 # .pc files, so non-recursive assignment would run pkg-config before
@@ -210,7 +211,7 @@ $(XTRCTL_OBJS): $(BUILD_DIR)/%.cpp.o: %.cpp $(PKG_CONFIG_FILES)
 	@mkdir -p $(@D)
 	$(CXX) -o $@ -c $(CPPFLAGS) $(CXXFLAGS) $<
 
-$(CONAN) $(PIP) &: requirements.txt
+$(CONAN) $(PIP) $(SPHINX) &: requirements.txt
 	python3 -m venv $(VENV_DIR)
 	$(PIP) install --force-reinstall -r $<
 
@@ -221,6 +222,13 @@ $(PKG_CONFIG_FILES) &: conanfile.py $(CONAN)
 
 conan-profile: $(CONAN)
 	$(CONAN) profile detect --exist-ok
+
+pip-lock: $(PIP)
+	$(PIP) install pip-tools
+	$(VENV_DIR)/bin/pip-compile --strip-extras requirements.in
+
+conan-lock: $(CONAN)
+	$(CONAN) lock create conanfile.py --lockfile-out=conan.lock
 
 all: $(TARGET) $(TEST_TARGET) $(BENCH_TARGET) $(XTRCTL_TARGET) single_include
 
@@ -269,11 +277,11 @@ build/doxygen/xml/index.xml: docs-src/Doxyfile $(INCLUDES)
 	@mkdir -p $(@D)
 	doxygen $<
 
-$(HTML_DOC_PAGES) &: $(DOCS_SRCS) build/doxygen/xml/index.xml
-	sphinx-build -W -b html docs-src docs
+$(HTML_DOC_PAGES) &: $(DOCS_SRCS) build/doxygen/xml/index.xml $(SPHINX)
+	$(SPHINX) -W -b html docs-src docs
 
-$(MAN_PAGES) &: $(DOCS_SRCS) build/doxygen/xml/index.xml
-	sphinx-build -W -b man docs-src docs
+$(MAN_PAGES) &: $(DOCS_SRCS) build/doxygen/xml/index.xml $(SPHINX)
+	$(SPHINX) -W -b man docs-src docs
 
 docs: $(HTML_DOC_PAGES) $(MAN_PAGES)
 
@@ -290,5 +298,6 @@ endif
 
 -include $(DEPS)
 
-.PHONY: all check benchmark benchmark_cpu conan-profile single_include \
-	install clean clean-docs distclean coverage_report docs xtrctl
+.PHONY: all check benchmark benchmark_cpu conan-profile conan-lock pip-lock \
+	single_include install clean clean-docs distclean coverage_report docs \
+	xtrctl
