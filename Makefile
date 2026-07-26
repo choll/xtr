@@ -218,7 +218,8 @@ $(CONAN) $(PIP) $(SPHINX) &: requirements.txt
 $(PKG_CONFIG_FILES) &: conanfile.py $(CONAN) conan.lock
 	@mkdir -p $(PKG_CONFIG_DIR)
 	$(CONAN) install --envs-generation=false --build=missing \
-		--output-folder=$(PKG_CONFIG_DIR) --lockfile=conan.lock $<
+		--output-folder=$(PKG_CONFIG_DIR) --lockfile=conan.lock \
+		--lockfile-partial $<
 
 conan-profile: $(CONAN)
 	$(CONAN) profile detect --exist-ok
