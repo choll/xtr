@@ -1695,8 +1695,8 @@ namespace xtr
 class xtr::sink
 {
 private:
-    using fptr_t = std::byte* (*)(detail::buffer & buf, // output buffer
-                                  std::byte* record,    // pointer to log record
+    using fptr_t = std::byte* (*)(detail::buffer& buf, // output buffer
+                                  std::byte* record,   // pointer to log record
                                   detail::consumer&,
                                   const char* timestamp,
                                   std::string& name) noexcept;
@@ -2193,7 +2193,7 @@ inline ::ssize_t xtr::detail::command_send(int fd, const void* buf, std::size_t 
     iov.iov_base = const_cast<void*>(buf);
     iov.iov_len = nbytes;
 
-    return XTR_TEMP_FAILURE_RETRY(::sendmsg(fd, &hdr, MSG_NOSIGNAL));
+    return XTR_TEMP_FAILURE_RETRY(::sendmsg(fd, &hdr, MSG_NOSIGNAL | MSG_EOR));
 }
 
 #include <sys/socket.h>
@@ -2352,7 +2352,7 @@ public:
     {
     }
 
-    virtual ~matcher() {};
+    virtual ~matcher(){};
 };
 
 #include <cstddef>
@@ -3477,7 +3477,6 @@ namespace xtr::detail
 
     template<typename T>
     concept tuple_like = requires(T t) { std::tuple_size<T>(); };
-
 }
 
 #include <algorithm>
@@ -3829,11 +3828,10 @@ inline void xtr::detail::command_dispatcher::send(
 
 inline void xtr::detail::command_dispatcher::process_commands(int timeout) noexcept
 {
-    int nfds = XTR_TEMP_FAILURE_RETRY(
-        ::poll(
-            reinterpret_cast<::pollfd*>(&pollfds_[0]),
-            ::nfds_t(pollfds_.size()),
-            timeout));
+    int nfds = XTR_TEMP_FAILURE_RETRY(::poll(
+        reinterpret_cast<::pollfd*>(&pollfds_[0]),
+        ::nfds_t(pollfds_.size()),
+        timeout));
 
     if (nfds == -1)
     {
@@ -4388,9 +4386,8 @@ inline xtr::storage_interface_ptr xtr::detail::make_fd_storage(
         {
             fmt::print(
                 stderr,
-                FMT_COMPILE(
-                    "Falling back to posix_fd_storage due to "
-                    "io_uring_fd_storage error: {}\n"),
+                FMT_COMPILE("Falling back to posix_fd_storage due to "
+                            "io_uring_fd_storage error: {}\n"),
                 e.what());
         }
 #endif
@@ -5117,11 +5114,10 @@ inline xtr::detail::mirrored_memory_mapping::~mirrored_memory_mapping()
 
 inline xtr::detail::file_descriptor xtr::detail::open_at_end(const char* path) noexcept
 {
-    const int fd = XTR_TEMP_FAILURE_RETRY(
-        ::open(
-            path,
-            O_CREAT | O_WRONLY,
-            S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH));
+    const int fd = XTR_TEMP_FAILURE_RETRY(::open(
+        path,
+        O_CREAT | O_WRONLY,
+        S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH));
 
     if (fd != -1)
         (void)::lseek(fd, 0, SEEK_END);
