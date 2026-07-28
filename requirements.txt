@@ -10,10 +10,14 @@ babel==2.18.0
     # via sphinx
 breathe==4.36.0
     # via -r requirements.in
+build==1.5.0
+    # via pip-tools
 certifi==2026.7.22
     # via requests
 charset-normalizer==3.4.9
     # via requests
+click==8.4.2
+    # via pip-tools
 colorama==0.4.6
     # via conan
 conan==2.31.1
@@ -37,11 +41,20 @@ jinja2==3.1.6
 markupsafe==3.0.3
     # via jinja2
 packaging==26.2
-    # via sphinx
+    # via
+    #   build
+    #   sphinx
+    #   wheel
 patch-ng==1.19.1
     # via conan
+pip-tools==7.6.0
+    # via -r requirements.in
 pygments==2.20.0
     # via sphinx
+pyproject-hooks==1.2.0
+    # via
+    #   build
+    #   pip-tools
 python-dateutil==2.9.0.post0
     # via conan
 pyyaml==6.0.3
@@ -82,3 +95,9 @@ urllib3==2.7.0
     # via
     #   conan
     #   requests
+wheel==0.47.0
+    # via pip-tools
+
+# The following packages are considered to be unsafe in a requirements file:
+# pip
+# setuptools
