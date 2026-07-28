@@ -15,6 +15,7 @@ PKG_CONFIG_DIR = build/pkgconfig
 CONAN ?= $(VENV_DIR)/bin/conan
 PIP ?= $(VENV_DIR)/bin/pip
 SPHINX ?= $(VENV_DIR)/bin/sphinx-build
+PIP_COMPILE ?= $(VENV_DIR)/bin/pip-compile
 # Note that anything using $(PKG_CONFIG) must use recursive assignment,
 # i.e. "FOO = x". This is because the build itself produces pkg-config
 # .pc files, so non-recursive assignment would run pkg-config before
@@ -211,7 +212,7 @@ $(XTRCTL_OBJS): $(BUILD_DIR)/%.cpp.o: %.cpp $(PKG_CONFIG_FILES)
 	@mkdir -p $(@D)
 	$(CXX) -o $@ -c $(CPPFLAGS) $(CXXFLAGS) $<
 
-$(CONAN) $(PIP) $(SPHINX) &: requirements.txt
+$(CONAN) $(SPHINX) $(PIP_COMPILE) &: requirements.txt
 	python3 -m venv $(VENV_DIR)
 	$(PIP) install --force-reinstall -r $<
 
@@ -224,9 +225,8 @@ $(PKG_CONFIG_FILES) &: conanfile.py $(CONAN) conan.lock
 conan-profile: $(CONAN)
 	$(CONAN) profile detect --exist-ok
 
-pip-lock: $(PIP)
-	$(PIP) install pip-tools
-	$(VENV_DIR)/bin/pip-compile --strip-extras requirements.in
+pip-lock: $(PIP_COMPILE)
+	$(PIP_COMPILE) --quiet --strip-extras requirements.in
 
 conan-lock: $(CONAN)
 	$(CONAN) lock create conanfile.py --lockfile-out=conan.lock
