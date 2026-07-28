@@ -132,8 +132,7 @@ bool xtr::detail::consumer::run_once(pump_io_stats* stats) noexcept
             sink::ring_buffer::size_type(pos - span.begin()));
 
         std::size_t n_dropped;
-        if (sinks_[i]->buf_.read_span().empty() &&
-            (n_dropped = sinks_[i]->dropped_count()) > 0)
+        if (pos == span.end() && (n_dropped = sinks_[i]->dropped_count()) > 0)
         {
             detail::print(
                 buf,

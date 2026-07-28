@@ -27,6 +27,7 @@
 #include <cassert>
 #include <cerrno>
 #include <cstdlib>
+#include <cstring>
 #include <random>
 
 #include <fcntl.h>
@@ -34,9 +35,9 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#if !defined(__linux__)
 namespace xtr::detail
 {
+#if !defined(__linux__)
     XTR_FUNC
     file_descriptor shm_open_anon(int oflag, mode_t mode)
     {
@@ -73,8 +74,23 @@ namespace xtr::detail
 
         return file_descriptor(fd);
     }
-}
 #endif
+
+    // This is required because MAP_POPULATE only sets up readable pages.
+    XTR_FUNC
+    void prefault_write(void* addr, std::size_t length)
+    {
+#if defined(MADV_POPULATE_WRITE)
+        if (::madvise(addr, length, MADV_POPULATE_WRITE) == 0)
+            return;
+#endif
+        // Perform a non-destructive write access on each page.
+        volatile std::byte* const p = static_cast<volatile std::byte*>(addr);
+        const std::size_t page_size = align_to_page_size(1);
+        for (std::size_t i = 0; i < length; i += page_size)
+            p[i] = p[i];
+    }
+}
 
 XTR_FUNC
 xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping(
@@ -149,6 +165,7 @@ xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping(
 
         reserve.release(); // mapping was destroyed by mremap
         mirror.release(); // mirror will be recreated in ~mirrored_memory_mapping
+        prefault_write(m_.get(), length * 2);
         return;
 #else
         if (!(temp_fd = shm_open_anon(O_RDWR, S_IRUSR | S_IWUSR)))
@@ -188,6 +205,7 @@ xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping(
 
     reserve.release(); // mapping was destroyed when m_ was created
     mirror.release();  // mirror will be recreated in ~mirrored_memory_mapping
+    prefault_write(m_.get(), length * 2);
 }
 
 XTR_FUNC
