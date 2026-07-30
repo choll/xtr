@@ -31,7 +31,7 @@ jobs:
         pic: [1, 0]
     steps:
     - uses: actions/checkout@v7
-    - uses: actions/cache@v4
+    - uses: actions/cache@v6
       with:
         path: ~/.conan2/p
         key: conan-${{ github.job }}-${{ hashFiles('conanfile.py', 'requirements.txt') }}
@@ -64,7 +64,7 @@ jobs:
         pic: [1, 0]
     steps:
     - uses: actions/checkout@v7
-    - uses: actions/cache@v4
+    - uses: actions/cache@v6
       with:
         path: ~/.conan2/p
         key: conan-${{ github.job }}-${{ hashFiles('conanfile.py', 'requirements.txt') }}
@@ -95,7 +95,7 @@ jobs:
     timeout-minutes: 30
     steps:
     - uses: actions/checkout@v7
-    - uses: actions/cache@v4
+    - uses: actions/cache@v6
       with:
         path: ~/.conan2/p
         key: conan-${{ github.job }}-${{ hashFiles('conanfile.py', 'requirements.txt') }}
@@ -120,7 +120,7 @@ jobs:
     timeout-minutes: 30
     steps:
     - uses: actions/checkout@v7
-    - uses: actions/cache@v4
+    - uses: actions/cache@v6
       with:
         path: ~/.conan2/p
         key: conan-${{ github.job }}-${{ hashFiles('conanfile.py', 'requirements.txt') }}
@@ -156,7 +156,7 @@ jobs:
         except: [1, 0]
     steps:
     - uses: actions/checkout@v7
-    - uses: actions/cache@v4
+    - uses: actions/cache@v6
       with:
         path: ~/.conan2/p
         key: conan-${{ github.job }}-${{ hashFiles('conanfile.py', 'requirements.txt') }}
@@ -177,7 +177,7 @@ jobs:
         except: [1, 0]
     steps:
     - uses: actions/checkout@v7
-    - uses: actions/cache@v4
+    - uses: actions/cache@v6
       with:
         path: ~/.conan2/p
         key: conan-${{ github.job }}-${{ hashFiles('conanfile.py', 'requirements.txt') }}
