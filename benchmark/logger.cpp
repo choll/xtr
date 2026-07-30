@@ -89,8 +89,6 @@ namespace
     BENCHMARK(NAME);
 
 LOG_BENCH(logger_benchmark, XTR_LOG(p, "Test"), 8)
-LOG_BENCH(logger_benchmark_tsc, XTR_LOG_TSC(p, "Test"), 16)
-LOG_BENCH(logger_benchmark_clock_realtime_coarse, XTR_LOG_RTC(p, "Test"), 24)
 LOG_BENCH(
     logger_benchmark_int,
     (benchmark::DoNotOptimize(int_arg), XTR_LOG(p, "Test {}", int_arg)),
@@ -115,4 +113,30 @@ LOG_BENCH(
     logger_benchmark_str,
     (benchmark::DoNotOptimize(str_arg), XTR_LOG(p, "Test {}", str_arg)),
     32)
+LOG_BENCH(logger_benchmark_tsc, XTR_LOG_TSC(p, "Test"), 16)
+LOG_BENCH(
+    logger_benchmark_tsc_int,
+    (benchmark::DoNotOptimize(int_arg), XTR_LOG_TSC(p, "Test {}", int_arg)),
+    24)
+LOG_BENCH(
+    logger_benchmark_tsc_long,
+    (benchmark::DoNotOptimize(long_arg), XTR_LOG_TSC(p, "Test {}", long_arg)),
+    24)
+LOG_BENCH(
+    logger_benchmark_tsc_double,
+    (benchmark::DoNotOptimize(double_arg), XTR_LOG_TSC(p, "Test {}", double_arg)),
+    24)
+LOG_BENCH(
+    logger_benchmark_tsc_c_str,
+    (benchmark::DoNotOptimize(c_str_arg), XTR_LOG_TSC(p, "Test {}", c_str_arg)),
+    40)
+LOG_BENCH(
+    logger_benchmark_tsc_str_view,
+    (benchmark::DoNotOptimize(sv_arg), XTR_LOG_TSC(p, "Test {}", sv_arg)),
+    40)
+LOG_BENCH(
+    logger_benchmark_tsc_str,
+    (benchmark::DoNotOptimize(str_arg), XTR_LOG_TSC(p, "Test {}", str_arg)),
+    40)
+LOG_BENCH(logger_benchmark_clock_realtime_coarse, XTR_LOG_RTC(p, "Test"), 24)
 LOG_BENCH(logger_benchmark_non_blocking, XTR_TRY_LOG(p, "Test"), 8)
