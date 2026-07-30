@@ -1486,8 +1486,11 @@ TEST_CASE_METHOD(fixture, "logger non-blocking drop test", "[logger]")
     next_sink.sync();
 
     REQUIRE(
-        last_line() ==
-        fmt::format("W 2000-01-01 01:02:03.123456 Name: {} messages dropped", n_dropped));
+        std::ranges::count(
+            lines_,
+            fmt::format(
+                "W 2000-01-01 01:02:03.123456 Name: {} messages dropped",
+                n_dropped)) == 1);
 }
 
 // Calling these tests `soak' tests is stretching things but I can't think
