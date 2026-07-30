@@ -30,7 +30,7 @@ jobs:
         except: [1, 0]
         pic: [1, 0]
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
     - uses: actions/cache@v4
       with:
         path: ~/.conan2/p
@@ -63,7 +63,7 @@ jobs:
         except: [1, 0]
         pic: [1, 0]
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
     - uses: actions/cache@v4
       with:
         path: ~/.conan2/p
@@ -94,7 +94,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
     - uses: actions/cache@v4
       with:
         path: ~/.conan2/p
@@ -119,7 +119,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
     - uses: actions/cache@v4
       with:
         path: ~/.conan2/p
@@ -155,7 +155,7 @@ jobs:
         sanitizer: [address, undefined, thread]
         except: [1, 0]
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
     - uses: actions/cache@v4
       with:
         path: ~/.conan2/p
@@ -176,7 +176,7 @@ jobs:
         sanitizer: [address, undefined, thread]
         except: [1, 0]
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
     - uses: actions/cache@v4
       with:
         path: ~/.conan2/p
