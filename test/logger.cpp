@@ -41,6 +41,7 @@
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 
+#include <algorithm>
 #include <array>
 #include <atomic>
 #include <cerrno>

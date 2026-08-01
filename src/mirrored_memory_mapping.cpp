@@ -27,7 +27,6 @@
 #include <cassert>
 #include <cerrno>
 #include <cstdlib>
-#include <cstring>
 #include <random>
 
 #include <fcntl.h>
