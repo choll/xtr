@@ -122,9 +122,9 @@ formatting (i.e. real world use would be slower).
 
 | Function       | Messages/s | MiB/s   | Time     |
 |----------------|------------|---------|----------|
-| XTR\_LOG       | 13532135   | 1330.67 | 7.38982s |
-| XTR\_LOGL\_TSC | 9082393    | 893.112 | 11.0103s |
-| fmt::print     | 12514662   | 1230.62 | 7.99063s |
+| XTR\_LOG       | 14856334   | 1460.89 | 6.73114s |
+| XTR\_LOGL\_TSC | 7713411    | 758.494 | 12.9644s |
+| fmt::print     | 14545790   | 1430.35 | 6.87484s |
 
 ## Installation notes
 
