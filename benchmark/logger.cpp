@@ -72,17 +72,15 @@ namespace
     struct variable_length_struct
     {
         std::size_t size;
-        __extension__ int data[];
+        __extension__ std::byte data[];
     };
 
-    template<std::size_t Bytes>
+    template<std::size_t N>
     variable_length_struct& make_vls()
     {
-        alignas(variable_length_struct) static std::byte storage[Bytes];
+        alignas(variable_length_struct) static std::byte storage[N];
         auto& vls = *reinterpret_cast<variable_length_struct*>(storage);
-        vls.size = (Bytes - sizeof(variable_length_struct)) / sizeof(int);
-        for (std::size_t i = 0; i != vls.size; ++i)
-            vls.data[i] = int(i);
+        vls.size = N - offsetof(variable_length_struct, data);
         return vls;
     }
 
