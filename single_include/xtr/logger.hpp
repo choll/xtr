@@ -45,6 +45,18 @@ SOFTWARE.
 #endif
 
 /**
+ * Sets the number of sub-second digits used when formatting timestamps, from
+ * 1 (tenths of a second) to 9 (nanoseconds).
+ *
+ * Note that if the single header include file is not used then this setting
+ * may only be defined in either config.hpp or by overriding CXXFLAGS, and
+ * requires rebuilding libxtr if set.
+ */
+#if !defined(XTR_TIMESTAMP_DIGITS)
+#define XTR_TIMESTAMP_DIGITS 6
+#endif
+
+/**
  * Set to 1 to enable io_uring support. If this setting is not manually defined
  * then io_uring support will be automatically detected. If libxtr is built with
  * io_uring support enabled then the library will still function on kernels that
@@ -72,6 +84,7 @@ SOFTWARE.
 #endif
 
 #include <algorithm>
+#include <cstdint>
 #include <ctime>
 #include <iterator>
 
@@ -90,13 +103,31 @@ namespace xtr
         }
     };
 
+    static_assert(
+        XTR_TIMESTAMP_DIGITS >= 1 && XTR_TIMESTAMP_DIGITS <= 9,
+        "XTR_TIMESTAMP_DIGITS must be between 1 and 9");
+
     namespace detail
     {
-        template<typename OutputIterator, typename T>
-        inline void format_micros(OutputIterator out, T value)
+        consteval std::uint32_t pow10(std::size_t n)
         {
-#pragma GCC unroll 6
-            for (std::size_t i = 0; i != 6; ++i)
+            std::uint32_t result = 1;
+            while (n-- != 0)
+                result *= 10u;
+            return result;
+        }
+
+        template<std::size_t Digits, typename OutputIterator>
+        inline void format_subseconds(OutputIterator out, std::uint32_t nsec)
+        {
+            static_assert(Digits >= 1 && Digits <= 9);
+
+            std::uint32_t value = nsec / pow10(9 - Digits);
+
+#if defined(__GNUC__)
+#pragma GCC unroll 9
+#endif
+            for (std::size_t i = 0; i != Digits; ++i)
             {
                 *--out = static_cast<char>('0' + value % 10);
                 value /= 10;
@@ -120,7 +151,7 @@ struct fmt::formatter<xtr::timespec>
         thread_local struct
         {
             std::time_t sec;
-            char buf[26] = {"1970-01-01 00:00:00."};
+            char buf[20 + XTR_TIMESTAMP_DIGITS] = {"1970-01-01 00:00:00."};
         } last;
 
         if (ts.tv_sec != last.sec) [[unlikely]]
@@ -132,7 +163,9 @@ struct fmt::formatter<xtr::timespec>
             last.sec = ts.tv_sec;
         }
 
-        xtr::detail::format_micros(std::end(last.buf), ts.tv_nsec / 1000);
+        xtr::detail::format_subseconds<XTR_TIMESTAMP_DIGITS>(
+            std::end(last.buf),
+            std::uint32_t(ts.tv_nsec));
 
         return std::copy(std::begin(last.buf), std::end(last.buf), ctx.out());
     }
@@ -1692,8 +1725,8 @@ namespace xtr
 class xtr::sink
 {
 private:
-    using fptr_t = std::byte* (*)(detail::buffer& buf, // output buffer
-                                  std::byte* record,   // pointer to log record
+    using fptr_t = std::byte* (*)(detail::buffer & buf, // output buffer
+                                  std::byte* record,    // pointer to log record
                                   detail::consumer&,
                                   const char* timestamp,
                                   std::string& name) noexcept;
@@ -2349,7 +2382,7 @@ public:
     {
     }
 
-    virtual ~matcher(){};
+    virtual ~matcher() {};
 };
 
 #include <cstddef>
@@ -3474,6 +3507,7 @@ namespace xtr::detail
 
     template<typename T>
     concept tuple_like = requires(T t) { std::tuple_size<T>(); };
+
 }
 
 #include <algorithm>
@@ -3825,10 +3859,11 @@ inline void xtr::detail::command_dispatcher::send(
 
 inline void xtr::detail::command_dispatcher::process_commands(int timeout) noexcept
 {
-    int nfds = XTR_TEMP_FAILURE_RETRY(::poll(
-        reinterpret_cast<::pollfd*>(&pollfds_[0]),
-        ::nfds_t(pollfds_.size()),
-        timeout));
+    int nfds = XTR_TEMP_FAILURE_RETRY(
+        ::poll(
+            reinterpret_cast<::pollfd*>(&pollfds_[0]),
+            ::nfds_t(pollfds_.size()),
+            timeout));
 
     if (nfds == -1)
     {
@@ -4382,8 +4417,9 @@ inline xtr::storage_interface_ptr xtr::detail::make_fd_storage(
         {
             fmt::print(
                 stderr,
-                FMT_COMPILE("Falling back to posix_fd_storage due to "
-                            "io_uring_fd_storage error: {}\n"),
+                FMT_COMPILE(
+                    "Falling back to posix_fd_storage due to "
+                    "io_uring_fd_storage error: {}\n"),
                 e.what());
         }
 #endif
@@ -5124,10 +5160,11 @@ inline xtr::detail::mirrored_memory_mapping::~mirrored_memory_mapping()
 
 inline xtr::detail::file_descriptor xtr::detail::open_at_end(const char* path) noexcept
 {
-    const int fd = XTR_TEMP_FAILURE_RETRY(::open(
-        path,
-        O_CREAT | O_WRONLY,
-        S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH));
+    const int fd = XTR_TEMP_FAILURE_RETRY(
+        ::open(
+            path,
+            O_CREAT | O_WRONLY,
+            S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH));
 
     if (fd != -1)
         (void)::lseek(fd, 0, SEEK_END);
