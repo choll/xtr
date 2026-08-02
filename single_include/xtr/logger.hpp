@@ -45,6 +45,18 @@ SOFTWARE.
 #endif
 
 /**
+ * Sets the number of sub-second digits used when formatting timestamps, from
+ * 1 (tenths of a second) to 9 (nanoseconds).
+ *
+ * Note that if the single header include file is not used then this setting
+ * may only be defined in either config.hpp or by overriding CXXFLAGS, and
+ * requires rebuilding libxtr if set.
+ */
+#if !defined(XTR_TIMESTAMP_DIGITS)
+#define XTR_TIMESTAMP_DIGITS 6
+#endif
+
+/**
  * Set to 1 to enable io_uring support. If this setting is not manually defined
  * then io_uring support will be automatically detected. If libxtr is built with
  * io_uring support enabled then the library will still function on kernels that
@@ -72,6 +84,7 @@ SOFTWARE.
 #endif
 
 #include <algorithm>
+#include <cstdint>
 #include <ctime>
 #include <iterator>
 
@@ -90,13 +103,31 @@ namespace xtr
         }
     };
 
+    static_assert(
+        XTR_TIMESTAMP_DIGITS >= 1 && XTR_TIMESTAMP_DIGITS <= 9,
+        "XTR_TIMESTAMP_DIGITS must be between 1 and 9");
+
     namespace detail
     {
-        template<typename OutputIterator, typename T>
-        inline void format_micros(OutputIterator out, T value)
+        consteval std::uint32_t pow10(std::size_t n)
         {
-#pragma GCC unroll 6
-            for (std::size_t i = 0; i != 6; ++i)
+            std::uint32_t result = 1;
+            while (n-- != 0)
+                result *= 10u;
+            return result;
+        }
+
+        template<std::size_t Digits, typename OutputIterator>
+        inline void format_subseconds(OutputIterator out, std::uint32_t nsec)
+        {
+            static_assert(Digits >= 1 && Digits <= 9);
+
+            std::uint32_t value = nsec / pow10(9 - Digits);
+
+#if defined(__GNUC__)
+#pragma GCC unroll 9
+#endif
+            for (std::size_t i = 0; i != Digits; ++i)
             {
                 *--out = static_cast<char>('0' + value % 10);
                 value /= 10;
@@ -120,7 +151,7 @@ struct fmt::formatter<xtr::timespec>
         thread_local struct
         {
             std::time_t sec;
-            char buf[26] = {"1970-01-01 00:00:00."};
+            char buf[20 + XTR_TIMESTAMP_DIGITS] = {"1970-01-01 00:00:00."};
         } last;
 
         if (ts.tv_sec != last.sec) [[unlikely]]
@@ -132,7 +163,9 @@ struct fmt::formatter<xtr::timespec>
             last.sec = ts.tv_sec;
         }
 
-        xtr::detail::format_micros(std::end(last.buf), ts.tv_nsec / 1000);
+        xtr::detail::format_subseconds<XTR_TIMESTAMP_DIGITS>(
+            std::end(last.buf),
+            std::uint32_t(ts.tv_nsec));
 
         return std::copy(std::begin(last.buf), std::end(last.buf), ctx.out());
     }
@@ -851,7 +884,10 @@ public:
 
     void reduce_readable(size_type nbytes) noexcept
     {
-        nread_plus_capacity_.fetch_add(nbytes, std::memory_order_release);
+        nread_plus_capacity_.store(
+            nread_plus_capacity_.load(std::memory_order_relaxed) + nbytes,
+            std::memory_order_release);
+
 #if !defined(XTR_THREAD_SANITIZER_ENABLED)
         assert(nread_plus_capacity_.load() - nwritten_.load() <= capacity());
 #endif
@@ -1553,16 +1589,10 @@ namespace xtr::detail
     string_table_entry transform_args(
         std::byte*& pos, std::byte*& end, Buffer& buf, bool&, const char* str)
     {
-        std::byte* begin = pos;
-        while (*str != '\0')
-        {
-            if (!copy<Tags>(pos, end, buf, *str++)) [[unlikely]]
-            {
-                pos = begin;
-                return string_table_entry{string_table_entry::truncated};
-            }
-        }
-        return string_table_entry(std::size_t(pos - begin));
+        const std::size_t length = std::strlen(str);
+        if (!copy<Tags>(pos, end, buf, str, length)) [[unlikely]]
+            return string_table_entry{string_table_entry::truncated};
+        return string_table_entry(length);
     }
 }
 
@@ -1695,8 +1725,8 @@ namespace xtr
 class xtr::sink
 {
 private:
-    using fptr_t = std::byte* (*)(detail::buffer& buf, // output buffer
-                                  std::byte* record,   // pointer to log record
+    using fptr_t = std::byte* (*)(detail::buffer & buf, // output buffer
+                                  std::byte* record,    // pointer to log record
                                   detail::consumer&,
                                   const char* timestamp,
                                   std::string& name) noexcept;
@@ -2352,7 +2382,7 @@ public:
     {
     }
 
-    virtual ~matcher(){};
+    virtual ~matcher() {};
 };
 
 #include <cstddef>
@@ -3477,6 +3507,7 @@ namespace xtr::detail
 
     template<typename T>
     concept tuple_like = requires(T t) { std::tuple_size<T>(); };
+
 }
 
 #include <algorithm>
@@ -3828,10 +3859,11 @@ inline void xtr::detail::command_dispatcher::send(
 
 inline void xtr::detail::command_dispatcher::process_commands(int timeout) noexcept
 {
-    int nfds = XTR_TEMP_FAILURE_RETRY(::poll(
-        reinterpret_cast<::pollfd*>(&pollfds_[0]),
-        ::nfds_t(pollfds_.size()),
-        timeout));
+    int nfds = XTR_TEMP_FAILURE_RETRY(
+        ::poll(
+            reinterpret_cast<::pollfd*>(&pollfds_[0]),
+            ::nfds_t(pollfds_.size()),
+            timeout));
 
     if (nfds == -1)
     {
@@ -4093,8 +4125,7 @@ inline bool xtr::detail::consumer::run_once(pump_io_stats* stats) noexcept
             sink::ring_buffer::size_type(pos - span.begin()));
 
         std::size_t n_dropped;
-        if (sinks_[i]->buf_.read_span().empty() &&
-            (n_dropped = sinks_[i]->dropped_count()) > 0)
+        if (pos == span.end() && (n_dropped = sinks_[i]->dropped_count()) > 0)
         {
             detail::print(
                 buf,
@@ -4386,8 +4417,9 @@ inline xtr::storage_interface_ptr xtr::detail::make_fd_storage(
         {
             fmt::print(
                 stderr,
-                FMT_COMPILE("Falling back to posix_fd_storage due to "
-                            "io_uring_fd_storage error: {}\n"),
+                FMT_COMPILE(
+                    "Falling back to posix_fd_storage due to "
+                    "io_uring_fd_storage error: {}\n"),
                 e.what());
         }
 #endif
@@ -4967,9 +4999,9 @@ inline void xtr::detail::memory_mapping::reset(void* addr, std::size_t length) n
 #include <sys/stat.h>
 #include <unistd.h>
 
-#if !defined(__linux__)
 namespace xtr::detail
 {
+#if !defined(__linux__)
     inline file_descriptor shm_open_anon(int oflag, mode_t mode)
     {
         int fd;
@@ -5001,8 +5033,20 @@ namespace xtr::detail
 
         return file_descriptor(fd);
     }
-}
 #endif
+
+    inline void prefault_write(void* addr, std::size_t length)
+    {
+#if defined(MADV_POPULATE_WRITE)
+        if (::madvise(addr, length, MADV_POPULATE_WRITE) == 0)
+            return;
+#endif
+        volatile std::byte* const p = static_cast<volatile std::byte*>(addr);
+        const std::size_t page_size = align_to_page_size(1);
+        for (std::size_t i = 0; i < length; i += page_size)
+            p[i] = p[i];
+    }
+}
 
 inline xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping(
     std::size_t length, int fd, std::size_t offset, int flags)
@@ -5057,6 +5101,7 @@ inline xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping(
 
         reserve.release(); // mapping was destroyed by mremap
         mirror.release(); // mirror will be recreated in ~mirrored_memory_mapping
+        prefault_write(m_.get(), length * 2);
         return;
 #else
         if (!(temp_fd = shm_open_anon(O_RDWR, S_IRUSR | S_IWUSR)))
@@ -5096,6 +5141,7 @@ inline xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping(
 
     reserve.release(); // mapping was destroyed when m_ was created
     mirror.release();  // mirror will be recreated in ~mirrored_memory_mapping
+    prefault_write(m_.get(), length * 2);
 }
 
 inline xtr::detail::mirrored_memory_mapping::~mirrored_memory_mapping()
@@ -5114,10 +5160,11 @@ inline xtr::detail::mirrored_memory_mapping::~mirrored_memory_mapping()
 
 inline xtr::detail::file_descriptor xtr::detail::open_at_end(const char* path) noexcept
 {
-    const int fd = XTR_TEMP_FAILURE_RETRY(::open(
-        path,
-        O_CREAT | O_WRONLY,
-        S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH));
+    const int fd = XTR_TEMP_FAILURE_RETRY(
+        ::open(
+            path,
+            O_CREAT | O_WRONLY,
+            S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH));
 
     if (fd != -1)
         (void)::lseek(fd, 0, SEEK_END);
