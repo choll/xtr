@@ -240,9 +240,10 @@ benchmark: $(BENCH_TARGET)
 	$<
 
 benchmark_cpu: $(BENCH_TARGET)
-	sudo cpupower --cpu $(PRODUCER_CPU),$(CONSUMER_CPU) frequency-set --governor performance
-	$<
-	sudo cpupower --cpu $(PRODUCER_CPU),$(CONSUMER_CPU) frequency-set --governor schedutil
+	@gov=$$(cat /sys/devices/system/cpu/cpu$(PRODUCER_CPU)/cpufreq/scaling_governor); \
+	sudo cpupower --cpu $(PRODUCER_CPU),$(CONSUMER_CPU) frequency-set --governor performance; \
+	$< ; \
+	sudo cpupower --cpu $(PRODUCER_CPU),$(CONSUMER_CPU) frequency-set --governor $$gov
 
 xtrctl: $(XTRCTL_TARGET)
 

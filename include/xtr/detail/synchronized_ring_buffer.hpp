@@ -275,7 +275,10 @@ public:
     {
         // This release pairs with the acquire in write_span(). No reads or
         // writes in the current thread can be reordered after this store.
-        nread_plus_capacity_.fetch_add(nbytes, std::memory_order_release);
+        nread_plus_capacity_.store(
+            nread_plus_capacity_.load(std::memory_order_relaxed) + nbytes,
+            std::memory_order_release);
+
 #if !defined(XTR_THREAD_SANITIZER_ENABLED)
         assert(nread_plus_capacity_.load() - nwritten_.load() <= capacity());
 #endif

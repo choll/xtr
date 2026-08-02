@@ -182,16 +182,10 @@ namespace xtr::detail
     string_table_entry transform_args(
         std::byte*& pos, std::byte*& end, Buffer& buf, bool&, const char* str)
     {
-        std::byte* begin = pos;
-        while (*str != '\0')
-        {
-            if (!copy<Tags>(pos, end, buf, *str++)) [[unlikely]]
-            {
-                pos = begin;
-                return string_table_entry{string_table_entry::truncated};
-            }
-        }
-        return string_table_entry(std::size_t(pos - begin));
+        const std::size_t length = std::strlen(str);
+        if (!copy<Tags>(pos, end, buf, str, length)) [[unlikely]]
+            return string_table_entry{string_table_entry::truncated};
+        return string_table_entry(length);
     }
 }
 

@@ -45,37 +45,64 @@ https://choll.github.io/xtr
 
 ## Benchmarks
 
-Below is the output of `PRODUCER_CPU=2 CONSUMER_CPU=1 make benchmark_cpu` on a stock Ryzen 5950X with SMT disabled, isolated cores and g++ version 11.2.0
+Below is the output of `PRODUCER_CPU=2 CONSUMER_CPU=1 make benchmark_cpu` on a stock Ryzen 5950X with SMT disabled, isolated cores and g++ version 15.3.0
 
 ```
-sudo cpupower --cpu 2,1 frequency-set --governor performance
 Setting cpu: 1
 Setting cpu: 2
-build/g++-lto-release/benchmark/benchmark
-2022-04-26T22:54:43+01:00
+2026-08-01T17:24:09+01:00
 Running build/g++-lto-release/benchmark/benchmark
-Run on (16 X 5084 MHz CPU s)
+Run on (16 X 5086.18 MHz CPU s)
 CPU Caches:
   L1 Data 32 KiB (x16)
   L1 Instruction 32 KiB (x16)
   L2 Unified 512 KiB (x16)
   L3 Unified 32768 KiB (x2)
-Load Average: 3.32, 2.74, 1.99
+Load Average: 1.49, 1.30, 1.12
 ***WARNING*** CPU scaling is enabled, the benchmark real time measurements may be noisy and will incur extra overhead.
 ---------------------------------------------------------------------------------
 Benchmark                                       Time             CPU   Iterations
 ---------------------------------------------------------------------------------
-logger_benchmark                             2.19 ns         2.19 ns    318972090
-logger_benchmark_tsc                         7.81 ns         7.81 ns     89307646
-logger_benchmark_clock_realtime_coarse       8.05 ns         8.05 ns     87732373
-logger_benchmark_int                         3.31 ns         3.31 ns    210259973
-logger_benchmark_long                        3.33 ns         3.33 ns    209935480
-logger_benchmark_double                      3.26 ns         3.26 ns    212240698
-logger_benchmark_c_str                       4.86 ns         4.86 ns    146577914
-logger_benchmark_str_view                    3.12 ns         3.12 ns    224958501
-logger_benchmark_str                         4.36 ns         4.36 ns    158750720
-logger_benchmark_non_blocking                2.01 ns         2.01 ns    349312408
-
+logger_benchmark                            0.892 ns        0.892 ns    729236263
+logger_benchmark_int                         1.25 ns         1.25 ns    546887959
+logger_benchmark_long                        1.29 ns         1.29 ns    538424449
+logger_benchmark_double                      1.30 ns         1.30 ns    544161657
+logger_benchmark_c_str_8                     5.91 ns         5.91 ns    118986321
+logger_benchmark_c_str_16                    5.95 ns         5.94 ns    118211133
+logger_benchmark_c_str_32                    6.20 ns         6.19 ns    113695149
+logger_benchmark_c_str_64                    6.55 ns         6.53 ns    107151690
+logger_benchmark_str_view_8                  3.53 ns         3.53 ns    198737333
+logger_benchmark_str_view_16                 3.66 ns         3.65 ns    192806602
+logger_benchmark_str_view_32                 3.83 ns         3.82 ns    185727265
+logger_benchmark_str_view_64                 4.26 ns         4.24 ns    165482328
+logger_benchmark_str_8                       3.79 ns         3.79 ns    184713006
+logger_benchmark_str_16                      3.89 ns         3.88 ns    180855799
+logger_benchmark_str_32                      3.77 ns         3.76 ns    185398315
+logger_benchmark_str_64                      4.19 ns         4.17 ns    163856703
+logger_benchmark_vcopy_64                    5.51 ns         5.49 ns    129211425
+logger_benchmark_vcopy_128                   7.51 ns         7.49 ns     95641328
+logger_benchmark_vcopy_256                   11.5 ns         11.5 ns     60935115
+logger_benchmark_tsc                         9.52 ns         9.52 ns     73570265
+logger_benchmark_tsc_int                     9.88 ns         9.88 ns     70904838
+logger_benchmark_tsc_long                    9.77 ns         9.77 ns     71655166
+logger_benchmark_tsc_double                  9.78 ns         9.77 ns     71643407
+logger_benchmark_tsc_c_str_8                 10.3 ns         10.3 ns     67998753
+logger_benchmark_tsc_c_str_16                10.2 ns         10.2 ns     68780399
+logger_benchmark_tsc_c_str_32                10.6 ns         10.6 ns     66282842
+logger_benchmark_tsc_c_str_64                11.1 ns         11.1 ns     63067116
+logger_benchmark_tsc_str_view_8              10.2 ns         10.2 ns     68745944
+logger_benchmark_tsc_str_view_16             10.3 ns         10.3 ns     68059516
+logger_benchmark_tsc_str_view_32             10.4 ns         10.4 ns     67622660
+logger_benchmark_tsc_str_view_64             10.3 ns         10.3 ns     68253218
+logger_benchmark_tsc_str_8                   10.1 ns         10.0 ns     69713560
+logger_benchmark_tsc_str_16                  10.0 ns         10.0 ns     70089365
+logger_benchmark_tsc_str_32                  10.3 ns         10.3 ns     68213933
+logger_benchmark_tsc_str_64                  10.3 ns         10.3 ns     68165396
+logger_benchmark_tsc_vcopy_64                10.1 ns         10.0 ns     69241914
+logger_benchmark_tsc_vcopy_128               11.3 ns         11.3 ns     62303537
+logger_benchmark_tsc_vcopy_256               15.0 ns         15.0 ns     46441248
+logger_benchmark_clock_realtime_coarse       6.77 ns         6.77 ns    103671157
+logger_benchmark_non_blocking               0.905 ns        0.904 ns    778123386
 ```
 
 ## Throughput
@@ -95,9 +122,9 @@ formatting (i.e. real world use would be slower).
 
 | Function       | Messages/s | MiB/s   | Time     |
 |----------------|------------|---------|----------|
-| XTR\_LOG       | 13532135   | 1330.67 | 7.38982s |
-| XTR\_LOGL\_TSC | 9082393    | 893.112 | 11.0103s |
-| fmt::print     | 12514662   | 1230.62 | 7.99063s |
+| XTR\_LOG       | 14856334   | 1460.89 | 6.73114s |
+| XTR\_LOGL\_TSC | 7713411    | 758.494 | 12.9644s |
+| fmt::print     | 14545790   | 1430.35 | 6.87484s |
 
 ## Installation notes
 
