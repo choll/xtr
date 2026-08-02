@@ -851,7 +851,10 @@ public:
 
     void reduce_readable(size_type nbytes) noexcept
     {
-        nread_plus_capacity_.fetch_add(nbytes, std::memory_order_release);
+        nread_plus_capacity_.store(
+            nread_plus_capacity_.load(std::memory_order_relaxed) + nbytes,
+            std::memory_order_release);
+
 #if !defined(XTR_THREAD_SANITIZER_ENABLED)
         assert(nread_plus_capacity_.load() - nwritten_.load() <= capacity());
 #endif
@@ -1553,16 +1556,10 @@ namespace xtr::detail
     string_table_entry transform_args(
         std::byte*& pos, std::byte*& end, Buffer& buf, bool&, const char* str)
     {
-        std::byte* begin = pos;
-        while (*str != '\0')
-        {
-            if (!copy<Tags>(pos, end, buf, *str++)) [[unlikely]]
-            {
-                pos = begin;
-                return string_table_entry{string_table_entry::truncated};
-            }
-        }
-        return string_table_entry(std::size_t(pos - begin));
+        const std::size_t length = std::strlen(str);
+        if (!copy<Tags>(pos, end, buf, str, length)) [[unlikely]]
+            return string_table_entry{string_table_entry::truncated};
+        return string_table_entry(length);
     }
 }
 
@@ -4093,8 +4090,7 @@ inline bool xtr::detail::consumer::run_once(pump_io_stats* stats) noexcept
             sink::ring_buffer::size_type(pos - span.begin()));
 
         std::size_t n_dropped;
-        if (sinks_[i]->buf_.read_span().empty() &&
-            (n_dropped = sinks_[i]->dropped_count()) > 0)
+        if (pos == span.end() && (n_dropped = sinks_[i]->dropped_count()) > 0)
         {
             detail::print(
                 buf,
@@ -4967,9 +4963,9 @@ inline void xtr::detail::memory_mapping::reset(void* addr, std::size_t length) n
 #include <sys/stat.h>
 #include <unistd.h>
 
-#if !defined(__linux__)
 namespace xtr::detail
 {
+#if !defined(__linux__)
     inline file_descriptor shm_open_anon(int oflag, mode_t mode)
     {
         int fd;
@@ -5001,8 +4997,20 @@ namespace xtr::detail
 
         return file_descriptor(fd);
     }
-}
 #endif
+
+    inline void prefault_write(void* addr, std::size_t length)
+    {
+#if defined(MADV_POPULATE_WRITE)
+        if (::madvise(addr, length, MADV_POPULATE_WRITE) == 0)
+            return;
+#endif
+        volatile std::byte* const p = static_cast<volatile std::byte*>(addr);
+        const std::size_t page_size = align_to_page_size(1);
+        for (std::size_t i = 0; i < length; i += page_size)
+            p[i] = p[i];
+    }
+}
 
 inline xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping(
     std::size_t length, int fd, std::size_t offset, int flags)
@@ -5057,6 +5065,7 @@ inline xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping(
 
         reserve.release(); // mapping was destroyed by mremap
         mirror.release(); // mirror will be recreated in ~mirrored_memory_mapping
+        prefault_write(m_.get(), length * 2);
         return;
 #else
         if (!(temp_fd = shm_open_anon(O_RDWR, S_IRUSR | S_IWUSR)))
@@ -5096,6 +5105,7 @@ inline xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping(
 
     reserve.release(); // mapping was destroyed when m_ was created
     mirror.release();  // mirror will be recreated in ~mirrored_memory_mapping
+    prefault_write(m_.get(), length * 2);
 }
 
 inline xtr::detail::mirrored_memory_mapping::~mirrored_memory_mapping()
