@@ -21,13 +21,13 @@ are made when a log statement is made.
 * Fast (please see benchmark results).
 * No allocations when logging, even when logging strings.
 * Support for logging variable-length objects, such as structs with flexible array members.
-* Formatting, I/O etc are all delegated to a background thread. Work done at the log statement call-site is minimized---for example a no argument log statement only involves writing a single pointer to a ring buffer.
+* Formatting, I/O etc are all delegated to a background thread. Work done at the log statement call-site is minimised---for example a no-argument log statement only involves writing a single pointer to a ring buffer.
 * Optional background thread. Users may run the log consumer from a thread of their choosing.
 * Safe: No references taken to arguments unless explicitly requested.
-* Comprehensive suite of unit tests which run cleanly under AddressSanitizer, UndefinedBehaviourSanitizer, ThreadSanitizer and LeakSanitizer.
+* Comprehensive suite of unit tests which run cleanly under AddressSanitizer, UndefinedBehaviorSanitizer, ThreadSanitizer and LeakSanitizer.
 * Log sinks with independent log levels (so that levels for different subsystems may be modified independently).
 * Ability to modify log levels via an external command.
-* Non-printable characters are sanitized for safety (to prevent terminal escape sequence injection attacks).
+* Non-printable characters are sanitised for safety (to prevent terminal escape sequence injection attacks).
 * Type-safe---formatting is done via fmtlib.
 * io\_uring support.
 * Support for custom I/O back-ends (e.g. to log to the network, write compressed files, etc).
@@ -47,7 +47,7 @@ https://choll.github.io/xtr
 
 ## Benchmarks
 
-Below is the output of `PRODUCER_CPU=2 CONSUMER_CPU=1 make benchmark_cpu` on a stock Ryzen 5950X with SMT disabled, isolated cores and g++ version 15.3.0
+Below is the output of `PRODUCER_CPU=2 CONSUMER_CPU=1 make benchmark_cpu` on a stock Ryzen 5950X with SMT disabled, isolated cores and g++ version 15.3.0.
 
 ```
 Setting cpu: 1
