@@ -32,7 +32,7 @@ namespace xtr::detail
     {
         const std::size_t n = std::min(DstSz - 1, std::size(src));
         if (std::size(src) > 0) [[likely]]
-            std::memcpy(dst, &src[0], n);
+            std::memcpy(dst, std::data(src), n);
         dst[n] = '\0';
     }
 }
