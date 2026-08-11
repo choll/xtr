@@ -25,6 +25,7 @@
 #include "mirrored_memory_mapping.hpp"
 #include "pagesize.hpp"
 #include "pause.hpp"
+#include "prefault.hpp"
 #include "tags.hpp"
 
 #include <atomic>
@@ -39,12 +40,6 @@
 namespace xtr::detail
 {
     inline constexpr std::size_t dynamic_capacity = std::size_t(-1);
-
-#if defined(MAP_POPULATE)
-    inline constexpr int srb_flags = MAP_POPULATE;
-#else
-    inline constexpr int srb_flags = 0;
-#endif
 
     template<std::size_t Capacity>
     class synchronized_ring_buffer;
@@ -153,16 +148,24 @@ public:
     static constexpr bool is_dynamic = Capacity == dynamic_capacity;
 
 public:
-    synchronized_ring_buffer(int fd = -1, std::size_t offset = 0, int flags = srb_flags)
+    synchronized_ring_buffer(
+        int fd = -1,
+        std::size_t offset = 0,
+        int flags = 0,
+        prefault_flags_t prefault_flags = prefault_flags_t::read_write)
         requires(!is_dynamic)
     {
-        m_ = mirrored_memory_mapping{capacity(), fd, offset, flags};
+        m_ = mirrored_memory_mapping{capacity(), fd, offset, flags, prefault_flags};
         nread_plus_capacity_ = wrnread_plus_capacity_ = capacity();
         wrbase_ = begin();
     }
 
     explicit synchronized_ring_buffer(
-        size_type min_capacity, int fd = -1, std::size_t offset = 0, int flags = srb_flags)
+        size_type min_capacity,
+        int fd = -1,
+        std::size_t offset = 0,
+        int flags = 0,
+        prefault_flags_t prefault_flags = prefault_flags_t::read_write)
         requires is_dynamic
         :
         m_(align_to_page_size(
@@ -173,7 +176,8 @@ public:
 #endif
            fd,
            offset,
-           flags)
+           flags,
+           prefault_flags)
     {
         assert(capacity() <= std::numeric_limits<size_type>::max());
         wrbase_ = begin();
