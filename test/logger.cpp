@@ -3177,18 +3177,16 @@ TEST_CASE_METHOD(fixture, "logger prefault test", "[logger]")
     std::vector<std::byte> storage(size);
     auto& vls = *reinterpret_cast<variable_length_struct*>(storage.data());
 
-    ::rusage before{};
-    ::rusage after{};
+    ::rusage r0{};
+    ::rusage r1{};
 
-    ::getrusage(RUSAGE_THREAD, &before);
+    ::getrusage(RUSAGE_THREAD, &r0);
 
     XTR_LOG(s_, "Test {}", vcopy(vls, size));
     XTR_LOG(s_, "Test {}", vcopy(vls, size));
 
-    ::getrusage(RUSAGE_THREAD, &after);
+    ::getrusage(RUSAGE_THREAD, &r1);
 
     // Allow a small number of faults to account for the test itself
-    REQUIRE(
-        (after.ru_minflt + after.ru_majflt) -
-            (before.ru_minflt + before.ru_majflt) <= 32);
+    REQUIRE((r1.ru_minflt + r1.ru_majflt) - (r0.ru_minflt + r0.ru_majflt) < 8);
 }
