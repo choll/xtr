@@ -79,6 +79,7 @@
 #include <signal.h>
 #include <stdio.h>
 #include <sys/mman.h>
+#include <sys/resource.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/un.h>
@@ -3166,4 +3167,26 @@ TEST_CASE_METHOD(fixture, "logger vcopy overflow test", "[logger]")
         last_line() ==
         fmt::format("W 2000-01-01 01:02:03.123456 Name: 1 messages dropped"));
     REQUIRE(w.expired());
+}
+
+TEST_CASE_METHOD(fixture, "logger prefault test", "[logger]")
+{
+    // Subtracting 64 is to account for logger overhead
+    const std::size_t size = s_.capacity() - 64;
+
+    std::vector<std::byte> storage(size);
+    auto& vls = *reinterpret_cast<variable_length_struct*>(storage.data());
+
+    ::rusage r0{};
+    ::rusage r1{};
+
+    ::getrusage(RUSAGE_THREAD, &r0);
+
+    XTR_LOG(s_, "Test {}", vcopy(vls, size));
+    XTR_LOG(s_, "Test {}", vcopy(vls, size));
+
+    ::getrusage(RUSAGE_THREAD, &r1);
+
+    // Allow a small number of faults to account for the test itself
+    REQUIRE((r1.ru_minflt + r1.ru_majflt) - (r0.ru_minflt + r0.ru_majflt) < 8);
 }
