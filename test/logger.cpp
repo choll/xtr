@@ -3169,6 +3169,8 @@ TEST_CASE_METHOD(fixture, "logger vcopy overflow test", "[logger]")
     REQUIRE(w.expired());
 }
 
+// Disabled as sanitizers can fault in a large amount of shadow memory (~500 pages)
+#if !defined(XTR_SANITIZER_ENABLED)
 TEST_CASE_METHOD(fixture, "logger prefault test", "[logger]")
 {
     // Subtracting 64 is to account for logger overhead
@@ -3190,3 +3192,4 @@ TEST_CASE_METHOD(fixture, "logger prefault test", "[logger]")
     // Allow a small number of faults to account for the test itself
     REQUIRE((r1.ru_minflt + r1.ru_majflt) - (r0.ru_minflt + r0.ru_majflt) < 8);
 }
+#endif

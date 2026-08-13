@@ -125,6 +125,7 @@ endif
 
 ifneq ($(SANITIZER),)
 	CXXFLAGS += -fno-omit-frame-pointer -fsanitize=$(SANITIZER) -fno-sanitize-recover=all
+	CPPFLAGS += -DXTR_SANITIZER_ENABLED
 	LDFLAGS += -fsanitize=$(SANITIZER)
 	BUILD_TAG := $(BUILD_TAG)-$(SANITIZER)-sanitizer
 endif
