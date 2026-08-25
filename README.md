@@ -16,6 +16,67 @@ It is designed so that the cost of a log statement is consistently fast---i.e.
 every call is fast, not just the average case. No allocations or system calls
 are made when a log statement is made.
 
+## Design
+
+XTR makes two departures from traditional logger design (global logger with either
+thread-local queues or an MPSC queue) in order to minimise the cost of a log statement:
+
+* XTR is designed around the idea of application components writing to their own
+sink object that contains an SPSC queue. An application creates many sinks which connect
+to a single logger object. As sinks are per-component, no thread-local storage is
+required; objects instead have a sink member that is written to without any thread-local
+access overhead or contention on a shared queue.
+This has the added benefit of allowing log levels to be controlled per component, which
+can be done from outside the process while it is running, via the supplied
+[xtrctl](https://choll.github.io/xtr/xtrctl.html) tool.
+* XTR gives users the choice of where timestamps are taken, in either the producer
+or consumer thread. This avoids the cost of reading the current timestamp, which is
+high relative to the overall cost of writing to the sink.
+
+### Example
+
+```c++
+xtr::logger log;
+xtr::sink s = log.get_sink("Example");
+XTR_LOG(s, "Hello world");
+```
+
+The log statement above [compiles](https://godbolt.org/z/bMdof3Ej8) to 11 instructions
+(excluding ret) on the fast path with a 64KB queue:
+
+```nasm
+f:
+    mov rax, [rdi+80]
+    mov rcx, [rdi+72]
+    movzx edx, ax
+    sub rcx, rax
+    add rdx, [rdi+64]
+    cmp rcx, 7
+    jbe .queue_full
+.write:
+    add rax, 8
+    mov qword [rdx], fptr
+    mov [rdi+80], rax
+    mov [rdi], rax
+    ret
+.queue_full:
+    pause
+    mov rcx, [rdi+128]
+    mov [rdi+72], rcx
+    mov rax, [rdi+80]
+    sub rcx, rax
+    cmp rcx, 7
+    ja .write
+    jmp .queue_full
+```
+
+`fptr` is the log record itself---specifically it is a function pointer to an instantiation
+of a per-log-record template function that embeds the format string, log level, line number
+and source file name. Note that only log statements with no arguments produce a single function
+pointer. Refer to the comments in
+[trampolines.hpp](https://github.com/choll/xtr/blob/master/include/xtr/detail/trampolines.hpp)
+for details.
+
 ## Features
 
 * Fast (please see benchmark results).
