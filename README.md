@@ -18,6 +18,10 @@ are made when a log statement is made.
 
 ## Design
 
+As much work as possible is delegated to a background thread. This is done by writing
+log records to queues that are read by the background thread. Log records contain a
+function pointer which is invoked by the background thread to perform formatting.
+
 XTR makes two departures from traditional logger design (global logger with either
 thread-local queues or an MPSC queue) in order to minimise the cost of a log statement:
 
@@ -25,10 +29,10 @@ thread-local queues or an MPSC queue) in order to minimise the cost of a log sta
 sink object that contains an SPSC queue. An application creates many sinks which connect
 to a single logger object. As sinks are per-component, no thread-local storage is
 required; objects instead have a sink member that is written to without any thread-local
-access overhead or contention on a shared queue.
-This has the added benefit of allowing log levels to be controlled per component, which
-can be done from outside the process while it is running, via the supplied
-[xtrctl](https://choll.github.io/xtr/xtrctl.html) tool.
+access overhead or contention on a shared queue. This has the added benefit of allowing
+log levels to be controlled per component, which can be done from outside the process
+while it is running, via the supplied [xtrctl](https://choll.github.io/xtr/xtrctl.html)
+tool.
 * XTR gives users the choice of where timestamps are taken, in either the producer
 or consumer thread. This avoids the cost of reading the current timestamp, which is
 high relative to the overall cost of writing to the sink.
@@ -55,7 +59,7 @@ f:
     jbe .queue_full
 .write:
     add rax, 8
-    mov qword [rdx], fptr
+    mov qword [rdx], func_ptr
     mov [rdi+80], rax
     mov [rdi], rax
     ret
@@ -70,7 +74,7 @@ f:
     jmp .queue_full
 ```
 
-`fptr` is the log record itself---specifically it is a function pointer to an instantiation
+`func_ptr` is the log record itself---specifically it is a function pointer to an instantiation
 of a per-log-record template function that embeds the format string, log level, line number
 and source file name. Note that only log statements with no arguments produce a single function
 pointer. Refer to the comments in
