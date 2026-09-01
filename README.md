@@ -9,8 +9,7 @@
 ## What is it?
 
 XTR is a C++ logging library aimed at applications with low-latency or real-time
-requirements. The cost of log statements is minimised by delegating as much work
-as possible to a background thread.
+requirements.
 
 It is designed so that the cost of a log statement is consistently fast---i.e.
 every call is fast, not just the average case. No allocations or system calls
@@ -18,12 +17,14 @@ are made when a log statement is made.
 
 ## Design
 
-As much work as possible is delegated to a background thread. This is done by writing
-log records to queues that are read by the background thread. Log records contain a
-function pointer which is invoked by the background thread to perform formatting.
+The cost of log statements is minimised by delegating as much work as possible to a
+background thread. This is done by writing log records to queues that are read by
+the background thread. Log records contain a function pointer which is invoked by the
+background thread to perform formatting.
 
-XTR makes two departures from traditional logger design (global logger with either
-thread-local queues or an MPSC queue) in order to minimise the cost of a log statement:
+With formatting delegated, the remaining costs are writing the record to a queue and
+reading the timestamp. XTR makes two departures from traditional logger design (global
+logger with either thread-local queues or an MPSC queue) to minimise these costs:
 
 * XTR is designed around the idea of application components writing to their own
 sink object that contains an SPSC queue. An application creates many sinks which connect
@@ -34,8 +35,8 @@ log levels to be controlled per component, which can be done from outside the pr
 while it is running, via the supplied [xtrctl](https://choll.github.io/xtr/xtrctl.html)
 tool.
 * XTR gives users the choice of where timestamps are taken, in either the producer
-or consumer thread. This avoids the cost of reading the current timestamp, which is
-high relative to the overall cost of writing to the sink.
+or consumer thread. This is done because the cost of reading the timestamp is high
+relative to the overall cost of writing to the sink.
 
 ### Example
 
@@ -80,6 +81,9 @@ and source file name. Note that only log statements with no arguments produce a 
 pointer. Refer to the comments in
 [trampolines.hpp](https://github.com/choll/xtr/blob/master/include/xtr/detail/trampolines.hpp)
 for details.
+
+If the queue is full then the `.queue_full` loop spins until space becomes available. To drop
+messages on a full queue use [XTR_TRY_LOG](https://choll.github.io/xtr/api.html#c.XTR_TRY_LOG).
 
 ## Features
 
