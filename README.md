@@ -36,7 +36,8 @@ while it is running, via the supplied [xtrctl](https://choll.github.io/xtr/xtrct
 tool.
 * XTR gives users the choice of where timestamps are taken, in either the producer
 or consumer thread. This is done because the cost of reading the timestamp is high
-relative to the overall cost of writing to the sink.
+relative to the overall cost of writing to the sink---see the `logger_benchmark` vs
+`logger_benchmark_tsc` timings in [benchmarks](#benchmarks).
 
 ### Example
 
@@ -87,7 +88,7 @@ messages on a full queue use [XTR_TRY_LOG](https://choll.github.io/xtr/api.html#
 
 ## Features
 
-* Fast (please see benchmark results).
+* Fast (please see [benchmark results](#benchmarks)).
 * No allocations when logging, even when logging strings.
 * Support for logging variable-length objects, such as structs with flexible array members.
 * Formatting, I/O etc are all delegated to a background thread. Work done at the log statement call-site is minimised---for example a no-argument log statement only involves writing a single pointer to a ring buffer.
