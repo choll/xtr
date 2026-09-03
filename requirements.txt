@@ -47,7 +47,7 @@ packaging==26.2
     #   wheel
 patch-ng==1.19.1
     # via conan
-pip-tools==7.6.0
+pip-tools==7.6.1
     # via -r requirements.in
 pygments==2.20.0
     # via sphinx
