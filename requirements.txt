@@ -20,7 +20,7 @@ click==8.4.2
     # via pip-tools
 colorama==0.4.6
     # via conan
-conan==2.31.1
+conan==2.31.2
     # via -r requirements.in
 distro==1.9.0
     # via conan
