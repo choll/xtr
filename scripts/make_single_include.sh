@@ -15,6 +15,7 @@ for file in \
     include/xtr/detail/throw.hpp \
     include/xtr/detail/retry.hpp \
     include/xtr/detail/align.hpp \
+    include/xtr/detail/bytecopy.hpp \
     include/xtr/detail/pagesize.hpp \
     include/xtr/detail/cpuid.hpp \
     include/xtr/detail/is_c_string.hpp \
