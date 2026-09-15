@@ -4,6 +4,7 @@ project(xtr_test CXX)
 find_package(Catch2 REQUIRED)
 
 add_executable(${PROJECT_NAME}  align.cpp
+                                bytecopy.cpp
                                 command_client.cpp
                                 command_dispatcher.cpp
                                 fd_storage.cpp

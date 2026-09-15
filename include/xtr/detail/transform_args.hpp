@@ -22,6 +22,7 @@
 #define XTR_DETAIL_TRANSFORM_ARGS_HPP
 
 #include "align.hpp"
+#include "bytecopy.hpp"
 #include "is_c_string.hpp"
 #include "pause.hpp"
 #include "string_ref.hpp"
@@ -112,15 +113,20 @@ namespace xtr::detail
         return true;
     }
 
-    template<typename Tags, typename Buffer>
+    template<typename Tags, typename Buffer, typename CopyTag>
     __attribute__((always_inline)) inline bool copy(
-        std::byte*& pos, std::byte*& end, Buffer& buf, const void* value, std::size_t length)
+        std::byte*& pos,
+        std::byte*& end,
+        Buffer& buf,
+        const void* value,
+        std::size_t length,
+        CopyTag copy_tag)
     {
         std::byte* value_end = pos + length;
         if (!wait_for_capacity<Tags>(end, value_end, buf)) [[unlikely]]
             return false;
-        std::memcpy(pos, value, length);
-        pos += length;
+        bytecopy(pos, value, length, copy_tag);
+        pos = value_end;
         return true;
     }
 
@@ -154,7 +160,7 @@ namespace xtr::detail
     }
 
     template<typename Tags, typename T, typename Buffer>
-    variable_length_entry<T> transform_args(
+    inline variable_length_entry<T> transform_args(
         std::byte*& pos,
         std::byte*& end,
         Buffer& buf,
@@ -162,28 +168,36 @@ namespace xtr::detail
         detail::vcopy_wrapper<T> vc)
     {
         pos = align<alignof(T)>(pos);
-        if (!copy<Tags>(pos, end, buf, &vc.value, vc.size)) [[unlikely]]
+        // Inline memcpy isn't used for vcopy because it is assumed that vcopy
+        // targets will be large, e.g. market data or order entry structs.
+        if (!copy<Tags>(pos, end, buf, &vc.value, vc.size, copy_memcpy))
+            [[unlikely]]
+        {
             overflow = true;
+        }
         return variable_length_entry<T>(vc.size);
     }
 
     template<typename Tags, typename Buffer, typename String>
         requires std::same_as<String, std::string> ||
                  std::same_as<String, std::string_view>
-    string_table_entry transform_args(
+    inline string_table_entry transform_args(
         std::byte*& pos, std::byte*& end, Buffer& buf, bool&, const String& str)
     {
-        if (!copy<Tags>(pos, end, buf, str.data(), str.length())) [[unlikely]]
+        if (!copy<Tags>(pos, end, buf, str.data(), str.length(), copy_inline))
+            [[unlikely]]
+        {
             return string_table_entry{string_table_entry::truncated};
+        }
         return string_table_entry(str.length());
     }
 
     template<typename Tags, typename Buffer>
-    string_table_entry transform_args(
+    inline string_table_entry transform_args(
         std::byte*& pos, std::byte*& end, Buffer& buf, bool&, const char* str)
     {
         const std::size_t length = std::strlen(str);
-        if (!copy<Tags>(pos, end, buf, str, length)) [[unlikely]]
+        if (!copy<Tags>(pos, end, buf, str, length, copy_inline)) [[unlikely]]
             return string_table_entry{string_table_entry::truncated};
         return string_table_entry(length);
     }
