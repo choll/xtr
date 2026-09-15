@@ -52,7 +52,7 @@ Below is the output of `PRODUCER_CPU=2 CONSUMER_CPU=1 make benchmark_cpu` on a s
 ```
 Setting cpu: 1
 Setting cpu: 2
-2026-09-15T20:24:55+01:00
+2026-09-15T21:10:37+01:00
 Running build/g++-lto-release/benchmark/benchmark
 Run on (16 X 5086.18 MHz CPU s)
 CPU Caches:
@@ -60,64 +60,64 @@ CPU Caches:
   L1 Instruction 32 KiB (x16)
   L2 Unified 512 KiB (x16)
   L3 Unified 32768 KiB (x2)
-Load Average: 1.48, 1.66, 1.65
+Load Average: 1.83, 1.74, 1.65
 ***WARNING*** CPU scaling is enabled, the benchmark real time measurements may be noisy and will incur extra overhead.
 ---------------------------------------------------------------------------------
 Benchmark                                       Time             CPU   Iterations
 ---------------------------------------------------------------------------------
-logger_benchmark                            0.904 ns        0.903 ns    773992268
-logger_benchmark_int                         1.27 ns         1.27 ns    548924685
-logger_benchmark_long                        1.29 ns         1.29 ns    538890624
-logger_benchmark_double                      1.31 ns         1.30 ns    547294711
-logger_benchmark_c_str_8                     5.43 ns         5.42 ns    129716915
-logger_benchmark_c_str_16                    5.60 ns         5.59 ns    125096979
-logger_benchmark_c_str_32                    6.21 ns         6.20 ns    113414754
-logger_benchmark_c_str_64                    6.52 ns         6.51 ns    105804370
-logger_benchmark_c_str_128                   8.31 ns         8.29 ns     84816936
-logger_benchmark_str_view_8                  3.53 ns         3.52 ns    199019338
-logger_benchmark_str_view_16                 3.88 ns         3.87 ns    180409818
-logger_benchmark_str_view_32                 3.68 ns         3.67 ns    191723379
-logger_benchmark_str_view_64                 4.29 ns         4.28 ns    168197415
-logger_benchmark_str_view_128                6.87 ns         6.85 ns    102144441
-logger_benchmark_str_view_rand               10.8 ns         10.8 ns     64888650
-logger_benchmark_str_view_const_8            2.07 ns         2.06 ns    337372835
-logger_benchmark_str_view_const_16           2.30 ns         2.29 ns    311140169
-logger_benchmark_str_view_const_32           2.72 ns         2.71 ns    258408553
-logger_benchmark_str_view_const_64           3.57 ns         3.56 ns    194648218
-logger_benchmark_str_view_const_128          6.03 ns         6.01 ns    117439753
-logger_benchmark_str_8                       3.78 ns         3.77 ns    185626506
-logger_benchmark_str_16                      3.89 ns         3.88 ns    180322628
-logger_benchmark_str_32                      3.76 ns         3.76 ns    187745449
-logger_benchmark_str_64                      4.19 ns         4.18 ns    167743865
-logger_benchmark_str_128                     6.98 ns         6.96 ns    104261936
-logger_benchmark_vcopy_64                    5.11 ns         5.10 ns    142833259
-logger_benchmark_vcopy_128                   6.70 ns         6.68 ns    104984332
-logger_benchmark_vcopy_256                   10.2 ns         10.2 ns     68636200
-logger_benchmark_tsc                         8.65 ns         8.64 ns     81015530
-logger_benchmark_tsc_int                     9.79 ns         9.78 ns     71521405
-logger_benchmark_tsc_long                    9.70 ns         9.69 ns     72265285
-logger_benchmark_tsc_double                  9.82 ns         9.81 ns     71358789
-logger_benchmark_tsc_c_str_8                 9.86 ns         9.86 ns     70889821
-logger_benchmark_tsc_c_str_16                9.77 ns         9.76 ns     71902812
-logger_benchmark_tsc_c_str_32                10.6 ns         10.6 ns     65905563
-logger_benchmark_tsc_c_str_64                11.1 ns         11.0 ns     63407079
-logger_benchmark_tsc_c_str_128               12.9 ns         12.9 ns     54219854
-logger_benchmark_tsc_str_view_8              9.72 ns         9.71 ns     72264341
-logger_benchmark_tsc_str_view_16             9.74 ns         9.73 ns     72019586
-logger_benchmark_tsc_str_view_32             10.4 ns         10.4 ns     67444695
-logger_benchmark_tsc_str_view_64             10.3 ns         10.3 ns     68326353
-logger_benchmark_tsc_str_view_128            11.0 ns         11.0 ns     63804455
-logger_benchmark_tsc_str_view_rand           14.7 ns         14.7 ns     47704403
-logger_benchmark_tsc_str_8                   9.77 ns         9.77 ns     71718915
-logger_benchmark_tsc_str_16                  9.50 ns         9.50 ns     73404482
-logger_benchmark_tsc_str_32                  10.3 ns         10.3 ns     68101763
-logger_benchmark_tsc_str_64                  10.5 ns         10.4 ns     67131809
-logger_benchmark_tsc_str_128                 11.0 ns         11.0 ns     63960251
-logger_benchmark_tsc_vcopy_64                10.1 ns         10.1 ns     69389378
-logger_benchmark_tsc_vcopy_128               11.3 ns         11.3 ns     61829343
-logger_benchmark_tsc_vcopy_256               13.8 ns         13.8 ns     50756600
-logger_benchmark_clock_realtime_coarse       6.72 ns         6.71 ns    104480882
-logger_benchmark_non_blocking               0.897 ns        0.896 ns    783524653
+logger_benchmark                            0.894 ns        0.893 ns    781501162
+logger_benchmark_int                         1.25 ns         1.25 ns    554495079
+logger_benchmark_long                        1.29 ns         1.29 ns    545524626
+logger_benchmark_double                      1.28 ns         1.28 ns    549515193
+logger_benchmark_c_str_8                     3.45 ns         3.44 ns    204685028
+logger_benchmark_c_str_16                    4.00 ns         3.99 ns    177459523
+logger_benchmark_c_str_32                    4.34 ns         4.33 ns    157937285
+logger_benchmark_c_str_64                    5.15 ns         5.14 ns    136966507
+logger_benchmark_c_str_128                   8.83 ns         8.81 ns     78644584
+logger_benchmark_str_view_8                  2.33 ns         2.33 ns    296690133
+logger_benchmark_str_view_16                 2.69 ns         2.68 ns    259885911
+logger_benchmark_str_view_32                 2.98 ns         2.97 ns    239187548
+logger_benchmark_str_view_64                 3.70 ns         3.69 ns    190443461
+logger_benchmark_str_view_128                7.09 ns         7.07 ns     97809794
+logger_benchmark_str_view_rand               7.59 ns         7.58 ns     92095459
+logger_benchmark_str_view_const_8            2.09 ns         2.08 ns    338936832
+logger_benchmark_str_view_const_16           2.26 ns         2.25 ns    314252338
+logger_benchmark_str_view_const_32           2.71 ns         2.70 ns    260566377
+logger_benchmark_str_view_const_64           3.56 ns         3.55 ns    194553614
+logger_benchmark_str_view_const_128          5.95 ns         5.94 ns    118191888
+logger_benchmark_str_8                       2.32 ns         2.31 ns    304413393
+logger_benchmark_str_16                      2.59 ns         2.59 ns    269515101
+logger_benchmark_str_32                      2.95 ns         2.94 ns    234145125
+logger_benchmark_str_64                      3.71 ns         3.70 ns    190204809
+logger_benchmark_str_128                     7.14 ns         7.12 ns     99385993
+logger_benchmark_vcopy_64                    5.04 ns         5.03 ns    100000000
+logger_benchmark_vcopy_128                   6.64 ns         6.63 ns    104604936
+logger_benchmark_vcopy_256                   10.2 ns         10.2 ns     67877457
+logger_benchmark_tsc                         8.65 ns         8.65 ns     80862546
+logger_benchmark_tsc_int                     9.79 ns         9.79 ns     71512031
+logger_benchmark_tsc_long                    9.69 ns         9.69 ns     72232093
+logger_benchmark_tsc_double                  9.78 ns         9.78 ns     71623464
+logger_benchmark_tsc_c_str_8                 9.71 ns         9.70 ns     72258012
+logger_benchmark_tsc_c_str_16                9.62 ns         9.61 ns     73139638
+logger_benchmark_tsc_c_str_32                10.3 ns         10.3 ns     67870667
+logger_benchmark_tsc_c_str_64                11.0 ns         11.0 ns     63613603
+logger_benchmark_tsc_c_str_128               13.4 ns         13.4 ns     52503523
+logger_benchmark_tsc_str_view_8              9.59 ns         9.58 ns     73071424
+logger_benchmark_tsc_str_view_16             9.47 ns         9.47 ns     74063551
+logger_benchmark_tsc_str_view_32             9.90 ns         9.89 ns     70940814
+logger_benchmark_tsc_str_view_64             10.1 ns         10.1 ns     69144818
+logger_benchmark_tsc_str_view_128            10.8 ns         10.8 ns     65078043
+logger_benchmark_tsc_str_view_rand           10.4 ns         10.4 ns     67348393
+logger_benchmark_tsc_str_8                   9.51 ns         9.51 ns     73742106
+logger_benchmark_tsc_str_16                  9.41 ns         9.40 ns     74540626
+logger_benchmark_tsc_str_32                  9.83 ns         9.82 ns     71359175
+logger_benchmark_tsc_str_64                  10.0 ns         9.99 ns     70081099
+logger_benchmark_tsc_str_128                 11.0 ns         11.0 ns     63639608
+logger_benchmark_tsc_vcopy_64                10.1 ns         10.1 ns     69282902
+logger_benchmark_tsc_vcopy_128               11.4 ns         11.4 ns     62304733
+logger_benchmark_tsc_vcopy_256               13.9 ns         13.9 ns     50714167
+logger_benchmark_clock_realtime_coarse       6.72 ns         6.72 ns    104293571
+logger_benchmark_non_blocking               0.894 ns        0.893 ns    782899524
 ```
 
 ## Throughput
