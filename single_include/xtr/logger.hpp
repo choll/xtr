@@ -200,6 +200,70 @@ namespace xtr::detail
     }
 }
 
+#include <cassert>
+#include <cstddef>
+#include <cstring>
+
+namespace xtr::detail
+{
+    template<std::size_t N>
+    __attribute__((always_inline)) inline void copy_overlapping(
+        std::byte* dst, const std::byte* src, std::size_t n)
+    {
+        assert(n >= N);
+        assert(n <= 2 * N);
+        __builtin_memcpy(dst, src, N);
+        __builtin_memcpy(dst + n - N, src + n - N, N);
+    }
+
+    struct copy_inline_t
+    {
+    };
+
+    struct copy_memcpy_t
+    {
+    };
+
+    inline constexpr copy_inline_t copy_inline{};
+    inline constexpr copy_memcpy_t copy_memcpy{};
+
+    __attribute__((always_inline)) inline void bytecopy(
+        void* dst, const void* src, std::size_t n, copy_memcpy_t)
+    {
+        std::memcpy(dst, src, n);
+    }
+
+    __attribute__((always_inline)) inline void bytecopy(
+        void* dst_v, const void* src_v, std::size_t n, copy_inline_t)
+    {
+        auto* dst = static_cast<std::byte*>(dst_v);
+        const auto* src = static_cast<const std::byte*>(src_v);
+
+        if (n > 16)
+        {
+            if (n <= 32)
+                copy_overlapping<16>(dst, src, n);
+            else if (n <= 64)
+                copy_overlapping<32>(dst, src, n);
+            else
+                std::memcpy(dst, src, n);
+        }
+        else if (n >= 4)
+        {
+            if (n <= 8)
+                copy_overlapping<4>(dst, src, n);
+            else
+                copy_overlapping<8>(dst, src, n);
+        }
+        else if (n > 0)
+        {
+            dst[0] = src[0];
+            dst[n / 2] = src[n / 2];
+            dst[n - 1] = src[n - 1];
+        }
+    }
+}
+
 #include <cstddef>
 
 namespace xtr::detail
@@ -1508,15 +1572,20 @@ namespace xtr::detail
         return true;
     }
 
-    template<typename Tags, typename Buffer>
+    template<typename Tags, typename Buffer, typename CopyTag>
     __attribute__((always_inline)) inline bool copy(
-        std::byte*& pos, std::byte*& end, Buffer& buf, const void* value, std::size_t length)
+        std::byte*& pos,
+        std::byte*& end,
+        Buffer& buf,
+        const void* value,
+        std::size_t length,
+        CopyTag copy_tag)
     {
         std::byte* value_end = pos + length;
         if (!wait_for_capacity<Tags>(end, value_end, buf)) [[unlikely]]
             return false;
-        std::memcpy(pos, value, length);
-        pos += length;
+        bytecopy(pos, value, length, copy_tag);
+        pos = value_end;
         return true;
     }
 
@@ -1545,7 +1614,7 @@ namespace xtr::detail
     }
 
     template<typename Tags, typename T, typename Buffer>
-    variable_length_entry<T> transform_args(
+    inline variable_length_entry<T> transform_args(
         std::byte*& pos,
         std::byte*& end,
         Buffer& buf,
@@ -1553,28 +1622,34 @@ namespace xtr::detail
         detail::vcopy_wrapper<T> vc)
     {
         pos = align<alignof(T)>(pos);
-        if (!copy<Tags>(pos, end, buf, &vc.value, vc.size)) [[unlikely]]
+        if (!copy<Tags>(pos, end, buf, &vc.value, vc.size, copy_memcpy))
+            [[unlikely]]
+        {
             overflow = true;
+        }
         return variable_length_entry<T>(vc.size);
     }
 
     template<typename Tags, typename Buffer, typename String>
         requires std::same_as<String, std::string> ||
                  std::same_as<String, std::string_view>
-    string_table_entry transform_args(
+    inline string_table_entry transform_args(
         std::byte*& pos, std::byte*& end, Buffer& buf, bool&, const String& str)
     {
-        if (!copy<Tags>(pos, end, buf, str.data(), str.length())) [[unlikely]]
+        if (!copy<Tags>(pos, end, buf, str.data(), str.length(), copy_inline))
+            [[unlikely]]
+        {
             return string_table_entry{string_table_entry::truncated};
+        }
         return string_table_entry(str.length());
     }
 
     template<typename Tags, typename Buffer>
-    string_table_entry transform_args(
+    inline string_table_entry transform_args(
         std::byte*& pos, std::byte*& end, Buffer& buf, bool&, const char* str)
     {
         const std::size_t length = std::strlen(str);
-        if (!copy<Tags>(pos, end, buf, str, length)) [[unlikely]]
+        if (!copy<Tags>(pos, end, buf, str, length, copy_inline)) [[unlikely]]
             return string_table_entry{string_table_entry::truncated};
         return string_table_entry(length);
     }
