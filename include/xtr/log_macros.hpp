@@ -293,12 +293,20 @@
 #define XTR_XSTR(s) XTR_STR(s)
 #define XTR_STR(s)  #s
 
+// Error, fatal and debug log statements are marked as unlikely in order to
+// encourage the compiler to outline them. This is done so that the code on the
+// user's fast path will be smaller.
 #define XTR_LOGL_TAGS(TAGS, LEVEL, SINK, ...)                                            \
     (__extension__({                                                                     \
         if constexpr (xtr::log_level_t::LEVEL != xtr::log_level_t::debug || !XTR_NDEBUG) \
         {                                                                                \
-            if ((SINK).level() >= xtr::log_level_t::LEVEL)                               \
+            if (__builtin_expect(                                                        \
+                    (SINK).level() >= xtr::log_level_t::LEVEL,                           \
+                    xtr::log_level_t::LEVEL >= xtr::log_level_t::warning &&              \
+                        xtr::log_level_t::LEVEL <= xtr::log_level_t::info))              \
+            {                                                                            \
                 XTR_LOG_TAGS(TAGS, LEVEL, SINK, __VA_ARGS__);                            \
+            }                                                                            \
             if constexpr (xtr::log_level_t::LEVEL == xtr::log_level_t::fatal)            \
             {                                                                            \
                 (SINK).sync();                                                           \
