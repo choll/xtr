@@ -2852,8 +2852,13 @@ namespace xtr
     (__extension__({                                                                     \
         if constexpr (xtr::log_level_t::LEVEL != xtr::log_level_t::debug || !XTR_NDEBUG) \
         {                                                                                \
-            if ((SINK).level() >= xtr::log_level_t::LEVEL)                               \
+            if (__builtin_expect(                                                        \
+                    (SINK).level() >= xtr::log_level_t::LEVEL,                           \
+                    xtr::log_level_t::LEVEL == xtr::log_level_t::warning ||              \
+                        xtr::log_level_t::LEVEL == xtr::log_level_t::info))              \
+            {                                                                            \
                 XTR_LOG_TAGS(TAGS, LEVEL, SINK, __VA_ARGS__);                            \
+            }                                                                            \
             if constexpr (xtr::log_level_t::LEVEL == xtr::log_level_t::fatal)            \
             {                                                                            \
                 (SINK).sync();                                                           \
