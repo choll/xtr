@@ -302,8 +302,8 @@
         {                                                                                \
             if (__builtin_expect(                                                        \
                     (SINK).level() >= xtr::log_level_t::LEVEL,                           \
-                    xtr::log_level_t::LEVEL >= xtr::log_level_t::warning &&              \
-                        xtr::log_level_t::LEVEL <= xtr::log_level_t::info))              \
+                    xtr::log_level_t::LEVEL == xtr::log_level_t::warning ||              \
+                        xtr::log_level_t::LEVEL == xtr::log_level_t::info))              \
             {                                                                            \
                 XTR_LOG_TAGS(TAGS, LEVEL, SINK, __VA_ARGS__);                            \
             }                                                                            \
