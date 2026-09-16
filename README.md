@@ -9,16 +9,86 @@
 ## What is it?
 
 XTR is a C++ logging library aimed at applications with low-latency or real-time
-requirements. The cost of log statements is minimised by delegating as much work
-as possible to a background thread.
+requirements.
 
 It is designed so that the cost of a log statement is consistently fast---i.e.
 every call is fast, not just the average case. No allocations or system calls
 are made when a log statement is made.
 
+## Design
+
+The cost of log statements is minimised by delegating as much work as possible to a
+background thread. This is done by writing log records to queues that are read by
+the background thread. Log records contain a function pointer which is invoked by the
+background thread to perform formatting.
+
+With formatting delegated, the remaining costs are writing the record to a queue and
+reading the timestamp. XTR makes two departures from traditional logger design (global
+logger with either thread-local queues or an MPSC queue) to minimise these costs:
+
+* XTR is designed around the idea of application components writing to their own
+sink object that contains an SPSC queue. An application creates many sinks which connect
+to a single logger object. As sinks are per-component, no thread-local storage is
+required; objects instead have a sink member that is written to without any thread-local
+access overhead or contention on a shared queue. This has the added benefit of allowing
+log levels to be controlled per component, which can be done from outside the process
+while it is running, via the supplied [xtrctl](https://choll.github.io/xtr/xtrctl.html)
+tool.
+* XTR gives users the choice of where timestamps are taken, in either the producer
+or consumer thread. This is done because the cost of reading the timestamp is high
+relative to the overall cost of writing to the sink---see the `logger_benchmark` vs
+`logger_benchmark_tsc` timings in [benchmarks](#benchmarks).
+
+### Example
+
+```c++
+xtr::logger log;
+xtr::sink s = log.get_sink("Example");
+XTR_LOG(s, "Hello world");
+```
+
+The log statement above [compiles](https://godbolt.org/z/bMdof3Ej8) to 11 instructions
+(excluding ret) on the fast path with a 64KB queue:
+
+```nasm
+f:
+    mov rax, [rdi+80]
+    mov rcx, [rdi+72]
+    movzx edx, ax
+    sub rcx, rax
+    add rdx, [rdi+64]
+    cmp rcx, 7
+    jbe .queue_full
+.write:
+    add rax, 8
+    mov qword [rdx], func_ptr
+    mov [rdi+80], rax
+    mov [rdi], rax
+    ret
+.queue_full:
+    pause
+    mov rcx, [rdi+128]
+    mov [rdi+72], rcx
+    mov rax, [rdi+80]
+    sub rcx, rax
+    cmp rcx, 7
+    ja .write
+    jmp .queue_full
+```
+
+`func_ptr` is the log record itself---specifically it is a function pointer to an instantiation
+of a per-log-record template function that embeds the format string, log level, line number
+and source file name. Note that only log statements with no arguments produce a single function
+pointer. Refer to the comments in
+[trampolines.hpp](https://github.com/choll/xtr/blob/master/include/xtr/detail/trampolines.hpp)
+for details.
+
+If the queue is full then the `.queue_full` loop spins until space becomes available. To drop
+messages on a full queue use [XTR_TRY_LOG](https://choll.github.io/xtr/api.html#c.XTR_TRY_LOG).
+
 ## Features
 
-* Fast (please see benchmark results).
+* Fast (please see [benchmark results](#benchmarks)).
 * No allocations when logging, even when logging strings.
 * Support for logging variable-length objects, such as structs with flexible array members.
 * Formatting, I/O etc are all delegated to a background thread. Work done at the log statement call-site is minimised---for example a no-argument log statement only involves writing a single pointer to a ring buffer.
