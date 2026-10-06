@@ -8,7 +8,7 @@ alabaster==1.0.0
     # via sphinx
 babel==2.18.0
     # via sphinx
-breathe==4.36.0
+breathe==5.0.0
     # via -r requirements.in
 build==1.5.0
     # via pip-tools
