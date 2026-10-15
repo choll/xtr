@@ -122,7 +122,7 @@ Example
     XTR_LOG(s, "Hello {}", 123.456); // Hello 123.456
     XTR_LOG(s, "Hello {:.1f}", 123.456); // Hello 123.1
 
-View this example on `Compiler Explorer <https://godbolt.org/z/zxs7WThM6>`__.
+View this example on `Compiler Explorer <https://godbolt.org/z/xn3z5fnj3>`__.
 
 .. _copy_val_ref:
 

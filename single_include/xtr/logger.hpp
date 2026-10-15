@@ -113,7 +113,7 @@ namespace xtr
         {
             std::uint32_t result = 1;
             while (n-- != 0)
-                result *= 10u;
+                result *= 10U;
             return result;
         }
 
@@ -230,6 +230,70 @@ namespace xtr::detail
                 std::is_same_v<std::remove_cv_t<T>, signed char>,
             "value must be a char or byte pointer");
         return reinterpret_cast<T*>(align(std::uintptr_t(ptr), Align));
+    }
+}
+
+#include <cassert>
+#include <cstddef>
+#include <cstring>
+
+namespace xtr::detail
+{
+    template<std::size_t N>
+    __attribute__((always_inline)) inline void copy_overlapping(
+        std::byte* dst, const std::byte* src, std::size_t n)
+    {
+        assert(n >= N);
+        assert(n <= 2 * N);
+        __builtin_memcpy(dst, src, N);
+        __builtin_memcpy(dst + n - N, src + n - N, N);
+    }
+
+    struct copy_inline_t
+    {
+    };
+
+    struct copy_memcpy_t
+    {
+    };
+
+    inline constexpr copy_inline_t copy_inline{};
+    inline constexpr copy_memcpy_t copy_memcpy{};
+
+    __attribute__((always_inline)) inline void bytecopy(
+        void* dst, const void* src, std::size_t n, copy_memcpy_t)
+    {
+        std::memcpy(dst, src, n);
+    }
+
+    __attribute__((always_inline)) inline void bytecopy(
+        void* dst_v, const void* src_v, std::size_t n, copy_inline_t)
+    {
+        auto* dst = static_cast<std::byte*>(dst_v);
+        const auto* src = static_cast<const std::byte*>(src_v);
+
+        if (n > 16)
+        {
+            if (n <= 32)
+                copy_overlapping<16>(dst, src, n);
+            else if (n <= 64)
+                copy_overlapping<32>(dst, src, n);
+            else
+                std::memcpy(dst, src, n);
+        }
+        else if (n >= 4)
+        {
+            if (n <= 8)
+                copy_overlapping<4>(dst, src, n);
+            else
+                copy_overlapping<8>(dst, src, n);
+        }
+        else if (n > 0)
+        {
+            dst[0] = src[0];
+            dst[n / 2] = src[n / 2];
+            dst[n - 1] = src[n - 1];
+        }
     }
 }
 
@@ -373,6 +437,19 @@ private:
 };
 
 #include <cstddef>
+
+namespace xtr::detail
+{
+    enum class prefault_flags_t
+    {
+        none,
+        read_write
+    };
+
+    void prefault_rw(void* addr, std::size_t length);
+}
+
+#include <cstddef>
 #include <utility>
 
 #include <sys/mman.h>
@@ -462,7 +539,8 @@ public:
         std::size_t length, // must be multiple of page size
         int fd = -1,
         std::size_t offset = 0, // must be multiple of page size
-        int flags = 0);
+        int flags = 0,
+        prefault_flags_t prefault_flags = prefault_flags_t::none);
 
     ~mirrored_memory_mapping();
 
@@ -661,12 +739,6 @@ namespace xtr::detail
 {
     inline constexpr std::size_t dynamic_capacity = std::size_t(-1);
 
-#if defined(MAP_POPULATE)
-    inline constexpr int srb_flags = MAP_POPULATE;
-#else
-    inline constexpr int srb_flags = 0;
-#endif
-
     template<std::size_t Capacity>
     class synchronized_ring_buffer;
 
@@ -774,16 +846,24 @@ public:
     static constexpr bool is_dynamic = Capacity == dynamic_capacity;
 
 public:
-    synchronized_ring_buffer(int fd = -1, std::size_t offset = 0, int flags = srb_flags)
+    synchronized_ring_buffer(
+        int fd = -1,
+        std::size_t offset = 0,
+        int flags = 0,
+        prefault_flags_t prefault_flags = prefault_flags_t::read_write)
         requires(!is_dynamic)
     {
-        m_ = mirrored_memory_mapping{capacity(), fd, offset, flags};
+        m_ = mirrored_memory_mapping{capacity(), fd, offset, flags, prefault_flags};
         nread_plus_capacity_ = wrnread_plus_capacity_ = capacity();
         wrbase_ = begin();
     }
 
     explicit synchronized_ring_buffer(
-        size_type min_capacity, int fd = -1, std::size_t offset = 0, int flags = srb_flags)
+        size_type min_capacity,
+        int fd = -1,
+        std::size_t offset = 0,
+        int flags = 0,
+        prefault_flags_t prefault_flags = prefault_flags_t::read_write)
         requires is_dynamic
         :
         m_(align_to_page_size(
@@ -794,7 +874,8 @@ public:
 #endif
            fd,
            offset,
-           flags)
+           flags,
+           prefault_flags)
     {
         assert(capacity() <= std::numeric_limits<size_type>::max());
         wrbase_ = begin();
@@ -1524,15 +1605,20 @@ namespace xtr::detail
         return true;
     }
 
-    template<typename Tags, typename Buffer>
+    template<typename Tags, typename Buffer, typename CopyTag>
     __attribute__((always_inline)) inline bool copy(
-        std::byte*& pos, std::byte*& end, Buffer& buf, const void* value, std::size_t length)
+        std::byte*& pos,
+        std::byte*& end,
+        Buffer& buf,
+        const void* value,
+        std::size_t length,
+        CopyTag copy_tag)
     {
         std::byte* value_end = pos + length;
         if (!wait_for_capacity<Tags>(end, value_end, buf)) [[unlikely]]
             return false;
-        std::memcpy(pos, value, length);
-        pos += length;
+        bytecopy(pos, value, length, copy_tag);
+        pos = value_end;
         return true;
     }
 
@@ -1561,7 +1647,7 @@ namespace xtr::detail
     }
 
     template<typename Tags, typename T, typename Buffer>
-    variable_length_entry<T> transform_args(
+    inline variable_length_entry<T> transform_args(
         std::byte*& pos,
         std::byte*& end,
         Buffer& buf,
@@ -1569,28 +1655,34 @@ namespace xtr::detail
         detail::vcopy_wrapper<T> vc)
     {
         pos = align<alignof(T)>(pos);
-        if (!copy<Tags>(pos, end, buf, &vc.value, vc.size)) [[unlikely]]
+        if (!copy<Tags>(pos, end, buf, &vc.value, vc.size, copy_memcpy))
+            [[unlikely]]
+        {
             overflow = true;
+        }
         return variable_length_entry<T>(vc.size);
     }
 
     template<typename Tags, typename Buffer, typename String>
         requires std::same_as<String, std::string> ||
                  std::same_as<String, std::string_view>
-    string_table_entry transform_args(
+    inline string_table_entry transform_args(
         std::byte*& pos, std::byte*& end, Buffer& buf, bool&, const String& str)
     {
-        if (!copy<Tags>(pos, end, buf, str.data(), str.length())) [[unlikely]]
+        if (!copy<Tags>(pos, end, buf, str.data(), str.length(), copy_inline))
+            [[unlikely]]
+        {
             return string_table_entry{string_table_entry::truncated};
+        }
         return string_table_entry(str.length());
     }
 
     template<typename Tags, typename Buffer>
-    string_table_entry transform_args(
+    inline string_table_entry transform_args(
         std::byte*& pos, std::byte*& end, Buffer& buf, bool&, const char* str)
     {
         const std::size_t length = std::strlen(str);
-        if (!copy<Tags>(pos, end, buf, str, length)) [[unlikely]]
+        if (!copy<Tags>(pos, end, buf, str, length, copy_inline)) [[unlikely]]
             return string_table_entry{string_table_entry::truncated};
         return string_table_entry(length);
     }
@@ -1680,7 +1772,7 @@ namespace xtr::detail
     {
         const std::size_t n = std::min(DstSz - 1, std::size(src));
         if (std::size(src) > 0) [[likely]]
-            std::memcpy(dst, &src[0], n);
+            std::memcpy(dst, std::data(src), n);
         dst[n] = '\0';
     }
 }
@@ -2793,8 +2885,13 @@ namespace xtr
     (__extension__({                                                                     \
         if constexpr (xtr::log_level_t::LEVEL != xtr::log_level_t::debug || !XTR_NDEBUG) \
         {                                                                                \
-            if ((SINK).level() >= xtr::log_level_t::LEVEL)                               \
+            if (__builtin_expect(                                                        \
+                    (SINK).level() >= xtr::log_level_t::LEVEL,                           \
+                    xtr::log_level_t::LEVEL == xtr::log_level_t::warning ||              \
+                        xtr::log_level_t::LEVEL == xtr::log_level_t::info))              \
+            {                                                                            \
                 XTR_LOG_TAGS(TAGS, LEVEL, SINK, __VA_ARGS__);                            \
+            }                                                                            \
             if constexpr (xtr::log_level_t::LEVEL == xtr::log_level_t::fatal)            \
             {                                                                            \
                 (SINK).sync();                                                           \
@@ -3507,7 +3604,6 @@ namespace xtr::detail
 
     template<typename T>
     concept tuple_like = requires(T t) { std::tuple_size<T>(); };
-
 }
 
 #include <algorithm>
@@ -5034,22 +5130,10 @@ namespace xtr::detail
         return file_descriptor(fd);
     }
 #endif
-
-    inline void prefault_write(void* addr, std::size_t length)
-    {
-#if defined(MADV_POPULATE_WRITE)
-        if (::madvise(addr, length, MADV_POPULATE_WRITE) == 0)
-            return;
-#endif
-        volatile std::byte* const p = static_cast<volatile std::byte*>(addr);
-        const std::size_t page_size = align_to_page_size(1);
-        for (std::size_t i = 0; i < length; i += page_size)
-            p[i] = p[i];
-    }
 }
 
 inline xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping(
-    std::size_t length, int fd, std::size_t offset, int flags)
+    std::size_t length, int fd, std::size_t offset, int flags, prefault_flags_t prefault_flags)
 {
     assert(!(flags & MAP_ANONYMOUS) || fd == -1);
     assert((flags & MAP_FIXED) == 0); // Not implemented (would be easy though)
@@ -5100,8 +5184,12 @@ inline xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping(
         }
 
         reserve.release(); // mapping was destroyed by mremap
+
+        if (prefault_flags == prefault_flags_t::read_write)
+            prefault_rw(m_.get(), length * 2);
+
         mirror.release(); // mirror will be recreated in ~mirrored_memory_mapping
-        prefault_write(m_.get(), length * 2);
+
         return;
 #else
         if (!(temp_fd = shm_open_anon(O_RDWR, S_IRUSR | S_IWUSR)))
@@ -5140,8 +5228,11 @@ inline xtr::detail::mirrored_memory_mapping::mirrored_memory_mapping(
     m_ = memory_mapping(reserve.get(), length, prot, flags, fd, offset);
 
     reserve.release(); // mapping was destroyed when m_ was created
-    mirror.release();  // mirror will be recreated in ~mirrored_memory_mapping
-    prefault_write(m_.get(), length * 2);
+
+    if (prefault_flags == prefault_flags_t::read_write)
+        prefault_rw(m_.get(), length * 2);
+
+    mirror.release(); // mirror will be recreated in ~mirrored_memory_mapping
 }
 
 inline xtr::detail::mirrored_memory_mapping::~mirrored_memory_mapping()
@@ -5255,6 +5346,20 @@ inline void xtr::posix_fd_storage::submit_buffer(char* buf, std::size_t size)
         size -= std::size_t(nwritten);
         buf += std::size_t(nwritten);
     }
+}
+
+#include <sys/mman.h>
+
+inline void xtr::detail::prefault_rw(void* addr, std::size_t length)
+{
+#if defined(MADV_POPULATE_WRITE)
+    if (::madvise(addr, length, MADV_POPULATE_WRITE) == 0)
+        return;
+#endif
+    volatile std::byte* const p = static_cast<volatile std::byte*>(addr);
+    const std::size_t page_size = align_to_page_size(1);
+    for (std::size_t i = 0; i < length; i += page_size)
+        p[i] = p[i];
 }
 
 #include <cassert>

@@ -8,7 +8,7 @@ alabaster==1.0.0
     # via sphinx
 babel==2.18.0
     # via sphinx
-breathe==4.36.0
+breathe==5.0.0
     # via -r requirements.in
 build==1.5.0
     # via pip-tools
@@ -20,7 +20,7 @@ click==8.4.2
     # via pip-tools
 colorama==0.4.6
     # via conan
-conan==2.31.1
+conan==2.32.0
     # via -r requirements.in
 distro==1.9.0
     # via conan
@@ -47,7 +47,7 @@ packaging==26.2
     #   wheel
 patch-ng==1.19.1
     # via conan
-pip-tools==7.6.0
+pip-tools==7.6.1
     # via -r requirements.in
 pygments==2.20.0
     # via sphinx
@@ -91,7 +91,7 @@ sphinxcontrib-qthelp==2.0.0
     # via sphinx
 sphinxcontrib-serializinghtml==2.0.0
     # via sphinx
-urllib3==2.7.0
+urllib3==2.8.0
     # via
     #   conan
     #   requests

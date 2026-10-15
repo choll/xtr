@@ -203,6 +203,12 @@ int main(int argc, char* argv[])
     if (pattern != nullptr && pattern_type == xtrd::pattern_type_t::none)
         pattern_type = xtrd::pattern_type_t::basic_regex;
 
+    if (pattern != nullptr &&
+        std::strlen(pattern) >= sizeof(xtrd::pattern::text))
+    {
+        usage(argv[0], EXIT_FAILURE, "Pattern is too long");
+    }
+
     const xtrd::file_descriptor fd = xtrd::command_connect(path);
 
     if (!fd)

@@ -386,9 +386,8 @@ TEST_CASE_METHOD(fixture, "short write test", "[fd_storage]")
         return io_uring_submit(ring);
     };
 
-    const auto span = storage_->allocate_buffer();
-    REQUIRE(span.size() > missing_size);
-    storage_->submit_buffer(span.data(), span.size());
+    REQUIRE(buffer_size() > missing_size);
+    send_buffer();
     sync();
 
     REQUIRE(verify_file_contents(1));
@@ -424,17 +423,15 @@ TEST_CASE_METHOD(fixture, "EAGAIN test", "[fd_storage]")
         return ret;
     };
 
-    const auto span = storage_->allocate_buffer();
-
     submit_hook = [&](io_uring* ring)
     {
         ++submit_count;
         // Full buffer should be resubmitted
-        REQUIRE(sqe->len == span.size());
+        REQUIRE(sqe->len == buffer_size());
         return io_uring_submit(ring);
     };
 
-    storage_->submit_buffer(span.data(), span.size());
+    send_buffer();
     sync();
 
     REQUIRE(verify_file_contents(1));
@@ -471,17 +468,15 @@ TEST_CASE_METHOD(fixture, "ECANCELED test", "[fd_storage]")
         return ret;
     };
 
-    const auto span = storage_->allocate_buffer();
-
     submit_hook = [&](io_uring* ring)
     {
         ++submit_count;
         // Full buffer should be resubmitted
-        REQUIRE(sqe->len == span.size());
+        REQUIRE(sqe->len == buffer_size());
         return io_uring_submit(ring);
     };
 
-    storage_->submit_buffer(span.data(), span.size());
+    send_buffer();
     sync();
 
     REQUIRE(verify_file_contents(1));

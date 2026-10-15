@@ -125,6 +125,7 @@ endif
 
 ifneq ($(SANITIZER),)
 	CXXFLAGS += -fno-omit-frame-pointer -fsanitize=$(SANITIZER) -fno-sanitize-recover=all
+	CPPFLAGS += -DXTR_SANITIZER_ENABLED
 	LDFLAGS += -fsanitize=$(SANITIZER)
 	BUILD_TAG := $(BUILD_TAG)-$(SANITIZER)-sanitizer
 endif
@@ -141,16 +142,18 @@ SRCS := \
 	src/file_descriptor.cpp src/io_uring_fd_storage.cpp src/logger.cpp \
 	src/log_level.cpp src/matcher.cpp src/memory_mapping.cpp \
 	src/mirrored_memory_mapping.cpp src/open.cpp src/pagesize.cpp \
-	src/posix_fd_storage.cpp src/regex_matcher.cpp src/sink.cpp \
-	src/throw.cpp src/tsc.cpp src/wildcard_matcher.cpp
+	src/posix_fd_storage.cpp src/prefault.cpp src/regex_matcher.cpp \
+	src/sink.cpp src/throw.cpp src/tsc.cpp \
+	src/wildcard_matcher.cpp
 
 OBJS = $(SRCS:%=$(BUILD_DIR)/%.o)
 
 TEST_TARGET = $(BUILD_DIR)/test/test
 TEST_SRCS := \
-	test/align.cpp test/command_client.cpp test/command_dispatcher.cpp \
-	test/fd_storage.cpp test/file_descriptor.cpp test/logger.cpp \
-	test/main.cpp test/memory_mapping.cpp test/mirrored_memory_mapping.cpp \
+	test/align.cpp test/bytecopy.cpp test/command_client.cpp \
+	test/command_dispatcher.cpp test/fd_storage.cpp \
+	test/file_descriptor.cpp test/logger.cpp test/main.cpp \
+	test/memory_mapping.cpp test/mirrored_memory_mapping.cpp \
 	test/pagesize.cpp test/synchronized_ring_buffer.cpp test/throw.cpp
 TEST_OBJS = $(TEST_SRCS:%=$(BUILD_DIR)/%.o)
 

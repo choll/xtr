@@ -5,6 +5,7 @@
 
 #include <cerrno>
 #include <cstddef>
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <ctime>
@@ -55,19 +56,59 @@ namespace
     const char* c_str_arg32{"12345678901234567890123456789012"};
     const char* c_str_arg64{
         "1234567890123456789012345678901234567890123456789012345678901234"};
-    std::string_view sv_arg8{"12345678"};
-    std::string_view sv_arg16{"1234567890123456"};
-    std::string_view sv_arg32{"12345678901234567890123456789012"};
-    std::string_view sv_arg64{
+    const char* c_str_arg128{
+        "1234567890123456789012345678901234567890123456789012345678901234"
         "1234567890123456789012345678901234567890123456789012345678901234"};
+    // Alignment is for benchmark repeatability
+    alignas(64) const char sv_buf8[] = "12345678";
+    alignas(64) const char sv_buf16[] = "1234567890123456";
+    alignas(64) const char sv_buf32[] = "12345678901234567890123456789012";
+    alignas(64) const char sv_buf64[] =
+        "1234567890123456789012345678901234567890123456789012345678901234";
+    alignas(64) const char sv_buf128[] =
+        "1234567890123456789012345678901234567890123456789012345678901234"
+        "1234567890123456789012345678901234567890123456789012345678901234";
+    std::string_view sv_arg8{sv_buf8, sizeof(sv_buf8) - 1};
+    std::string_view sv_arg16{sv_buf16, sizeof(sv_buf16) - 1};
+    std::string_view sv_arg32{sv_buf32, sizeof(sv_buf32) - 1};
+    std::string_view sv_arg64{sv_buf64, sizeof(sv_buf64) - 1};
+    std::string_view sv_arg128{sv_buf128, sizeof(sv_buf128) - 1};
+    // Separate variables are needed for benchmarks that don't use DoNotOptimize---if
+    // the same variable is used then the compiler considers all use of it as escaped.
+    constexpr std::string_view sv_const_arg8{sv_buf8, sizeof(sv_buf8) - 1};
+    constexpr std::string_view sv_const_arg16{sv_buf16, sizeof(sv_buf16) - 1};
+    constexpr std::string_view sv_const_arg32{sv_buf32, sizeof(sv_buf32) - 1};
+    constexpr std::string_view sv_const_arg64{sv_buf64, sizeof(sv_buf64) - 1};
+    constexpr std::string_view sv_const_arg128{sv_buf128, sizeof(sv_buf128) - 1};
     std::string str_arg8{"12345678"};
     std::string str_arg16{"1234567890123456"};
     std::string str_arg32{"12345678901234567890123456789012"};
     std::string str_arg64{
         "1234567890123456789012345678901234567890123456789012345678901234"};
+    std::string str_arg128{
+        "1234567890123456789012345678901234567890123456789012345678901234"
+        "1234567890123456789012345678901234567890123456789012345678901234"};
     int int_arg = 42;
     long long_arg = 42L;
     double double_arg = 42.0;
+
+    // Jon Maiga's mx3 (rev2) 64-bit mixer
+    inline std::uint64_t hash_mix(std::uint64_t x) noexcept
+    {
+        constexpr std::uint64_t m = 0xE9846AF9B1A615DULL;
+        x ^= x >> 32;
+        x *= m;
+        x ^= x >> 32;
+        x *= m;
+        x ^= x >> 28;
+        return x;
+    }
+
+    // Random length from 1 to 64 inclusive, uniformly distributed
+    inline std::size_t random_length(std::uint64_t n) noexcept
+    {
+        return 1 + std::size_t(hash_mix(n) & 0x3F);
+    }
 
     struct variable_length_struct
     {
@@ -172,6 +213,10 @@ LOG_BENCH(
     (benchmark::DoNotOptimize(c_str_arg64), XTR_LOG(p, "Test {}", c_str_arg64)),
     88)
 LOG_BENCH(
+    logger_benchmark_c_str_128,
+    (benchmark::DoNotOptimize(c_str_arg128), XTR_LOG(p, "Test {}", c_str_arg128)),
+    152)
+LOG_BENCH(
     logger_benchmark_str_view_8,
     (benchmark::DoNotOptimize(sv_arg8), XTR_LOG(p, "Test {}", sv_arg8)),
     32)
@@ -188,6 +233,19 @@ LOG_BENCH(
     (benchmark::DoNotOptimize(sv_arg64), XTR_LOG(p, "Test {}", sv_arg64)),
     88)
 LOG_BENCH(
+    logger_benchmark_str_view_128,
+    (benchmark::DoNotOptimize(sv_arg128), XTR_LOG(p, "Test {}", sv_arg128)),
+    152)
+LOG_BENCH(
+    logger_benchmark_str_view_rand,
+    XTR_LOG(p, "Test {}", std::string_view(sv_buf64, random_length(n))),
+    88)
+LOG_BENCH(logger_benchmark_str_view_const_8, XTR_LOG(p, "Test {}", sv_const_arg8), 32)
+LOG_BENCH(logger_benchmark_str_view_const_16, XTR_LOG(p, "Test {}", sv_const_arg16), 40)
+LOG_BENCH(logger_benchmark_str_view_const_32, XTR_LOG(p, "Test {}", sv_const_arg32), 56)
+LOG_BENCH(logger_benchmark_str_view_const_64, XTR_LOG(p, "Test {}", sv_const_arg64), 88)
+LOG_BENCH(logger_benchmark_str_view_const_128, XTR_LOG(p, "Test {}", sv_const_arg128), 152)
+LOG_BENCH(
     logger_benchmark_str_8,
     (benchmark::DoNotOptimize(str_arg8), XTR_LOG(p, "Test {}", str_arg8)),
     32)
@@ -203,6 +261,10 @@ LOG_BENCH(
     logger_benchmark_str_64,
     (benchmark::DoNotOptimize(str_arg64), XTR_LOG(p, "Test {}", str_arg64)),
     88)
+LOG_BENCH(
+    logger_benchmark_str_128,
+    (benchmark::DoNotOptimize(str_arg128), XTR_LOG(p, "Test {}", str_arg128)),
+    152)
 LOG_BENCH(
     logger_benchmark_vcopy_64,
     (benchmark::DoNotOptimize(vcopy_arg64),
@@ -251,6 +313,11 @@ LOG_BENCH(
     (benchmark::DoNotOptimize(c_str_arg64), XTR_LOG_TSC(p, "Test {}", c_str_arg64)),
     96)
 LOG_BENCH(
+    logger_benchmark_tsc_c_str_128,
+    (benchmark::DoNotOptimize(c_str_arg128),
+     XTR_LOG_TSC(p, "Test {}", c_str_arg128)),
+    160)
+LOG_BENCH(
     logger_benchmark_tsc_str_view_8,
     (benchmark::DoNotOptimize(sv_arg8), XTR_LOG_TSC(p, "Test {}", sv_arg8)),
     40)
@@ -265,6 +332,14 @@ LOG_BENCH(
 LOG_BENCH(
     logger_benchmark_tsc_str_view_64,
     (benchmark::DoNotOptimize(sv_arg64), XTR_LOG_TSC(p, "Test {}", sv_arg64)),
+    96)
+LOG_BENCH(
+    logger_benchmark_tsc_str_view_128,
+    (benchmark::DoNotOptimize(sv_arg128), XTR_LOG_TSC(p, "Test {}", sv_arg128)),
+    160)
+LOG_BENCH(
+    logger_benchmark_tsc_str_view_rand,
+    XTR_LOG_TSC(p, "Test {}", std::string_view(sv_buf64, random_length(n))),
     96)
 LOG_BENCH(
     logger_benchmark_tsc_str_8,
@@ -282,6 +357,10 @@ LOG_BENCH(
     logger_benchmark_tsc_str_64,
     (benchmark::DoNotOptimize(str_arg64), XTR_LOG_TSC(p, "Test {}", str_arg64)),
     96)
+LOG_BENCH(
+    logger_benchmark_tsc_str_128,
+    (benchmark::DoNotOptimize(str_arg128), XTR_LOG_TSC(p, "Test {}", str_arg128)),
+    160)
 LOG_BENCH(
     logger_benchmark_tsc_vcopy_64,
     (benchmark::DoNotOptimize(vcopy_arg64),
