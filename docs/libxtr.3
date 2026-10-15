@@ -373,30 +373,24 @@ Path constructor. The first argument is the path to a file which should be opene
 .B template<typename Clock = std::chrono::system_clock> inline explicit logger(FILE *stream = stderr, Clock &&clock = Clock(), std::string command_path = default_command_path(), log_level_style_t level_style = default_log_level_style, option_flags_t options = option_flags_t::none) 
 Stream constructor.
 .sp
-It is expected that this constructor will be used with streams such as stdout or stderr. If a stream that has been opened by the user is to be passed to the logger then the stream
+It is expected that this constructor will be used with streams such as stdout or stderr. If a stream that has been opened by the user is to be passed to the logger then the streamconstructor with reopen path constructor is recommended instead, as this will mean that the log file can be rotated\-\-\-please refer to the xtrctl documentation for the reopening log files \%<xtrctl\:.html#\:reopening-log-files> command for details.
 .sp
-constructor with reopen path\(dq constructor is recommended instead, as this
-.sp
-will mean that the log file can be rotated\-\-\-please refer to the xtrctl
-.sp
-documentation for the <a href=\(dqxtrctl.html::reopening\-log\-files\(dq>reopening
-.sp
-log files</a> command for details.
-.sp
-@note Reopening the log file via the <a href=\(dqxtrctl.html::rotating\-log\-files\(dq>xtrctl</a>
-.sp
-tool is <em>not</em> supported if this constructor is used.
-.sp
-@param stream: The stream to write log statements to.
-.sp
-@param clock: Please refer to the @ref clock_arg \(dqdescription\(dq above.
-.sp
-@param command_path: Please refer to the @ref command_path_arg \(dqdescription\(dq above.
-
+\fBNote:\fP
+.INDENT 7.0
+.INDENT 3.5
+Reopening the log file via the xtrctl \%<xtrctl\:.html#\:rotating-log-files> tool is \fInot\fP supported if this constructor is used.
+.UNINDENT
+.UNINDENT
 .INDENT 7.0
 .TP
 .B Parameters
 .INDENT 7.0
+.IP \(bu 2
+\fBstream\fP \-\- The stream to write log statements to.
+.IP \(bu 2
+\fBclock\fP \-\- Please refer to the description above.
+.IP \(bu 2
+\fBcommand_path\fP \-\- Please refer to the description above.
 .IP \(bu 2
 \fBlevel_style\fP \-\- The log level style that will be used to prefix each log statement\-\-\-please refer to the log_level_style_t documentation for details.
 .IP \(bu 2
@@ -610,7 +604,7 @@ Sets the sink\(aqs name to the specified value.
 .UNINDENT
 .INDENT 7.0
 .TP
-.B template<auto Format, auto Level, typename Tags = void(), typename \&...Args> void log(Args&&\&... args) noexcept((XTR_NOTHROW_INGESTIBLE(Args, args) && \&...)) 
+.B template<auto Format, auto Level, typename Tags = void(), typename \&...Args> void log(Args&&\&... args) 
 Logs the given format string and arguments. This function is not intended to be used directly, instead one of the XTR_LOG macros should be used. It is provided for use in situations where use of a macro may be undesirable. 
 .UNINDENT
 .INDENT 7.0
@@ -638,7 +632,7 @@ nocopy is used to specify that a string argument should be passed by reference i
 .SH STREAM FORMATTING WRAPPERS
 .INDENT 0.0
 .TP
-.B template<typename T> constexpr detail::streamed_wrapper<std::remove_cv_t<std::remove_reference_t<T>>> xtr::streamed_copy(T &&value) 
+.B template<typename T> detail::streamed_wrapper<std::remove_cv_t<std::remove_reference_t<T>>> xtr::streamed_copy(T &&value) 
 Returns a wrapper that formats the given argument using its ostream stream insertion operator (operator<<). The value is copied into the wrapper.
 .sp
 
@@ -654,7 +648,7 @@ A wrapper object suitable for passing as an argument to a log macro such as XTR_
 .UNINDENT
 .INDENT 0.0
 .TP
-.B template<typename T> constexpr detail::streamed_wrapper<const T&> xtr::streamed_ref(const T &value) 
+.B template<typename T> detail::streamed_wrapper<const T&> xtr::streamed_ref(const T &value) 
 Returns a wrapper that formats the given argument using its ostream stream insertion operator (operator<<). The wrapper stores a reference to the argument so callers must ensure that it remains valid until formatting is completed.
 .sp
 
@@ -800,17 +794,17 @@ File descriptor constructor.
 Public Static Attributes
 .INDENT 7.0
 .TP
-.B static constexpr std::size_t default_buffer_capacity = 64UL * 1024UL 
+.B static std::size_t default_buffer_capacity = 64UL * 1024UL 
 Default value for the buffer_capacity constructor argument. 
 .UNINDENT
 .INDENT 7.0
 .TP
-.B static constexpr std::size_t default_queue_size = 1024UL 
+.B static std::size_t default_queue_size = 1024UL 
 Default value for the queue_size constructor argument. 
 .UNINDENT
 .INDENT 7.0
 .TP
-.B static constexpr std::size_t default_batch_size = 32UL 
+.B static std::size_t default_batch_size = 32UL 
 Default value for the batch_size constructor argument. 
 .UNINDENT
 .UNINDENT
@@ -841,7 +835,7 @@ File descriptor constructor.
 Public Static Attributes
 .INDENT 7.0
 .TP
-.B static constexpr std::size_t default_buffer_capacity = 64UL * 1024UL 
+.B static std::size_t default_buffer_capacity = 64UL * 1024UL 
 Default value for the buffer_capacity constructor argument. 
 .UNINDENT
 .UNINDENT
@@ -882,7 +876,7 @@ Creates a storage interface object from a file descriptor and reopen path. Eithe
 .UNINDENT
 .INDENT 0.0
 .TP
-.B constexpr auto xtr::null_reopen_path = \(dq\(dq 
+.B auto xtr::null_reopen_path = \(dq\(dq 
 When passed to the reopen_path argument of make_fd_storage, posix_fd_storage::posix_fd_storage, io_uring_fd_storage or logger::logger indicates that the output file handle has no associated filename and so should not be reopened if requested by the xtrctl reopen command \%<xtrctl\:.html#\:reopening-log-files>\&. 
 .UNINDENT
 .SH I/O PUMP STATISTICS
@@ -907,7 +901,7 @@ Returns the default command path used for the command_path argument of logger::l
 .SH NULL COMMAND PATH
 .INDENT 0.0
 .TP
-.B constexpr auto xtr::null_command_path = \(dq\(dq 
+.B auto xtr::null_command_path = \(dq\(dq 
 When passed to the command_path argument of logger::logger (or other logger constructors) indicates that no command socket should be created. 
 .UNINDENT
 .SH CONFIGURATION VARIABLES
@@ -918,6 +912,13 @@ overridden by users.
 .TP
 .B XTR_SINK_CAPACITY 
 Sets the capacity (in bytes) of the queue that sinks use to send log data to the background thread. Each sink will have an individual queue of this size. Users are permitted to define this variable in order to set a custom capacity. User provided capacities may be rounded up\-\-\-to obtain the actual capacity invoke xtr::sink::capacity\&.
+.sp
+Note that if the single header include file is not used then this setting may only be defined in either config.hpp or by overriding CXXFLAGS, and requires rebuilding libxtr if set. 
+.UNINDENT
+.INDENT 0.0
+.TP
+.B XTR_TIMESTAMP_DIGITS 
+Sets the number of sub\-second digits used when formatting timestamps, from 1 (tenths of a second) to 9 (nanoseconds).
 .sp
 Note that if the single header include file is not used then this setting may only be defined in either config.hpp or by overriding CXXFLAGS, and requires rebuilding libxtr if set. 
 .UNINDENT

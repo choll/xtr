@@ -21,6 +21,18 @@
 #endif
 
 /**
+ * Sets the number of sub-second digits used when formatting timestamps, from
+ * 1 (tenths of a second) to 9 (nanoseconds).
+ *
+ * Note that if the single header include file is not used then this setting
+ * may only be defined in either config.hpp or by overriding CXXFLAGS, and
+ * requires rebuilding libxtr if set.
+ */
+#if !defined(XTR_TIMESTAMP_DIGITS)
+#define XTR_TIMESTAMP_DIGITS 6
+#endif
+
+/**
  * Set to 1 to enable io_uring support. If this setting is not manually defined
  * then io_uring support will be automatically detected. If libxtr is built with
  * io_uring support enabled then the library will still function on kernels that
