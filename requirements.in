@@ -1,5 +1,5 @@
 conan>=2.34.0,<3
-sphinx
+sphinx<9.2  # 9.2 requires Python >= 3.13; CI (Ubuntu 24.04, FreeBSD) has 3.12
 breathe
 sphinx-rtd-theme
 pip-tools
