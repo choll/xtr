@@ -20,7 +20,7 @@ click==8.4.2
     # via pip-tools
 colorama==0.4.6
     # via conan
-conan==2.32.0
+conan==2.34.0
     # via -r requirements.in
 distro==1.9.0
     # via conan
@@ -55,8 +55,6 @@ pyproject-hooks==1.2.0
     # via
     #   build
     #   pip-tools
-python-dateutil==2.9.0.post0
-    # via conan
 pyyaml==6.0.3
     # via conan
 requests==2.34.2
@@ -65,8 +63,6 @@ requests==2.34.2
     #   sphinx
 roman-numerals==4.1.0
     # via sphinx
-six==1.17.0
-    # via python-dateutil
 snowballstemmer==3.1.1
     # via sphinx
 sphinx==9.2.0
@@ -91,6 +87,8 @@ sphinxcontrib-qthelp==2.0.0
     # via sphinx
 sphinxcontrib-serializinghtml==2.0.0
     # via sphinx
+truststore==0.10.5
+    # via conan
 urllib3==2.8.0
     # via
     #   conan
