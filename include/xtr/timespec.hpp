@@ -27,6 +27,16 @@ namespace xtr
     namespace detail
     {
         template<typename OutputIterator, typename T>
+        inline void format_nanos(OutputIterator out, T value)
+        {
+#pragma GCC unroll 9
+            for (std::size_t i = 0; i != 9; ++i)
+            {
+                *--out = static_cast<char>('0' + value % 10);
+                value /= 10;
+            }
+        }
+        template<typename OutputIterator, typename T>
         inline void format_micros(OutputIterator out, T value)
         {
 #pragma GCC unroll 6
@@ -54,7 +64,11 @@ struct fmt::formatter<xtr::timespec>
         thread_local struct
         {
             std::time_t sec;
+#ifdef XTR_TIMESPEC_NANO
+            char buf[29] = {"1970-01-01 00:00:00."};
+#else
             char buf[26] = {"1970-01-01 00:00:00."};
+#endif
         } last;
 
         if (ts.tv_sec != last.sec) [[unlikely]]
@@ -66,7 +80,11 @@ struct fmt::formatter<xtr::timespec>
             last.sec = ts.tv_sec;
         }
 
+#ifdef XTR_TIMESPEC_NANO
+        xtr::detail::format_nanos(std::end(last.buf), ts.tv_nsec);
+#else
         xtr::detail::format_micros(std::end(last.buf), ts.tv_nsec / 1000);
+#endif
 
         return std::copy(std::begin(last.buf), std::end(last.buf), ctx.out());
     }
