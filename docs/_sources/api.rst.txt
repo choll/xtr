@@ -165,5 +165,6 @@ The header file `xtr/config.hpp` contains configuration variables that may be
 overridden by users.
 
 .. doxygendefine:: XTR_SINK_CAPACITY
+.. doxygendefine:: XTR_TIMESTAMP_DIGITS
 .. doxygendefine:: XTR_USE_IO_URING
 .. doxygendefine:: XTR_IO_URING_POLL
