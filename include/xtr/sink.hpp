@@ -24,7 +24,7 @@
 #include "config.hpp"
 #include "detail/align.hpp"
 #include "detail/buffer.hpp"
-#include "detail/is_c_string.hpp"
+#include "detail/concepts.hpp"
 #include "detail/print.hpp"
 #include "detail/synchronized_ring_buffer.hpp"
 #include "detail/trampolines.hpp"
@@ -39,7 +39,6 @@
 #include <limits>
 #include <memory>
 #include <string>
-#include <string_view>
 #include <type_traits>
 #include <utility>
 
@@ -259,13 +258,9 @@ void xtr::sink::log_impl(Args&&... args) noexcept(
     (XTR_NOTHROW_INGESTIBLE(Args, args) && ...))
 {
     static_assert(sizeof...(Args) > 0);
-    constexpr bool is_str = std::disjunction_v<
-        detail::is_c_string<decltype(std::forward<Args>(args))>...,
-        std::is_same<std::remove_cvref_t<Args>, std::string_view>...,
-        std::is_same<std::remove_cvref_t<Args>, std::string>...>;
-    constexpr bool is_vcopy =
-        std::disjunction_v<detail::is_vcopy_wrapper<Args>...>;
-    if constexpr (is_str || is_vcopy)
+    constexpr bool is_vlen =
+        std::disjunction_v<detail::is_variable_length<Args>...>;
+    if constexpr (is_vlen)
         post_variable_len<Format, Level, Tags>(std::forward<Args>(args)...);
     else
         post<Format, Level, Tags>(make_lambda<Tags>(std::forward<Args>(args)...));
