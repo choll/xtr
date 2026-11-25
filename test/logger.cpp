@@ -71,6 +71,8 @@
 #include <string>
 #include <string_view>
 #include <tuple>
+#include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -3167,6 +3169,532 @@ TEST_CASE_METHOD(fixture, "logger vcopy overflow test", "[logger]")
         last_line() ==
         fmt::format("W 2000-01-01 01:02:03.123456 Name: 1 messages dropped"));
     REQUIRE(w.expired());
+}
+
+namespace
+{
+    // XXX review comment
+    // A user-defined container opted in to serialization via
+    // enable_container_serialization.
+    struct user_container
+    {
+        using value_type = std::string;
+
+        auto begin() const
+        {
+            return v_.begin();
+        }
+
+        auto end() const
+        {
+            return v_.end();
+        }
+
+        std::vector<std::string> v_;
+    };
+
+    // XXX review comment
+    // A user-defined container whose iterator yields elements by value
+    // rather than by reference.
+    struct by_value_container
+    {
+        using value_type = std::string;
+
+        struct iterator
+        {
+            using value_type = std::string;
+            using difference_type = std::ptrdiff_t;
+
+            std::string operator*() const
+            {
+                return std::to_string(*pos_);
+            }
+
+            iterator& operator++()
+            {
+                ++pos_;
+                return *this;
+            }
+
+            iterator operator++(int)
+            {
+                iterator tmp = *this;
+                ++pos_;
+                return tmp;
+            }
+
+            bool operator==(const iterator&) const = default;
+
+            const int* pos_ = nullptr;
+        };
+
+        iterator begin() const
+        {
+            return iterator{v_.data()};
+        }
+
+        iterator end() const
+        {
+            return iterator{v_.data() + v_.size()};
+        }
+
+        std::vector<int> v_;
+    };
+
+    // XXX review comment
+    // Formattable but not trivially destructible, so a container of these
+    // cannot be serialized and is copied instead.
+    struct non_trivially_destructible
+    {
+        ~non_trivially_destructible()
+        {
+        }
+
+        int x_;
+        // XXX review comment
+        // Optionally set by tests so that a weak_ptr can be used to detect
+        // copies that are never destroyed.
+        std::shared_ptr<int> p_ = nullptr;
+    };
+}
+
+template<>
+struct xtr::enable_container_serialization<user_container> : std::true_type
+{
+};
+
+template<>
+struct xtr::enable_container_serialization<by_value_container> : std::true_type
+{
+};
+
+template<>
+struct fmt::formatter<non_trivially_destructible>
+{
+    template<typename ParseContext>
+    constexpr auto parse(ParseContext& ctx)
+    {
+        return ctx.begin();
+    }
+
+    template<typename FormatContext>
+    auto format(const non_trivially_destructible& v, FormatContext& ctx) const
+    {
+        return fmt::format_to(ctx.out(), "{}", v.x_);
+    }
+};
+
+TEST_CASE_METHOD(fixture, "logger tuple-like test", "[logger]")
+{
+    const auto expected = [this](std::string_view msg)
+    {
+        return fmt::format(
+            "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test {}",
+            line_,
+            msg);
+    };
+
+    const std::string str = "string";
+
+    const std::tuple<std::string, int> t{str, 1};
+    XTR_LOG(s_, "Test {}", t), line_ = __LINE__;
+    REQUIRE(last_line() == expected("(string, 1)"));
+
+    const std::pair<std::string, int> p{str, 2};
+    XTR_LOG(s_, "Test {}", p), line_ = __LINE__;
+    REQUIRE(last_line() == expected("(string, 2)"));
+
+    const std::array<std::string, 2> a{str, str};
+    XTR_LOG(s_, "Test {}", a), line_ = __LINE__;
+    REQUIRE(last_line() == expected("[string, string]"));
+
+    const std::tuple<const char*, int> c{"cstr", 3};
+    XTR_LOG(s_, "Test {}", c), line_ = __LINE__;
+    REQUIRE(last_line() == expected("(cstr, 3)"));
+
+    const std::size_t n = 2;
+    alignas(variable_length_struct)
+        std::byte storage[sizeof(variable_length_struct) + sizeof(int) * n];
+    auto& vls = *reinterpret_cast<variable_length_struct*>(storage);
+    vls.size = n;
+    vls.data[0] = 1;
+    vls.data[1] = 2;
+    const auto v = std::make_tuple(xtr::vcopy(vls, sizeof(storage)), 4);
+    XTR_LOG(s_, "Test {}", v), line_ = __LINE__;
+    REQUIRE(last_line() == expected("([1, 2], 4)"));
+
+    // XXX review comment
+    // Forwarded unchanged, as no member is variable-length
+    const std::tuple<int, double> f{5, 6.5};
+    XTR_LOG(s_, "Test {}", f), line_ = __LINE__;
+    REQUIRE(last_line() == expected("(5, 6.5)"));
+
+    const std::tuple<std::tuple<std::string>, int> nested{{str}, 7};
+    XTR_LOG(s_, "Test {}", nested), line_ = __LINE__;
+    REQUIRE(last_line() == expected("((string), 7)"));
+
+    // XXX review comment
+    // One-element tuple-likes whose member is itself a tuple-like must keep
+    // both levels
+    const std::tuple<std::tuple<std::string>> one_tuple{{str}};
+    XTR_LOG(s_, "Test {}", one_tuple), line_ = __LINE__;
+    REQUIRE(last_line() == expected("((string))"));
+
+    const std::array<std::array<std::string, 1>, 1> one_array{{{str}}};
+    XTR_LOG(s_, "Test {}", one_array), line_ = __LINE__;
+    REQUIRE(last_line() == expected("[[string]]"));
+}
+
+TEST_CASE_METHOD(fixture, "logger tuple reference test", "[logger]")
+{
+    // XXX review comment
+    // Reference members of a tuple or pair are logged by reference and other
+    // members by value. The blocker holds the consumer back until after the
+    // variables have been modified, so the modified values are printed for
+    // reference members and the original values for other members.
+    blocker b;
+    XTR_LOG(s_, "{}", b);
+
+    std::string str = "before";
+    int x = 1;
+    std::vector<int> v{1};
+    const char* p = "before";
+    // clang-format off
+    XTR_LOG(s_, "Test {} {} {} {} {} {} {} {} {} {} {}",std::tie(str), std::tie(str, x), std::tie(v), (std::tuple<std::string, int&>{str, x}), (std::pair<std::string, std::string&>{str, str}), (std::tuple<std::string, int, int&>{str, x, x}), (std::tuple<std::string, std::vector<int>&>{str, v}), (std::tuple<std::string, const std::string&>{str, str}), (std::tuple<std::tuple<std::string, int&>>{std::tuple<std::string, int&>{str, x}}), std::tie(p), (std::tuple<std::string, const char*&>{str, p})), line_ = __LINE__;
+    // clang-format on
+    str = "after";
+    x = 2;
+    v.push_back(2);
+    p = "after";
+
+    b.release();
+
+    REQUIRE(
+        last_line() ==
+        fmt::format(
+            "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test (after) "
+            "(after, 2) ([1, 2]) (before, 2) (before, after) (before, 1, 2) "
+            "(before, [1, 2]) (before, after) ((before, 2)) (after) (before, "
+            "after)",
+            line_));
+}
+
+TEST_CASE_METHOD(fixture, "logger container tuple reference test", "[logger]")
+{
+    // XXX review comment
+    // Elements of a serialized container are never destroyed, so a
+    // reference member of an element must be stored as a reference and not
+    // as a copy of the object it refers to. If it were copied then the
+    // shared_ptr held by the copy would keep the weak reference alive.
+    std::weak_ptr<int> w;
+    {
+        non_trivially_destructible n{1, std::make_shared<int>(42)};
+        w = n.p_;
+        using elem_t = std::tuple<std::string, non_trivially_destructible&>;
+        const std::vector<elem_t> v{elem_t{"a", n}, elem_t{"b", n}};
+        static_assert(xtrd::container_serializable<std::vector<elem_t>>);
+        XTR_LOG(s_, "Test {}", v), line_ = __LINE__;
+        REQUIRE(
+            last_line() ==
+            fmt::format(
+                "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test [(a, "
+                "1), (b, 1)]",
+                line_));
+    }
+    REQUIRE(w.expired());
+}
+
+TEST_CASE_METHOD(fixture, "logger container test", "[logger]")
+{
+    const auto expected = [this](std::string_view msg)
+    {
+        return fmt::format(
+            "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test {}",
+            line_,
+            msg);
+    };
+
+    const std::vector<std::string> vs{"a", "b"};
+    XTR_LOG(s_, "Test {}", vs), line_ = __LINE__;
+    REQUIRE(last_line() == expected("[a, b]"));
+
+    const std::vector<int> vi{1, 2, 3};
+    XTR_LOG(s_, "Test {}", vi), line_ = __LINE__;
+    REQUIRE(last_line() == expected("[1, 2, 3]"));
+
+    const std::vector<bool> vb{true, false};
+    XTR_LOG(s_, "Test {}", vb), line_ = __LINE__;
+    REQUIRE(last_line() == expected("[true, false]"));
+
+    const std::deque<int> d{4, 5};
+    XTR_LOG(s_, "Test {}", d), line_ = __LINE__;
+    REQUIRE(last_line() == expected("[4, 5]"));
+
+    const std::list<std::string> l{"c"};
+    XTR_LOG(s_, "Test {}", l), line_ = __LINE__;
+    REQUIRE(last_line() == expected("[c]"));
+
+    const std::forward_list<std::string> fl{"d", "e"};
+    XTR_LOG(s_, "Test {}", fl), line_ = __LINE__;
+    REQUIRE(last_line() == expected("[d, e]"));
+
+    const std::set<std::string> set{"g", "f"};
+    XTR_LOG(s_, "Test {}", set), line_ = __LINE__;
+    REQUIRE(last_line() == expected("[f, g]"));
+
+    const std::multiset<int> ms{7, 6, 7};
+    XTR_LOG(s_, "Test {}", ms), line_ = __LINE__;
+    REQUIRE(last_line() == expected("[6, 7, 7]"));
+
+    const std::map<std::string, int> m{{"k", 8}};
+    XTR_LOG(s_, "Test {}", m), line_ = __LINE__;
+    REQUIRE(last_line() == expected("{k: 8}"));
+
+    const std::multimap<int, std::string> mm{{9, "h"}, {9, "i"}};
+    XTR_LOG(s_, "Test {}", mm), line_ = __LINE__;
+    REQUIRE(last_line() == expected("{9: h, 9: i}"));
+
+    // XXX review comment
+    // Single elements so that the output order is deterministic
+    const std::unordered_set<std::string> us{"j"};
+    XTR_LOG(s_, "Test {}", us), line_ = __LINE__;
+    REQUIRE(last_line() == expected("[j]"));
+
+    const std::unordered_multiset<int> ums{10};
+    XTR_LOG(s_, "Test {}", ums), line_ = __LINE__;
+    REQUIRE(last_line() == expected("[10]"));
+
+    const std::unordered_map<std::string, int> um{{"l", 11}};
+    XTR_LOG(s_, "Test {}", um), line_ = __LINE__;
+    REQUIRE(last_line() == expected("{l: 11}"));
+
+    const std::unordered_multimap<int, int> umm{{12, 13}};
+    XTR_LOG(s_, "Test {}", umm), line_ = __LINE__;
+    REQUIRE(last_line() == expected("{12: 13}"));
+
+    const std::vector<std::string> empty;
+    XTR_LOG(s_, "Test {} {}", empty, 14), line_ = __LINE__;
+    REQUIRE(last_line() == expected("[] 14"));
+}
+
+TEST_CASE_METHOD(fixture, "logger nested container test", "[logger]")
+{
+    const auto expected = [this](std::string_view msg)
+    {
+        return fmt::format(
+            "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test {}",
+            line_,
+            msg);
+    };
+
+    // XXX review comment
+    // Each container is followed by another argument, to verify that the
+    // reader is left at the start of the next argument's data.
+    const std::string after = "after";
+
+    const std::tuple<std::vector<std::string>, std::string> t{{"a", "b"}, "c"};
+    XTR_LOG(s_, "Test {} {}", t, after), line_ = __LINE__;
+    REQUIRE(last_line() == expected("([a, b], c) after"));
+
+    const std::vector<std::tuple<std::string, int>> vt{{"d", 1}, {"e", 2}};
+    XTR_LOG(s_, "Test {} {}", vt, after), line_ = __LINE__;
+    REQUIRE(last_line() == expected("[(d, 1), (e, 2)] after"));
+
+    const std::vector<std::vector<std::string>> vv{{"f", "g"}, {}, {"h"}};
+    XTR_LOG(s_, "Test {} {}", vv, after), line_ = __LINE__;
+    REQUIRE(last_line() == expected("[[f, g], [], [h]] after"));
+
+    const std::map<std::string, std::vector<std::string>> mv{{"k", {"i", "j"}}};
+    XTR_LOG(s_, "Test {} {}", mv, after), line_ = __LINE__;
+    REQUIRE(last_line() == expected("{k: [i, j]} after"));
+}
+
+TEST_CASE_METHOD(
+    fixture, "logger enable_container_serialization test", "[logger]")
+{
+    const auto expected = [this](std::string_view msg)
+    {
+        return fmt::format(
+            "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test {}",
+            line_,
+            msg);
+    };
+
+    static_assert(xtrd::container_serializable<user_container>);
+    const user_container uc{{"u", "v"}};
+    XTR_LOG(s_, "Test {}", uc), line_ = __LINE__;
+    REQUIRE(last_line() == expected("[u, v]"));
+
+    static_assert(xtrd::container_serializable<by_value_container>);
+    const by_value_container bv{{1, 2}};
+    XTR_LOG(s_, "Test {}", bv), line_ = __LINE__;
+    REQUIRE(last_line() == expected("[1, 2]"));
+
+    // XXX review comment
+    // Elements that cannot be serialized fall back to copying the container
+    using fallback_t = std::vector<non_trivially_destructible>;
+    static_assert(!xtrd::container_serializable<fallback_t>);
+    const fallback_t fallback{{1}, {2}};
+    XTR_LOG(s_, "Test {}", fallback), line_ = __LINE__;
+    REQUIRE(last_line() == expected("[1, 2]"));
+}
+
+TEST_CASE_METHOD(fixture, "logger nested string sanitize test", "[logger]")
+{
+    const auto expected = [this](std::string_view msg)
+    {
+        return fmt::format(
+            "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test {}",
+            line_,
+            msg);
+    };
+
+    const std::tuple<std::string, int> t{"a\nb", 1};
+    XTR_LOG(s_, "Test {}", t), line_ = __LINE__;
+    REQUIRE(last_line() == expected(R"((a\x0Ab, 1))"));
+
+    const std::vector<std::string> v{"c\x01", "d\\"};
+    XTR_LOG(s_, "Test {}", v), line_ = __LINE__;
+    REQUIRE(last_line() == expected(R"([c\x01, d\x5C])"));
+
+    const std::map<std::string, std::string> m{{"k\t", "v"}};
+    XTR_LOG(s_, "Test {}", m), line_ = __LINE__;
+    REQUIRE(last_line() == expected(R"({k\x09: v})"));
+}
+
+TEST_CASE_METHOD(fixture, "logger container overflow test", "[logger]")
+{
+    // XXX review comment
+    // The element array alone is larger than the sink's capacity, so the
+    // record can never fit and is dropped.
+    const std::vector<int> v(s_.capacity() / sizeof(int) + 1);
+    XTR_LOG(s_, "Test {}", v);
+
+    // sync() is required to ensure that the dropped count is picked up
+    sync();
+
+    REQUIRE(
+        last_line() ==
+        fmt::format("W 2000-01-01 01:02:03.123456 Name: 1 messages dropped"));
+}
+
+TEST_CASE_METHOD(fixture, "logger container string overflow test", "[logger]")
+{
+    // XXX review comment
+    // The element array fits but the middle element's string does not, so
+    // that element is truncated and the rest of the container is logged.
+    const std::vector<std::string> v{"a", std::string(s_.capacity(), 'X'), "c"};
+    XTR_LOG(s_, "Test {}", v), line_ = __LINE__;
+    REQUIRE(
+        last_line() ==
+        fmt::format("I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test [a, <truncated>, c]", line_));
+}
+
+TEST_CASE_METHOD(fixture, "logger non-blocking container drop test", "[logger]")
+{
+    auto next_sink = log_.get_sink("next");
+
+    blocker b;
+    XTR_LOG(s_, "{}", b);
+
+    // XXX review comment
+    // The first container fills most of the buffer, the second cannot fit
+    // while the consumer is blocked, so it is dropped.
+    const std::vector<int> v((s_.capacity() / 2) / sizeof(int));
+    XTR_TRY_LOG(s_, "Test {}", v);
+    XTR_TRY_LOG(s_, "Test {}", v);
+
+    b.release();
+    sync();
+
+    // XXX review comment
+    // See the comment in "logger non-blocking drop test"
+    next_sink.sync();
+
+    REQUIRE(
+        std::ranges::count(
+            lines_,
+            fmt::format("W 2000-01-01 01:02:03.123456 Name: 1 messages dropped")) ==
+        1);
+}
+
+TEST_CASE_METHOD(fixture, "logger container move test", "[logger]")
+{
+    const auto expected = [this](std::string_view msg)
+    {
+        return fmt::format(
+            "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test {}",
+            line_,
+            msg);
+    };
+
+    // XXX review comment
+    // r-value containers are moved, like std::string&&, rather than serialized
+    std::vector<std::string> v{"a", "b"};
+    XTR_LOG(s_, "Test {}", std::move(v)), line_ = __LINE__;
+    REQUIRE(last_line() == expected("[a, b]"));
+    REQUIRE(v.empty());
+
+    // XXX review comment
+    // Moving is not subject to the sink capacity, unlike serialization (see
+    // "logger container overflow test")
+    std::vector<int> large(s_.capacity() / sizeof(int) + 1);
+    const std::string formatted = fmt::format("{}", large);
+    XTR_LOG(s_, "Test {}", std::move(large)), line_ = __LINE__;
+    REQUIRE(last_line() == expected(formatted));
+}
+
+TEST_CASE_METHOD(fixture, "logger nocopy container test", "[logger]")
+{
+    const auto expected = [this](std::string_view msg)
+    {
+        return fmt::format(
+            "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test {}",
+            line_,
+            msg);
+    };
+
+    // XXX review comment
+    // Passed by reference: the blocker holds the consumer back until after
+    // the vector has been modified, so the modified contents are printed.
+    blocker b;
+    XTR_LOG(s_, "{}", b);
+    std::vector<std::string> v{"a"};
+    XTR_LOG(s_, "Test {}", nocopy(v)), line_ = __LINE__;
+    v.push_back("b");
+    b.release();
+    REQUIRE(last_line() == expected("[a, b]"));
+
+    const std::map<std::string, int> m{{"k", 1}};
+    XTR_LOG(s_, "Test {}", nocopy(m)), line_ = __LINE__;
+    REQUIRE(last_line() == expected("{k: 1}"));
+
+    const std::tuple<std::string, int> t{"c", 2};
+    XTR_LOG(s_, "Test {}", nocopy(t)), line_ = __LINE__;
+    REQUIRE(last_line() == expected("(c, 2)"));
+
+    const std::pair<std::string, int> p{"d", 3};
+    XTR_LOG(s_, "Test {}", nocopy(p)), line_ = __LINE__;
+    REQUIRE(last_line() == expected("(d, 3)"));
+
+    const std::array<std::string, 2> a{"e", "f"};
+    XTR_LOG(s_, "Test {}", nocopy(a)), line_ = __LINE__;
+    REQUIRE(last_line() == expected("[e, f]"));
+}
+
+TEST_CASE_METHOD(fixture, "logger nocopy large container test", "[logger]")
+{
+    // XXX review comment
+    // Too large to serialize into the sink (see "logger container overflow
+    // test"), but logged by reference with nocopy.
+    const std::vector<int> v(s_.capacity() / sizeof(int) + 1);
+    XTR_LOG(s_, "Test {}", nocopy(v)), line_ = __LINE__;
+    REQUIRE(
+        last_line() ==
+        fmt::format(
+            "I 2000-01-01 01:02:03.123456 Name logger.cpp:{}: Test {}",
+            line_,
+            v));
 }
 
 // Disabled as sanitizers can fault in a large amount of shadow memory (~500 pages)

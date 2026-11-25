@@ -38,9 +38,14 @@ for file in \
     include/xtr/detail/print.hpp \
     include/xtr/detail/string.hpp \
     include/xtr/detail/vcopy_wrapper.hpp \
+    include/xtr/enable_container_serialization.hpp \
+    include/xtr/detail/concepts.hpp \
     include/xtr/vcopy.hpp \
+    include/xtr/detail/nocopy_wrapper.hpp \
     include/xtr/nocopy.hpp \
+    include/xtr/detail/serialized_args.hpp \
     include/xtr/detail/transform_args.hpp \
+    include/xtr/detail/reconstruct_args.hpp \
     include/xtr/detail/trampolines.hpp \
     include/xtr/detail/strzcpy.hpp \
     include/xtr/sink.hpp \
@@ -66,7 +71,6 @@ for file in \
     include/xtr/io/detail/open.hpp \
     include/xtr/io/fd_storage.hpp \
     include/xtr/logger.hpp \
-    include/xtr/detail/concepts.hpp \
     include/xtr/formatters.hpp \
     include/xtr/streamed.hpp;
 do

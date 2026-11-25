@@ -7,6 +7,7 @@ add_executable(${PROJECT_NAME}  align.cpp
                                 bytecopy.cpp
                                 command_client.cpp
                                 command_dispatcher.cpp
+                                concepts.cpp
                                 fd_storage.cpp
                                 file_descriptor.cpp
                                 logger.cpp

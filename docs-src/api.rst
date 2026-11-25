@@ -88,6 +88,11 @@ Nocopy
 
 .. doxygenfunction:: xtr::nocopy
 
+Container Serialization
+-----------------------
+
+.. doxygenstruct:: xtr::enable_container_serialization
+
 Stream Formatting Wrappers
 --------------------------
 

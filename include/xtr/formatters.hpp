@@ -25,6 +25,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <tuple>
 #include <type_traits>
 #include <utility>
 
@@ -88,15 +89,23 @@ namespace fmt
             if (!value.empty())
             {
                 auto it = std::begin(value);
-                fmt::format_to(ctx.out(), FMT_COMPILE("{}: {}"), it->first, it->second);
+                {
+                    auto&& entry = *it;
+                    fmt::format_to(
+                        ctx.out(),
+                        FMT_COMPILE("{}: {}"),
+                        std::get<0>(entry),
+                        std::get<1>(entry));
+                }
                 ++it;
                 while (it != std::end(value))
                 {
+                    auto&& entry = *it;
                     fmt::format_to(
                         ctx.out(),
                         FMT_COMPILE(", {}: {}"),
-                        it->first,
-                        it->second);
+                        std::get<0>(entry),
+                        std::get<1>(entry));
                     ++it;
                 }
             }

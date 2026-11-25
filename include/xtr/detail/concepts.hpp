@@ -1,30 +1,44 @@
+// Copyright 2026 Chris E. Holloway
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 #ifndef XTR_DETAIL_CONCEPTS_HPP
 #define XTR_DETAIL_CONCEPTS_HPP
 
 #include "is_c_string.hpp"
 #include "vcopy_wrapper.hpp"
+#include "xtr/enable_container_serialization.hpp"
 
 #include <array>
-#include <deque>
-#include <list>
-#include <map>
-#include <set>
+#include <concepts>
+#include <cstddef>
+#include <ranges>
 #include <string>
 #include <string_view>
 #include <tuple>
 #include <type_traits>
-#include <unordered_map>
-#include <unordered_set>
 #include <utility>
-#include <vector>
 
 namespace xtr::detail
 {
     template<typename T>
-    concept iterable = requires(T t) {
-        std::begin(t);
-        std::end(t);
-    };
+    concept iterable = std::ranges::range<T>;
 
     template<typename T>
     concept associative_container = requires(T t) { typename T::mapped_type; };
@@ -32,22 +46,15 @@ namespace xtr::detail
     template<typename T>
     concept tuple_like = requires(T t) { std::tuple_size<T>(); };
 
-    // XXX THIS SHOULD BE OUTSIDE OF THE DETAIL NAMESPACE BECAUSE USERS ARE PERMITTED
-    // TO SPECIALIZE IT.
     template<typename T>
-    struct enable_container_serialization;
-
-    template<typename T>
-    constexpr bool enable_container_serialization_v =
-        enable_container_serialization<T>::value;
+    concept string_like = is_c_string<T>::value ||
+                          std::same_as<std::remove_cvref_t<T>, std::string> ||
+                          std::same_as<std::remove_cvref_t<T>, std::string_view>;
 
     // True if the serialized form of T is trivially destructible, false
-    // otherwise. We only serialize containers that have a trivially
-    // destructible serialized form in order to avoid having to implement
-    // complicated unwind logic in case an exception is thrown when copying
-    // items in.
-    //
-    // XXX is_c_string is wrong! just need to check std::string
+    // otherwise. Serialized container elements must be trivially destructible
+    // to avoid having complex unwind logic for values that either throw while
+    // being copied, or fail to copy due to lack of space in the sink buffer.
     template<typename T>
     struct is_serialized_trivially_destructible :
         std::is_trivially_destructible<T>
@@ -65,6 +72,14 @@ namespace xtr::detail
     struct is_serialized_trivially_destructible<T> :
         is_serialized_trivially_destructible<std::remove_const_t<typename T::value_type>>
     {
+        static_assert(
+            requires { typename T::value_type; },
+            "Types enabled via enable_container_serialization must have a "
+            "value_type");
+        static_assert(
+            std::ranges::range<T>,
+            "Types enabled via enable_container_serialization must model "
+            "std::ranges::range");
     };
 
     template<typename... Ts>
@@ -89,66 +104,24 @@ namespace xtr::detail
     constexpr bool is_serialized_trivially_destructible_v =
         is_serialized_trivially_destructible<T>::value;
 
-    ////
-
     template<typename T>
-    struct enable_container_serialization : std::false_type
-    {
-    };
+    concept container_serializable = enable_container_serialization_v<T> &&
+                                     is_serialized_trivially_destructible_v<T>;
 
-    template<typename... Args>
-    struct enable_container_serialization<std::deque<Args...>> : std::true_type
-    {
-    };
-
-    template<typename... Args>
-    struct enable_container_serialization<std::list<Args...>> : std::true_type
-    {
-    };
-
-    template<typename... Args>
-    struct enable_container_serialization<std::map<Args...>> : std::true_type
-    {
-    };
-
-    template<typename... Args>
-    struct enable_container_serialization<std::unordered_map<Args...>> :
-        std::true_type
-    {
-    };
-
-    template<typename... Args>
-    struct enable_container_serialization<std::unordered_set<Args...>> :
-        std::true_type
-    {
-    };
-
-    template<typename... Args>
-    struct enable_container_serialization<std::set<Args...>> : std::true_type
-    {
-    };
-
-    template<typename... Args>
-    struct enable_container_serialization<std::vector<Args...>> : std::true_type
-    {
-    };
-
-    template<typename T>
-    concept container_serializable =
-        enable_container_serialization_v<T> &&
-        is_serialized_trivially_destructible_v<T> && iterable<T>;
-
+    // XXX review comment
     // True if T is serialized into the variable-length area of a log record,
     // either directly (strings, vcopy) or by containing such a type.
-    // Specializations are on is_variable_length_impl, which only ever sees
-    // types with cv-qualifiers and references removed.
+    // Specializations are on is_variable_length_impl, which sees the logged
+    // type with cv-qualifiers and references removed. Members of a tuple or
+    // pair only have cv-qualifiers removed, as a reference member is kept as
+    // a reference rather than serialized.
     template<typename T>
     struct is_variable_length;
 
     template<typename T>
     struct is_variable_length_impl :
         std::disjunction<
-            is_c_string<T>,
+            std::conjunction<std::negation<std::is_reference<T>>, is_c_string<T>>,
             std::is_same<T, std::string>,
             std::is_same<T, std::string_view>,
             is_vcopy_wrapper<T>>
@@ -157,18 +130,24 @@ namespace xtr::detail
 
     template<typename... Ts>
     struct is_variable_length_impl<std::tuple<Ts...>> :
-        std::disjunction<is_variable_length<Ts>...>
+        std::disjunction<is_variable_length_impl<std::remove_cv_t<Ts>>...>
     {
     };
 
     template<typename... Ts>
     struct is_variable_length_impl<std::pair<Ts...>> :
-        std::disjunction<is_variable_length<Ts>...>
+        std::disjunction<is_variable_length_impl<std::remove_cv_t<Ts>>...>
     {
     };
 
     template<typename T, std::size_t N>
     struct is_variable_length_impl<std::array<T, N>> : is_variable_length<T>
+    {
+    };
+
+    template<typename T>
+        requires container_serializable<T>
+    struct is_variable_length_impl<T> : std::true_type
     {
     };
 
@@ -179,30 +158,6 @@ namespace xtr::detail
 
     template<typename T>
     constexpr bool is_variable_length_v = is_variable_length<T>::value;
-
-    // template<typename T>
-    // struct is_allocated;
-    //
-    // template<typename T>
-    //     requires(!tuple_like<T>)
-    // struct is_allocated<T>
-    // {
-    //     static constexpr bool value = requires { typename T::allocator_type; };
-    // };
-    //
-    // template<typename T>
-    //     requires(tuple_like<T>)
-    // struct is_allocated<T>
-    // {
-    //     static constexpr bool value =
-    //         []<std::size_t... Is>(std::index_sequence<Is...>)
-    //     {
-    //         return (is_allocated<std::tuple_element_t<Is, T>>::value || ...);
-    //     }(std::make_index_sequence<std::tuple_size_v<T>>{});
-    // };
-    //
-    // template<typename T>
-    // concept allocated = is_allocated<T>::value;
 }
 
 #endif

@@ -1,4 +1,5 @@
 #include "xtr/logger.hpp"
+#include "xtr/formatters.hpp"
 #include "xtr/vcopy.hpp"
 
 #include <benchmark/benchmark.h>
@@ -12,6 +13,7 @@
 #include <iostream>
 #include <string>
 #include <string_view>
+#include <vector>
 
 #include <pthread.h>
 #if __has_include(<pthread_np.h>)
@@ -88,6 +90,8 @@ namespace
     std::string str_arg128{
         "1234567890123456789012345678901234567890123456789012345678901234"
         "1234567890123456789012345678901234567890123456789012345678901234"};
+    std::vector<std::string> vec_str_arg_16x50(
+        16, "12345678901234567890123456789012345678901234567890");
     int int_arg = 42;
     long long_arg = 42L;
     double double_arg = 42.0;
@@ -283,6 +287,11 @@ LOG_BENCH(
      benchmark::DoNotOptimize(vcopy_size256),
      XTR_LOG(p, "Test {}", xtr::vcopy(vcopy_arg256, vcopy_size256))),
     288)
+LOG_BENCH(
+    logger_benchmark_vector_str_16x50,
+    (benchmark::DoNotOptimize(vec_str_arg_16x50),
+     XTR_LOG(p, "Test {}", vec_str_arg_16x50)),
+    880)
 LOG_BENCH(logger_benchmark_tsc, XTR_LOG_TSC(p, "Test"), 16)
 LOG_BENCH(
     logger_benchmark_tsc_int,

@@ -151,7 +151,7 @@ OBJS = $(SRCS:%=$(BUILD_DIR)/%.o)
 TEST_TARGET = $(BUILD_DIR)/test/test
 TEST_SRCS := \
 	test/align.cpp test/bytecopy.cpp test/command_client.cpp \
-	test/command_dispatcher.cpp test/fd_storage.cpp \
+	test/command_dispatcher.cpp test/concepts.cpp test/fd_storage.cpp \
 	test/file_descriptor.cpp test/logger.cpp test/main.cpp \
 	test/memory_mapping.cpp test/mirrored_memory_mapping.cpp \
 	test/pagesize.cpp test/synchronized_ring_buffer.cpp test/throw.cpp

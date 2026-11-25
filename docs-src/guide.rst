@@ -129,10 +129,13 @@ View this example on `Compiler Explorer <https://godbolt.org/z/xn3z5fnj3>`__.
 Passing Arguments by Value or Reference
 ---------------------------------------
 
+.. XXX review comment
+
 The default behaviour of the logger is to copy format arguments into the
-specified sink by value. Note that no allocations are be performed by the
-logger when this is done. If copying is undesirable then arguments may be
-passed by reference by wrapping them in a call to :cpp:func:`xtr::nocopy`.
+specified sink by value. No allocations are performed by the logger when this
+is done, other than any made by the copy constructor of the argument itself.
+If copying is undesirable then arguments may be passed by reference by
+wrapping them in a call to :cpp:func:`xtr::nocopy`.
 
 Example
 ~~~~~~~
@@ -186,6 +189,107 @@ copied. The user is then responsible for ensuring that the string data remains
 valid long enough for the logger to process the log statement. Note that only
 the string data must remain valid---so for :cpp:expr:`std::string_view` the
 object itself does not need to remain valid, just the data it references.
+
+.. _container_args:
+
+Container Arguments
+-------------------
+
+.. XXX review comment
+
+Containers are serialized into the sink when logged: the elements are written
+directly into the sink's buffer, without invoking the container's copy
+constructor and without allocating memory. For example:
+
+.. code-block:: c++
+
+    #include <xtr/formatters.hpp>
+    #include <xtr/logger.hpp>
+
+    const std::vector<std::string> v = {"Hello", "world"};
+
+    // Neither the vector nor the strings it contains are allocated:
+    XTR_LOG(s, "{}", v);
+
+This applies to :cpp:expr:`std::vector`, :cpp:expr:`std::deque`,
+:cpp:expr:`std::list`, :cpp:expr:`std::forward_list`, and the ordered and
+unordered set and map containers. Elements may be arithmetic types, strings,
+tuples, pairs, arrays, other containers, or any other type that is trivially
+destructible once copied into the sink. A container with elements that do not
+meet this requirement, for example
+:cpp:expr:`std::vector<std::shared_ptr<int>>`, is instead copied using its
+copy constructor, which will usually allocate.
+
+A serialized container must fit in the sink's buffer, the size of which is set
+by :c:macro:`XTR_SINK_CAPACITY`:
+
+* If the container's elements do not fit then the entire log record is dropped
+  and the sink's dropped message counter is incremented. A container that is
+  larger than the sink's buffer can never fit, so will always be dropped.
+* If the elements fit but the contents of a string element do not, then that
+  element is logged as `<truncated>` and the remaining elements are logged
+  normally, as for top-level string arguments.
+
+To log a container that is too large to be serialized, either move it into the
+log statement, pass it by reference using :cpp:func:`xtr::nocopy`, or increase
+:c:macro:`XTR_SINK_CAPACITY`:
+
+.. code-block:: c++
+
+    XTR_LOG(s, "{}", std::move(v));
+    XTR_LOG(s, "{}", nocopy(v));
+
+User-Defined Containers
+~~~~~~~~~~~~~~~~~~~~~~~
+
+User-defined containers are copied by default. Serialization may be enabled
+for a container by specializing :cpp:struct:`xtr::enable_container_serialization`:
+
+.. code-block:: c++
+
+    #include <xtr/logger.hpp>
+
+    template<typename T>
+    struct xtr::enable_container_serialization<my_container<T>> : std::true_type
+    {
+    };
+
+The container must model :cpp:expr:`std::ranges::range` and provide a
+:cpp:type:`value_type` member, otherwise enabling it is a compile error.
+
+.. _tuple_args:
+
+Tuple and Pair Arguments
+------------------------
+
+.. XXX review comment
+
+Each member of a :cpp:expr:`std::tuple` or :cpp:expr:`std::pair` is handled
+according to how the member is declared:
+
+* Members held by value are copied in the same way as a top-level argument of
+  the same type. In particular the contents of a :cpp:expr:`std::string`,
+  :cpp:expr:`std::string_view` or C string member are copied into the sink
+  when the log statement is made, and container members are serialized, all
+  without allocating.
+* Members that are references remain references. The logger stores the
+  reference and reads the object it refers to when the log statement is
+  processed, so the user is responsible for ensuring that the object remains
+  valid until then.
+
+.. code-block:: c++
+
+    std::string str = "Hello";
+    int x = 42;
+
+    // Both members are held by value, so are copied:
+    XTR_LOG(s, "{}", std::tuple<std::string, int>{str, x});
+
+    // The string is copied, 'x' is passed by reference:
+    XTR_LOG(s, "{}", std::tuple<std::string, int&>{str, x});
+
+    // Both members are references, so 'str' and 'x' are passed by reference:
+    XTR_LOG(s, "{}", std::tie(str, x));
 
 .. _variable_length_args:
 
@@ -369,13 +473,42 @@ Formatters for containers, tuples and pairs are provided in
   following criteria;
 
   1. Is not constructible from :cpp:expr:`const char*`.
-  2. :cpp:func:`std::begin()` and :cpp:func:`std::end()` are defined.
+  2. Models :cpp:expr:`std::ranges::range`.
   3. Is not an associative container.
 
 * Any associative container---specifically any type that provides a
-  :cpp:type:`mapped_type` member.
+  :cpp:type:`mapped_type` member. The container's elements must be tuple-like,
+  with the key and mapped value accessible via :cpp:expr:`std::get<0>` and
+  :cpp:expr:`std::get<1>`.
 * Any tuple-like type---specifically any type for which a
   :cpp:class:`std::tuple_size` overload is defined.
+
+Formatting Serialized Containers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. XXX review comment
+
+A :ref:`serialized container <container_args>` is formatted from its
+serialized elements rather than from the container object, so a
+:cpp:expr:`fmt::formatter` specialization for the container type itself is not
+used. Instead the elements are formatted as a sequence, or as key-value pairs
+if the container provides a :cpp:type:`mapped_type` member, by the formatters
+in `xtr/formatters.hpp` (or those in `fmt/ranges.h`). If no such formatter is
+available then the log statement will not compile.
+
+To have a container formatted by a :cpp:expr:`fmt::formatter` specialization
+for the container type, either move it into the log statement, pass it by
+reference using :cpp:func:`xtr::nocopy`, or disable serialization for the type
+by specializing :cpp:struct:`xtr::enable_container_serialization`, in which
+case the container is copied:
+
+.. code-block:: c++
+
+    template<>
+    struct xtr::enable_container_serialization<std::vector<my_type>> :
+        std::false_type
+    {
+    };
 
 .. _time-sources:
 
